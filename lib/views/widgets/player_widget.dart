@@ -44,6 +44,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   late StreamSubscription videoTrackSubscription;
   late StreamSubscription audioTrackSubscription;
   late StreamSubscription subtitleTranckSubscription;
+  late final GlobalKey<VideoState> key = GlobalKey<VideoState>();
 
   late Player _player;
   VideoController? _videoController;
@@ -124,6 +125,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
       Media(mediaUrl, start: watchHistory?.watchDuration ?? Duration()),
       play: true,
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      key.currentState?.enterFullscreen();
+    });
 
     // try {
     //   await _player.stream.buffer.first;
@@ -270,7 +275,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     return Stack(
       children: [
-        getVideo(context, _videoController!),
+        getVideo(context, _videoController!, key),
         // Custom fullscreen button
         if (widget.onFullscreen != null)
           Positioned(

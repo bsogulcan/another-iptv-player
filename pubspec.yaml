@@ -37,7 +37,7 @@ dependencies:
   http: ^1.4.0
   # screen_brightness: ^2.1.4
   cached_network_image: ^3.4.1
-  audio_service: ^0.18.12
+  audio_service: ^0.18.18
   just_audio: ^0.10.4
   rxdart: ^0.28.0
   flutter_in_app_pip: ^1.7.4
@@ -45,6 +45,7 @@ dependencies:
   persistent_bottom_nav_bar: ^6.2.1
   shared_preferences: ^2.5.3
   audio_session: ^0.2.2
+  auto_orientation: ^2.3.1
 
 # Tüm media-kit paketleri için dependency override
 dependency_overrides:

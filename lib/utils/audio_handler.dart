@@ -44,7 +44,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     _positionSubscription = _player!.stream.position.listen((position) {
       playbackState.add(playbackState.value.copyWith(
         updatePosition: position,
-        bufferedPosition: position, // updateTime yerine bufferedPosition kullan
+        bufferedPosition: position,
       ));
     });
 
