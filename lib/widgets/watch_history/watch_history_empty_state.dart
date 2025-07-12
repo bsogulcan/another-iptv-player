@@ -1,6 +1,5 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-
-import '../../l10n/app_localizations.dart';
 
 class WatchHistoryEmptyState extends StatelessWidget {
   const WatchHistoryEmptyState({super.key});
@@ -14,8 +13,7 @@ class WatchHistoryEmptyState extends StatelessWidget {
           const Icon(Icons.history, size: 64, color: Colors.grey),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context)!.history,
-            // 'Henüz izleme geçmişiniz bulunmuyor',
+            context.loc.history,
             style: const TextStyle(
               fontSize: 18,
               color: Colors.grey,
@@ -24,12 +22,9 @@ class WatchHistoryEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Video izlemeye başladığınızda burada görünecek',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+          Text(
+            context.loc.history_empty_message,
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ],

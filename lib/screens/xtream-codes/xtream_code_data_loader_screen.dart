@@ -210,7 +210,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                           ),
                           SizedBox(height: 24),
                           Text(
-                            'IPTV Player',
+                            'Another IPTV Player',
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w300,

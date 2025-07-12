@@ -1,7 +1,10 @@
 import 'package:another_iptv_player/screens/settings/subtitle_settings_section.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/locale_provider.dart';
 import '../../repositories/user_preferences.dart';
 import '../../services/app_state.dart';
+import '../../widgets/dropdown_tile_widget.dart';
 import '../../widgets/section_title_widget.dart';
 import '../playlist_screen.dart';
 import '../xtream-codes/xtream_code_data_loader_screen.dart';
@@ -15,6 +18,7 @@ class GeneralSettingsWidget extends StatefulWidget {
 
 class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   bool _backgroundPlayEnabled = false;
+  Locale _appLanguage = Locale('tr');
   bool _isLoading = true;
 
   @override
@@ -113,6 +117,25 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       ),
                     ),
                   );
+                },
+              ),
+              const Divider(height: 1),
+
+              DropdownTileWidget<Locale>(
+                icon: Icons.format_bold,
+                label: 'Uygulama Dili',
+                value:
+                    Provider.of<LocaleProvider>(context).locale ??
+                    const Locale('tr'),
+                items: const [
+                  DropdownMenuItem(value: Locale('tr'), child: Text('Türkçe')),
+                  DropdownMenuItem(value: Locale('en'), child: Text('English')),
+                ],
+                onChanged: (v) {
+                  Provider.of<LocaleProvider>(
+                    context,
+                    listen: false,
+                  ).setLocale(v!);
                 },
               ),
             ],

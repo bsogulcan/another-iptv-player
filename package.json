@@ -4,7 +4,8 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
+    "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "localize": "flutter gen-l10n"
   },
   "devDependencies": {
     "vitepress": "^1.6.3",

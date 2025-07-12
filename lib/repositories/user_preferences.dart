@@ -17,6 +17,7 @@ class UserPreferences {
   static const String _keySubtitleFontWeight = 'subtitle_font_weight';
   static const String _keySubtitleTextAlign = 'subtitle_text_align';
   static const String _keySubtitlePadding = 'subtitle_padding';
+  static const String _keyLocale = 'locale';
 
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -177,5 +178,20 @@ class UserPreferences {
   static Future<void> setSubtitlePadding(double padding) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keySubtitlePadding, padding);
+  }
+
+  static Future<String> getLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLocale) ?? 'tr';
+  }
+
+  static Future<void> setLocale(String locale) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLocale, locale);
+  }
+
+  static Future<void> removeLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyLocale);
   }
 }
