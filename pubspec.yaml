@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
   get_it: ^7.2.0
   media_kit:
     git:
@@ -26,7 +29,6 @@ dependencies:
       url: https://github.com/media-kit/media-kit.git
       path: libs/universal/media_kit_libs_video
       ref: main
-
   provider: ^6.1.1
   drift: ^2.26.1
   sqlite3_flutter_libs: ^0.5.34
@@ -41,12 +43,12 @@ dependencies:
   persistent_bottom_nav_bar: ^6.2.1
   shared_preferences: ^2.5.3
   audio_session: ^0.2.2
-
   drift_dev: any
   sqlite3: any
   path_provider: any
   path: any
   meta: any
+
 dependency_overrides:
   media_kit:
     git:
@@ -77,6 +79,7 @@ dev_dependencies:
   mockito: ^5.4.6
 flutter:
   uses-material-design: true
+  generate: true
 
 flutter_icons:
   android: true
