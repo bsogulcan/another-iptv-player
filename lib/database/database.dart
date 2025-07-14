@@ -12,6 +12,7 @@ import 'package:another_iptv_player/models/user_info.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../models/category_type.dart';
+import '../models/m3u_item.dart';
 import '../models/playlist_model.dart';
 
 part 'database.g.dart';
@@ -318,6 +319,52 @@ class WatchHistories extends Table {
   Set<Column> get primaryKey => {playlistId, streamId};
 }
 
+@DataClassName('M3uItemData')
+class M3uItems extends Table {
+  TextColumn get playlistId => text()();
+
+  TextColumn get url => text()();
+
+  TextColumn get name => text().nullable()();
+
+  TextColumn get tvgId => text().nullable()();
+
+  TextColumn get tvgName => text().nullable()();
+
+  TextColumn get tvgLogo => text().nullable()();
+
+  TextColumn get tvgUrl => text().nullable()();
+
+  TextColumn get tvgRec => text().nullable()();
+
+  TextColumn get tvgShift => text().nullable()();
+
+  TextColumn get groupTitle => text().nullable()();
+
+  TextColumn get groupName => text().nullable()();
+
+  TextColumn get userAgent => text().nullable()();
+
+  TextColumn get referrer => text().nullable()();
+
+  TextColumn get categoryId => text().nullable()();
+
+  IntColumn get contentType => integer()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {playlistId, url};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (LENGTH(url) > 0)',
+    'CHECK (LENGTH(playlist_id) > 0)', // playlistId değil playlist_id!
+  ];
+}
+
 @DriftDatabase(
   tables: [
     Playlists,
@@ -331,6 +378,7 @@ class WatchHistories extends Table {
     Seasons,
     Episodes,
     WatchHistories,
+    M3uItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -358,7 +406,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1210,6 +1258,49 @@ class AppDatabase extends _$AppDatabase {
     return movieList.map((x) => VodStream.fromDriftVodStream(x)).toList();
   }
 
+  // M3uItem insert etme
+  Future<int> insertM3uItem(M3uItem item) {
+    return into(m3uItems).insert(item.toCompanion());
+  }
+
+  // Birden fazla M3uItem insert etme
+  Future<void> insertM3uItems(List<M3uItem> items) {
+    return batch((batch) {
+      batch.insertAll(m3uItems, items.map((item) => item.toCompanion()));
+    });
+  }
+
+  // M3uItem güncelleme
+  Future<bool> updateM3uItem(M3uItem item) {
+    return update(m3uItems).replace(item.toCompanion());
+  }
+
+  Future<int> deleteM3uItem(String playlistId, String url) {
+    return (delete(m3uItems)..where(
+          (tbl) => tbl.playlistId.equals(playlistId) & tbl.url.equals(url),
+        ))
+        .go();
+  }
+
+  Future<List<M3uItem>> getAllM3uItems() async {
+    final data = await select(m3uItems).get();
+    return data.map((item) => M3uItem.fromData(item)).toList();
+  }
+
+  Future<List<M3uItem>> getM3uItemsByPlaylist(String playlistId) async {
+    final data = await (select(
+      m3uItems,
+    )..where((tbl) => tbl.playlistId.equals(playlistId))).get();
+    return data.map((item) => M3uItem.fromData(item)).toList();
+  }
+
+  Future<List<M3uItem>> getM3uItemsByCategory(String categoryId) async {
+    final data = await (select(
+      m3uItems,
+    )..where((tbl) => tbl.categoryId.equals(categoryId))).get();
+    return data.map((item) => M3uItem.fromData(item)).toList();
+  }
+
   Future<List<SeriesStream>> searchSeries(
     String playlistId,
     String query,
@@ -1262,6 +1353,10 @@ class AppDatabase extends _$AppDatabase {
           SET type = 'PlaylistType.xtream' 
           WHERE type = 'PlaylistType.xstream'
         ''');
+      }
+
+      if (from <= 4) {
+        await m.createTable(m3uItems);
       }
     },
   );

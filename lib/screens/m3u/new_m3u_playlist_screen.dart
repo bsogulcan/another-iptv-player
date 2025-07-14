@@ -426,7 +426,10 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
     );
   }
 
-  Widget _buildSaveButton(PlaylistController controller, ColorScheme colorScheme) {
+  Widget _buildSaveButton(
+    PlaylistController controller,
+    ColorScheme colorScheme,
+  ) {
     return SizedBox(
       height: 56,
       child: ElevatedButton(
@@ -567,14 +570,20 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       print('Playlist Name: ${_nameController.text.trim()}');
       print('Is URL Source: $_isUrlSource');
 
+      var playlist = await playlistController.createPlaylist(
+        name: _nameController.text.trim(),
+        type: PlaylistType.m3u,
+        url: _isUrlSource ? _urlController.text : _selectedFilePath,
+      );
+
       List<M3uItem> m3uItems = [];
       if (_isUrlSource) {
         print('URL: ${_urlController.text.trim()}');
-        m3uItems = await M3uParser.parseUrl('test-id', _urlController.text);
+        m3uItems = await M3uParser.parseUrl(playlist!.id, _urlController.text);
       } else {
         print('File Path: $_selectedFilePath');
         print('File Name: $_selectedFileName');
-        m3uItems = await M3uParser.parseFile('test-id', _selectedFilePath!);
+        m3uItems = await M3uParser.parseFile(playlist!.id, _selectedFilePath!);
       }
 
       if (m3uItems.length == 0) {
@@ -582,16 +591,11 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
         return;
       }
 
-      var playlist = await playlistController.createPlaylist(
-        name: _nameController.text.trim(),
-        type: PlaylistType.m3u,
-        url: _isUrlSource ? _urlController.text : _selectedFilePath,
-      );
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => M3uDataLoaderScreen(playlist: playlist!, m3uItems: m3uItems,),
+          builder: (context) =>
+              M3uDataLoaderScreen(playlist: playlist!, m3uItems: m3uItems),
         ),
       );
     }

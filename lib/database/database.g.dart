@@ -7646,6 +7646,962 @@ class WatchHistoriesCompanion extends UpdateCompanion<WatchHistoriesData> {
   }
 }
 
+class $M3uItemsTable extends M3uItems
+    with TableInfo<$M3uItemsTable, M3uItemData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $M3uItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _playlistIdMeta = const VerificationMeta(
+    'playlistId',
+  );
+  @override
+  late final GeneratedColumn<String> playlistId = GeneratedColumn<String>(
+    'playlist_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgIdMeta = const VerificationMeta('tvgId');
+  @override
+  late final GeneratedColumn<String> tvgId = GeneratedColumn<String>(
+    'tvg_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgNameMeta = const VerificationMeta(
+    'tvgName',
+  );
+  @override
+  late final GeneratedColumn<String> tvgName = GeneratedColumn<String>(
+    'tvg_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgLogoMeta = const VerificationMeta(
+    'tvgLogo',
+  );
+  @override
+  late final GeneratedColumn<String> tvgLogo = GeneratedColumn<String>(
+    'tvg_logo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgUrlMeta = const VerificationMeta('tvgUrl');
+  @override
+  late final GeneratedColumn<String> tvgUrl = GeneratedColumn<String>(
+    'tvg_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgRecMeta = const VerificationMeta('tvgRec');
+  @override
+  late final GeneratedColumn<String> tvgRec = GeneratedColumn<String>(
+    'tvg_rec',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tvgShiftMeta = const VerificationMeta(
+    'tvgShift',
+  );
+  @override
+  late final GeneratedColumn<String> tvgShift = GeneratedColumn<String>(
+    'tvg_shift',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupTitleMeta = const VerificationMeta(
+    'groupTitle',
+  );
+  @override
+  late final GeneratedColumn<String> groupTitle = GeneratedColumn<String>(
+    'group_title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupNameMeta = const VerificationMeta(
+    'groupName',
+  );
+  @override
+  late final GeneratedColumn<String> groupName = GeneratedColumn<String>(
+    'group_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _userAgentMeta = const VerificationMeta(
+    'userAgent',
+  );
+  @override
+  late final GeneratedColumn<String> userAgent = GeneratedColumn<String>(
+    'user_agent',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _referrerMeta = const VerificationMeta(
+    'referrer',
+  );
+  @override
+  late final GeneratedColumn<String> referrer = GeneratedColumn<String>(
+    'referrer',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contentTypeMeta = const VerificationMeta(
+    'contentType',
+  );
+  @override
+  late final GeneratedColumn<int> contentType = GeneratedColumn<int>(
+    'content_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    playlistId,
+    url,
+    name,
+    tvgId,
+    tvgName,
+    tvgLogo,
+    tvgUrl,
+    tvgRec,
+    tvgShift,
+    groupTitle,
+    groupName,
+    userAgent,
+    referrer,
+    categoryId,
+    contentType,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'm3u_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<M3uItemData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('playlist_id')) {
+      context.handle(
+        _playlistIdMeta,
+        playlistId.isAcceptableOrUnknown(data['playlist_id']!, _playlistIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_playlistIdMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('tvg_id')) {
+      context.handle(
+        _tvgIdMeta,
+        tvgId.isAcceptableOrUnknown(data['tvg_id']!, _tvgIdMeta),
+      );
+    }
+    if (data.containsKey('tvg_name')) {
+      context.handle(
+        _tvgNameMeta,
+        tvgName.isAcceptableOrUnknown(data['tvg_name']!, _tvgNameMeta),
+      );
+    }
+    if (data.containsKey('tvg_logo')) {
+      context.handle(
+        _tvgLogoMeta,
+        tvgLogo.isAcceptableOrUnknown(data['tvg_logo']!, _tvgLogoMeta),
+      );
+    }
+    if (data.containsKey('tvg_url')) {
+      context.handle(
+        _tvgUrlMeta,
+        tvgUrl.isAcceptableOrUnknown(data['tvg_url']!, _tvgUrlMeta),
+      );
+    }
+    if (data.containsKey('tvg_rec')) {
+      context.handle(
+        _tvgRecMeta,
+        tvgRec.isAcceptableOrUnknown(data['tvg_rec']!, _tvgRecMeta),
+      );
+    }
+    if (data.containsKey('tvg_shift')) {
+      context.handle(
+        _tvgShiftMeta,
+        tvgShift.isAcceptableOrUnknown(data['tvg_shift']!, _tvgShiftMeta),
+      );
+    }
+    if (data.containsKey('group_title')) {
+      context.handle(
+        _groupTitleMeta,
+        groupTitle.isAcceptableOrUnknown(data['group_title']!, _groupTitleMeta),
+      );
+    }
+    if (data.containsKey('group_name')) {
+      context.handle(
+        _groupNameMeta,
+        groupName.isAcceptableOrUnknown(data['group_name']!, _groupNameMeta),
+      );
+    }
+    if (data.containsKey('user_agent')) {
+      context.handle(
+        _userAgentMeta,
+        userAgent.isAcceptableOrUnknown(data['user_agent']!, _userAgentMeta),
+      );
+    }
+    if (data.containsKey('referrer')) {
+      context.handle(
+        _referrerMeta,
+        referrer.isAcceptableOrUnknown(data['referrer']!, _referrerMeta),
+      );
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
+    }
+    if (data.containsKey('content_type')) {
+      context.handle(
+        _contentTypeMeta,
+        contentType.isAcceptableOrUnknown(
+          data['content_type']!,
+          _contentTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentTypeMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {playlistId, url};
+  @override
+  M3uItemData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return M3uItemData(
+      playlistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}playlist_id'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      tvgId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_id'],
+      ),
+      tvgName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_name'],
+      ),
+      tvgLogo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_logo'],
+      ),
+      tvgUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_url'],
+      ),
+      tvgRec: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_rec'],
+      ),
+      tvgShift: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tvg_shift'],
+      ),
+      groupTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_title'],
+      ),
+      groupName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_name'],
+      ),
+      userAgent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_agent'],
+      ),
+      referrer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}referrer'],
+      ),
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
+      contentType: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}content_type'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $M3uItemsTable createAlias(String alias) {
+    return $M3uItemsTable(attachedDatabase, alias);
+  }
+}
+
+class M3uItemData extends DataClass implements Insertable<M3uItemData> {
+  final String playlistId;
+  final String url;
+  final String? name;
+  final String? tvgId;
+  final String? tvgName;
+  final String? tvgLogo;
+  final String? tvgUrl;
+  final String? tvgRec;
+  final String? tvgShift;
+  final String? groupTitle;
+  final String? groupName;
+  final String? userAgent;
+  final String? referrer;
+  final String? categoryId;
+  final int contentType;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const M3uItemData({
+    required this.playlistId,
+    required this.url,
+    this.name,
+    this.tvgId,
+    this.tvgName,
+    this.tvgLogo,
+    this.tvgUrl,
+    this.tvgRec,
+    this.tvgShift,
+    this.groupTitle,
+    this.groupName,
+    this.userAgent,
+    this.referrer,
+    this.categoryId,
+    required this.contentType,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['playlist_id'] = Variable<String>(playlistId);
+    map['url'] = Variable<String>(url);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    if (!nullToAbsent || tvgId != null) {
+      map['tvg_id'] = Variable<String>(tvgId);
+    }
+    if (!nullToAbsent || tvgName != null) {
+      map['tvg_name'] = Variable<String>(tvgName);
+    }
+    if (!nullToAbsent || tvgLogo != null) {
+      map['tvg_logo'] = Variable<String>(tvgLogo);
+    }
+    if (!nullToAbsent || tvgUrl != null) {
+      map['tvg_url'] = Variable<String>(tvgUrl);
+    }
+    if (!nullToAbsent || tvgRec != null) {
+      map['tvg_rec'] = Variable<String>(tvgRec);
+    }
+    if (!nullToAbsent || tvgShift != null) {
+      map['tvg_shift'] = Variable<String>(tvgShift);
+    }
+    if (!nullToAbsent || groupTitle != null) {
+      map['group_title'] = Variable<String>(groupTitle);
+    }
+    if (!nullToAbsent || groupName != null) {
+      map['group_name'] = Variable<String>(groupName);
+    }
+    if (!nullToAbsent || userAgent != null) {
+      map['user_agent'] = Variable<String>(userAgent);
+    }
+    if (!nullToAbsent || referrer != null) {
+      map['referrer'] = Variable<String>(referrer);
+    }
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
+    map['content_type'] = Variable<int>(contentType);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  M3uItemsCompanion toCompanion(bool nullToAbsent) {
+    return M3uItemsCompanion(
+      playlistId: Value(playlistId),
+      url: Value(url),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      tvgId: tvgId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgId),
+      tvgName: tvgName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgName),
+      tvgLogo: tvgLogo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgLogo),
+      tvgUrl: tvgUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgUrl),
+      tvgRec: tvgRec == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgRec),
+      tvgShift: tvgShift == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tvgShift),
+      groupTitle: groupTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupTitle),
+      groupName: groupName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupName),
+      userAgent: userAgent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userAgent),
+      referrer: referrer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(referrer),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
+      contentType: Value(contentType),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory M3uItemData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return M3uItemData(
+      playlistId: serializer.fromJson<String>(json['playlistId']),
+      url: serializer.fromJson<String>(json['url']),
+      name: serializer.fromJson<String?>(json['name']),
+      tvgId: serializer.fromJson<String?>(json['tvgId']),
+      tvgName: serializer.fromJson<String?>(json['tvgName']),
+      tvgLogo: serializer.fromJson<String?>(json['tvgLogo']),
+      tvgUrl: serializer.fromJson<String?>(json['tvgUrl']),
+      tvgRec: serializer.fromJson<String?>(json['tvgRec']),
+      tvgShift: serializer.fromJson<String?>(json['tvgShift']),
+      groupTitle: serializer.fromJson<String?>(json['groupTitle']),
+      groupName: serializer.fromJson<String?>(json['groupName']),
+      userAgent: serializer.fromJson<String?>(json['userAgent']),
+      referrer: serializer.fromJson<String?>(json['referrer']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
+      contentType: serializer.fromJson<int>(json['contentType']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'playlistId': serializer.toJson<String>(playlistId),
+      'url': serializer.toJson<String>(url),
+      'name': serializer.toJson<String?>(name),
+      'tvgId': serializer.toJson<String?>(tvgId),
+      'tvgName': serializer.toJson<String?>(tvgName),
+      'tvgLogo': serializer.toJson<String?>(tvgLogo),
+      'tvgUrl': serializer.toJson<String?>(tvgUrl),
+      'tvgRec': serializer.toJson<String?>(tvgRec),
+      'tvgShift': serializer.toJson<String?>(tvgShift),
+      'groupTitle': serializer.toJson<String?>(groupTitle),
+      'groupName': serializer.toJson<String?>(groupName),
+      'userAgent': serializer.toJson<String?>(userAgent),
+      'referrer': serializer.toJson<String?>(referrer),
+      'categoryId': serializer.toJson<String?>(categoryId),
+      'contentType': serializer.toJson<int>(contentType),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  M3uItemData copyWith({
+    String? playlistId,
+    String? url,
+    Value<String?> name = const Value.absent(),
+    Value<String?> tvgId = const Value.absent(),
+    Value<String?> tvgName = const Value.absent(),
+    Value<String?> tvgLogo = const Value.absent(),
+    Value<String?> tvgUrl = const Value.absent(),
+    Value<String?> tvgRec = const Value.absent(),
+    Value<String?> tvgShift = const Value.absent(),
+    Value<String?> groupTitle = const Value.absent(),
+    Value<String?> groupName = const Value.absent(),
+    Value<String?> userAgent = const Value.absent(),
+    Value<String?> referrer = const Value.absent(),
+    Value<String?> categoryId = const Value.absent(),
+    int? contentType,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => M3uItemData(
+    playlistId: playlistId ?? this.playlistId,
+    url: url ?? this.url,
+    name: name.present ? name.value : this.name,
+    tvgId: tvgId.present ? tvgId.value : this.tvgId,
+    tvgName: tvgName.present ? tvgName.value : this.tvgName,
+    tvgLogo: tvgLogo.present ? tvgLogo.value : this.tvgLogo,
+    tvgUrl: tvgUrl.present ? tvgUrl.value : this.tvgUrl,
+    tvgRec: tvgRec.present ? tvgRec.value : this.tvgRec,
+    tvgShift: tvgShift.present ? tvgShift.value : this.tvgShift,
+    groupTitle: groupTitle.present ? groupTitle.value : this.groupTitle,
+    groupName: groupName.present ? groupName.value : this.groupName,
+    userAgent: userAgent.present ? userAgent.value : this.userAgent,
+    referrer: referrer.present ? referrer.value : this.referrer,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    contentType: contentType ?? this.contentType,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  M3uItemData copyWithCompanion(M3uItemsCompanion data) {
+    return M3uItemData(
+      playlistId: data.playlistId.present
+          ? data.playlistId.value
+          : this.playlistId,
+      url: data.url.present ? data.url.value : this.url,
+      name: data.name.present ? data.name.value : this.name,
+      tvgId: data.tvgId.present ? data.tvgId.value : this.tvgId,
+      tvgName: data.tvgName.present ? data.tvgName.value : this.tvgName,
+      tvgLogo: data.tvgLogo.present ? data.tvgLogo.value : this.tvgLogo,
+      tvgUrl: data.tvgUrl.present ? data.tvgUrl.value : this.tvgUrl,
+      tvgRec: data.tvgRec.present ? data.tvgRec.value : this.tvgRec,
+      tvgShift: data.tvgShift.present ? data.tvgShift.value : this.tvgShift,
+      groupTitle: data.groupTitle.present
+          ? data.groupTitle.value
+          : this.groupTitle,
+      groupName: data.groupName.present ? data.groupName.value : this.groupName,
+      userAgent: data.userAgent.present ? data.userAgent.value : this.userAgent,
+      referrer: data.referrer.present ? data.referrer.value : this.referrer,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      contentType: data.contentType.present
+          ? data.contentType.value
+          : this.contentType,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('M3uItemData(')
+          ..write('playlistId: $playlistId, ')
+          ..write('url: $url, ')
+          ..write('name: $name, ')
+          ..write('tvgId: $tvgId, ')
+          ..write('tvgName: $tvgName, ')
+          ..write('tvgLogo: $tvgLogo, ')
+          ..write('tvgUrl: $tvgUrl, ')
+          ..write('tvgRec: $tvgRec, ')
+          ..write('tvgShift: $tvgShift, ')
+          ..write('groupTitle: $groupTitle, ')
+          ..write('groupName: $groupName, ')
+          ..write('userAgent: $userAgent, ')
+          ..write('referrer: $referrer, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('contentType: $contentType, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    playlistId,
+    url,
+    name,
+    tvgId,
+    tvgName,
+    tvgLogo,
+    tvgUrl,
+    tvgRec,
+    tvgShift,
+    groupTitle,
+    groupName,
+    userAgent,
+    referrer,
+    categoryId,
+    contentType,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is M3uItemData &&
+          other.playlistId == this.playlistId &&
+          other.url == this.url &&
+          other.name == this.name &&
+          other.tvgId == this.tvgId &&
+          other.tvgName == this.tvgName &&
+          other.tvgLogo == this.tvgLogo &&
+          other.tvgUrl == this.tvgUrl &&
+          other.tvgRec == this.tvgRec &&
+          other.tvgShift == this.tvgShift &&
+          other.groupTitle == this.groupTitle &&
+          other.groupName == this.groupName &&
+          other.userAgent == this.userAgent &&
+          other.referrer == this.referrer &&
+          other.categoryId == this.categoryId &&
+          other.contentType == this.contentType &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class M3uItemsCompanion extends UpdateCompanion<M3uItemData> {
+  final Value<String> playlistId;
+  final Value<String> url;
+  final Value<String?> name;
+  final Value<String?> tvgId;
+  final Value<String?> tvgName;
+  final Value<String?> tvgLogo;
+  final Value<String?> tvgUrl;
+  final Value<String?> tvgRec;
+  final Value<String?> tvgShift;
+  final Value<String?> groupTitle;
+  final Value<String?> groupName;
+  final Value<String?> userAgent;
+  final Value<String?> referrer;
+  final Value<String?> categoryId;
+  final Value<int> contentType;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const M3uItemsCompanion({
+    this.playlistId = const Value.absent(),
+    this.url = const Value.absent(),
+    this.name = const Value.absent(),
+    this.tvgId = const Value.absent(),
+    this.tvgName = const Value.absent(),
+    this.tvgLogo = const Value.absent(),
+    this.tvgUrl = const Value.absent(),
+    this.tvgRec = const Value.absent(),
+    this.tvgShift = const Value.absent(),
+    this.groupTitle = const Value.absent(),
+    this.groupName = const Value.absent(),
+    this.userAgent = const Value.absent(),
+    this.referrer = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.contentType = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  M3uItemsCompanion.insert({
+    required String playlistId,
+    required String url,
+    this.name = const Value.absent(),
+    this.tvgId = const Value.absent(),
+    this.tvgName = const Value.absent(),
+    this.tvgLogo = const Value.absent(),
+    this.tvgUrl = const Value.absent(),
+    this.tvgRec = const Value.absent(),
+    this.tvgShift = const Value.absent(),
+    this.groupTitle = const Value.absent(),
+    this.groupName = const Value.absent(),
+    this.userAgent = const Value.absent(),
+    this.referrer = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    required int contentType,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : playlistId = Value(playlistId),
+       url = Value(url),
+       contentType = Value(contentType);
+  static Insertable<M3uItemData> custom({
+    Expression<String>? playlistId,
+    Expression<String>? url,
+    Expression<String>? name,
+    Expression<String>? tvgId,
+    Expression<String>? tvgName,
+    Expression<String>? tvgLogo,
+    Expression<String>? tvgUrl,
+    Expression<String>? tvgRec,
+    Expression<String>? tvgShift,
+    Expression<String>? groupTitle,
+    Expression<String>? groupName,
+    Expression<String>? userAgent,
+    Expression<String>? referrer,
+    Expression<String>? categoryId,
+    Expression<int>? contentType,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (playlistId != null) 'playlist_id': playlistId,
+      if (url != null) 'url': url,
+      if (name != null) 'name': name,
+      if (tvgId != null) 'tvg_id': tvgId,
+      if (tvgName != null) 'tvg_name': tvgName,
+      if (tvgLogo != null) 'tvg_logo': tvgLogo,
+      if (tvgUrl != null) 'tvg_url': tvgUrl,
+      if (tvgRec != null) 'tvg_rec': tvgRec,
+      if (tvgShift != null) 'tvg_shift': tvgShift,
+      if (groupTitle != null) 'group_title': groupTitle,
+      if (groupName != null) 'group_name': groupName,
+      if (userAgent != null) 'user_agent': userAgent,
+      if (referrer != null) 'referrer': referrer,
+      if (categoryId != null) 'category_id': categoryId,
+      if (contentType != null) 'content_type': contentType,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  M3uItemsCompanion copyWith({
+    Value<String>? playlistId,
+    Value<String>? url,
+    Value<String?>? name,
+    Value<String?>? tvgId,
+    Value<String?>? tvgName,
+    Value<String?>? tvgLogo,
+    Value<String?>? tvgUrl,
+    Value<String?>? tvgRec,
+    Value<String?>? tvgShift,
+    Value<String?>? groupTitle,
+    Value<String?>? groupName,
+    Value<String?>? userAgent,
+    Value<String?>? referrer,
+    Value<String?>? categoryId,
+    Value<int>? contentType,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return M3uItemsCompanion(
+      playlistId: playlistId ?? this.playlistId,
+      url: url ?? this.url,
+      name: name ?? this.name,
+      tvgId: tvgId ?? this.tvgId,
+      tvgName: tvgName ?? this.tvgName,
+      tvgLogo: tvgLogo ?? this.tvgLogo,
+      tvgUrl: tvgUrl ?? this.tvgUrl,
+      tvgRec: tvgRec ?? this.tvgRec,
+      tvgShift: tvgShift ?? this.tvgShift,
+      groupTitle: groupTitle ?? this.groupTitle,
+      groupName: groupName ?? this.groupName,
+      userAgent: userAgent ?? this.userAgent,
+      referrer: referrer ?? this.referrer,
+      categoryId: categoryId ?? this.categoryId,
+      contentType: contentType ?? this.contentType,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (playlistId.present) {
+      map['playlist_id'] = Variable<String>(playlistId.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (tvgId.present) {
+      map['tvg_id'] = Variable<String>(tvgId.value);
+    }
+    if (tvgName.present) {
+      map['tvg_name'] = Variable<String>(tvgName.value);
+    }
+    if (tvgLogo.present) {
+      map['tvg_logo'] = Variable<String>(tvgLogo.value);
+    }
+    if (tvgUrl.present) {
+      map['tvg_url'] = Variable<String>(tvgUrl.value);
+    }
+    if (tvgRec.present) {
+      map['tvg_rec'] = Variable<String>(tvgRec.value);
+    }
+    if (tvgShift.present) {
+      map['tvg_shift'] = Variable<String>(tvgShift.value);
+    }
+    if (groupTitle.present) {
+      map['group_title'] = Variable<String>(groupTitle.value);
+    }
+    if (groupName.present) {
+      map['group_name'] = Variable<String>(groupName.value);
+    }
+    if (userAgent.present) {
+      map['user_agent'] = Variable<String>(userAgent.value);
+    }
+    if (referrer.present) {
+      map['referrer'] = Variable<String>(referrer.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (contentType.present) {
+      map['content_type'] = Variable<int>(contentType.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('M3uItemsCompanion(')
+          ..write('playlistId: $playlistId, ')
+          ..write('url: $url, ')
+          ..write('name: $name, ')
+          ..write('tvgId: $tvgId, ')
+          ..write('tvgName: $tvgName, ')
+          ..write('tvgLogo: $tvgLogo, ')
+          ..write('tvgUrl: $tvgUrl, ')
+          ..write('tvgRec: $tvgRec, ')
+          ..write('tvgShift: $tvgShift, ')
+          ..write('groupTitle: $groupTitle, ')
+          ..write('groupName: $groupName, ')
+          ..write('userAgent: $userAgent, ')
+          ..write('referrer: $referrer, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('contentType: $contentType, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7660,6 +8616,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SeasonsTable seasons = $SeasonsTable(this);
   late final $EpisodesTable episodes = $EpisodesTable(this);
   late final $WatchHistoriesTable watchHistories = $WatchHistoriesTable(this);
+  late final $M3uItemsTable m3uItems = $M3uItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7676,6 +8633,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     seasons,
     episodes,
     watchHistories,
+    m3uItems,
   ];
 }
 
@@ -11328,6 +12286,439 @@ typedef $$WatchHistoriesTableProcessedTableManager =
       WatchHistoriesData,
       PrefetchHooks Function()
     >;
+typedef $$M3uItemsTableCreateCompanionBuilder =
+    M3uItemsCompanion Function({
+      required String playlistId,
+      required String url,
+      Value<String?> name,
+      Value<String?> tvgId,
+      Value<String?> tvgName,
+      Value<String?> tvgLogo,
+      Value<String?> tvgUrl,
+      Value<String?> tvgRec,
+      Value<String?> tvgShift,
+      Value<String?> groupTitle,
+      Value<String?> groupName,
+      Value<String?> userAgent,
+      Value<String?> referrer,
+      Value<String?> categoryId,
+      required int contentType,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+typedef $$M3uItemsTableUpdateCompanionBuilder =
+    M3uItemsCompanion Function({
+      Value<String> playlistId,
+      Value<String> url,
+      Value<String?> name,
+      Value<String?> tvgId,
+      Value<String?> tvgName,
+      Value<String?> tvgLogo,
+      Value<String?> tvgUrl,
+      Value<String?> tvgRec,
+      Value<String?> tvgShift,
+      Value<String?> groupTitle,
+      Value<String?> groupName,
+      Value<String?> userAgent,
+      Value<String?> referrer,
+      Value<String?> categoryId,
+      Value<int> contentType,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$M3uItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $M3uItemsTable> {
+  $$M3uItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgId => $composableBuilder(
+    column: $table.tvgId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgName => $composableBuilder(
+    column: $table.tvgName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgLogo => $composableBuilder(
+    column: $table.tvgLogo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgUrl => $composableBuilder(
+    column: $table.tvgUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgRec => $composableBuilder(
+    column: $table.tvgRec,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tvgShift => $composableBuilder(
+    column: $table.tvgShift,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupTitle => $composableBuilder(
+    column: $table.groupTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupName => $composableBuilder(
+    column: $table.groupName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userAgent => $composableBuilder(
+    column: $table.userAgent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get referrer => $composableBuilder(
+    column: $table.referrer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contentType => $composableBuilder(
+    column: $table.contentType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$M3uItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $M3uItemsTable> {
+  $$M3uItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgId => $composableBuilder(
+    column: $table.tvgId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgName => $composableBuilder(
+    column: $table.tvgName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgLogo => $composableBuilder(
+    column: $table.tvgLogo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgUrl => $composableBuilder(
+    column: $table.tvgUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgRec => $composableBuilder(
+    column: $table.tvgRec,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tvgShift => $composableBuilder(
+    column: $table.tvgShift,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupTitle => $composableBuilder(
+    column: $table.groupTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupName => $composableBuilder(
+    column: $table.groupName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userAgent => $composableBuilder(
+    column: $table.userAgent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get referrer => $composableBuilder(
+    column: $table.referrer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contentType => $composableBuilder(
+    column: $table.contentType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$M3uItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $M3uItemsTable> {
+  $$M3uItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgId =>
+      $composableBuilder(column: $table.tvgId, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgName =>
+      $composableBuilder(column: $table.tvgName, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgLogo =>
+      $composableBuilder(column: $table.tvgLogo, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgUrl =>
+      $composableBuilder(column: $table.tvgUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgRec =>
+      $composableBuilder(column: $table.tvgRec, builder: (column) => column);
+
+  GeneratedColumn<String> get tvgShift =>
+      $composableBuilder(column: $table.tvgShift, builder: (column) => column);
+
+  GeneratedColumn<String> get groupTitle => $composableBuilder(
+    column: $table.groupTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get groupName =>
+      $composableBuilder(column: $table.groupName, builder: (column) => column);
+
+  GeneratedColumn<String> get userAgent =>
+      $composableBuilder(column: $table.userAgent, builder: (column) => column);
+
+  GeneratedColumn<String> get referrer =>
+      $composableBuilder(column: $table.referrer, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contentType => $composableBuilder(
+    column: $table.contentType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$M3uItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $M3uItemsTable,
+          M3uItemData,
+          $$M3uItemsTableFilterComposer,
+          $$M3uItemsTableOrderingComposer,
+          $$M3uItemsTableAnnotationComposer,
+          $$M3uItemsTableCreateCompanionBuilder,
+          $$M3uItemsTableUpdateCompanionBuilder,
+          (
+            M3uItemData,
+            BaseReferences<_$AppDatabase, $M3uItemsTable, M3uItemData>,
+          ),
+          M3uItemData,
+          PrefetchHooks Function()
+        > {
+  $$M3uItemsTableTableManager(_$AppDatabase db, $M3uItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$M3uItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$M3uItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$M3uItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> playlistId = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<String?> tvgId = const Value.absent(),
+                Value<String?> tvgName = const Value.absent(),
+                Value<String?> tvgLogo = const Value.absent(),
+                Value<String?> tvgUrl = const Value.absent(),
+                Value<String?> tvgRec = const Value.absent(),
+                Value<String?> tvgShift = const Value.absent(),
+                Value<String?> groupTitle = const Value.absent(),
+                Value<String?> groupName = const Value.absent(),
+                Value<String?> userAgent = const Value.absent(),
+                Value<String?> referrer = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
+                Value<int> contentType = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => M3uItemsCompanion(
+                playlistId: playlistId,
+                url: url,
+                name: name,
+                tvgId: tvgId,
+                tvgName: tvgName,
+                tvgLogo: tvgLogo,
+                tvgUrl: tvgUrl,
+                tvgRec: tvgRec,
+                tvgShift: tvgShift,
+                groupTitle: groupTitle,
+                groupName: groupName,
+                userAgent: userAgent,
+                referrer: referrer,
+                categoryId: categoryId,
+                contentType: contentType,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String playlistId,
+                required String url,
+                Value<String?> name = const Value.absent(),
+                Value<String?> tvgId = const Value.absent(),
+                Value<String?> tvgName = const Value.absent(),
+                Value<String?> tvgLogo = const Value.absent(),
+                Value<String?> tvgUrl = const Value.absent(),
+                Value<String?> tvgRec = const Value.absent(),
+                Value<String?> tvgShift = const Value.absent(),
+                Value<String?> groupTitle = const Value.absent(),
+                Value<String?> groupName = const Value.absent(),
+                Value<String?> userAgent = const Value.absent(),
+                Value<String?> referrer = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
+                required int contentType,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => M3uItemsCompanion.insert(
+                playlistId: playlistId,
+                url: url,
+                name: name,
+                tvgId: tvgId,
+                tvgName: tvgName,
+                tvgLogo: tvgLogo,
+                tvgUrl: tvgUrl,
+                tvgRec: tvgRec,
+                tvgShift: tvgShift,
+                groupTitle: groupTitle,
+                groupName: groupName,
+                userAgent: userAgent,
+                referrer: referrer,
+                categoryId: categoryId,
+                contentType: contentType,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$M3uItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $M3uItemsTable,
+      M3uItemData,
+      $$M3uItemsTableFilterComposer,
+      $$M3uItemsTableOrderingComposer,
+      $$M3uItemsTableAnnotationComposer,
+      $$M3uItemsTableCreateCompanionBuilder,
+      $$M3uItemsTableUpdateCompanionBuilder,
+      (M3uItemData, BaseReferences<_$AppDatabase, $M3uItemsTable, M3uItemData>),
+      M3uItemData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -11354,4 +12745,6 @@ class $AppDatabaseManager {
       $$EpisodesTableTableManager(_db, _db.episodes);
   $$WatchHistoriesTableTableManager get watchHistories =>
       $$WatchHistoriesTableTableManager(_db, _db.watchHistories);
+  $$M3uItemsTableTableManager get m3uItems =>
+      $$M3uItemsTableTableManager(_db, _db.m3uItems);
 }
