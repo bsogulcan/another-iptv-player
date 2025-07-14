@@ -37,8 +37,7 @@ class Playlist {
       name: safeString(json['name']),
       type: PlaylistType.values.firstWhere(
         (e) => e.toString() == json['type'],
-        orElse: () =>
-            PlaylistType.m3u, // Varsayılan bir değer (gerekirse değiştir)
+        orElse: () => PlaylistType.m3u,
       ),
       url: safeString(json['url']),
       username: safeString(json['username']),

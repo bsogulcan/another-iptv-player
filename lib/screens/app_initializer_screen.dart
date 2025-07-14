@@ -45,8 +45,8 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return _lastPlaylist == null
-        ? const PlaylistScreen()
-        : XtreamCodeHomeScreen(playlist: _lastPlaylist!);
+    return (_lastPlaylist != null && _lastPlaylist?.type == PlaylistType.xtream)
+        ? XtreamCodeHomeScreen(playlist: _lastPlaylist!)
+        : const PlaylistScreen();
   }
 }

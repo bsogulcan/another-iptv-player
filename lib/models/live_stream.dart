@@ -30,7 +30,6 @@ class LiveStream {
     );
   }
 
-  // Drift'ten LiveStream oluşturmak için
   factory LiveStream.fromDriftLiveStream(LiveStreamsData driftLiveStream) {
     return LiveStream(
       streamId: driftLiveStream.streamId,
@@ -42,7 +41,6 @@ class LiveStream {
     );
   }
 
-  // Drift'e kaydetmek için
   LiveStreamsCompanion toDriftCompanion(String playlistId) {
     return LiveStreamsCompanion(
       streamId: Value(streamId),
