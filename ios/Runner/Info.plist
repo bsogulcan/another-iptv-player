@@ -53,5 +53,9 @@
 	<false/>
 	<key>AVAudioSessionCategory</key>
     <string>AVAudioSessionCategoryPlayback</string>
+    <key>NSDocumentDirectoryUsageDescription</key>
+    <string>This app needs file access to select M3U playlist files.</string>
+    <key>NSDownloadsDirectoryUsageDescription</key>
+    <string>This app provides access to downloaded files to select M3U playlist files.</string>
 </dict>
 </plist>

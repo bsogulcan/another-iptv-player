@@ -437,7 +437,6 @@ class AppDatabase extends _$AppDatabase {
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
 
-  // Kategorileri ekle/güncelle
   Future<void> insertCategories(List<Category> categoryList) async {
     await batch((batch) {
       batch.insertAllOnConflictUpdate(

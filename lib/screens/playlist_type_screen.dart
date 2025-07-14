@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:another_iptv_player/screens/m3u/new_m3u_playlist_screen.dart';
 import 'package:flutter/material.dart';
 import 'xtream-codes/new_xtream_code_playlist_screen.dart';
 
@@ -57,32 +58,26 @@ class PlaylistTypeScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      // SizedBox(height: 20),
-                      // _buildPlaylistTypeCard(
-                      //   context,
-                      //   title: 'M3U Playlist',
-                      //   subtitle: 'M3U dosyası veya URL ile playlist ekleyin',
-                      //   description:
-                      //       'Geleneksel M3U format dosyalarını destekler',
-                      //   icon: Icons.playlist_play,
-                      //   color: Colors.green,
-                      //   onTap: () {
-                      //     ScaffoldMessenger.of(context).showSnackBar(
-                      //       SnackBar(
-                      //         content: Row(
-                      //           children: [
-                      //             Icon(Icons.info, color: Colors.white),
-                      //             SizedBox(width: 8),
-                      //             Text('M3U özelliği yakında eklenecek'),
-                      //           ],
-                      //         ),
-                      //         backgroundColor: Colors.orange,
-                      //       ),
-                      //     );
-                      //   },
-                      // ),
+                      SizedBox(height: 20),
+                      _buildPlaylistTypeCard(
+                        context,
+                        title: 'M3U Playlist',
+                        subtitle: 'M3U dosyası veya URL ile playlist ekleyin',
+                        description:
+                            'Geleneksel M3U format dosyalarını destekler',
+                        icon: Icons.playlist_play,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  NewM3uPlaylistScreen(),
+                            ),
+                          );
+                        },
+                      ),
                       Spacer(),
-                      // Bu alan büyük ekranlarda genişleyecek
                       Container(
                         padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(

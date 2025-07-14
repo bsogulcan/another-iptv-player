@@ -322,7 +322,6 @@ class IptvRepository {
         }
       }
 
-      // API'den çek
       final additionalParams = <String, String>{'action': action};
 
       final response = await _makeRequest(
@@ -336,7 +335,6 @@ class IptvRepository {
             .map((json) => Category.fromJson(json, _playlistId, type))
             .toList();
 
-        // Eski kategorileri sil ve yenileri ekle
         await _database.deleteCategoriesByTypeAndPlaylist(_playlistId, type);
         await _database.insertCategories(categories);
 
