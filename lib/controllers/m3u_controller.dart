@@ -1,15 +1,17 @@
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/category_type.dart';
-import 'package:another_iptv_player/services/service_locator.dart';
-import 'package:flutter/foundation.dart' hide Category;
-import 'package:another_iptv_player/models/m3u_item.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/category.dart';
-import 'package:another_iptv_player/models/progress_step.dart';
 import 'dart:convert' show utf8;
 import 'dart:io' show File, HttpClient;
-import '../models/category_with_content_type.dart';
+
+import 'package:another_iptv_player/database/database.dart';
+import 'package:another_iptv_player/models/category.dart';
+import 'package:another_iptv_player/models/category_type.dart';
+import 'package:another_iptv_player/models/content_type.dart';
+import 'package:another_iptv_player/models/m3u_item.dart';
+import 'package:another_iptv_player/models/progress_step.dart';
+import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:uuid/uuid.dart';
+
+import '../models/category_with_content_type.dart';
 
 class M3uController extends ChangeNotifier {
   final String playlistId;
@@ -169,12 +171,12 @@ class M3uController extends ChangeNotifier {
       _liveChannels = _allChannels!
           .where((item) => item.contentType == ContentType.liveStream)
           .map((x) {
-            x.categoryId = (x.groupTitle?.isNotEmpty ?? false)
-                ? findCategoryId(x.groupTitle!, ContentType.liveStream)
-                : null;
+            x.categoryId = findCategoryId(x.groupTitle, CategoryType.live);
             return x;
           })
           .toList();
+
+      await appDatabase.insertM3uItems(_liveChannels!);
 
       return true;
     } catch (e) {
@@ -196,12 +198,12 @@ class M3uController extends ChangeNotifier {
       _movies = _allChannels!
           .where((item) => item.contentType == ContentType.vod)
           .map((x) {
-            x.categoryId = (x.groupTitle?.isNotEmpty ?? false)
-                ? findCategoryId(x.groupTitle!, ContentType.vod)
-                : null;
+            x.categoryId = findCategoryId(x.groupTitle, CategoryType.vod);
             return x;
           })
           .toList();
+
+      await appDatabase.insertM3uItems(_movies!);
 
       return true;
     } catch (e) {
@@ -220,12 +222,12 @@ class M3uController extends ChangeNotifier {
       _series = _allChannels!
           .where((item) => item.contentType == ContentType.series)
           .map((x) {
-            x.categoryId = (x.groupTitle?.isNotEmpty ?? false)
-                ? findCategoryId(x.groupTitle!, ContentType.series)
-                : null;
+            x.categoryId = findCategoryId(x.groupTitle, CategoryType.series);
             return x;
           })
           .toList();
+
+      await appDatabase.insertM3uItems(_series!);
 
       return true;
     } catch (e) {
@@ -445,10 +447,13 @@ class M3uController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String? findCategoryId(String groupTitle, ContentType contentType) {
+  String? findCategoryId(String? groupTitle, CategoryType categoryType) {
+    if (groupTitle == null) {
+      return null;
+    }
+
     final category = categories?.firstWhere(
-      (x) => x.categoryName == groupTitle && x.type == contentType,
-      orElse: () => null as dynamic,
+      (x) => x.categoryName == groupTitle && x.type == categoryType,
     );
     return category?.categoryId;
   }
