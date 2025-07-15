@@ -166,6 +166,7 @@ class _DeletePlaylistDialog extends StatelessWidget {
         text: TextSpan(
           children: [
             TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium,
               text: context.loc.playlist_delete_confirmation_message(
                 playlist.name,
               ),
