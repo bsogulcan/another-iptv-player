@@ -137,7 +137,7 @@ class IptvRepository {
       final additionalParams = <String, String>{'action': 'get_live_streams'};
 
       additionalParams['category_id'] = categoryId;
-    
+
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: additionalParams,
@@ -399,9 +399,7 @@ class IptvRepository {
     return await _database.searchMovie(_playlistId, query);
   }
 
-  Future<List<SeriesStream>> searchSeries(
-    String query,
-  ) async {
+  Future<List<SeriesStream>> searchSeries(String query) async {
     return await _database.searchSeries(_playlistId, query);
   }
 
@@ -568,6 +566,8 @@ class IptvRepository {
 
           if (seasonEpisodes is List) {
             for (final episode in seasonEpisodes) {
+              dynamic info = episode['info'];
+
               final episodeCompanion = EpisodesCompanion(
                 seriesId: drift.Value(seriesId),
                 playlistId: drift.Value(_playlistId),
@@ -582,22 +582,33 @@ class IptvRepository {
                 added: drift.Value(safeString(episode['added'])),
                 directSource: drift.Value(safeString(episode['direct_source'])),
 
-                // Episode info
-                tmdbId: drift.Value(safeInt(episode['info']?['tmdb_id'])),
+                tmdbId: drift.Value(
+                  safeInt(info is Map ? info['tmdb_id'] : null),
+                ),
                 releasedate: drift.Value(
-                  safeString(episode['info']?['releasedate']),
+                  safeString(info is Map ? info['releasedate'] : null),
                 ),
-                plot: drift.Value(safeString(episode['info']?['plot'])),
+                plot: drift.Value(
+                  safeString(info is Map ? info['plot'] : null),
+                ),
                 durationSecs: drift.Value(
-                  safeInt(episode['info']?['duration_secs']),
+                  safeInt(info is Map ? info['duration_secs'] : null),
                 ),
-                duration: drift.Value(safeString(episode['info']?['duration'])),
+                duration: drift.Value(
+                  safeString(info is Map ? info['duration'] : null),
+                ),
                 movieImage: drift.Value(
-                  safeString(episode['info']?['movie_image']),
+                  safeString(info is Map ? info['movie_image'] : null),
                 ),
-                bitrate: drift.Value(safeInt(episode['info']?['bitrate'])),
-                rating: drift.Value(safeDouble(episode['info']?['rating'])),
+                bitrate: drift.Value(
+                  safeInt(info is Map ? info['bitrate'] : null),
+                ),
+                rating: drift.Value(
+                  safeDouble(info is Map ? info['rating'] : null),
+                ),
               );
+
+              print('TMDB ->${info is Map ? info['tmdb_id'] : null}');
 
               await _database.insertEpisode(episodeCompanion);
             }
