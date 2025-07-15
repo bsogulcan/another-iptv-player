@@ -599,6 +599,8 @@ class IptvRepository {
                 ),
               );
 
+              print('TMDB ->${info is Map ? info['tmdb_id'] : null}');
+
               await _database.insertEpisode(episodeCompanion);
             }
           }
