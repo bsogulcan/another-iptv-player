@@ -20,10 +20,7 @@ class DropdownTileWidget<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      leading: Icon(
-        icon,
-        size: 20,
-      ),
+      leading: Icon(icon, size: 20),
       title: Text(
         label,
         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
@@ -34,7 +31,10 @@ class DropdownTileWidget<T> extends StatelessWidget {
           value: value,
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
@@ -58,14 +58,9 @@ class DropdownTileWidget<T> extends StatelessWidget {
           items: items,
           onChanged: onChanged,
           isExpanded: true,
-          style: TextStyle(
-            fontSize: 12,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
           dropdownColor: Theme.of(context).colorScheme.surface,
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            size: 18,
-          ),
+          icon: Icon(Icons.keyboard_arrow_down, size: 18),
         ),
       ),
     );
