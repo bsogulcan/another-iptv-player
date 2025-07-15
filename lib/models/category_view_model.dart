@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/models/category.dart';
+import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 
 class CategoryViewModel {
@@ -7,3 +8,11 @@ class CategoryViewModel {
 
   CategoryViewModel({required this.category, required this.contentItems});
 }
+
+
+// class CategoryM3uViewModel {
+//   final Category category;
+//   final List<M3uItem> contentItems;
+//
+//   CategoryM3uViewModel({required this.category, required this.contentItems});
+// }

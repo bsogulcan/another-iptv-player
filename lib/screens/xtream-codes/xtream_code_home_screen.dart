@@ -50,7 +50,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       widget.playlist.id,
     );
 
-    AppState.repository = repository;
+    AppState.xtreamCodeRepository = repository;
     _controller = XtreamCodeHomeController();
   }
 

@@ -1,10 +1,14 @@
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/live_stream.dart';
+import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/models/series.dart';
 import 'package:another_iptv_player/models/vod_streams.dart';
+import 'package:another_iptv_player/utils/build_media_url.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 
 class ContentItem {
   final String id;
+  late String url;
   final String name;
   final String imagePath;
   final String? description;
@@ -16,6 +20,7 @@ class ContentItem {
   final VodStream? vodStream;
   final SeriesStream? seriesStream;
   final int? season;
+  final M3uItem? m3uItem;
 
   ContentItem(
     this.id,
@@ -30,7 +35,8 @@ class ContentItem {
     this.vodStream,
     this.seriesStream,
     this.season,
-  });
+    this.m3uItem,
+  }) {
+    url = isXtreamCode ? buildMediaUrl(this) : id;
+  }
 }
-
-class PlaylistContentModel {}

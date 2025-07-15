@@ -5,6 +5,7 @@ import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
 import 'package:audio_service/audio_service.dart';
@@ -118,7 +119,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     );
 
     List<MediaItem> mediaItems = [];
-    var mediaUrl = buildMediaUrl(contentItem);
     var currentItemIndex = 0;
 
     if (_queue != null) {
@@ -138,7 +138,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             artUri: item.imagePath != null ? Uri.parse(item.imagePath!) : null,
             playable: true,
             extras: {
-              'url': buildMediaUrl(item),
+              'url': item.url,
               'startPosition':
                   itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
             },
@@ -171,7 +171,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             ? Uri.parse(contentItem.imagePath!)
             : null,
         extras: {
-          'url': mediaUrl,
+          'url': contentItem.url,
           'startPosition': watchHistory?.watchDuration?.inMilliseconds ?? 0,
         },
       );
@@ -180,7 +180,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       await _player.open(
         Playlist([
-          Media(mediaUrl, start: watchHistory?.watchDuration ?? Duration()),
+          Media(
+            contentItem.url,
+            start: watchHistory?.watchDuration ?? Duration(),
+          ),
         ]),
         play: true,
       );
@@ -233,7 +236,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     _player.stream.position.listen((position) async {
       _player.state.playlist.medias[currentItemIndex] = Media(
-        buildMediaUrl(contentItem),
+        contentItem.url,
         start: position,
       );
 

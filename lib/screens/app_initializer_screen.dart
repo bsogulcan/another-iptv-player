@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/models/playlist_model.dart';
+import 'package:another_iptv_player/screens/m3u/m3u_home_screen.dart';
 import 'package:another_iptv_player/screens/playlist_screen.dart';
 import 'package:flutter/material.dart';
 import '../../repositories/user_preferences.dart';
@@ -45,8 +46,15 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return (_lastPlaylist != null && _lastPlaylist?.type == PlaylistType.xtream)
-        ? XtreamCodeHomeScreen(playlist: _lastPlaylist!)
-        : const PlaylistScreen();
+    if (_lastPlaylist == null) {
+      return const PlaylistScreen();
+    } else {
+      switch (_lastPlaylist!.type) {
+        case PlaylistType.xtream:
+          return XtreamCodeHomeScreen(playlist: _lastPlaylist!);
+        case PlaylistType.m3u:
+          return M3UHomeScreen(playlist: _lastPlaylist!);
+      }
+    }
   }
 }

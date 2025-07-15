@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import '../screens/live_stream/live_stream_screen.dart';
-import '../screens/movies/movide_screen.dart';
+import '../screens/movies/movie_screen.dart';
 import '../screens/series/series_screen.dart';
 
 void navigateByContentType(BuildContext context, ContentItem content) {

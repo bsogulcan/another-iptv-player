@@ -34,7 +34,7 @@ class WatchHistoryController extends ChangeNotifier {
 
   WatchHistoryController() {
     _historyService = WatchHistoryService();
-    _repository = AppState.repository!;
+    _repository = AppState.xtreamCodeRepository!;
   }
 
   bool get isAllEmpty =>

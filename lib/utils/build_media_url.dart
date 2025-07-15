@@ -9,8 +9,8 @@ String buildMediaUrl(ContentItem contentItem) {
     case ContentType.liveStream:
       return '${playlist.url}/${playlist.username}/${playlist.password}/${contentItem.id}';
     case ContentType.vod:
-      return '${playlist.url}/movie/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension!}';
+      return '${playlist.url}/movie/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension}';
     case ContentType.series:
-      return '${playlist.url}/series/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension!}';
+      return '${playlist.url}/series/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension}';
   }
 }

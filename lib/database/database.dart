@@ -485,6 +485,14 @@ class AppDatabase extends _$AppDatabase {
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
 
+  Future<List<Category>> getCategoriesByPlaylist(String playlistId) async {
+    final categoriesData = await (select(
+      categories,
+    )..where((tbl) => tbl.playlistId.equals(playlistId))).get();
+
+    return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
+  }
+
   Future<void> insertCategories(List<Category> categoryList) async {
     await batch((batch) {
       batch.insertAllOnConflictUpdate(
@@ -1275,16 +1283,36 @@ class AppDatabase extends _$AppDatabase {
     return update(m3uItems).replace(item.toCompanion());
   }
 
+  Future<List<M3uItem>> getM3uItemsByCategoryId(
+    String playlistId,
+    String categoryId, {
+    int? top,
+    ContentType? contentType,
+  }) async {
+    var query = select(m3uItems)
+      ..where(
+        (ls) =>
+            ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
+      );
+
+    if (top != null) {
+      query = query..limit(top);
+    }
+
+    if (contentType != null) {
+      query = query..where((x) => x.contentType.equals(contentType.index));
+    }
+
+    final rows = await query.get();
+
+    return rows.map((row) => M3uItem.fromData(row)).toList();
+  }
+
   Future<int> deleteM3uItem(String playlistId, String url) {
     return (delete(m3uItems)..where(
           (tbl) => tbl.playlistId.equals(playlistId) & tbl.url.equals(url),
         ))
         .go();
-  }
-
-  Future<List<M3uItem>> getAllM3uItems() async {
-    final data = await select(m3uItems).get();
-    return data.map((item) => M3uItem.fromData(item)).toList();
   }
 
   Future<List<M3uItem>> getM3uItemsByPlaylist(String playlistId) async {
