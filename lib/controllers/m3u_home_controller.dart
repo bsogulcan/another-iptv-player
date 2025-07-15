@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/models/category_type.dart';
 import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:flutter/material.dart';
@@ -69,14 +70,18 @@ class M3UHomeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String getPageTitle() {
+  String getPageTitle(BuildContext context) {
     switch (currentIndex) {
       case 0:
-        return 'Canlı TV';
+        return context.loc.history;
       case 1:
-        return 'Filmler';
+        return context.loc.live_streams;
       case 2:
-        return 'Diziler';
+        return context.loc.movies;
+      case 3:
+        return context.loc.series_plural;
+      case 4:
+        return context.loc.settings;
       default:
         return 'Another IPTV Player';
     }
@@ -110,7 +115,7 @@ class M3UHomeController extends ChangeNotifier {
               x.name ?? '',
               x.tvgLogo ?? '',
               x.contentType,
-              m3uItem: x
+              m3uItem: x,
             );
           }).toList(),
         );
