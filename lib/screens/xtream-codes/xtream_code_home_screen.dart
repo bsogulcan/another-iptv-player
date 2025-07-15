@@ -8,7 +8,7 @@ import 'package:another_iptv_player/models/category_view_model.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/screens/category_detail_screen.dart';
-import 'package:another_iptv_player/screens/xtream-codes/xtream_code_playlist_detail_screen.dart';
+import 'package:another_iptv_player/screens/xtream-codes/xtream_code_playlist_settings_screen.dart';
 import 'package:another_iptv_player/screens/watch_history_screen.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';

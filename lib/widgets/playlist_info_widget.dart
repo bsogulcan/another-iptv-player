@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
@@ -28,11 +29,12 @@ class PlaylistInfoWidget extends StatelessWidget {
                 label: context.loc.server_url,
                 value: playlist.url ?? context.loc.not_found_in_category,
               ),
-              InfoTileWidget(
-                icon: Icons.person,
-                label: context.loc.username,
-                value: playlist.username ?? context.loc.not_found_in_category,
-              ),
+              if (isXtreamCode)
+                InfoTileWidget(
+                  icon: Icons.person,
+                  label: context.loc.username,
+                  value: playlist.username ?? context.loc.not_found_in_category,
+                ),
             ],
           ),
         ),
