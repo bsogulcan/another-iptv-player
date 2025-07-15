@@ -573,7 +573,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       var playlist = await playlistController.createPlaylist(
         name: _nameController.text.trim(),
         type: PlaylistType.m3u,
-        url: _isUrlSource ? _urlController.text : _selectedFilePath,
+        url: _isUrlSource ? _urlController.text : _selectedFileName,
       );
 
       List<M3uItem> m3uItems = [];

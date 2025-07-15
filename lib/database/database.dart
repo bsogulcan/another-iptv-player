@@ -147,7 +147,7 @@ class VodStreams extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column> get primaryKey => {streamId, playlistId}; // Composite primary key
+  Set<Column> get primaryKey => {streamId, playlistId};
 }
 
 @DataClassName('SeriesStreamsData')
@@ -156,34 +156,35 @@ class SeriesStreams extends Table {
 
   TextColumn get name => text()();
 
-  TextColumn get cover => text()();
+  TextColumn get cover => text().nullable()();
 
-  TextColumn get plot => text()();
+  TextColumn get plot => text().nullable()();
 
-  TextColumn get cast => text()();
+  TextColumn get cast => text().nullable()();
 
-  TextColumn get director => text()();
+  TextColumn get director => text().nullable()();
 
-  TextColumn get genre => text()();
+  TextColumn get genre => text().nullable()();
 
-  TextColumn get releaseDate => text()();
+  TextColumn get releaseDate => text().nullable()();
 
-  TextColumn get rating => text()();
+  TextColumn get rating => text().nullable()();
 
-  RealColumn get rating5based => real()();
+  RealColumn get rating5based => real().nullable()();
 
-  TextColumn get youtubeTrailer => text()();
+  TextColumn get youtubeTrailer => text().nullable()();
 
-  TextColumn get episodeRunTime => text()();
+  TextColumn get episodeRunTime => text().nullable()();
 
-  TextColumn get categoryId => text()();
+  TextColumn get categoryId => text().nullable()();
 
-  TextColumn get playlistId => text()(); // Ekstra property
+  TextColumn get playlistId => text()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
-  TextColumn get lastModified => text()();
+  TextColumn get lastModified => text().nullable()();
 
-  TextColumn get backdropPath => text()(); // JSON string olarak saklanacak
+  TextColumn get backdropPath => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {seriesId, playlistId};
@@ -406,7 +407,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1397,6 +1398,10 @@ class AppDatabase extends _$AppDatabase {
 
       if (from <= 4) {
         await m.createTable(m3uItems);
+      }
+
+      if (from <= 5) {
+        // nothing
       }
     },
   );

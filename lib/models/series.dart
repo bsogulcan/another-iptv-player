@@ -5,40 +5,40 @@ import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/utils/type_convertions.dart';
 
 class SeriesStream {
+  final String playlistId;
   final String seriesId;
   final String name;
-  final String cover;
-  final String plot;
-  final String cast;
-  final String director;
-  final String genre;
-  final String releaseDate;
-  final String lastModified; // Eksik alan eklendi
-  final String rating;
-  final double rating5based;
-  final List<String> backdropPath; // Eksik alan eklendi
-  final String youtubeTrailer;
-  final String episodeRunTime;
-  final String categoryId;
-  final String? playlistId;
+  final String? cover;
+  final String? plot;
+  final String? cast;
+  final String? director;
+  final String? genre;
+  final String? releaseDate;
+  final String? lastModified;
+  final String? rating;
+  final double? rating5based;
+  final List<String>? backdropPath;
+  final String? youtubeTrailer;
+  final String? episodeRunTime;
+  final String? categoryId;
 
   SeriesStream({
+    required this.playlistId,
     required this.seriesId,
     required this.name,
-    required this.cover,
-    required this.plot,
-    required this.cast,
-    required this.director,
-    required this.genre,
-    required this.releaseDate,
-    required this.lastModified,
-    required this.rating,
-    required this.rating5based,
-    required this.backdropPath,
-    required this.youtubeTrailer,
-    required this.episodeRunTime,
-    required this.categoryId,
-    this.playlistId,
+    this.cover,
+    this.plot,
+    this.cast,
+    this.director,
+    this.genre,
+    this.releaseDate,
+    this.lastModified,
+    this.rating,
+    this.rating5based,
+    this.backdropPath,
+    this.youtubeTrailer,
+    this.episodeRunTime,
+    this.categoryId,
   });
 
   factory SeriesStream.fromJson(Map<String, dynamic> json, String playlistId) {
@@ -73,22 +73,20 @@ class SeriesStream {
       playlistId: safeString(playlistId),
     );
   }
-  // Drift'ten SeriesStream oluşturmak için
+
   factory SeriesStream.fromDriftSeriesStream(
     SeriesStreamsData driftSeriesStream,
   ) {
-    // Veritabanından gelen backdrop_path string'ini List'e dönüştürme
     List<String> backdropPaths = [];
-    if (driftSeriesStream.backdropPath.isNotEmpty) {
-      // Eğer JSON string olarak saklanıyorsa
+    if (driftSeriesStream.backdropPath != null &&
+        driftSeriesStream.backdropPath!.isNotEmpty) {
       try {
-        final decoded = jsonDecode(driftSeriesStream.backdropPath);
+        final decoded = jsonDecode(driftSeriesStream.backdropPath!);
         if (decoded is List) {
           backdropPaths = decoded.map((item) => item.toString()).toList();
         }
       } catch (e) {
-        // JSON decode edilemezse, virgülle ayrılmış string olarak varsay
-        backdropPaths = driftSeriesStream.backdropPath
+        backdropPaths = driftSeriesStream.backdropPath!
             .split(',')
             .where((item) => item.trim().isNotEmpty)
             .toList();
@@ -117,9 +115,8 @@ class SeriesStream {
 
   // Drift'e kaydetmek için
   SeriesStreamsCompanion toDriftCompanion() {
-    // List<String>'i JSON string'e dönüştürme
     String backdropPathJson = '';
-    if (backdropPath.isNotEmpty) {
+    if (backdropPath != null && backdropPath!.isNotEmpty) {
       backdropPathJson = jsonEncode(backdropPath);
     }
 
@@ -139,7 +136,7 @@ class SeriesStream {
       youtubeTrailer: Value(youtubeTrailer),
       episodeRunTime: Value(episodeRunTime),
       categoryId: Value(categoryId),
-      playlistId: Value(playlistId ?? ''),
+      playlistId: Value(playlistId),
     );
   }
 

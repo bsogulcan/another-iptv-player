@@ -1,5 +1,4 @@
 import 'package:another_iptv_player/controllers/playlist_controller.dart';
-import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
