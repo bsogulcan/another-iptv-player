@@ -131,19 +131,20 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   ) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
-        _buildSliverAppBar(controller, contentType),
+        _buildSliverAppBar(context, controller, contentType),
       ],
       body: _buildCategoryList(categories, contentType),
     );
   }
 
   SliverAppBar _buildSliverAppBar(
+    BuildContext context,
     XtreamCodeHomeController controller,
     ContentType contentType,
   ) {
     return SliverAppBar(
       title: SelectableText(
-        controller.getPageTitle(),
+        controller.getPageTitle(context),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       floating: true,

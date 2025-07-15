@@ -43,7 +43,13 @@ class _XtreamCodePlaylistSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.loc.settings), actions: []),
+      appBar: AppBar(
+        title: SelectableText(
+          context.loc.settings,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [],
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         children: [

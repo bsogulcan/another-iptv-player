@@ -10,7 +10,10 @@ class WatchHistoryAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      title: Text(context.loc.history),
+      title: SelectableText(
+        context.loc.history,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
       floating: true,
       snap: true,
       elevation: 0,

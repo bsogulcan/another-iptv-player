@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/utils/build_media_url.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/category_view_model.dart';
@@ -63,20 +64,20 @@ class XtreamCodeHomeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String getPageTitle() {
+  String getPageTitle(BuildContext context) {
     switch (currentIndex) {
       case 0:
-        return 'İzleme Geçmişi';
+        return context.loc.history;
       case 1:
-        return 'Canlı TV';
+        return context.loc.live_streams;
       case 2:
-        return 'Filmler';
+        return context.loc.movies;
       case 3:
-        return 'Diziler';
+        return context.loc.series_plural;
       case 4:
-        return 'Ayarlar';
+        return context.loc.settings;
       default:
-        return 'IPTV Player';
+        return 'Another IPTV Player';
     }
   }
 
