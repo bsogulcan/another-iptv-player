@@ -1,0 +1,136 @@
+import 'package:another_iptv_player/models/category_type.dart';
+import 'package:another_iptv_player/models/m3u_item.dart';
+import 'package:flutter/material.dart';
+import 'package:another_iptv_player/models/category_view_model.dart';
+import 'package:another_iptv_player/models/playlist_content_model.dart';
+import 'package:another_iptv_player/models/view_state.dart';
+import 'package:another_iptv_player/repositories/m3u_repository.dart';
+import 'package:another_iptv_player/services/app_state.dart';
+
+class M3UHomeController extends ChangeNotifier {
+  late PageController _pageController;
+  final M3uRepository _repository = AppState.m3uRepository!;
+  String? _errorMessage;
+  ViewState _viewState = ViewState.idle;
+
+  int _currentIndex = 0;
+  bool _isLoading = true;
+
+  final List<CategoryViewModel> _liveCategories = [];
+  final List<CategoryViewModel> _vodCategories = [];
+  final List<CategoryViewModel> _seriesCategories = [];
+  List<M3uItem>? _liveChannels;
+  List<M3uItem>? _movies;
+  List<M3uItem>? _series;
+
+  // Getters
+  PageController get pageController => _pageController;
+
+  int get currentIndex => _currentIndex;
+
+  List<CategoryViewModel>? get liveCategories => _liveCategories;
+
+  List<CategoryViewModel>? get vodCategories => _vodCategories;
+
+  List<CategoryViewModel>? get seriesCategories => _seriesCategories;
+
+  List<M3uItem>? get liveChannels => _liveChannels;
+
+  List<M3uItem>? get movies => _movies;
+
+  List<M3uItem>? get series => _series;
+
+  bool get isLoading => _isLoading;
+
+  M3UHomeController() {
+    _pageController = PageController();
+    _loadCategories();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void onNavigationTap(int index) {
+    _currentIndex = index;
+    notifyListeners();
+
+    _pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void onPageChanged(int index) {
+    _currentIndex = index;
+    notifyListeners();
+  }
+
+  String getPageTitle() {
+    switch (currentIndex) {
+      case 0:
+        return 'Canlı TV';
+      case 1:
+        return 'Filmler';
+      case 2:
+        return 'Diziler';
+      default:
+        return 'Another IPTV Player';
+    }
+  }
+
+  void _setViewState(ViewState state) {
+    _viewState = state;
+    if (state != ViewState.error) {
+      _errorMessage = null;
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      var categories = await _repository.getCategories();
+      for (var category in categories!) {
+        var m3uItems = await _repository.getM3uItemsByCategoryId(
+          categoryId: category.categoryId,
+          top: 10,
+        );
+
+        var categoryViewModel = CategoryViewModel(
+          category: category,
+          contentItems: m3uItems!.map((x) {
+            return ContentItem(
+              x.url,
+              x.name ?? '',
+              x.tvgLogo ?? '',
+              x.contentType,
+              m3uItem: x
+            );
+          }).toList(),
+        );
+
+        switch (category.type) {
+          case CategoryType.live:
+            _liveCategories.add(categoryViewModel);
+          case CategoryType.vod:
+            _vodCategories.add(categoryViewModel);
+          case CategoryType.series:
+            _seriesCategories.add(categoryViewModel);
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Kategoriler yüklenemedi: $e';
+      _setViewState(ViewState.error);
+      _isLoading = false;
+    }
+  }
+}

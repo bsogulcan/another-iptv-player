@@ -25,7 +25,7 @@ class SearchScreenState extends State<SearchScreen> {
   TextEditingController searchController = TextEditingController();
   FocusNode searchFocusNode = FocusNode();
   List<ContentItem> contentItems = [];
-  IptvRepository repository = AppState.repository!;
+  IptvRepository repository = AppState.xtreamCodeRepository!;
 
   @override
   void initState() {

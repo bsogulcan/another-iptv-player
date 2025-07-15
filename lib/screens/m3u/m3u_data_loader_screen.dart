@@ -120,7 +120,7 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
         MaterialPageRoute(
           builder: (context) => ChangeNotifierProvider.value(
             value: _controller,
-            child: M3uHomeScreen(),
+            child: M3UHomeScreen(playlist: widget.playlist),
           ),
         ),
         (route) => false,

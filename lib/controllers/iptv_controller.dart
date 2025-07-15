@@ -26,7 +26,7 @@ class IptvController extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _errorMessage;
-  String? _errorKey; // Localization key için
+  String? _errorKey;
   ProgressStep _currentStep = ProgressStep.userInfo;
 
   // Getters

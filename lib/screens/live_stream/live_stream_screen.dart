@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
@@ -34,22 +35,33 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   }
 
   Future<void> _initializeQueue() async {
-    allContents =
-        (await AppState.repository!.getLiveChannelsByCategoryId(
-          categoryId: widget.content.liveStream!.categoryId,
-        ))!.map((x) {
-          return ContentItem(
-            x.streamId,
-            x.name,
-            x.streamIcon,
-            ContentType.liveStream,
-            liveStream: x,
-          );
-        }).toList();
+    allContents = isXtreamCode
+        ? (await AppState.xtreamCodeRepository!.getLiveChannelsByCategoryId(
+            categoryId: widget.content.liveStream!.categoryId,
+          ))!.map((x) {
+            return ContentItem(
+              x.streamId,
+              x.name,
+              x.streamIcon,
+              ContentType.liveStream,
+              liveStream: x,
+            );
+          }).toList()
+        : (await AppState.m3uRepository!.getM3uItemsByCategoryId(
+            categoryId: widget.content.m3uItem!.categoryId!,
+          ))!.map((x) {
+            return ContentItem(
+              x.url,
+              x.name ?? 'NO NAME',
+              x.tvgLogo ?? '',
+              ContentType.liveStream,
+              m3uItem: x,
+            );
+          }).toList();
 
     setState(() {
       selectedContentItemIndex = allContents.indexWhere(
-            (element) => element.id == widget.content.id,
+        (element) => element.id == widget.content.id,
       );
       allContentsLoaded = true;
     });
@@ -57,13 +69,13 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
     contentItemIndexChangedSubscription = EventBus()
         .on<int>('player_content_item_index')
         .listen((int index) {
-      if (!mounted) return;
+          if (!mounted) return;
 
-      setState(() {
-        selectedContentItemIndex = index;
-        contentItem = allContents[selectedContentItemIndex];
-      });
-    });
+          setState(() {
+            selectedContentItemIndex = index;
+            contentItem = allContents[selectedContentItemIndex];
+          });
+        });
   }
 
   @override
@@ -75,11 +87,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   @override
   Widget build(BuildContext context) {
     if (!allContentsLoaded) {
-      return Scaffold(
-        body: SafeArea(
-          child: buildFullScreenLoadingWidget(),
-        ),
-      );
+      return Scaffold(body: SafeArea(child: buildFullScreenLoadingWidget()));
     }
 
     return Scaffold(
@@ -95,7 +103,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kanal Başlığı
                       Row(
                         children: [
                           Container(
@@ -180,7 +187,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                         icon: Icons.category,
                         title: context.loc.category_id,
                         value:
-                        contentItem.liveStream?.categoryId ?? context.loc.not_found_in_category,
+                            contentItem.liveStream?.categoryId ??
+                            context.loc.not_found_in_category,
                         color: Colors.green,
                       ),
                       const SizedBox(height: 12),
@@ -197,7 +205,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                         icon: Icons.signal_cellular_alt,
                         title: context.loc.stream_type,
                         value:
-                        contentItem.containerExtension?.toUpperCase() ??
+                            contentItem.containerExtension?.toUpperCase() ??
                             context.loc.live,
                         color: Colors.purple,
                       ),

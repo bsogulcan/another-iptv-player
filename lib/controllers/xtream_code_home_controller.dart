@@ -7,12 +7,13 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/view_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
+import 'package:path/path.dart';
 
 import '../screens/xtream-codes/xtream_code_data_loader_screen.dart';
 
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
-  final IptvRepository _repository = AppState.repository!;
+  final IptvRepository _repository = AppState.xtreamCodeRepository!;
   String? _errorMessage;
   ViewState _viewState = ViewState.idle;
 

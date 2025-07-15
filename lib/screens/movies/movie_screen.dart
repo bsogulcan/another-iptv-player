@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 
@@ -39,43 +40,45 @@ class _MovieScreenState extends State<MovieScreen> {
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
-                          ...List.generate(5, (index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 4),
-                              child: Icon(
-                                index <
-                                        (widget
-                                                .contentItem
-                                                .vodStream!
-                                                .rating5based
-                                                .round() ??
-                                            0)
-                                    ? Icons.star_rounded
-                                    : Icons.star_outline_rounded,
-                                color: Colors.amber,
-                                size: 24,
-                              ),
-                            );
-                          }),
+                          if (isXtreamCode)
+                            ...List.generate(5, (index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Icon(
+                                  index <
+                                          (widget
+                                                  .contentItem
+                                                  .vodStream!
+                                                  .rating5based
+                                                  .round() ??
+                                              0)
+                                      ? Icons.star_rounded
+                                      : Icons.star_outline_rounded,
+                                  color: Colors.amber,
+                                  size: 24,
+                                ),
+                              );
+                            }),
                           const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${widget.contentItem.vodStream!.rating5based.toStringAsFixed(1) ?? '0.0'}/5',
-                              style: TextStyle(
-                                color: Colors.amber.shade700,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                          if (isXtreamCode)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${widget.contentItem.vodStream!.rating5based.toStringAsFixed(1) ?? '0.0'}/5',
+                                style: TextStyle(
+                                  color: Colors.amber.shade700,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
 

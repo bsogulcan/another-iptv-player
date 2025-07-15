@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/screens/m3u/m3u_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
@@ -27,8 +28,7 @@ class PlaylistController extends ChangeNotifier {
   int get m3uCount =>
       _playlists.where((p) => p.type == PlaylistType.m3u).length;
 
-  List<Playlist> get xtreamPlaylists =>
-      getPlaylistsByType(PlaylistType.xtream);
+  List<Playlist> get xtreamPlaylists => getPlaylistsByType(PlaylistType.xtream);
 
   List<Playlist> get m3uPlaylists => getPlaylistsByType(PlaylistType.m3u);
 
@@ -51,12 +51,22 @@ class PlaylistController extends ChangeNotifier {
     AppState.currentPlaylist = playlist;
 
     if (context.mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => XtreamCodeHomeScreen(playlist: playlist),
-        ),
-      );
+      switch (playlist.type) {
+        case PlaylistType.xtream:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => XtreamCodeHomeScreen(playlist: playlist),
+            ),
+          );
+        case PlaylistType.m3u:
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => M3UHomeScreen(playlist: playlist),
+            ),
+          );
+      }
     }
   }
 

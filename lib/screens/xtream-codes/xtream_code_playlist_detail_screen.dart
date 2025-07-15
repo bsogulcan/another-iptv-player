@@ -30,8 +30,8 @@ class _XtreamCodePlaylistSettingsScreenState
   }
 
   Future<void> _loadServerInfo() async {
-    if (AppState.repository != null) {
-      final info = await AppState.repository!.getPlayerInfo();
+    if (AppState.xtreamCodeRepository != null) {
+      final info = await AppState.xtreamCodeRepository!.getPlayerInfo();
       if (mounted) {
         setState(() {
           _serverInfo = info;
