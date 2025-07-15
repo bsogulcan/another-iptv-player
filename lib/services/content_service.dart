@@ -63,7 +63,7 @@ class ContentService {
           (item) => ContentItem(
             item.seriesId,
             item.name,
-            item.cover,
+            item.cover ?? '',
             ContentType.series,
             seriesStream: item,
           ),

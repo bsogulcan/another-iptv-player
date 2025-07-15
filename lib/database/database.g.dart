@@ -3372,27 +3372,27 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> cover = GeneratedColumn<String>(
     'cover',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _plotMeta = const VerificationMeta('plot');
   @override
   late final GeneratedColumn<String> plot = GeneratedColumn<String>(
     'plot',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _castMeta = const VerificationMeta('cast');
   @override
   late final GeneratedColumn<String> cast = GeneratedColumn<String>(
     'cast',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _directorMeta = const VerificationMeta(
     'director',
@@ -3401,18 +3401,18 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> director = GeneratedColumn<String>(
     'director',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _genreMeta = const VerificationMeta('genre');
   @override
   late final GeneratedColumn<String> genre = GeneratedColumn<String>(
     'genre',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _releaseDateMeta = const VerificationMeta(
     'releaseDate',
@@ -3421,18 +3421,18 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> releaseDate = GeneratedColumn<String>(
     'release_date',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _ratingMeta = const VerificationMeta('rating');
   @override
   late final GeneratedColumn<String> rating = GeneratedColumn<String>(
     'rating',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _rating5basedMeta = const VerificationMeta(
     'rating5based',
@@ -3441,9 +3441,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<double> rating5based = GeneratedColumn<double>(
     'rating5based',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.double,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _youtubeTrailerMeta = const VerificationMeta(
     'youtubeTrailer',
@@ -3452,9 +3452,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> youtubeTrailer = GeneratedColumn<String>(
     'youtube_trailer',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _episodeRunTimeMeta = const VerificationMeta(
     'episodeRunTime',
@@ -3463,9 +3463,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> episodeRunTime = GeneratedColumn<String>(
     'episode_run_time',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
@@ -3474,9 +3474,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
     'category_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _playlistIdMeta = const VerificationMeta(
     'playlistId',
@@ -3508,9 +3508,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> lastModified = GeneratedColumn<String>(
     'last_modified',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _backdropPathMeta = const VerificationMeta(
     'backdropPath',
@@ -3519,9 +3519,9 @@ class $SeriesStreamsTable extends SeriesStreams
   late final GeneratedColumn<String> backdropPath = GeneratedColumn<String>(
     'backdrop_path',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -3576,40 +3576,30 @@ class $SeriesStreamsTable extends SeriesStreams
         _coverMeta,
         cover.isAcceptableOrUnknown(data['cover']!, _coverMeta),
       );
-    } else if (isInserting) {
-      context.missing(_coverMeta);
     }
     if (data.containsKey('plot')) {
       context.handle(
         _plotMeta,
         plot.isAcceptableOrUnknown(data['plot']!, _plotMeta),
       );
-    } else if (isInserting) {
-      context.missing(_plotMeta);
     }
     if (data.containsKey('cast')) {
       context.handle(
         _castMeta,
         cast.isAcceptableOrUnknown(data['cast']!, _castMeta),
       );
-    } else if (isInserting) {
-      context.missing(_castMeta);
     }
     if (data.containsKey('director')) {
       context.handle(
         _directorMeta,
         director.isAcceptableOrUnknown(data['director']!, _directorMeta),
       );
-    } else if (isInserting) {
-      context.missing(_directorMeta);
     }
     if (data.containsKey('genre')) {
       context.handle(
         _genreMeta,
         genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
       );
-    } else if (isInserting) {
-      context.missing(_genreMeta);
     }
     if (data.containsKey('release_date')) {
       context.handle(
@@ -3619,16 +3609,12 @@ class $SeriesStreamsTable extends SeriesStreams
           _releaseDateMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_releaseDateMeta);
     }
     if (data.containsKey('rating')) {
       context.handle(
         _ratingMeta,
         rating.isAcceptableOrUnknown(data['rating']!, _ratingMeta),
       );
-    } else if (isInserting) {
-      context.missing(_ratingMeta);
     }
     if (data.containsKey('rating5based')) {
       context.handle(
@@ -3638,8 +3624,6 @@ class $SeriesStreamsTable extends SeriesStreams
           _rating5basedMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_rating5basedMeta);
     }
     if (data.containsKey('youtube_trailer')) {
       context.handle(
@@ -3649,8 +3633,6 @@ class $SeriesStreamsTable extends SeriesStreams
           _youtubeTrailerMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_youtubeTrailerMeta);
     }
     if (data.containsKey('episode_run_time')) {
       context.handle(
@@ -3660,16 +3642,12 @@ class $SeriesStreamsTable extends SeriesStreams
           _episodeRunTimeMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_episodeRunTimeMeta);
     }
     if (data.containsKey('category_id')) {
       context.handle(
         _categoryIdMeta,
         categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_categoryIdMeta);
     }
     if (data.containsKey('playlist_id')) {
       context.handle(
@@ -3693,8 +3671,6 @@ class $SeriesStreamsTable extends SeriesStreams
           _lastModifiedMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_lastModifiedMeta);
     }
     if (data.containsKey('backdrop_path')) {
       context.handle(
@@ -3704,8 +3680,6 @@ class $SeriesStreamsTable extends SeriesStreams
           _backdropPathMeta,
         ),
       );
-    } else if (isInserting) {
-      context.missing(_backdropPathMeta);
     }
     return context;
   }
@@ -3727,47 +3701,47 @@ class $SeriesStreamsTable extends SeriesStreams
       cover: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}cover'],
-      )!,
+      ),
       plot: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}plot'],
-      )!,
+      ),
       cast: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}cast'],
-      )!,
+      ),
       director: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}director'],
-      )!,
+      ),
       genre: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}genre'],
-      )!,
+      ),
       releaseDate: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}release_date'],
-      )!,
+      ),
       rating: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}rating'],
-      )!,
+      ),
       rating5based: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}rating5based'],
-      )!,
+      ),
       youtubeTrailer: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}youtube_trailer'],
-      )!,
+      ),
       episodeRunTime: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}episode_run_time'],
-      )!,
+      ),
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
-      )!,
+      ),
       playlistId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}playlist_id'],
@@ -3779,11 +3753,11 @@ class $SeriesStreamsTable extends SeriesStreams
       lastModified: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}last_modified'],
-      )!,
+      ),
       backdropPath: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}backdrop_path'],
-      )!,
+      ),
     );
   }
 
@@ -3797,60 +3771,86 @@ class SeriesStreamsData extends DataClass
     implements Insertable<SeriesStreamsData> {
   final String seriesId;
   final String name;
-  final String cover;
-  final String plot;
-  final String cast;
-  final String director;
-  final String genre;
-  final String releaseDate;
-  final String rating;
-  final double rating5based;
-  final String youtubeTrailer;
-  final String episodeRunTime;
-  final String categoryId;
+  final String? cover;
+  final String? plot;
+  final String? cast;
+  final String? director;
+  final String? genre;
+  final String? releaseDate;
+  final String? rating;
+  final double? rating5based;
+  final String? youtubeTrailer;
+  final String? episodeRunTime;
+  final String? categoryId;
   final String playlistId;
   final DateTime createdAt;
-  final String lastModified;
-  final String backdropPath;
+  final String? lastModified;
+  final String? backdropPath;
   const SeriesStreamsData({
     required this.seriesId,
     required this.name,
-    required this.cover,
-    required this.plot,
-    required this.cast,
-    required this.director,
-    required this.genre,
-    required this.releaseDate,
-    required this.rating,
-    required this.rating5based,
-    required this.youtubeTrailer,
-    required this.episodeRunTime,
-    required this.categoryId,
+    this.cover,
+    this.plot,
+    this.cast,
+    this.director,
+    this.genre,
+    this.releaseDate,
+    this.rating,
+    this.rating5based,
+    this.youtubeTrailer,
+    this.episodeRunTime,
+    this.categoryId,
     required this.playlistId,
     required this.createdAt,
-    required this.lastModified,
-    required this.backdropPath,
+    this.lastModified,
+    this.backdropPath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['series_id'] = Variable<String>(seriesId);
     map['name'] = Variable<String>(name);
-    map['cover'] = Variable<String>(cover);
-    map['plot'] = Variable<String>(plot);
-    map['cast'] = Variable<String>(cast);
-    map['director'] = Variable<String>(director);
-    map['genre'] = Variable<String>(genre);
-    map['release_date'] = Variable<String>(releaseDate);
-    map['rating'] = Variable<String>(rating);
-    map['rating5based'] = Variable<double>(rating5based);
-    map['youtube_trailer'] = Variable<String>(youtubeTrailer);
-    map['episode_run_time'] = Variable<String>(episodeRunTime);
-    map['category_id'] = Variable<String>(categoryId);
+    if (!nullToAbsent || cover != null) {
+      map['cover'] = Variable<String>(cover);
+    }
+    if (!nullToAbsent || plot != null) {
+      map['plot'] = Variable<String>(plot);
+    }
+    if (!nullToAbsent || cast != null) {
+      map['cast'] = Variable<String>(cast);
+    }
+    if (!nullToAbsent || director != null) {
+      map['director'] = Variable<String>(director);
+    }
+    if (!nullToAbsent || genre != null) {
+      map['genre'] = Variable<String>(genre);
+    }
+    if (!nullToAbsent || releaseDate != null) {
+      map['release_date'] = Variable<String>(releaseDate);
+    }
+    if (!nullToAbsent || rating != null) {
+      map['rating'] = Variable<String>(rating);
+    }
+    if (!nullToAbsent || rating5based != null) {
+      map['rating5based'] = Variable<double>(rating5based);
+    }
+    if (!nullToAbsent || youtubeTrailer != null) {
+      map['youtube_trailer'] = Variable<String>(youtubeTrailer);
+    }
+    if (!nullToAbsent || episodeRunTime != null) {
+      map['episode_run_time'] = Variable<String>(episodeRunTime);
+    }
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
     map['playlist_id'] = Variable<String>(playlistId);
     map['created_at'] = Variable<DateTime>(createdAt);
-    map['last_modified'] = Variable<String>(lastModified);
-    map['backdrop_path'] = Variable<String>(backdropPath);
+    if (!nullToAbsent || lastModified != null) {
+      map['last_modified'] = Variable<String>(lastModified);
+    }
+    if (!nullToAbsent || backdropPath != null) {
+      map['backdrop_path'] = Variable<String>(backdropPath);
+    }
     return map;
   }
 
@@ -3858,21 +3858,43 @@ class SeriesStreamsData extends DataClass
     return SeriesStreamsCompanion(
       seriesId: Value(seriesId),
       name: Value(name),
-      cover: Value(cover),
-      plot: Value(plot),
-      cast: Value(cast),
-      director: Value(director),
-      genre: Value(genre),
-      releaseDate: Value(releaseDate),
-      rating: Value(rating),
-      rating5based: Value(rating5based),
-      youtubeTrailer: Value(youtubeTrailer),
-      episodeRunTime: Value(episodeRunTime),
-      categoryId: Value(categoryId),
+      cover: cover == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cover),
+      plot: plot == null && nullToAbsent ? const Value.absent() : Value(plot),
+      cast: cast == null && nullToAbsent ? const Value.absent() : Value(cast),
+      director: director == null && nullToAbsent
+          ? const Value.absent()
+          : Value(director),
+      genre: genre == null && nullToAbsent
+          ? const Value.absent()
+          : Value(genre),
+      releaseDate: releaseDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(releaseDate),
+      rating: rating == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rating),
+      rating5based: rating5based == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rating5based),
+      youtubeTrailer: youtubeTrailer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(youtubeTrailer),
+      episodeRunTime: episodeRunTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(episodeRunTime),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
       playlistId: Value(playlistId),
       createdAt: Value(createdAt),
-      lastModified: Value(lastModified),
-      backdropPath: Value(backdropPath),
+      lastModified: lastModified == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastModified),
+      backdropPath: backdropPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backdropPath),
     );
   }
 
@@ -3884,21 +3906,21 @@ class SeriesStreamsData extends DataClass
     return SeriesStreamsData(
       seriesId: serializer.fromJson<String>(json['seriesId']),
       name: serializer.fromJson<String>(json['name']),
-      cover: serializer.fromJson<String>(json['cover']),
-      plot: serializer.fromJson<String>(json['plot']),
-      cast: serializer.fromJson<String>(json['cast']),
-      director: serializer.fromJson<String>(json['director']),
-      genre: serializer.fromJson<String>(json['genre']),
-      releaseDate: serializer.fromJson<String>(json['releaseDate']),
-      rating: serializer.fromJson<String>(json['rating']),
-      rating5based: serializer.fromJson<double>(json['rating5based']),
-      youtubeTrailer: serializer.fromJson<String>(json['youtubeTrailer']),
-      episodeRunTime: serializer.fromJson<String>(json['episodeRunTime']),
-      categoryId: serializer.fromJson<String>(json['categoryId']),
+      cover: serializer.fromJson<String?>(json['cover']),
+      plot: serializer.fromJson<String?>(json['plot']),
+      cast: serializer.fromJson<String?>(json['cast']),
+      director: serializer.fromJson<String?>(json['director']),
+      genre: serializer.fromJson<String?>(json['genre']),
+      releaseDate: serializer.fromJson<String?>(json['releaseDate']),
+      rating: serializer.fromJson<String?>(json['rating']),
+      rating5based: serializer.fromJson<double?>(json['rating5based']),
+      youtubeTrailer: serializer.fromJson<String?>(json['youtubeTrailer']),
+      episodeRunTime: serializer.fromJson<String?>(json['episodeRunTime']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
       playlistId: serializer.fromJson<String>(json['playlistId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      lastModified: serializer.fromJson<String>(json['lastModified']),
-      backdropPath: serializer.fromJson<String>(json['backdropPath']),
+      lastModified: serializer.fromJson<String?>(json['lastModified']),
+      backdropPath: serializer.fromJson<String?>(json['backdropPath']),
     );
   }
   @override
@@ -3907,60 +3929,64 @@ class SeriesStreamsData extends DataClass
     return <String, dynamic>{
       'seriesId': serializer.toJson<String>(seriesId),
       'name': serializer.toJson<String>(name),
-      'cover': serializer.toJson<String>(cover),
-      'plot': serializer.toJson<String>(plot),
-      'cast': serializer.toJson<String>(cast),
-      'director': serializer.toJson<String>(director),
-      'genre': serializer.toJson<String>(genre),
-      'releaseDate': serializer.toJson<String>(releaseDate),
-      'rating': serializer.toJson<String>(rating),
-      'rating5based': serializer.toJson<double>(rating5based),
-      'youtubeTrailer': serializer.toJson<String>(youtubeTrailer),
-      'episodeRunTime': serializer.toJson<String>(episodeRunTime),
-      'categoryId': serializer.toJson<String>(categoryId),
+      'cover': serializer.toJson<String?>(cover),
+      'plot': serializer.toJson<String?>(plot),
+      'cast': serializer.toJson<String?>(cast),
+      'director': serializer.toJson<String?>(director),
+      'genre': serializer.toJson<String?>(genre),
+      'releaseDate': serializer.toJson<String?>(releaseDate),
+      'rating': serializer.toJson<String?>(rating),
+      'rating5based': serializer.toJson<double?>(rating5based),
+      'youtubeTrailer': serializer.toJson<String?>(youtubeTrailer),
+      'episodeRunTime': serializer.toJson<String?>(episodeRunTime),
+      'categoryId': serializer.toJson<String?>(categoryId),
       'playlistId': serializer.toJson<String>(playlistId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'lastModified': serializer.toJson<String>(lastModified),
-      'backdropPath': serializer.toJson<String>(backdropPath),
+      'lastModified': serializer.toJson<String?>(lastModified),
+      'backdropPath': serializer.toJson<String?>(backdropPath),
     };
   }
 
   SeriesStreamsData copyWith({
     String? seriesId,
     String? name,
-    String? cover,
-    String? plot,
-    String? cast,
-    String? director,
-    String? genre,
-    String? releaseDate,
-    String? rating,
-    double? rating5based,
-    String? youtubeTrailer,
-    String? episodeRunTime,
-    String? categoryId,
+    Value<String?> cover = const Value.absent(),
+    Value<String?> plot = const Value.absent(),
+    Value<String?> cast = const Value.absent(),
+    Value<String?> director = const Value.absent(),
+    Value<String?> genre = const Value.absent(),
+    Value<String?> releaseDate = const Value.absent(),
+    Value<String?> rating = const Value.absent(),
+    Value<double?> rating5based = const Value.absent(),
+    Value<String?> youtubeTrailer = const Value.absent(),
+    Value<String?> episodeRunTime = const Value.absent(),
+    Value<String?> categoryId = const Value.absent(),
     String? playlistId,
     DateTime? createdAt,
-    String? lastModified,
-    String? backdropPath,
+    Value<String?> lastModified = const Value.absent(),
+    Value<String?> backdropPath = const Value.absent(),
   }) => SeriesStreamsData(
     seriesId: seriesId ?? this.seriesId,
     name: name ?? this.name,
-    cover: cover ?? this.cover,
-    plot: plot ?? this.plot,
-    cast: cast ?? this.cast,
-    director: director ?? this.director,
-    genre: genre ?? this.genre,
-    releaseDate: releaseDate ?? this.releaseDate,
-    rating: rating ?? this.rating,
-    rating5based: rating5based ?? this.rating5based,
-    youtubeTrailer: youtubeTrailer ?? this.youtubeTrailer,
-    episodeRunTime: episodeRunTime ?? this.episodeRunTime,
-    categoryId: categoryId ?? this.categoryId,
+    cover: cover.present ? cover.value : this.cover,
+    plot: plot.present ? plot.value : this.plot,
+    cast: cast.present ? cast.value : this.cast,
+    director: director.present ? director.value : this.director,
+    genre: genre.present ? genre.value : this.genre,
+    releaseDate: releaseDate.present ? releaseDate.value : this.releaseDate,
+    rating: rating.present ? rating.value : this.rating,
+    rating5based: rating5based.present ? rating5based.value : this.rating5based,
+    youtubeTrailer: youtubeTrailer.present
+        ? youtubeTrailer.value
+        : this.youtubeTrailer,
+    episodeRunTime: episodeRunTime.present
+        ? episodeRunTime.value
+        : this.episodeRunTime,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
     playlistId: playlistId ?? this.playlistId,
     createdAt: createdAt ?? this.createdAt,
-    lastModified: lastModified ?? this.lastModified,
-    backdropPath: backdropPath ?? this.backdropPath,
+    lastModified: lastModified.present ? lastModified.value : this.lastModified,
+    backdropPath: backdropPath.present ? backdropPath.value : this.backdropPath,
   );
   SeriesStreamsData copyWithCompanion(SeriesStreamsCompanion data) {
     return SeriesStreamsData(
@@ -4070,21 +4096,21 @@ class SeriesStreamsData extends DataClass
 class SeriesStreamsCompanion extends UpdateCompanion<SeriesStreamsData> {
   final Value<String> seriesId;
   final Value<String> name;
-  final Value<String> cover;
-  final Value<String> plot;
-  final Value<String> cast;
-  final Value<String> director;
-  final Value<String> genre;
-  final Value<String> releaseDate;
-  final Value<String> rating;
-  final Value<double> rating5based;
-  final Value<String> youtubeTrailer;
-  final Value<String> episodeRunTime;
-  final Value<String> categoryId;
+  final Value<String?> cover;
+  final Value<String?> plot;
+  final Value<String?> cast;
+  final Value<String?> director;
+  final Value<String?> genre;
+  final Value<String?> releaseDate;
+  final Value<String?> rating;
+  final Value<double?> rating5based;
+  final Value<String?> youtubeTrailer;
+  final Value<String?> episodeRunTime;
+  final Value<String?> categoryId;
   final Value<String> playlistId;
   final Value<DateTime> createdAt;
-  final Value<String> lastModified;
-  final Value<String> backdropPath;
+  final Value<String?> lastModified;
+  final Value<String?> backdropPath;
   final Value<int> rowid;
   const SeriesStreamsCompanion({
     this.seriesId = const Value.absent(),
@@ -4109,38 +4135,25 @@ class SeriesStreamsCompanion extends UpdateCompanion<SeriesStreamsData> {
   SeriesStreamsCompanion.insert({
     required String seriesId,
     required String name,
-    required String cover,
-    required String plot,
-    required String cast,
-    required String director,
-    required String genre,
-    required String releaseDate,
-    required String rating,
-    required double rating5based,
-    required String youtubeTrailer,
-    required String episodeRunTime,
-    required String categoryId,
+    this.cover = const Value.absent(),
+    this.plot = const Value.absent(),
+    this.cast = const Value.absent(),
+    this.director = const Value.absent(),
+    this.genre = const Value.absent(),
+    this.releaseDate = const Value.absent(),
+    this.rating = const Value.absent(),
+    this.rating5based = const Value.absent(),
+    this.youtubeTrailer = const Value.absent(),
+    this.episodeRunTime = const Value.absent(),
+    this.categoryId = const Value.absent(),
     required String playlistId,
     this.createdAt = const Value.absent(),
-    required String lastModified,
-    required String backdropPath,
+    this.lastModified = const Value.absent(),
+    this.backdropPath = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : seriesId = Value(seriesId),
        name = Value(name),
-       cover = Value(cover),
-       plot = Value(plot),
-       cast = Value(cast),
-       director = Value(director),
-       genre = Value(genre),
-       releaseDate = Value(releaseDate),
-       rating = Value(rating),
-       rating5based = Value(rating5based),
-       youtubeTrailer = Value(youtubeTrailer),
-       episodeRunTime = Value(episodeRunTime),
-       categoryId = Value(categoryId),
-       playlistId = Value(playlistId),
-       lastModified = Value(lastModified),
-       backdropPath = Value(backdropPath);
+       playlistId = Value(playlistId);
   static Insertable<SeriesStreamsData> custom({
     Expression<String>? seriesId,
     Expression<String>? name,
@@ -4186,21 +4199,21 @@ class SeriesStreamsCompanion extends UpdateCompanion<SeriesStreamsData> {
   SeriesStreamsCompanion copyWith({
     Value<String>? seriesId,
     Value<String>? name,
-    Value<String>? cover,
-    Value<String>? plot,
-    Value<String>? cast,
-    Value<String>? director,
-    Value<String>? genre,
-    Value<String>? releaseDate,
-    Value<String>? rating,
-    Value<double>? rating5based,
-    Value<String>? youtubeTrailer,
-    Value<String>? episodeRunTime,
-    Value<String>? categoryId,
+    Value<String?>? cover,
+    Value<String?>? plot,
+    Value<String?>? cast,
+    Value<String?>? director,
+    Value<String?>? genre,
+    Value<String?>? releaseDate,
+    Value<String?>? rating,
+    Value<double?>? rating5based,
+    Value<String?>? youtubeTrailer,
+    Value<String?>? episodeRunTime,
+    Value<String?>? categoryId,
     Value<String>? playlistId,
     Value<DateTime>? createdAt,
-    Value<String>? lastModified,
-    Value<String>? backdropPath,
+    Value<String?>? lastModified,
+    Value<String?>? backdropPath,
     Value<int>? rowid,
   }) {
     return SeriesStreamsCompanion(
@@ -10304,42 +10317,42 @@ typedef $$SeriesStreamsTableCreateCompanionBuilder =
     SeriesStreamsCompanion Function({
       required String seriesId,
       required String name,
-      required String cover,
-      required String plot,
-      required String cast,
-      required String director,
-      required String genre,
-      required String releaseDate,
-      required String rating,
-      required double rating5based,
-      required String youtubeTrailer,
-      required String episodeRunTime,
-      required String categoryId,
+      Value<String?> cover,
+      Value<String?> plot,
+      Value<String?> cast,
+      Value<String?> director,
+      Value<String?> genre,
+      Value<String?> releaseDate,
+      Value<String?> rating,
+      Value<double?> rating5based,
+      Value<String?> youtubeTrailer,
+      Value<String?> episodeRunTime,
+      Value<String?> categoryId,
       required String playlistId,
       Value<DateTime> createdAt,
-      required String lastModified,
-      required String backdropPath,
+      Value<String?> lastModified,
+      Value<String?> backdropPath,
       Value<int> rowid,
     });
 typedef $$SeriesStreamsTableUpdateCompanionBuilder =
     SeriesStreamsCompanion Function({
       Value<String> seriesId,
       Value<String> name,
-      Value<String> cover,
-      Value<String> plot,
-      Value<String> cast,
-      Value<String> director,
-      Value<String> genre,
-      Value<String> releaseDate,
-      Value<String> rating,
-      Value<double> rating5based,
-      Value<String> youtubeTrailer,
-      Value<String> episodeRunTime,
-      Value<String> categoryId,
+      Value<String?> cover,
+      Value<String?> plot,
+      Value<String?> cast,
+      Value<String?> director,
+      Value<String?> genre,
+      Value<String?> releaseDate,
+      Value<String?> rating,
+      Value<double?> rating5based,
+      Value<String?> youtubeTrailer,
+      Value<String?> episodeRunTime,
+      Value<String?> categoryId,
       Value<String> playlistId,
       Value<DateTime> createdAt,
-      Value<String> lastModified,
-      Value<String> backdropPath,
+      Value<String?> lastModified,
+      Value<String?> backdropPath,
       Value<int> rowid,
     });
 
@@ -10647,21 +10660,21 @@ class $$SeriesStreamsTableTableManager
               ({
                 Value<String> seriesId = const Value.absent(),
                 Value<String> name = const Value.absent(),
-                Value<String> cover = const Value.absent(),
-                Value<String> plot = const Value.absent(),
-                Value<String> cast = const Value.absent(),
-                Value<String> director = const Value.absent(),
-                Value<String> genre = const Value.absent(),
-                Value<String> releaseDate = const Value.absent(),
-                Value<String> rating = const Value.absent(),
-                Value<double> rating5based = const Value.absent(),
-                Value<String> youtubeTrailer = const Value.absent(),
-                Value<String> episodeRunTime = const Value.absent(),
-                Value<String> categoryId = const Value.absent(),
+                Value<String?> cover = const Value.absent(),
+                Value<String?> plot = const Value.absent(),
+                Value<String?> cast = const Value.absent(),
+                Value<String?> director = const Value.absent(),
+                Value<String?> genre = const Value.absent(),
+                Value<String?> releaseDate = const Value.absent(),
+                Value<String?> rating = const Value.absent(),
+                Value<double?> rating5based = const Value.absent(),
+                Value<String?> youtubeTrailer = const Value.absent(),
+                Value<String?> episodeRunTime = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 Value<String> playlistId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<String> lastModified = const Value.absent(),
-                Value<String> backdropPath = const Value.absent(),
+                Value<String?> lastModified = const Value.absent(),
+                Value<String?> backdropPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SeriesStreamsCompanion(
                 seriesId: seriesId,
@@ -10687,21 +10700,21 @@ class $$SeriesStreamsTableTableManager
               ({
                 required String seriesId,
                 required String name,
-                required String cover,
-                required String plot,
-                required String cast,
-                required String director,
-                required String genre,
-                required String releaseDate,
-                required String rating,
-                required double rating5based,
-                required String youtubeTrailer,
-                required String episodeRunTime,
-                required String categoryId,
+                Value<String?> cover = const Value.absent(),
+                Value<String?> plot = const Value.absent(),
+                Value<String?> cast = const Value.absent(),
+                Value<String?> director = const Value.absent(),
+                Value<String?> genre = const Value.absent(),
+                Value<String?> releaseDate = const Value.absent(),
+                Value<String?> rating = const Value.absent(),
+                Value<double?> rating5based = const Value.absent(),
+                Value<String?> youtubeTrailer = const Value.absent(),
+                Value<String?> episodeRunTime = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 required String playlistId,
                 Value<DateTime> createdAt = const Value.absent(),
-                required String lastModified,
-                required String backdropPath,
+                Value<String?> lastModified = const Value.absent(),
+                Value<String?> backdropPath = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SeriesStreamsCompanion.insert(
                 seriesId: seriesId,

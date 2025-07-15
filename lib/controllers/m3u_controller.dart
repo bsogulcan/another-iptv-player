@@ -229,6 +229,8 @@ class M3uController extends ChangeNotifier {
 
       await appDatabase.insertM3uItems(_series!);
 
+
+
       return true;
     } catch (e) {
       _setError('preparing_series_exception_2', 'preparing_series_exception_2');

@@ -111,7 +111,7 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
       _animationController.animateTo(1.0);
       _pulseAnimationController.stop();
       _waveAnimationController.stop();
-      await Future.delayed(Duration(milliseconds: 800));
+      // await Future.delayed(Duration(milliseconds: 800));
 
       AppState.currentPlaylist = widget.playlist;
       await UserPreferences.setLastPlaylist(widget.playlist.id);

@@ -155,7 +155,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
                 (x) => ContentItem(
                   x.seriesId,
                   x.name,
-                  x.cover,
+                  x.cover ?? '',
                   ContentType.series,
                   seriesStream: x,
                 ),

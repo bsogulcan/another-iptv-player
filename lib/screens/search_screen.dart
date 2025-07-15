@@ -139,7 +139,7 @@ class SearchScreenState extends State<SearchScreen> {
                 (x) => ContentItem(
                   x.seriesId,
                   x.name,
-                  x.cover,
+                  x.cover ?? '',
                   ContentType.series,
                   seriesStream: x,
                 ),
