@@ -1,9 +1,9 @@
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
@@ -12,7 +12,6 @@ import '../screens/series/episode_screen.dart';
 
 class WatchHistoryController extends ChangeNotifier {
   late WatchHistoryService _historyService;
-  late IptvRepository _repository;
   final _database = getIt<AppDatabase>();
 
   List<WatchHistory> _continueWatching = [];
@@ -25,24 +24,29 @@ class WatchHistoryController extends ChangeNotifier {
 
   // Getters
   List<WatchHistory> get continueWatching => _continueWatching;
+
   List<WatchHistory> get recentlyWatched => _recentlyWatched;
+
   List<WatchHistory> get liveHistory => _liveHistory;
+
   List<WatchHistory> get movieHistory => _movieHistory;
+
   List<WatchHistory> get seriesHistory => _seriesHistory;
+
   bool get isLoading => _isLoading;
+
   String? get errorMessage => _errorMessage;
 
   WatchHistoryController() {
     _historyService = WatchHistoryService();
-    _repository = AppState.xtreamCodeRepository!;
   }
 
   bool get isAllEmpty =>
       _continueWatching.isEmpty &&
-          _recentlyWatched.isEmpty &&
-          _liveHistory.isEmpty &&
-          _movieHistory.isEmpty &&
-          _seriesHistory.isEmpty;
+      _recentlyWatched.isEmpty &&
+      _liveHistory.isEmpty &&
+      _movieHistory.isEmpty &&
+      _seriesHistory.isEmpty;
 
   Future<void> loadWatchHistory() async {
     _setLoading(true);
@@ -54,9 +58,18 @@ class WatchHistoryController extends ChangeNotifier {
       final futures = await Future.wait([
         _historyService.getContinueWatching(playlistId),
         _historyService.getRecentlyWatched(limit: 20, playlistId),
-        _historyService.getWatchHistoryByContentType(ContentType.liveStream, playlistId),
-        _historyService.getWatchHistoryByContentType(ContentType.vod, playlistId),
-        _historyService.getWatchHistoryByContentType(ContentType.series, playlistId),
+        _historyService.getWatchHistoryByContentType(
+          ContentType.liveStream,
+          playlistId,
+        ),
+        _historyService.getWatchHistoryByContentType(
+          ContentType.vod,
+          playlistId,
+        ),
+        _historyService.getWatchHistoryByContentType(
+          ContentType.series,
+          playlistId,
+        ),
       ]);
 
       _continueWatching = futures[0];
@@ -92,7 +105,10 @@ class WatchHistoryController extends ChangeNotifier {
 
   Future<void> removeHistory(WatchHistory history) async {
     try {
-      await _historyService.deleteWatchHistory(history.playlistId, history.streamId);
+      await _historyService.deleteWatchHistory(
+        history.playlistId,
+        history.streamId,
+      );
       await loadWatchHistory();
     } catch (e) {
       _setError('Hata oluştu: $e');
@@ -124,41 +140,80 @@ class WatchHistoryController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _playLiveStream(BuildContext context, WatchHistory history) async {
-    final liveStream = await _database.findLiveStreamById(
-      history.streamId,
-      AppState.currentPlaylist!.id,
-    );
-
-    navigateByContentType(
-      context,
-      ContentItem(
+  Future<void> _playLiveStream(
+    BuildContext context,
+    WatchHistory history,
+  ) async {
+    if (isXtreamCode) {
+      final liveStream = await _database.findLiveStreamById(
         history.streamId,
-        history.title,
-        history.imagePath ?? '',
-        history.contentType,
-        liveStream: liveStream,
-      ),
-    );
+        AppState.currentPlaylist!.id,
+      );
+
+      navigateByContentType(
+        context,
+        ContentItem(
+          history.streamId,
+          history.title,
+          history.imagePath ?? '',
+          history.contentType,
+          liveStream: liveStream,
+        ),
+      );
+    } else if (isM3u) {
+      final liveStream = await _database.getM3uItemsByIdAndPlaylist(
+        history.streamId,
+        AppState.currentPlaylist!.id,
+      );
+
+      navigateByContentType(
+        context,
+        ContentItem(
+          history.streamId,
+          history.title,
+          history.imagePath ?? '',
+          history.contentType,
+          m3uItem: liveStream!,
+        ),
+      );
+    }
   }
 
   Future<void> _playMovie(BuildContext context, WatchHistory history) async {
-    final movie = await _database.findMovieById(
-      history.streamId,
-      AppState.currentPlaylist!.id,
-    );
-
-    navigateByContentType(
-      context,
-      ContentItem(
+    if (isXtreamCode) {
+      final movie = await _database.findMovieById(
         history.streamId,
-        history.title,
-        history.imagePath ?? '',
-        history.contentType,
-        containerExtension: movie!.containerExtension,
-        vodStream: movie,
-      ),
-    );
+        AppState.currentPlaylist!.id,
+      );
+
+      navigateByContentType(
+        context,
+        ContentItem(
+          history.streamId,
+          history.title,
+          history.imagePath ?? '',
+          history.contentType,
+          containerExtension: movie!.containerExtension,
+          vodStream: movie,
+        ),
+      );
+    } else if (isM3u) {
+      final movie = await _database.getM3uItemsByIdAndPlaylist(
+        history.streamId,
+        AppState.currentPlaylist!.id,
+      );
+
+      navigateByContentType(
+        context,
+        ContentItem(
+          history.streamId,
+          history.title,
+          history.imagePath ?? '',
+          history.contentType,
+          m3uItem: movie,
+        ),
+      );
+    }
   }
 
   Future<void> _playSeries(BuildContext context, WatchHistory history) async {
@@ -167,7 +222,9 @@ class WatchHistoryController extends ChangeNotifier {
       AppState.currentPlaylist!.id,
     );
 
-    final seriesResponse = await _repository.getSeriesInfo(episode!.seriesId);
+    final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
+      episode!.seriesId,
+    );
 
     Navigator.push(
       context,
