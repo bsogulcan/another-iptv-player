@@ -12,6 +12,7 @@ import 'package:another_iptv_player/utils/responsive_helper.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 
 import '../../services/app_state.dart';
+import '../watch_history_screen.dart';
 
 class M3UHomeScreen extends StatefulWidget {
   final Playlist playlist;
@@ -89,7 +90,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
 
   List<Widget> _buildPages(M3UHomeController controller) {
     return [
-      // WatchHistoryScreen(playlistId: widget.playlist.id),
+      WatchHistoryScreen(playlistId: widget.playlist.id),
       _buildContentPage(controller.liveCategories!, controller),
       _buildContentPage(controller.vodCategories!, controller),
       _buildContentPage(
@@ -173,7 +174,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
     BuildContext context,
   ) {
     return [
-      // BottomNavigationBarItem(icon: Icon(Icons.history), label: "Geçmiş"),
+      BottomNavigationBarItem(icon: Icon(Icons.history), label: context.loc.history),
       BottomNavigationBarItem(
         icon: Icon(Icons.live_tv),
         label: context.loc.live,

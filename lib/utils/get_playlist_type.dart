@@ -9,6 +9,6 @@ bool get isXtreamCode {
   return getPlaylistType() == PlaylistType.xtream;
 }
 
-bool isM3u() {
+bool get isM3u {
   return getPlaylistType() == PlaylistType.m3u;
 }

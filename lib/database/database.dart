@@ -1322,6 +1322,18 @@ class AppDatabase extends _$AppDatabase {
     return data.map((item) => M3uItem.fromData(item)).toList();
   }
 
+  Future<M3uItem?> getM3uItemsByIdAndPlaylist(
+    String id,
+    String playlistId,
+  ) async {
+    final query = select(m3uItems)
+      ..where((tbl) => tbl.url.equals(id) & tbl.playlistId.equals(playlistId));
+    final data = await query.getSingleOrNull();
+
+    if (data == null) return null;
+    return M3uItem.fromData(data);
+  }
+
   Future<List<M3uItem>> getM3uItemsByCategory(String categoryId) async {
     final data = await (select(
       m3uItems,
