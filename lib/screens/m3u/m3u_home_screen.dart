@@ -105,16 +105,19 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
   ) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
-        _buildSliverAppBar(controller),
+        _buildSliverAppBar(context, controller),
       ],
       body: _buildCategoryList(categories),
     );
   }
 
-  SliverAppBar _buildSliverAppBar(M3UHomeController controller) {
+  SliverAppBar _buildSliverAppBar(
+    BuildContext context,
+    M3UHomeController controller,
+  ) {
     return SliverAppBar(
       title: SelectableText(
-        controller.getPageTitle(),
+        controller.getPageTitle(context),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       floating: true,
