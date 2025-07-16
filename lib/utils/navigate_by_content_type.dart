@@ -1,3 +1,5 @@
+import 'package:another_iptv_player/screens/m3u/series/m3u_series_screen.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
@@ -22,11 +24,20 @@ void navigateByContentType(BuildContext context, ContentItem content) {
         ),
       );
     case ContentType.series:
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SeriesScreen(contentItem: content),
-        ),
-      );
+      if (isXtreamCode) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SeriesScreen(contentItem: content),
+          ),
+        );
+      } else if (isM3u) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => M3uSeriesScreen(contentItem: content),
+          ),
+        );
+      }
   }
 }
