@@ -52,8 +52,7 @@ class M3uRepository {
 
   Future<List<M3uSerie>?> getSeriesByCategoryId({
     required String categoryId,
-    int? top,
-    ContentType? contentType,
+    int? top
   }) async {
     var liveStreams = await _database.getM3uSeriesByCategoryId(
       _playlistId,

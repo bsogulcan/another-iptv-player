@@ -50,6 +50,7 @@ dependencies:
   meta: any
   file_picker: ^10.2.0
   uuid: ^4.5.1
+  collection: ^1.19.1
 
 dependency_overrides:
   media_kit:

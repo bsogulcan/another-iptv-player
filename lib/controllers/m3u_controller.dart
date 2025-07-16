@@ -9,6 +9,7 @@ import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/models/progress_step.dart';
 import 'package:another_iptv_player/services/m3u_parser.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:uuid/uuid.dart';
 import '../models/category_with_content_type.dart';
@@ -347,7 +348,9 @@ class M3uController extends ChangeNotifier {
   ) {
     final grouped = <CategoryWithContentType, List<M3uItem>>{};
 
-    for (final channel in channels) {
+    for (final channel in channels.where(
+      (x) => x.groupTitle != null && x.groupTitle!.isNotEmpty,
+    )) {
       final group = channel.groupTitle ?? 'not_categorized';
       final contentType = channel.contentType;
 
@@ -487,11 +490,8 @@ class M3uController extends ChangeNotifier {
   }
 
   String? findCategoryId(String? groupTitle, CategoryType categoryType) {
-    if (groupTitle == null) {
-      return null;
-    }
-
-    final category = categories?.firstWhere(
+    if (groupTitle == null) return null;
+    final category = categories?.firstWhereOrNull(
       (x) => x.categoryName == groupTitle && x.type == categoryType,
     );
     return category?.categoryId;

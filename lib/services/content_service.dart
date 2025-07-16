@@ -90,6 +90,7 @@ class ContentService {
             item.name ?? 'NO NAME',
             item.tvgLogo ?? '',
             ContentType.liveStream,
+            m3uItem: item,
           ),
           'M3U canlı kanallar yüklenirken hata',
         );
@@ -105,22 +106,16 @@ class ContentService {
             item.name ?? 'NO NAME',
             item.tvgLogo ?? '',
             ContentType.vod,
+            m3uItem: item,
           ),
           'M3U filmler yüklenirken hata',
         );
       case CategoryType.series:
         return await _fetchGenericContent(
-          () => repository.getM3uItemsByCategoryId(
-            categoryId: categoryId,
-            contentType: ContentType.series,
-          ),
+          () => repository.getSeriesByCategoryId(categoryId: categoryId),
           ContentType.series,
-          (item) => ContentItem(
-            item.url,
-            item.name ?? 'NO NAME',
-            item.tvgLogo ?? '',
-            ContentType.series,
-          ),
+          (item) =>
+              ContentItem(item.seriesId, item.name, '', ContentType.series),
           'M3U diziler yüklenirken hata',
         );
     }
