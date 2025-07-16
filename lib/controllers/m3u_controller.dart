@@ -1,17 +1,18 @@
 import 'dart:convert' show utf8;
 import 'dart:io' show File, HttpClient;
-
-import 'package:another_iptv_player/database/database.dart';
+import 'package:another_iptv_player/database/database.dart'
+    hide M3uEpisodes, M3uSeries;
 import 'package:another_iptv_player/models/category.dart';
 import 'package:another_iptv_player/models/category_type.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/models/progress_step.dart';
+import 'package:another_iptv_player/services/m3u_parser.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:uuid/uuid.dart';
-
 import '../models/category_with_content_type.dart';
+import '../models/m3u_series.dart';
 
 class M3uController extends ChangeNotifier {
   final String playlistId;
@@ -229,7 +230,43 @@ class M3uController extends ChangeNotifier {
 
       await appDatabase.insertM3uItems(_series!);
 
+      var m3uTempSeries = _series!
+          .map((x) {
+            return SeriesParser.parse(x);
+          })
+          .where((item) => item != null)
+          .cast<M3uTempSeries>()
+          .toList();
 
+      if (m3uTempSeries.isNotEmpty) {
+        var grouped = groupByName(m3uTempSeries);
+        var m3uSeries = convertToSeriesStreams(playlistId, grouped);
+        var m3uEpisodes = m3uTempSeries.map((x) {
+          return M3uEpisode(
+            playlistId: playlistId,
+            seriesId: m3uSeries.firstWhere((series) {
+              return series.name == x.name;
+            }).seriesId,
+            seasonNumber: x.seasonNumber,
+            episodeNumber: x.episodeNumber,
+            name: x.m3uItem.name!,
+            url: x.m3uItem.url,
+            cover: x.m3uItem.tvgLogo,
+          );
+        }).toList();
+
+        await appDatabase.insertM3uSeries(
+          m3uSeries.map((x) {
+            return x.toCompanion();
+          }).toList(),
+        );
+
+        await appDatabase.insertM3uEpisodes(
+          m3uEpisodes.map((x) {
+            return x.toCompanion();
+          }).toList(),
+        );
+      }
 
       return true;
     } catch (e) {
@@ -458,5 +495,38 @@ class M3uController extends ChangeNotifier {
       (x) => x.categoryName == groupTitle && x.type == categoryType,
     );
     return category?.categoryId;
+  }
+
+  Map<String, List<M3uTempSeries>> groupByName(List<M3uTempSeries> list) {
+    var map = <String, List<M3uTempSeries>>{};
+    for (var series in list) {
+      if (!map.containsKey(series.name)) {
+        map[series.name] = [];
+      }
+      map[series.name]!.add(series);
+    }
+    return map;
+  }
+
+  List<M3uSerie> convertToSeriesStreams(
+    String playlistId,
+    Map<String, List<M3uTempSeries>> grouped,
+  ) {
+    List<M3uSerie> result = [];
+
+    grouped.forEach((name, episodes) {
+      final first = episodes.first;
+
+      result.add(
+        M3uSerie(
+          playlistId: playlistId,
+          categoryId: first.m3uItem.categoryId,
+          name: name,
+          seriesId: uuid.v4(),
+        ),
+      );
+    });
+
+    return result;
   }
 }

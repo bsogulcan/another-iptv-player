@@ -124,7 +124,6 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
       snap: true,
       elevation: 0,
       actions: [
-        // Arama fonksiyonu ekleyebilirsin
         IconButton(
           onPressed: () => UserPreferences.removeLastPlaylist(),
           icon: Icon(Icons.exit_to_app),

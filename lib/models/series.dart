@@ -42,7 +42,6 @@ class SeriesStream {
   });
 
   factory SeriesStream.fromJson(Map<String, dynamic> json, String playlistId) {
-    // backdrop_path'i güvenli şekilde List<String>'e dönüştürme
     List<String> backdropPaths = [];
     final rawBackdrop = json['backdrop_path'];
     if (rawBackdrop is List) {
@@ -113,7 +112,6 @@ class SeriesStream {
     );
   }
 
-  // Drift'e kaydetmek için
   SeriesStreamsCompanion toDriftCompanion() {
     String backdropPathJson = '';
     if (backdropPath != null && backdropPath!.isNotEmpty) {

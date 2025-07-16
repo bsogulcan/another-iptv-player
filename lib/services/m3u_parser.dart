@@ -137,3 +137,71 @@ class M3uParser {
     }
   }
 }
+
+class M3uTempSeries {
+  final String name;
+  final int seasonNumber;
+  final int episodeNumber;
+  final M3uItem m3uItem;
+
+  M3uTempSeries(
+    this.name,
+    this.seasonNumber,
+    this.episodeNumber,
+    this.m3uItem,
+  );
+
+  @override
+  String toString() {
+    return "$name $seasonNumber $episodeNumber";
+  }
+}
+
+class SeriesParser {
+  static final RegExp _seriesRegex = RegExp(
+    r'^(.+?)\s+S(\d{1,2})\s+E(\d{1,3})',
+    caseSensitive: false,
+  );
+
+  static final RegExp _alternativeRegex = RegExp(
+    r'^(.+?)\s+Season\s+(\d{1,2})\s+Episode\s+(\d{1,3})',
+    caseSensitive: false,
+  );
+
+  static M3uTempSeries? parse(M3uItem item) {
+    if (item.name == null) {
+      return null;
+    }
+
+    RegExpMatch? match = _seriesRegex.firstMatch(item.name!.trim());
+
+    match ??= _alternativeRegex.firstMatch(item.name!.trim());
+
+    if (match != null) {
+      final seriesName = match.group(1)?.trim() ?? '';
+      final seasonNumber = int.tryParse(match.group(2) ?? '') ?? 0;
+      final episodeNumber = int.tryParse(match.group(3) ?? '') ?? 0;
+
+      return M3uTempSeries(
+        seriesName,
+        seasonNumber,
+        episodeNumber,
+        item,
+      );
+    }
+
+    return null;
+  }
+
+  static String generateSeriesId(String playlistId, String seriesName) {
+    return '${playlistId}_${seriesName.toLowerCase().replaceAll(' ', '_')}';
+  }
+
+  static String generateSeasonId(String seriesId, int seasonNumber) {
+    return '${seriesId}_s${seasonNumber.toString().padLeft(2, '0')}';
+  }
+
+  static String generateEpisodeId(String seasonId, int episodeNumber) {
+    return '${seasonId}_e${episodeNumber.toString().padLeft(2, '0')}';
+  }
+}

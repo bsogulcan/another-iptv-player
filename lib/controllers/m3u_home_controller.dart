@@ -1,12 +1,13 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/models/category_type.dart';
-import 'package:another_iptv_player/models/m3u_item.dart';
-import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/category_view_model.dart';
+import 'package:another_iptv_player/models/content_type.dart';
+import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/view_state.dart';
 import 'package:another_iptv_player/repositories/m3u_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
+import 'package:flutter/material.dart';
 
 class M3UHomeController extends ChangeNotifier {
   late PageController _pageController;
@@ -102,31 +103,63 @@ class M3UHomeController extends ChangeNotifier {
 
       var categories = await _repository.getCategories();
       for (var category in categories!) {
-        var m3uItems = await _repository.getM3uItemsByCategoryId(
-          categoryId: category.categoryId,
-          top: 10,
-        );
+        if (category.type != CategoryType.series) {
+          var m3uItems = await _repository.getM3uItemsByCategoryId(
+            categoryId: category.categoryId,
+            top: 10,
+          );
 
-        var categoryViewModel = CategoryViewModel(
-          category: category,
-          contentItems: m3uItems!.map((x) {
-            return ContentItem(
-              x.url,
-              x.name ?? '',
-              x.tvgLogo ?? '',
-              x.contentType,
-              m3uItem: x,
+          late CategoryViewModel categoryViewModel;
+          if (m3uItems == null) {
+            categoryViewModel = CategoryViewModel(
+              category: category,
+              contentItems: [],
             );
-          }).toList(),
-        );
+          } else {
+            categoryViewModel = CategoryViewModel(
+              category: category,
+              contentItems: m3uItems.map((x) {
+                return ContentItem(
+                  x.url,
+                  x.name ?? '',
+                  x.tvgLogo ?? '',
+                  x.contentType,
+                  m3uItem: x,
+                );
+              }).toList(),
+            );
+          }
 
-        switch (category.type) {
-          case CategoryType.live:
-            _liveCategories.add(categoryViewModel);
-          case CategoryType.vod:
-            _vodCategories.add(categoryViewModel);
-          case CategoryType.series:
-            _seriesCategories.add(categoryViewModel);
+          switch (category.type) {
+            case CategoryType.live:
+              _liveCategories.add(categoryViewModel);
+            case CategoryType.vod:
+              _vodCategories.add(categoryViewModel);
+            case CategoryType.series:
+              _seriesCategories.add(categoryViewModel);
+          }
+        } else {
+          var series = await _repository.getSeriesByCategoryId(
+            categoryId: category.categoryId,
+            top: 10,
+          );
+
+          late CategoryViewModel categoryViewModel;
+          if (series == null) {
+            categoryViewModel = CategoryViewModel(
+              category: category,
+              contentItems: [],
+            );
+          } else {
+            categoryViewModel = CategoryViewModel(
+              category: category,
+              contentItems: series.map((x) {
+                return ContentItem(x.seriesId, x.name, '', ContentType.series);
+              }).toList(),
+            );
+          }
+
+          _seriesCategories.add(categoryViewModel);
         }
       }
 

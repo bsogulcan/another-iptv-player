@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../models/category_type.dart';
 import '../models/m3u_item.dart';
+import '../models/m3u_series.dart';
 import '../models/playlist_model.dart';
 
 part 'database.g.dart';
@@ -366,6 +367,49 @@ class M3uItems extends Table {
   ];
 }
 
+@DataClassName('M3uSeriesData')
+class M3uSeries extends Table {
+  TextColumn get playlistId => text()();
+
+  TextColumn get seriesId => text()();
+
+  TextColumn get name => text()();
+
+  TextColumn get categoryId => text().nullable()();
+
+  TextColumn get cover => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {playlistId, seriesId};
+}
+
+@DataClassName('M3uEpisodesData')
+class M3uEpisodes extends Table {
+  TextColumn get playlistId => text()();
+
+  TextColumn get seriesId => text()();
+
+  IntColumn get seasonNumber => integer()();
+
+  IntColumn get episodeNumber => integer()();
+
+  TextColumn get name => text()();
+
+  TextColumn get url => text()();
+
+  TextColumn get categoryId => text().nullable()();
+
+  TextColumn get cover => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {
+    playlistId,
+    seriesId,
+    seasonNumber,
+    episodeNumber,
+  };
+}
+
 @DriftDatabase(
   tables: [
     Playlists,
@@ -380,6 +424,8 @@ class M3uItems extends Table {
     Episodes,
     WatchHistories,
     M3uItems,
+    M3uSeries,
+    M3uEpisodes,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -407,7 +453,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1016,7 +1062,6 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  // SeriesStreams için CRUD operations
   Future<void> insertSeriesStreams(List<SeriesStream> seriesStreams) async {
     final seriesStreamsCompanions = seriesStreams
         .map((seriesStream) => seriesStream.toDriftCompanion())
@@ -1362,6 +1407,58 @@ class AppDatabase extends _$AppDatabase {
         .toList();
   }
 
+  Future<void> insertM3uSeries(List<M3uSeriesCompanion> seriesList) async {
+    await batch((batch) {
+      batch.insertAll(m3uSeries, seriesList, mode: InsertMode.insertOrReplace);
+    });
+  }
+
+  Future<void> insertM3uEpisodes(
+    List<M3uEpisodesCompanion> episodesList,
+  ) async {
+    await batch((batch) {
+      batch.insertAll(
+        m3uEpisodes,
+        episodesList,
+        mode: InsertMode.insertOrReplace,
+      );
+    });
+  }
+
+  Future<List<M3uSerie>> getM3uSeriesByCategoryId(
+    String playlistId,
+    String categoryId, {
+    int? top,
+  }) async {
+    var query = select(m3uSeries)
+      ..where(
+        (ls) =>
+            ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
+      );
+
+    if (top != null) {
+      query = query..limit(top);
+    }
+
+    final rows = await query.get();
+
+    return rows.map((row) => M3uSerie.fromData(row)).toList();
+  }
+
+  Future<List<M3uEpisode>> getM3uEpisodesBySeriesId(
+    String playlistId,
+    String seriesId,
+  ) async {
+    var query = select(m3uEpisodes)
+      ..where(
+        (ls) => ls.playlistId.equals(playlistId) & ls.seriesId.equals(seriesId),
+      );
+
+    final rows = await query.get();
+
+    return rows.map((row) => M3uEpisode.fromData(row)).toList();
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
@@ -1401,7 +1498,8 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from <= 5) {
-        // nothing
+        await m.createTable(m3uSeries);
+        await m.createTable(m3uEpisodes);
       }
     },
   );
