@@ -4,10 +4,31 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import '../screens/live_stream/live_stream_screen.dart';
+import '../screens/m3u/m3u_player_screen.dart';
 import '../screens/movies/movie_screen.dart';
 import '../screens/series/series_screen.dart';
 
 void navigateByContentType(BuildContext context, ContentItem content) {
+  if (isM3u &&
+      (content.m3uItem != null && content.m3uItem!.groupTitle == null)) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => M3uPlayerScreen(
+          contentItem: ContentItem(
+            content.m3uItem!.url,
+            content.m3uItem!.name ?? '',
+            content.m3uItem!.tvgLogo ?? '',
+            content.m3uItem!.contentType,
+            m3uItem: content.m3uItem!,
+          ),
+        ),
+      ),
+    );
+
+    return;
+  }
+
   switch (content.contentType) {
     case ContentType.liveStream:
       Navigator.push(

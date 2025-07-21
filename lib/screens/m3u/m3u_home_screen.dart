@@ -1,5 +1,6 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
+import 'package:another_iptv_player/screens/m3u/m3u_items_screen.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_playlist_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -92,6 +93,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
   List<Widget> _buildPages(M3UHomeController controller) {
     return [
       WatchHistoryScreen(playlistId: widget.playlist.id),
+      M3uItemsScreen(m3uItems: controller.m3uItems!),
       _buildContentPage(controller.liveCategories!, controller),
       _buildContentPage(controller.vodCategories!, controller),
       _buildContentPage(controller.seriesCategories!, controller),
@@ -179,6 +181,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
         icon: Icon(Icons.history),
         label: context.loc.history,
       ),
+      BottomNavigationBarItem(icon: Icon(Icons.all_inbox), label: 'All'),
       BottomNavigationBarItem(
         icon: Icon(Icons.live_tv),
         label: context.loc.live,

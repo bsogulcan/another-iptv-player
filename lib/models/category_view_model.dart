@@ -8,11 +8,3 @@ class CategoryViewModel {
 
   CategoryViewModel({required this.category, required this.contentItems});
 }
-
-
-// class CategoryM3uViewModel {
-//   final Category category;
-//   final List<M3uItem> contentItems;
-//
-//   CategoryM3uViewModel({required this.category, required this.contentItems});
-// }

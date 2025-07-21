@@ -431,7 +431,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                   episode.name,
                   episode.cover ?? "",
                   ContentType.series,
-                  season: episode.seasonNumber,
+                  season: episode.seasonNumber
                 ),
               ),
             ),

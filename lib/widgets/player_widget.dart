@@ -250,12 +250,19 @@ class _PlayerWidgetState extends State<PlayerWidget>
           imagePath: contentItem.imagePath,
           totalDuration: _player.state.duration,
           watchDuration: position,
+          seriesId: contentItem.seriesStream?.seriesId,
         ),
       );
     });
 
     _player.stream.error.listen((error) {
       print('PLAYER ERROR -> $error');
+
+      if (error.contains('Failed to open')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error'), duration: Duration(seconds: 3)),
+        );
+      }
     });
 
     _player.stream.playlist.listen((playlist) {

@@ -7,6 +7,7 @@ import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import '../screens/m3u/m3u_player_screen.dart';
 import '../services/service_locator.dart';
 import '../screens/series/episode_screen.dart';
 
@@ -217,33 +218,55 @@ class WatchHistoryController extends ChangeNotifier {
   }
 
   Future<void> _playSeries(BuildContext context, WatchHistory history) async {
-    final episode = await _database.findEpisodesById(
-      history.streamId,
-      AppState.currentPlaylist!.id,
-    );
+    if (isXtreamCode) {
+      final episode = await _database.findEpisodesById(
+        history.streamId,
+        AppState.currentPlaylist!.id,
+      );
 
-    final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
-      episode!.seriesId,
-    );
+      final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
+        episode!.seriesId,
+      );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EpisodeScreen(
-          seriesInfo: seriesResponse!.seriesInfo,
-          seasons: seriesResponse.seasons,
-          episodes: seriesResponse.episodes,
-          contentItem: ContentItem(
-            episode.episodeId.toString(),
-            history.title,
-            history.imagePath ?? "",
-            ContentType.series,
-            containerExtension: episode.containerExtension,
-            season: episode.season,
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EpisodeScreen(
+            seriesInfo: seriesResponse!.seriesInfo,
+            seasons: seriesResponse.seasons,
+            episodes: seriesResponse.episodes,
+            contentItem: ContentItem(
+              episode.episodeId.toString(),
+              history.title,
+              history.imagePath ?? "",
+              ContentType.series,
+              containerExtension: episode.containerExtension,
+              season: episode.season,
+            ),
+            watchHistory: history,
           ),
-          watchHistory: history,
         ),
-      ),
-    );
+      );
+    } else if (isM3u) {
+      var m3uItem = await _database.getM3uItemsByIdAndPlaylist(
+        history.streamId,
+        AppState.currentPlaylist!.id,
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => M3uPlayerScreen(
+            contentItem: ContentItem(
+              m3uItem!.url,
+              m3uItem.name ?? '',
+              m3uItem.tvgLogo ?? '',
+              m3uItem.contentType,
+              m3uItem: m3uItem,
+            ),
+          ),
+        ),
+      );
+    }
   }
 }
