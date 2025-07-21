@@ -21,6 +21,7 @@ class M3UHomeController extends ChangeNotifier {
   final List<CategoryViewModel> _liveCategories = [];
   final List<CategoryViewModel> _vodCategories = [];
   final List<CategoryViewModel> _seriesCategories = [];
+  List<M3uItem>? _m3uItems = [];
   List<M3uItem>? _liveChannels;
   List<M3uItem>? _movies;
   List<M3uItem>? _series;
@@ -36,6 +37,8 @@ class M3UHomeController extends ChangeNotifier {
 
   List<CategoryViewModel>? get seriesCategories => _seriesCategories;
 
+  List<M3uItem>? get m3uItems => _m3uItems;
+
   List<M3uItem>? get liveChannels => _liveChannels;
 
   List<M3uItem>? get movies => _movies;
@@ -46,6 +49,7 @@ class M3UHomeController extends ChangeNotifier {
 
   M3UHomeController() {
     _pageController = PageController();
+    _loadM3uItems();
     _loadCategories();
   }
 
@@ -94,6 +98,22 @@ class M3UHomeController extends ChangeNotifier {
       _errorMessage = null;
     }
     notifyListeners();
+  }
+
+  Future<void> _loadM3uItems() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      _m3uItems = await _repository.getM3uItems();
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'M3U items cannot loaded: $e';
+      _setViewState(ViewState.error);
+      _isLoading = false;
+    }
   }
 
   Future<void> _loadCategories() async {

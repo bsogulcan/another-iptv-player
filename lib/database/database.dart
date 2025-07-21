@@ -1312,19 +1312,16 @@ class AppDatabase extends _$AppDatabase {
     return movieList.map((x) => VodStream.fromDriftVodStream(x)).toList();
   }
 
-  // M3uItem insert etme
   Future<int> insertM3uItem(M3uItem item) {
     return into(m3uItems).insert(item.toCompanion());
   }
 
-  // Birden fazla M3uItem insert etme
   Future<void> insertM3uItems(List<M3uItem> items) {
     return batch((batch) {
       batch.insertAll(m3uItems, items.map((item) => item.toCompanion()));
     });
   }
 
-  // M3uItem güncelleme
   Future<bool> updateM3uItem(M3uItem item) {
     return update(m3uItems).replace(item.toCompanion());
   }

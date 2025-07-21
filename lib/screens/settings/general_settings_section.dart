@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/screens/settings/subtitle_settings_section.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
@@ -102,8 +103,8 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                   );
                 },
               ),
-              const Divider(height: 1),
-              ListTile(
+              if (isXtreamCode) const Divider(height: 1),
+              if (isXtreamCode) ListTile(
                 leading: const Icon(Icons.refresh),
                 title: Text(context.loc.refresh_contents),
                 trailing: const Icon(Icons.cloud_download),
@@ -119,6 +120,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                   );
                 },
               ),
+
               const Divider(height: 1),
               DropdownTileWidget<Locale>(
                 icon: Icons.language,

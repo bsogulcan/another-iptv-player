@@ -38,6 +38,21 @@ class M3uRepository {
     return null;
   }
 
+  Future<List<M3uItem>?> getM3uItems({
+    int? top,
+    ContentType? contentType,
+  }) async {
+    var liveStreams = await _database.getM3uItemsByPlaylist(
+      _playlistId,
+    );
+
+    if (liveStreams.isNotEmpty) {
+      return liveStreams;
+    }
+    return null;
+  }
+
+
   Future<List<LiveStream>> searchLiveStreams(String query) async {
     return await _database.searchLiveStreams(_playlistId, query);
   }
