@@ -159,7 +159,7 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                                     ),
                                     Text(
                                       context.loc.episode_count(
-                                        allContents.length.toString(),
+                                        allContents.length,
                                       ),
                                       style: TextStyle(
                                         color: Colors.grey.shade600,
@@ -238,8 +238,7 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child:
-                    episode.cover != null
+                child: episode.cover != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -248,7 +247,7 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                           errorBuilder: (context, error, stackTrace) {
                             return Center(
                               child: Text(
-                                '${episode.episodeNumber}.Bolum',
+                                '${episode.episodeNumber}.${context.loc.episode_short}',
                                 style: TextStyle(
                                   color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold,
@@ -261,7 +260,7 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                       )
                     : Center(
                         child: Text(
-                          '${episode.episodeNumber}.Bolum',
+                          '${episode.episodeNumber}.${context.loc.episode_short}',
                           style: TextStyle(
                             color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.bold,

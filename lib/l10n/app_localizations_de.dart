@@ -491,4 +491,140 @@ class AppLocalizationsDe extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return 'Fehler beim Laden der Benutzerinformationen: $error';
   }
+
+  @override
+  String get m3u_playlist_title => 'Playlist mit M3U-Datei oder URL hinzufügen';
+
+  @override
+  String get m3u_playlist_description =>
+      'Unterstützt traditionelle M3U-Formatdateien';
+
+  @override
+  String get m3u_playlist => 'M3U-Playlist';
+
+  @override
+  String get m3u_playlist_load_description =>
+      'IPTV-Kanäle mit M3U-Playlist-Datei oder URL laden';
+
+  @override
+  String get playlist_name_hint => 'Playlist-Namen eingeben';
+
+  @override
+  String get playlist_name_min_length =>
+      'Playlist-Name muss mindestens 2 Zeichen haben';
+
+  @override
+  String get source_type => 'Quellentyp';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get file => 'Datei';
+
+  @override
+  String get m3u_url => 'M3U-URL';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => 'M3U-URL ist erforderlich';
+
+  @override
+  String get url_format_error => 'Gültiges URL-Format eingeben';
+
+  @override
+  String get url_scheme_error => 'URL muss mit http:// oder https:// beginnen';
+
+  @override
+  String get m3u_file => 'M3U-Datei';
+
+  @override
+  String get file_selected => 'Datei ausgewählt';
+
+  @override
+  String get select_m3u_file => 'M3U-Datei auswählen (.m3u, .m3u8)';
+
+  @override
+  String get please_select_m3u_file => 'Bitte eine M3U-Datei auswählen';
+
+  @override
+  String get file_selection_error => 'Fehler beim Auswählen der Datei';
+
+  @override
+  String get processing => 'Verarbeitung läuft...';
+
+  @override
+  String get create_playlist => 'Playlist erstellen';
+
+  @override
+  String get error_occurred_title => 'Fehler aufgetreten';
+
+  @override
+  String get m3u_info_message =>
+      'Alle Daten werden sicher auf Ihrem Gerät gespeichert.\nUnterstützte Formate: .m3u, .m3u8\nURL-Format: Muss mit http:// oder https:// beginnen';
+
+  @override
+  String get m3u_parse_error => 'M3U-Parsing-Fehler';
+
+  @override
+  String get loading_m3u => 'M3U wird geladen';
+
+  @override
+  String get preparing_m3u_exception_no_source => 'Keine M3U-Quelle gefunden';
+
+  @override
+  String get preparing_m3u_exception_empty => 'M3U-Datei ist leer';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'M3U-Parsing-Fehler: $error';
+  }
+
+  @override
+  String get not_categorized => 'Nicht kategorisiert';
+
+  @override
+  String get loading_lists => 'Listen werden geladen...';
+
+  @override
+  String get all => 'Alle';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'IPTV-Kanäle ($count)';
+  }
+
+  @override
+  String get unknown_channel => 'Unbekannter Kanal';
+
+  @override
+  String get live_content => 'LIVE';
+
+  @override
+  String get movie_content => 'FILM';
+
+  @override
+  String get series_content => 'SERIE';
+
+  @override
+  String get media_content => 'MEDIEN';
+
+  @override
+  String get m3u_error => 'M3U-Fehler';
+
+  @override
+  String get episode_short => 'Folge';
+
+  @override
+  String season_number(Object number) {
+    return '$number. Staffel';
+  }
+
+  @override
+  String get image_loading => 'Bild wird geladen...';
+
+  @override
+  String get image_not_found => 'Bild nicht gefunden';
 }

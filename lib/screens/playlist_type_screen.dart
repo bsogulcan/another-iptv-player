@@ -62,17 +62,15 @@ class PlaylistTypeScreen extends StatelessWidget {
                       _buildPlaylistTypeCard(
                         context,
                         title: 'M3U Playlist',
-                        subtitle: 'M3U dosyası veya URL ile playlist ekleyin',
-                        description:
-                            'Geleneksel M3U format dosyalarını destekler',
+                        subtitle: context.loc.m3u_playlist_title,
+                        description: context.loc.m3u_playlist_description,
                         icon: Icons.playlist_play,
                         color: Colors.green,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  NewM3uPlaylistScreen(),
+                              builder: (context) => NewM3uPlaylistScreen(),
                             ),
                           );
                         },

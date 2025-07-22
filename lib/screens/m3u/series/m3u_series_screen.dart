@@ -278,7 +278,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        "$season.Sezon",
+                        context.loc.season_number(season.toString()),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -354,17 +354,14 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          "$season.Season",
+                          context.loc.season_number(season.toString()),
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                       Text(
                         context.loc.episode_count(
-                          (getEpisodesBySeason(
-                            episodes,
-                            season,
-                          ).length).toString(),
+                          '${getEpisodesBySeason(episodes, season).length}',
                         ),
                         style: TextStyle(
                           color: Colors.grey.shade600,
@@ -431,7 +428,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                   episode.name,
                   episode.cover ?? "",
                   ContentType.series,
-                  season: episode.seasonNumber
+                  season: episode.seasonNumber,
                 ),
               ),
             ),
@@ -555,8 +552,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Görsel yükleniyor...',
-                      // Bu string için de localization ekleyebiliriz
+                      context.loc.image_loading,
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14,
@@ -594,7 +590,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Görsel Bulunamadı',
+              context.loc.image_not_found,
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 16,

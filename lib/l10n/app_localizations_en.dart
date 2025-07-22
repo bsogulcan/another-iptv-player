@@ -484,4 +484,140 @@ class AppLocalizationsEn extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return 'Error loading user information: $error';
   }
+
+  @override
+  String get m3u_playlist_title => 'Add playlist with M3U file or URL';
+
+  @override
+  String get m3u_playlist_description =>
+      'Supports traditional M3U format files';
+
+  @override
+  String get m3u_playlist => 'M3U Playlist';
+
+  @override
+  String get m3u_playlist_load_description =>
+      'Load IPTV channels with M3U playlist file or URL';
+
+  @override
+  String get playlist_name_hint => 'Enter playlist name';
+
+  @override
+  String get playlist_name_min_length =>
+      'Playlist name must be at least 2 characters';
+
+  @override
+  String get source_type => 'Source Type';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get file => 'File';
+
+  @override
+  String get m3u_url => 'M3U URL';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => 'M3U URL is required';
+
+  @override
+  String get url_format_error => 'Enter a valid URL format';
+
+  @override
+  String get url_scheme_error => 'URL must start with http:// or https://';
+
+  @override
+  String get m3u_file => 'M3U File';
+
+  @override
+  String get file_selected => 'File selected';
+
+  @override
+  String get select_m3u_file => 'Select M3U file (.m3u, .m3u8)';
+
+  @override
+  String get please_select_m3u_file => 'Please select an M3U file';
+
+  @override
+  String get file_selection_error => 'Error occurred while selecting file';
+
+  @override
+  String get processing => 'Processing...';
+
+  @override
+  String get create_playlist => 'Create Playlist';
+
+  @override
+  String get error_occurred_title => 'Error Occurred';
+
+  @override
+  String get m3u_info_message =>
+      'All data is securely stored on your device.\nSupported formats: .m3u, .m3u8\nURL format: Must start with http:// or https://';
+
+  @override
+  String get m3u_parse_error => 'M3U parsing error';
+
+  @override
+  String get loading_m3u => 'Loading M3U';
+
+  @override
+  String get preparing_m3u_exception_no_source => 'No M3U source found';
+
+  @override
+  String get preparing_m3u_exception_empty => 'M3U file is empty';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'M3U parsing error: $error';
+  }
+
+  @override
+  String get not_categorized => 'Uncategorized';
+
+  @override
+  String get loading_lists => 'Loading Lists...';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'IPTV Channels ($count)';
+  }
+
+  @override
+  String get unknown_channel => 'Unknown Channel';
+
+  @override
+  String get live_content => 'LIVE';
+
+  @override
+  String get movie_content => 'MOVIE';
+
+  @override
+  String get series_content => 'SERIES';
+
+  @override
+  String get media_content => 'MEDIA';
+
+  @override
+  String get m3u_error => 'M3U Error';
+
+  @override
+  String get episode_short => 'Ep';
+
+  @override
+  String season_number(Object number) {
+    return '$number. Season';
+  }
+
+  @override
+  String get image_loading => 'Loading image...';
+
+  @override
+  String get image_not_found => 'Image Not Found';
 }

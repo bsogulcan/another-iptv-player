@@ -2,6 +2,7 @@ import 'package:another_iptv_player/controllers/m3u_controller.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_data_loader_screen.dart';
 import 'package:another_iptv_player/services/m3u_parser.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
@@ -83,7 +84,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Dosya seçilirken hata oluştu')));
+      ).showSnackBar(SnackBar(content: Text(context.loc.file_selection_error)));
     }
   }
 
@@ -93,7 +94,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text('M3U Playlist')),
+      appBar: AppBar(title: Text(context.loc.m3u_playlist)),
       body: Consumer<PlaylistController>(
         builder: (context, controller, child) {
           return SingleChildScrollView(
@@ -144,7 +145,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
         ),
         SizedBox(height: 16),
         Text(
-          'M3U Playlist',
+          context.loc.m3u_playlist,
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -153,7 +154,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
         ),
         SizedBox(height: 8),
         Text(
-          'M3U playlist dosyası veya URL\'si ile IPTV kanallarını yükleyin',
+          context.loc.m3u_playlist_load_description,
           style: TextStyle(
             fontSize: 16,
             color: colorScheme.onSurface.withOpacity(0.7),
@@ -168,7 +169,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Playlist Adı',
+          context.loc.playlist_name,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -179,7 +180,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
         TextFormField(
           controller: _nameController,
           decoration: InputDecoration(
-            hintText: 'Playlist adını girin',
+            hintText: context.loc.playlist_name_hint,
             prefixIcon: Icon(Icons.playlist_add, color: colorScheme.primary),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -194,10 +195,10 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'Playlist adı gereklidir';
+              return context.loc.playlist_name_required;
             }
             if (value.trim().length < 2) {
-              return 'Playlist adı en az 2 karakter olmalıdır';
+              return context.loc.playlist_name_min_length;
             }
             return null;
           },
@@ -211,7 +212,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Kaynak Türü',
+          context.loc.source_type,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -251,7 +252,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'URL',
+                          context.loc.url,
                           style: TextStyle(
                             color: _isUrlSource
                                 ? colorScheme.onPrimary
@@ -290,7 +291,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Dosya',
+                          context.loc.file,
                           style: TextStyle(
                             color: !_isUrlSource
                                 ? colorScheme.onPrimary
@@ -315,7 +316,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'M3U URL',
+          context.loc.m3u_url,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -327,7 +328,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
           controller: _urlController,
           keyboardType: TextInputType.url,
           decoration: InputDecoration(
-            hintText: 'http://example.com/playlist.m3u',
+            hintText: context.loc.m3u_url_hint,
             prefixIcon: Icon(Icons.link, color: colorScheme.primary),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -342,16 +343,16 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
           ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return 'M3U URL gereklidir';
+              return context.loc.m3u_url_required;
             }
 
             final uri = Uri.tryParse(value.trim());
             if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-              return 'Geçerli bir URL formatı girin';
+              return context.loc.url_format_error;
             }
 
             if (!['http', 'https'].contains(uri.scheme)) {
-              return 'URL http:// veya https:// ile başlamalıdır';
+              return context.loc.url_scheme_error;
             }
 
             return null;
@@ -366,7 +367,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'M3U Dosyası',
+          context.loc.m3u_file,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -396,8 +397,8 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
                 Expanded(
                   child: Text(
                     _selectedFilePath != null
-                        ? _selectedFileName ?? 'Dosya seçildi'
-                        : 'M3U dosyası seçin (.m3u, .m3u8)',
+                        ? _selectedFileName ?? context.loc.file_selected
+                        : context.loc.select_m3u_file,
                     style: TextStyle(
                       color: _selectedFilePath != null
                           ? colorScheme.onSurface
@@ -418,7 +419,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
           Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
-              'Lütfen bir M3U dosyası seçin',
+              context.loc.please_select_m3u_file,
               style: TextStyle(color: colorScheme.error, fontSize: 12),
             ),
           ),
@@ -461,7 +462,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
                   ),
                   SizedBox(width: 12),
                   Text(
-                    'İşlem yapılıyor...',
+                    context.loc.processing,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -472,7 +473,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
                   Icon(Icons.save, size: 20),
                   SizedBox(width: 8),
                   Text(
-                    'Playlist Oluştur',
+                    context.loc.create_playlist,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -498,7 +499,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hata Oluştu',
+                  context.loc.error_occurred_title,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onErrorContainer,
@@ -536,7 +537,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
               Icon(Icons.info_outline, color: colorScheme.primary, size: 20),
               SizedBox(width: 8),
               Text(
-                'Bilgi',
+                context.loc.info,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onPrimaryContainer,
@@ -546,7 +547,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            'Tüm veriler cihazınızda güvenli şekilde saklanır.\nDesteklenen formatlar: .m3u, .m3u8\nURL formatı: http:// veya https:// ile başlamalıdır.',
+            context.loc.m3u_info_message,
             style: TextStyle(
               color: colorScheme.onPrimaryContainer,
               fontSize: 13,
@@ -587,7 +588,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       }
 
       if (m3uItems.length == 0) {
-        playlistController.setError('M3U Error');
+        playlistController.setError(context.loc.m3u_error);
         return;
       }
 

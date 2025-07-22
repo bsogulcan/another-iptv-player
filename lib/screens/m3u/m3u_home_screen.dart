@@ -75,7 +75,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text('Listeler Yükleniyor...'),
+            Text(context.loc.loading_lists),
           ],
         ),
       ),
@@ -125,12 +125,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
       floating: true,
       snap: true,
       elevation: 0,
-      actions: [
-        IconButton(
-          onPressed: () => UserPreferences.removeLastPlaylist(),
-          icon: Icon(Icons.exit_to_app),
-        ),
-      ],
+      actions: [],
     );
   }
 
@@ -181,7 +176,10 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
         icon: Icon(Icons.history),
         label: context.loc.history,
       ),
-      BottomNavigationBarItem(icon: Icon(Icons.all_inbox), label: 'All'),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.all_inbox),
+        label: context.loc.all,
+      ),
       BottomNavigationBarItem(
         icon: Icon(Icons.live_tv),
         label: context.loc.live,
