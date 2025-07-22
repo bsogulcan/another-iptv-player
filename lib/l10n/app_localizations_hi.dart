@@ -484,4 +484,140 @@ class AppLocalizationsHi extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return 'उपयोगकर्ता की जानकारी लोड करने में त्रुटि: $error';
   }
+
+  @override
+  String get m3u_playlist_title => 'M3U फ़ाइल या URL के साथ प्लेलिस्ट जोड़ें';
+
+  @override
+  String get m3u_playlist_description =>
+      'पारंपरिक M3U प्रारूप फ़ाइलों का समर्थन करता है';
+
+  @override
+  String get m3u_playlist => 'M3U प्लेलिस्ट';
+
+  @override
+  String get m3u_playlist_load_description =>
+      'M3U प्लेलिस्ट फ़ाइल या URL के साथ IPTV चैनल लोड करें';
+
+  @override
+  String get playlist_name_hint => 'प्लेलिस्ट का नाम दर्ज करें';
+
+  @override
+  String get playlist_name_min_length =>
+      'प्लेलिस्ट का नाम कम से कम 2 अक्षर का होना चाहिए';
+
+  @override
+  String get source_type => 'स्रोत प्रकार';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get file => 'फ़ाइल';
+
+  @override
+  String get m3u_url => 'M3U URL';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => 'M3U URL आवश्यक है';
+
+  @override
+  String get url_format_error => 'एक वैध URL प्रारूप दर्ज करें';
+
+  @override
+  String get url_scheme_error => 'URL http:// या https:// से शुरू होना चाहिए';
+
+  @override
+  String get m3u_file => 'M3U फ़ाइल';
+
+  @override
+  String get file_selected => 'फ़ाइल चुनी गई';
+
+  @override
+  String get select_m3u_file => 'M3U फ़ाइल चुनें (.m3u, .m3u8)';
+
+  @override
+  String get please_select_m3u_file => 'कृपया एक M3U फ़ाइल चुनें';
+
+  @override
+  String get file_selection_error => 'फ़ाइल चुनने में त्रुटि हुई';
+
+  @override
+  String get processing => 'प्रसंस्करण...';
+
+  @override
+  String get create_playlist => 'प्लेलिस्ट बनाएं';
+
+  @override
+  String get error_occurred_title => 'त्रुटि हुई';
+
+  @override
+  String get m3u_info_message =>
+      'सभी डेटा आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है।\nसमर्थित प्रारूप: .m3u, .m3u8\nURL प्रारूप: http:// या https:// से शुरू होना चाहिए';
+
+  @override
+  String get m3u_parse_error => 'M3U पार्सिंग त्रुटि';
+
+  @override
+  String get loading_m3u => 'M3U लोड हो रहा है';
+
+  @override
+  String get preparing_m3u_exception_no_source => 'कोई M3U स्रोत नहीं मिला';
+
+  @override
+  String get preparing_m3u_exception_empty => 'M3U फ़ाइल खाली है';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'M3U पार्सिंग त्रुटि: $error';
+  }
+
+  @override
+  String get not_categorized => 'बिना श्रेणी';
+
+  @override
+  String get loading_lists => 'सूचियां लोड हो रही हैं...';
+
+  @override
+  String get all => 'सभी';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'IPTV चैनल ($count)';
+  }
+
+  @override
+  String get unknown_channel => 'अज्ञात चैनल';
+
+  @override
+  String get live_content => 'लाइव';
+
+  @override
+  String get movie_content => 'फिल्म';
+
+  @override
+  String get series_content => 'सीरीज';
+
+  @override
+  String get media_content => 'मीडिया';
+
+  @override
+  String get m3u_error => 'M3U त्रुटि';
+
+  @override
+  String get episode_short => 'एप';
+
+  @override
+  String season_number(Object number) {
+    return 'सीजन $number';
+  }
+
+  @override
+  String get image_loading => 'चित्र लोड हो रहा है...';
+
+  @override
+  String get image_not_found => 'चित्र नहीं मिला';
 }

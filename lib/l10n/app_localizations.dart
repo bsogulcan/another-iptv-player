@@ -995,6 +995,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error loading user information: {error}'**
   String preparing_user_info_exception_2(Object error);
+
+  /// No description provided for @m3u_playlist_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add playlist with M3U file or URL'**
+  String get m3u_playlist_title;
+
+  /// No description provided for @m3u_playlist_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Supports traditional M3U format files'**
+  String get m3u_playlist_description;
+
+  /// No description provided for @m3u_playlist.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U Playlist'**
+  String get m3u_playlist;
+
+  /// No description provided for @m3u_playlist_load_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Load IPTV channels with M3U playlist file or URL'**
+  String get m3u_playlist_load_description;
+
+  /// No description provided for @playlist_name_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter playlist name'**
+  String get playlist_name_hint;
+
+  /// No description provided for @playlist_name_min_length.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist name must be at least 2 characters'**
+  String get playlist_name_min_length;
+
+  /// No description provided for @source_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Source Type'**
+  String get source_type;
+
+  /// No description provided for @url.
+  ///
+  /// In en, this message translates to:
+  /// **'URL'**
+  String get url;
+
+  /// No description provided for @file.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get file;
+
+  /// No description provided for @m3u_url.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U URL'**
+  String get m3u_url;
+
+  /// No description provided for @m3u_url_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'http://example.com/playlist.m3u'**
+  String get m3u_url_hint;
+
+  /// No description provided for @m3u_url_required.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U URL is required'**
+  String get m3u_url_required;
+
+  /// No description provided for @url_format_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid URL format'**
+  String get url_format_error;
+
+  /// No description provided for @url_scheme_error.
+  ///
+  /// In en, this message translates to:
+  /// **'URL must start with http:// or https://'**
+  String get url_scheme_error;
+
+  /// No description provided for @m3u_file.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U File'**
+  String get m3u_file;
+
+  /// No description provided for @file_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'File selected'**
+  String get file_selected;
+
+  /// No description provided for @select_m3u_file.
+  ///
+  /// In en, this message translates to:
+  /// **'Select M3U file (.m3u, .m3u8)'**
+  String get select_m3u_file;
+
+  /// No description provided for @please_select_m3u_file.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select an M3U file'**
+  String get please_select_m3u_file;
+
+  /// No description provided for @file_selection_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Error occurred while selecting file'**
+  String get file_selection_error;
+
+  /// No description provided for @processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get processing;
+
+  /// No description provided for @create_playlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Playlist'**
+  String get create_playlist;
+
+  /// No description provided for @error_occurred_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Error Occurred'**
+  String get error_occurred_title;
+
+  /// No description provided for @m3u_info_message.
+  ///
+  /// In en, this message translates to:
+  /// **'All data is securely stored on your device.\nSupported formats: .m3u, .m3u8\nURL format: Must start with http:// or https://'**
+  String get m3u_info_message;
+
+  /// No description provided for @m3u_parse_error.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U parsing error'**
+  String get m3u_parse_error;
+
+  /// No description provided for @loading_m3u.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading M3U'**
+  String get loading_m3u;
+
+  /// No description provided for @preparing_m3u_exception_no_source.
+  ///
+  /// In en, this message translates to:
+  /// **'No M3U source found'**
+  String get preparing_m3u_exception_no_source;
+
+  /// No description provided for @preparing_m3u_exception_empty.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U file is empty'**
+  String get preparing_m3u_exception_empty;
+
+  /// No description provided for @preparing_m3u_exception_parse.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U parsing error: {error}'**
+  String preparing_m3u_exception_parse(Object error);
+
+  /// No description provided for @not_categorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get not_categorized;
+
+  /// No description provided for @loading_lists.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Lists...'**
+  String get loading_lists;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @iptv_channels_count.
+  ///
+  /// In en, this message translates to:
+  /// **'IPTV Channels ({count})'**
+  String iptv_channels_count(Object count);
+
+  /// No description provided for @unknown_channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Channel'**
+  String get unknown_channel;
+
+  /// No description provided for @live_content.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE'**
+  String get live_content;
+
+  /// No description provided for @movie_content.
+  ///
+  /// In en, this message translates to:
+  /// **'MOVIE'**
+  String get movie_content;
+
+  /// No description provided for @series_content.
+  ///
+  /// In en, this message translates to:
+  /// **'SERIES'**
+  String get series_content;
+
+  /// No description provided for @media_content.
+  ///
+  /// In en, this message translates to:
+  /// **'MEDIA'**
+  String get media_content;
+
+  /// No description provided for @m3u_error.
+  ///
+  /// In en, this message translates to:
+  /// **'M3U Error'**
+  String get m3u_error;
+
+  /// No description provided for @episode_short.
+  ///
+  /// In en, this message translates to:
+  /// **'Ep'**
+  String get episode_short;
+
+  /// No description provided for @season_number.
+  ///
+  /// In en, this message translates to:
+  /// **'{number}. Season'**
+  String season_number(Object number);
+
+  /// No description provided for @image_loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading image...'**
+  String get image_loading;
+
+  /// No description provided for @image_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Not Found'**
+  String get image_not_found;
 }
 
 class _AppLocalizationsDelegate

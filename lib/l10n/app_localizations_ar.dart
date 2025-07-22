@@ -484,4 +484,139 @@ class AppLocalizationsAr extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return 'خطأ في تحميل معلومات المستخدم: $error';
   }
+
+  @override
+  String get m3u_playlist_title => 'إضافة قائمة تشغيل بملف M3U أو رابط';
+
+  @override
+  String get m3u_playlist_description => 'يدعم ملفات تنسيق M3U التقليدية';
+
+  @override
+  String get m3u_playlist => 'قائمة تشغيل M3U';
+
+  @override
+  String get m3u_playlist_load_description =>
+      'تحميل قنوات IPTV بملف قائمة تشغيل M3U أو رابط';
+
+  @override
+  String get playlist_name_hint => 'أدخل اسم قائمة التشغيل';
+
+  @override
+  String get playlist_name_min_length =>
+      'يجب أن يكون اسم قائمة التشغيل على الأقل حرفين';
+
+  @override
+  String get source_type => 'نوع المصدر';
+
+  @override
+  String get url => 'رابط';
+
+  @override
+  String get file => 'ملف';
+
+  @override
+  String get m3u_url => 'رابط M3U';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => 'رابط M3U مطلوب';
+
+  @override
+  String get url_format_error => 'أدخل تنسيق رابط صحيح';
+
+  @override
+  String get url_scheme_error => 'يجب أن يبدأ الرابط بـ http:// أو https://';
+
+  @override
+  String get m3u_file => 'ملف M3U';
+
+  @override
+  String get file_selected => 'تم اختيار الملف';
+
+  @override
+  String get select_m3u_file => 'اختر ملف M3U (.m3u, .m3u8)';
+
+  @override
+  String get please_select_m3u_file => 'يرجى اختيار ملف M3U';
+
+  @override
+  String get file_selection_error => 'حدث خطأ أثناء اختيار الملف';
+
+  @override
+  String get processing => 'جاري المعالجة...';
+
+  @override
+  String get create_playlist => 'إنشاء قائمة التشغيل';
+
+  @override
+  String get error_occurred_title => 'حدث خطأ';
+
+  @override
+  String get m3u_info_message =>
+      'جميع البيانات محفوظة بأمان على جهازك.\nالتنسيقات المدعومة: .m3u, .m3u8\nتنسيق الرابط: يجب أن يبدأ بـ http:// أو https://';
+
+  @override
+  String get m3u_parse_error => 'خطأ في تحليل M3U';
+
+  @override
+  String get loading_m3u => 'تحميل M3U';
+
+  @override
+  String get preparing_m3u_exception_no_source => 'لم يتم العثور على مصدر M3U';
+
+  @override
+  String get preparing_m3u_exception_empty => 'ملف M3U فارغ';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'خطأ في تحليل M3U: $error';
+  }
+
+  @override
+  String get not_categorized => 'غير مصنف';
+
+  @override
+  String get loading_lists => 'تحميل القوائم...';
+
+  @override
+  String get all => 'الكل';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'قنوات IPTV ($count)';
+  }
+
+  @override
+  String get unknown_channel => 'قناة غير معروفة';
+
+  @override
+  String get live_content => 'مباشر';
+
+  @override
+  String get movie_content => 'فيلم';
+
+  @override
+  String get series_content => 'مسلسل';
+
+  @override
+  String get media_content => 'وسائط';
+
+  @override
+  String get m3u_error => 'خطأ M3U';
+
+  @override
+  String get episode_short => 'حلقة';
+
+  @override
+  String season_number(Object number) {
+    return 'الموسم $number';
+  }
+
+  @override
+  String get image_loading => 'تحميل الصورة...';
+
+  @override
+  String get image_not_found => 'الصورة غير موجودة';
 }

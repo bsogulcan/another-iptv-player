@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../models/playlist_content_model.dart';
 import '../../widgets/player_widget.dart';
 

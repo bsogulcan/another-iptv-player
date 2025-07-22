@@ -483,4 +483,140 @@ class AppLocalizationsTr extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return 'Kullanıcı bilgileri yüklenirken hata: $error';
   }
+
+  @override
+  String get m3u_playlist_title => 'M3U dosyası veya URL ile playlist ekle';
+
+  @override
+  String get m3u_playlist_description =>
+      'Geleneksel M3U format dosyalarını destekler';
+
+  @override
+  String get m3u_playlist => 'M3U Playlist';
+
+  @override
+  String get m3u_playlist_load_description =>
+      'M3U playlist dosyası veya URL\'si ile IPTV kanallarını yükleyin';
+
+  @override
+  String get playlist_name_hint => 'Playlist adını girin';
+
+  @override
+  String get playlist_name_min_length =>
+      'Playlist adı en az 2 karakter olmalıdır';
+
+  @override
+  String get source_type => 'Kaynak Türü';
+
+  @override
+  String get url => 'URL';
+
+  @override
+  String get file => 'Dosya';
+
+  @override
+  String get m3u_url => 'M3U URL';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => 'M3U URL gereklidir';
+
+  @override
+  String get url_format_error => 'Geçerli bir URL formatı girin';
+
+  @override
+  String get url_scheme_error => 'URL http:// veya https:// ile başlamalıdır';
+
+  @override
+  String get m3u_file => 'M3U Dosyası';
+
+  @override
+  String get file_selected => 'Dosya seçildi';
+
+  @override
+  String get select_m3u_file => 'M3U dosyası seçin (.m3u, .m3u8)';
+
+  @override
+  String get please_select_m3u_file => 'Lütfen bir M3U dosyası seçin';
+
+  @override
+  String get file_selection_error => 'Dosya seçilirken hata oluştu';
+
+  @override
+  String get processing => 'İşlem yapılıyor...';
+
+  @override
+  String get create_playlist => 'Playlist Oluştur';
+
+  @override
+  String get error_occurred_title => 'Hata Oluştu';
+
+  @override
+  String get m3u_info_message =>
+      'Tüm veriler cihazınızda güvenli şekilde saklanır.\nDesteklenen formatlar: .m3u, .m3u8\nURL formatı: http:// veya https:// ile başlamalıdır';
+
+  @override
+  String get m3u_parse_error => 'M3U ayrıştırma hatası';
+
+  @override
+  String get loading_m3u => 'M3U Yükleniyor';
+
+  @override
+  String get preparing_m3u_exception_no_source => 'M3U kaynağı bulunamadı';
+
+  @override
+  String get preparing_m3u_exception_empty => 'M3U dosyası boş';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'M3U ayrıştırma hatası: $error';
+  }
+
+  @override
+  String get not_categorized => 'Kategorilendirilmemiş';
+
+  @override
+  String get loading_lists => 'Listeler Yükleniyor...';
+
+  @override
+  String get all => 'Tümü';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'IPTV Kanalları ($count)';
+  }
+
+  @override
+  String get unknown_channel => 'Bilinmeyen Kanal';
+
+  @override
+  String get live_content => 'CANLI';
+
+  @override
+  String get movie_content => 'FİLM';
+
+  @override
+  String get series_content => 'DİZİ';
+
+  @override
+  String get media_content => 'MEDYA';
+
+  @override
+  String get m3u_error => 'M3U Hatası';
+
+  @override
+  String get episode_short => 'Bölüm';
+
+  @override
+  String season_number(Object number) {
+    return '$number. Sezon';
+  }
+
+  @override
+  String get image_loading => 'Görsel yükleniyor...';
+
+  @override
+  String get image_not_found => 'Görsel Bulunamadı';
 }

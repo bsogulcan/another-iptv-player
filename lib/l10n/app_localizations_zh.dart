@@ -471,4 +471,137 @@ class AppLocalizationsZh extends AppLocalizations {
   String preparing_user_info_exception_2(Object error) {
     return '加载用户信息时出错：$error';
   }
+
+  @override
+  String get m3u_playlist_title => '使用M3U文件或URL添加播放列表';
+
+  @override
+  String get m3u_playlist_description => '支持传统M3U格式文件';
+
+  @override
+  String get m3u_playlist => 'M3U播放列表';
+
+  @override
+  String get m3u_playlist_load_description => '使用M3U播放列表文件或URL加载IPTV频道';
+
+  @override
+  String get playlist_name_hint => '输入播放列表名称';
+
+  @override
+  String get playlist_name_min_length => '播放列表名称至少需要2个字符';
+
+  @override
+  String get source_type => '源类型';
+
+  @override
+  String get url => '网址';
+
+  @override
+  String get file => '文件';
+
+  @override
+  String get m3u_url => 'M3U网址';
+
+  @override
+  String get m3u_url_hint => 'http://example.com/playlist.m3u';
+
+  @override
+  String get m3u_url_required => '需要M3U网址';
+
+  @override
+  String get url_format_error => '请输入有效的网址格式';
+
+  @override
+  String get url_scheme_error => '网址必须以http://或https://开头';
+
+  @override
+  String get m3u_file => 'M3U文件';
+
+  @override
+  String get file_selected => '文件已选择';
+
+  @override
+  String get select_m3u_file => '选择M3U文件（.m3u, .m3u8）';
+
+  @override
+  String get please_select_m3u_file => '请选择一个M3U文件';
+
+  @override
+  String get file_selection_error => '选择文件时出错';
+
+  @override
+  String get processing => '正在处理...';
+
+  @override
+  String get create_playlist => '创建播放列表';
+
+  @override
+  String get error_occurred_title => '发生错误';
+
+  @override
+  String get m3u_info_message =>
+      '所有数据都安全存储在您的设备上。\n支持的格式：.m3u, .m3u8\n网址格式：必须以http://或https://开头';
+
+  @override
+  String get m3u_parse_error => 'M3U解析错误';
+
+  @override
+  String get loading_m3u => '正在加载M3U';
+
+  @override
+  String get preparing_m3u_exception_no_source => '未找到M3U源';
+
+  @override
+  String get preparing_m3u_exception_empty => 'M3U文件为空';
+
+  @override
+  String preparing_m3u_exception_parse(Object error) {
+    return 'M3U解析错误：$error';
+  }
+
+  @override
+  String get not_categorized => '未分类';
+
+  @override
+  String get loading_lists => '正在加载列表...';
+
+  @override
+  String get all => '全部';
+
+  @override
+  String iptv_channels_count(Object count) {
+    return 'IPTV频道（$count）';
+  }
+
+  @override
+  String get unknown_channel => '未知频道';
+
+  @override
+  String get live_content => '直播';
+
+  @override
+  String get movie_content => '电影';
+
+  @override
+  String get series_content => '剧集';
+
+  @override
+  String get media_content => '媒体';
+
+  @override
+  String get m3u_error => 'M3U错误';
+
+  @override
+  String get episode_short => '集';
+
+  @override
+  String season_number(Object number) {
+    return '第$number季';
+  }
+
+  @override
+  String get image_loading => '正在加载图片...';
+
+  @override
+  String get image_not_found => '图片未找到';
 }

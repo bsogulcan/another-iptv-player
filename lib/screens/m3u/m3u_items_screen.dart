@@ -86,7 +86,7 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
                 ),
                 onChanged: _filterItems,
               )
-            : Text('IPTV Kanalları (${filteredItems.length})'),
+            : Text(context.loc.iptv_channels_count(filteredItems.length)),
         actions: [
           IconButton(
             icon: Icon(isSearching ? Icons.close : Icons.search),
@@ -180,7 +180,7 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  channel.name ?? 'Bilinmeyen Kanal',
+                                  channel.name ?? context.loc.unknown_channel,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
@@ -314,13 +314,13 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
   String _getContentTypeText(M3uItem channel) {
     switch (channel.contentType) {
       case ContentType.liveStream:
-        return 'CANLI';
+        return context.loc.live_content;
       case ContentType.vod:
-        return 'FİLM';
+        return context.loc.movie_content;
       case ContentType.series:
-        return 'DİZİ';
+        return context.loc.series_content;
       default:
-        return 'MEDYA';
+        return context.loc.media_content;
     }
   }
 
