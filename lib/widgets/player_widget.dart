@@ -5,10 +5,10 @@ import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
-import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 import 'package:media_kit_video/media_kit_video.dart';
@@ -16,7 +16,6 @@ import '../../models/content_type.dart';
 import '../../services/player_state.dart';
 import '../../services/service_locator.dart';
 import '../../utils/audio_handler.dart';
-import '../../utils/build_media_url.dart';
 
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
@@ -46,6 +45,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   late StreamSubscription audioTrackSubscription;
   late StreamSubscription subtitleTrackSubscription;
   late StreamSubscription contentItemIndexChangedSubscription;
+  late StreamSubscription _connectivitySubscription;
 
   late Player _player;
   VideoController? _videoController;
@@ -64,7 +64,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     contentItem = widget.contentItem;
     _queue = widget.queue;
     PlayerState.title = widget.contentItem.name;
-    _player = Player(configuration: PlayerConfiguration(osc: false));
+    _player = Player(configuration: PlayerConfiguration());
     watchHistoryService = WatchHistoryService();
 
     super.initState();
@@ -101,6 +101,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     audioTrackSubscription.cancel();
     subtitleTrackSubscription.cancel();
     contentItemIndexChangedSubscription.cancel();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -120,6 +121,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     List<MediaItem> mediaItems = [];
     var currentItemIndex = 0;
+    ContentItem? liveStreamContentItem = null;
 
     if (_queue != null) {
       for (int i = 0; i < _queue!.length; i++) {
@@ -147,21 +149,48 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
         if (item.id == contentItem.id) {
           currentItemIndex = i;
+
+          if (contentItem.contentType == ContentType.liveStream) {
+            liveStreamContentItem = item;
+            currentItemIndex = 0;
+            contentItem = item;
+
+            mediaItems.add(
+              MediaItem(
+                id: item.id.toString(),
+                title: item.name,
+                artist: _getContentTypeDisplayName(),
+                album: AppState.currentPlaylist?.name ?? '',
+                artUri: item.imagePath != null
+                    ? Uri.parse(item.imagePath!)
+                    : null,
+                playable: true,
+                extras: {'url': item.url, 'startPosition': 0},
+              ),
+            );
+
+            EventBus().emit('player_content_item', item);
+            EventBus().emit('player_content_item_index', i);
+          }
         }
       }
 
       await _audioHandler.setQueue(mediaItems, initialIndex: currentItemIndex);
 
-      var playlist = mediaItems.map((mediaItem) {
-        final url = mediaItem.extras!['url'] as String;
-        final startMs = mediaItem.extras!['startPosition'] as int;
-        return Media(url, start: Duration(milliseconds: startMs));
-      }).toList();
+      if (contentItem.contentType != ContentType.liveStream) {
+        var playlist = mediaItems.map((mediaItem) {
+          final url = mediaItem.extras!['url'] as String;
+          final startMs = mediaItem.extras!['startPosition'] as int;
+          return Media(url, start: Duration(milliseconds: startMs));
+        }).toList();
 
-      await _player.open(
-        Playlist(playlist, index: currentItemIndex),
-        play: true,
-      );
+        await _player.open(
+          Playlist(playlist, index: currentItemIndex),
+          play: true,
+        );
+      } else {
+        await _player.open(Media(liveStreamContentItem!.url));
+      }
     } else {
       final mediaItem = MediaItem(
         id: contentItem.id.toString(),
@@ -176,6 +205,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
         },
       );
 
+      if (contentItem.contentType == ContentType.liveStream) {
+        liveStreamContentItem = contentItem;
+      }
+
       await _audioHandler.setQueue([mediaItem]);
 
       await _player.open(
@@ -188,6 +221,23 @@ class _PlayerWidgetState extends State<PlayerWidget>
         play: true,
       );
     }
+
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      result,
+    ) async {
+      bool hasConnection = result.any(
+        (connectivity) =>
+            connectivity == ConnectivityResult.mobile ||
+            connectivity == ConnectivityResult.wifi ||
+            connectivity == ConnectivityResult.ethernet,
+      );
+
+      if (hasConnection &&
+          contentItem.contentType == ContentType.liveStream &&
+          liveStreamContentItem != null) {
+        await _player.open(Media(liveStreamContentItem.url));
+      }
+    });
 
     _player.stream.tracks.listen((event) async {
       if (!mounted) return;
@@ -267,6 +317,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     _player.stream.playlist.listen((playlist) {
       if (!mounted) return;
+
+      if (contentItem.contentType == ContentType.liveStream) {
+        return;
+      }
+
       currentItemIndex = playlist.index;
       contentItem = _queue?[playlist.index] ?? widget.contentItem;
       PlayerState.title = contentItem.name;
@@ -276,8 +331,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     contentItemIndexChangedSubscription = EventBus()
         .on<int>('player_content_item_index_changed')
-        .listen((int index) {
-          _player.jump(index);
+        .listen((int index) async {
+          if (contentItem.contentType == ContentType.liveStream) {
+            final item = _queue![index];
+            contentItem = item;
+            await _player.open(Playlist([Media(item.url)]), play: true);
+            EventBus().emit('player_content_item', item);
+            EventBus().emit('player_content_item_index', index);
+          } else {
+            _player.jump(index);
+          }
         });
 
     if (mounted) {

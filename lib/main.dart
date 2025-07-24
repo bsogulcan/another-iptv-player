@@ -12,6 +12,7 @@ import 'utils/app_themes.dart';
 
 Future<void> main() async {
   await setupServiceLocator();
+  await UserPreferences.removeLastPlaylist();
   runApp(
     MultiProvider(
       providers: [
