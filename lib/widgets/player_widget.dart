@@ -57,6 +57,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool isLoading = true;
   bool hasError = false;
   String errorMessage = '';
+  bool _wasDisconnected = false;
+  bool _isFirstCheck = true;
 
   @override
   void initState() {
@@ -223,19 +225,57 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      result,
+      List<ConnectivityResult> results,
     ) async {
-      bool hasConnection = result.any(
+      bool hasConnection = results.any(
         (connectivity) =>
             connectivity == ConnectivityResult.mobile ||
             connectivity == ConnectivityResult.wifi ||
             connectivity == ConnectivityResult.ethernet,
       );
 
-      if (hasConnection &&
-          contentItem.contentType == ContentType.liveStream &&
-          liveStreamContentItem != null) {
-        await _player.open(Media(liveStreamContentItem.url));
+      if (_isFirstCheck) {
+        final currentConnectivity = await Connectivity().checkConnectivity();
+        hasConnection = currentConnectivity.any(
+          (connectivity) =>
+              connectivity == ConnectivityResult.mobile ||
+              connectivity == ConnectivityResult.wifi ||
+              connectivity == ConnectivityResult.ethernet,
+        );
+        _isFirstCheck = false;
+      }
+
+      if (hasConnection) {
+        if (_wasDisconnected &&
+            contentItem.contentType == ContentType.liveStream &&
+            liveStreamContentItem != null &&
+            liveStreamContentItem!.url.isNotEmpty) {
+          try {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Online", style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // TODO: Implement watch history duration for vod and series
+            await _player.open(Media(liveStreamContentItem.url));
+          } catch (e) {
+            print('Error opening media: $e');
+          }
+        }
+        _wasDisconnected = false;
+      } else {
+        _wasDisconnected = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "No Connection",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     });
 
