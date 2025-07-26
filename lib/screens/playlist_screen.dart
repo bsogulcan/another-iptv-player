@@ -1,5 +1,6 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/playlist_controller.dart';
 import '../../models/playlist_model.dart';
@@ -24,13 +25,43 @@ class PlaylistScreenState extends State<PlaylistScreen> {
   }
 }
 
-class _PlaylistScreenBody extends StatelessWidget {
+class _PlaylistScreenBody extends StatefulWidget {
+  @override
+  _PlaylistScreenBodyState createState() => _PlaylistScreenBodyState();
+}
+
+class _PlaylistScreenBodyState extends State<_PlaylistScreenBody> {
+  final FocusNode _focusNode = FocusNode();
+  int _selectedIndex = 0;
+  bool _fabFocused = false;
+  bool _menuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializePlaylistsIfNeeded();
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _initializePlaylistsIfNeeded() {
+    final controller = context.read<PlaylistController>();
+    if (!controller.isLoading &&
+        controller.playlists.isEmpty &&
+        controller.error == null) {
+      controller.loadPlaylists(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializePlaylistsIfNeeded(context);
-    });
-
     return Scaffold(
       appBar: _buildAppBar(context),
       body: Consumer<PlaylistController>(
@@ -39,15 +70,6 @@ class _PlaylistScreenBody extends StatelessWidget {
       ),
       floatingActionButton: _buildFloatingActionButton(context),
     );
-  }
-
-  void _initializePlaylistsIfNeeded(BuildContext context) {
-    final controller = context.read<PlaylistController>();
-    if (!controller.isLoading &&
-        controller.playlists.isEmpty &&
-        controller.error == null) {
-      controller.loadPlaylists(context);
-    }
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -60,9 +82,9 @@ class _PlaylistScreenBody extends StatelessWidget {
   }
 
   Widget _buildBodyFromState(
-    BuildContext context,
-    PlaylistController controller,
-  ) {
+      BuildContext context,
+      PlaylistController controller,
+      ) {
     if (controller.isLoading) {
       return const PlaylistLoadingState();
     }
@@ -84,35 +106,142 @@ class _PlaylistScreenBody extends StatelessWidget {
   }
 
   Widget _buildPlaylistList(
-    BuildContext context,
-    PlaylistController controller,
-  ) {
-    return RefreshIndicator(
-      onRefresh: () => controller.loadPlaylists(context),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: controller.playlists.length,
-        itemBuilder: (context, index) {
-          return PlaylistCard(
-            playlist: controller.playlists[index],
-            onTap: () =>
-                controller.openPlaylist(context, controller.playlists[index]),
-            onDelete: () => _showDeleteDialog(
-              context,
-              controller,
-              controller.playlists[index],
-            ),
-          );
-        },
+      BuildContext context,
+      PlaylistController controller,
+      ) {
+    return KeyboardListener(
+      focusNode: _focusNode,
+      onKeyEvent: (event) => _handleKeyEvent(event, controller),
+      child: RefreshIndicator(
+        onRefresh: () => controller.loadPlaylists(context),
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: controller.playlists.length,
+          itemBuilder: (context, index) {
+            final isSelected = index == _selectedIndex && !_fabFocused;
+            return Container(
+              decoration: isSelected
+                  ? BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              )
+                  : null,
+              child: PlaylistCard(
+                playlist: controller.playlists[index],
+                onTap: () =>
+                    controller.openPlaylist(context, controller.playlists[index]),
+                onDelete: () => _showDeleteDialog(
+                  context,
+                  controller,
+                  controller.playlists[index],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
+  void _handleKeyEvent(KeyEvent event, PlaylistController controller) {
+    if (event is! KeyDownEvent) return;
+
+    final key = event.logicalKey;
+
+    if (key == LogicalKeyboardKey.arrowDown) {
+      setState(() {
+        if (_fabFocused) {
+          // FAB'dan liste başına geç
+          _fabFocused = false;
+          _selectedIndex = 0;
+        } else if (_selectedIndex < controller.playlists.length - 1) {
+          _selectedIndex++;
+        } else {
+          // Liste sonundan FAB'a geç
+          _fabFocused = true;
+        }
+        _menuOpen = false;
+      });
+    }
+
+    if (key == LogicalKeyboardKey.arrowUp) {
+      setState(() {
+        if (_fabFocused) {
+          // FAB'dan liste sonuna geç
+          _fabFocused = false;
+          _selectedIndex = controller.playlists.length - 1;
+        } else if (_selectedIndex > 0) {
+          _selectedIndex--;
+        } else {
+          // Liste başından FAB'a geç
+          _fabFocused = true;
+        }
+        _menuOpen = false;
+      });
+    }
+
+    if (key == LogicalKeyboardKey.arrowRight) {
+      setState(() {
+        if (!_fabFocused && !_menuOpen) {
+          _menuOpen = true; // 3 nokta menüsünü aç
+        }
+      });
+    }
+
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      setState(() {
+        if (_menuOpen) {
+          _menuOpen = false; // 3 nokta menüsünü kapat
+        }
+      });
+    }
+
+    if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+      if (_fabFocused) {
+        _navigateToCreatePlaylist(context);
+      } else if (_menuOpen && _selectedIndex < controller.playlists.length) {
+        // Menü açıkken Enter = Sil
+        _showDeleteDialog(
+          context,
+          controller,
+          controller.playlists[_selectedIndex],
+        );
+      } else if (_selectedIndex < controller.playlists.length) {
+        // Normal Enter = Playlist aç
+        controller.openPlaylist(context, controller.playlists[_selectedIndex]);
+      }
+    }
+
+    if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace) {
+      if (!_fabFocused && _selectedIndex < controller.playlists.length) {
+        _showDeleteDialog(
+          context,
+          controller,
+          controller.playlists[_selectedIndex],
+        );
+      }
+    }
+
+    if (key == LogicalKeyboardKey.escape) {
+      setState(() {
+        _menuOpen = false;
+      });
+    }
+  }
+
   Widget _buildFloatingActionButton(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => _navigateToCreatePlaylist(context),
-      tooltip: context.loc.create_new_playlist,
-      child: const Icon(Icons.add, color: Colors.white),
+    return Container(
+      decoration: _fabFocused
+          ? BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).primaryColor.withOpacity(0.1),
+      )
+          : null,
+      child: FloatingActionButton(
+        onPressed: () => _navigateToCreatePlaylist(context),
+        tooltip: context.loc.create_new_playlist,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
@@ -124,10 +253,10 @@ class _PlaylistScreenBody extends StatelessWidget {
   }
 
   void _showDeleteDialog(
-    BuildContext context,
-    PlaylistController controller,
-    Playlist playlist,
-  ) {
+      BuildContext context,
+      PlaylistController controller,
+      Playlist playlist,
+      ) {
     showDialog(
       context: context,
       builder: (context) => _DeletePlaylistDialog(
