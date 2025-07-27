@@ -191,21 +191,22 @@ class FavoritesRepository {
             break;
 
           case ContentType.vod:
-            final movies = await repository.getMovies(categoryId: '');
-            final vodStream = movies?.firstWhere(
-              (movie) => movie.streamId == favorite.streamId,
+            final movie = await _database.findMovieById(
+              favorite.streamId,
+              AppState.currentPlaylist!.id,
             );
-            if (vodStream != null) {
+
+            if (movie != null) {
               return ContentItem(
-                vodStream.streamId,
-                vodStream.name,
-                vodStream.streamIcon,
+                favorite.streamId,
+                favorite.name,
+                favorite.imagePath ?? '',
                 ContentType.vod,
-                vodStream: vodStream,
+                containerExtension: movie.containerExtension,
+                vodStream: movie,
               );
             }
             break;
-
           case ContentType.series:
             final series = await repository.getSeries(categoryId: '');
             final seriesStream = series?.firstWhere(

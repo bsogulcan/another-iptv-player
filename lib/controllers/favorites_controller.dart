@@ -56,13 +56,11 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori ekle
   Future<bool> addFavorite(ContentItem contentItem) async {
     try {
       _setError(null);
       
       await _repository.addFavorite(contentItem);
-      // Hızlı güncelleme için listeyi yenile
       await loadFavorites();
       
       return true;
@@ -88,13 +86,11 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori toggle (ekle/kaldır)
   Future<bool> toggleFavorite(ContentItem contentItem) async {
     try {
       _setError(null);
       
       final result = await _repository.toggleFavorite(contentItem);
-      // Hızlı güncelleme için listeyi yenile
       await loadFavorites();
       
       return result;
@@ -104,7 +100,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori var mı kontrol et
   Future<bool> isFavorite(String streamId, ContentType contentType, {String? episodeId}) async {
     try {
       return await _repository.isFavorite(streamId, contentType, episodeId: episodeId);
@@ -114,7 +109,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // İçerik tipine göre favorileri getir
   Future<List<Favorite>> getFavoritesByContentType(ContentType contentType) async {
     try {
       return await _repository.getFavoritesByContentType(contentType);
@@ -124,7 +118,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori sayısını getir
   Future<int> getFavoriteCount() async {
     try {
       return await _repository.getFavoriteCount();
@@ -134,7 +127,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // İçerik tipine göre favori sayısını getir
   Future<int> getFavoriteCountByContentType(ContentType contentType) async {
     try {
       return await _repository.getFavoriteCountByContentType(contentType);
@@ -144,13 +136,11 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori güncelle
   Future<bool> updateFavorite(Favorite favorite) async {
     try {
       _setError(null);
       
       await _repository.updateFavorite(favorite);
-      // Hızlı güncelleme için listeyi yenile
       await loadFavorites();
       
       return true;
@@ -160,7 +150,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Tüm favorileri temizle
   Future<bool> clearAllFavorites() async {
     try {
       _setError(null);
@@ -176,7 +165,6 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori ara
   List<Favorite> searchFavorites(String query) {
     if (query.isEmpty) return _favorites;
     
@@ -184,23 +172,19 @@ class FavoritesController extends ChangeNotifier {
         favorite.name.toLowerCase().contains(query.toLowerCase())).toList();
   }
 
-  // Favori filtrele (içerik tipine göre)
   List<Favorite> filterFavoritesByContentType(ContentType contentType) {
     return _favorites.where((favorite) => favorite.contentType == contentType).toList();
   }
 
-  // Hata temizle
   void clearError() {
     _setError(null);
   }
 
-  // Loading durumunu ayarla
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
 
-  // Hata ayarla
   void _setError(String? error) {
     _error = error;
     notifyListeners();

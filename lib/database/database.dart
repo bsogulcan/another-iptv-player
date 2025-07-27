@@ -1500,32 +1500,25 @@ class AppDatabase extends _$AppDatabase {
     return rows.map((row) => M3uEpisode.fromData(row)).toList();
   }
 
-  // === FAVORİLER İŞLEMLERİ ===
-
-  // Favori ekle
   Future<void> insertFavorite(Favorite favorite) async {
     await into(favorites).insert(favorite.toCompanion());
   }
 
-  // Favori güncelle
   Future<void> updateFavorite(Favorite favorite) async {
     await (update(
       favorites,
     )..where((f) => f.id.equals(favorite.id))).write(favorite.toCompanion());
   }
 
-  // Favori sil
   Future<void> deleteFavorite(String id) async {
     await (delete(favorites)..where((f) => f.id.equals(id))).go();
   }
 
-  // Tüm favorileri getir
   Future<List<Favorite>> getAllFavorites() async {
     final favoritesData = await select(favorites).get();
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
 
-  // Playlist'e ait favorileri getir
   Future<List<Favorite>> getFavoritesByPlaylist(String playlistId) async {
     final query = select(favorites)
       ..where((f) => f.playlistId.equals(playlistId))
@@ -1534,7 +1527,6 @@ class AppDatabase extends _$AppDatabase {
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
 
-  // İçerik tipine göre favorileri getir
   Future<List<Favorite>> getFavoritesByContentType(
     String playlistId,
     ContentType contentType,
@@ -1550,7 +1542,6 @@ class AppDatabase extends _$AppDatabase {
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
 
-  // Favori var mı kontrol et
   Future<bool> isFavorite(
     String playlistId,
     String streamId,
