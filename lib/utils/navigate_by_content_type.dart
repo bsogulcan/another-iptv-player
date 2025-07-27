@@ -10,13 +10,14 @@ import '../screens/series/series_screen.dart';
 
 void navigateByContentType(BuildContext context, ContentItem content) {
   if (isM3u &&
-      (content.m3uItem != null && content.m3uItem!.groupTitle == null)) {
+      ((content.m3uItem != null && content.m3uItem!.groupTitle == null) ||
+          content.contentType == ContentType.series)) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => M3uPlayerScreen(
           contentItem: ContentItem(
-            content.m3uItem!.url,
+            content.m3uItem!.id,
             content.m3uItem!.name ?? '',
             content.m3uItem!.tvgLogo ?? '',
             content.m3uItem!.contentType,

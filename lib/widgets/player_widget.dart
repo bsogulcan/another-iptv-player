@@ -5,6 +5,7 @@ import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
 import 'package:audio_service/audio_service.dart';
@@ -118,7 +119,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     var watchHistory = await watchHistoryService.getWatchHistory(
       AppState.currentPlaylist!.id,
-      contentItem.id,
+      isXtreamCode ? contentItem.id : contentItem.m3uItem?.id ?? contentItem.id,
     );
 
     List<MediaItem> mediaItems = [];
@@ -130,7 +131,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         final item = _queue![i];
         final itemWatchHistory = await watchHistoryService.getWatchHistory(
           AppState.currentPlaylist!.id,
-          item.id,
+          isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
         );
 
         mediaItems.add(
@@ -334,7 +335,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
         WatchHistory(
           playlistId: AppState.currentPlaylist!.id,
           contentType: contentItem.contentType,
-          streamId: contentItem.id,
+          streamId: isXtreamCode
+              ? contentItem.id
+              : contentItem.m3uItem?.id ?? contentItem.id,
           lastWatched: DateTime.now(),
           title: contentItem.name,
           imagePath: contentItem.imagePath,

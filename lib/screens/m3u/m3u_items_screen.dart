@@ -325,7 +325,9 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
   }
 
   void _onChannelTap(BuildContext context, M3uItem m3uItem) {
-    if (m3uItem.groupTitle != null && m3uItem.groupTitle!.isEmpty) {
+    if (m3uItem.groupTitle != null &&
+        m3uItem.groupTitle!.isNotEmpty &&
+        m3uItem.contentType != ContentType.series) {
       navigateByContentType(
         context,
         ContentItem(
@@ -342,7 +344,7 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
         MaterialPageRoute(
           builder: (context) => M3uPlayerScreen(
             contentItem: ContentItem(
-              m3uItem.url,
+              m3uItem.id,
               m3uItem.name ?? '',
               m3uItem.tvgLogo ?? '',
               m3uItem.contentType,

@@ -116,9 +116,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
       body: Row(
         children: [
           _buildDesktopNavigationBar(context, controller, constraints),
-          Expanded(
-            child: _buildPageView(controller),
-          ),
+          Expanded(child: _buildPageView(controller)),
         ],
       ),
     );
@@ -138,9 +136,9 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
         playlistId: widget.playlist.id,
       ),
       M3uItemsScreen(m3uItems: controller.m3uItems!),
-      _buildContentPage(controller.liveCategories!, controller),
-      _buildContentPage(controller.vodCategories!, controller),
-      _buildContentPage(controller.seriesCategories!, controller),
+      // _buildContentPage(controller.liveCategories!, controller),
+      // _buildContentPage(controller.vodCategories!, controller),
+      // _buildContentPage(controller.seriesCategories!, controller),
       M3uPlaylistSettingsScreen(playlist: widget.playlist),
     ];
   }
@@ -236,10 +234,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
     BuildContext context,
   ) {
     return _getNavigationItems(context).map((item) {
-      return BottomNavigationBarItem(
-        icon: Icon(item.icon),
-        label: item.label,
-      );
+      return BottomNavigationBarItem(icon: Icon(item.icon), label: item.label);
     }).toList();
   }
 
@@ -249,7 +244,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
     BoxConstraints constraints,
   ) {
     final navWidth = _getNavigationWidth(constraints.maxWidth);
-    
+
     return Container(
       width: navWidth,
       decoration: _getNavigationBarDecoration(context),
@@ -296,7 +291,7 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
       height: sizes.itemHeight,
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected 
+        color: isSelected
             ? Theme.of(context).colorScheme.primaryContainer
             : Colors.transparent,
       ),
@@ -330,21 +325,20 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
     return BoxDecoration(
       color: Theme.of(context).colorScheme.surface,
       border: Border(
-        right: BorderSide(
-          color: Theme.of(context).dividerColor,
-          width: 0.5,
-        ),
+        right: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
       ),
     );
   }
 
   double _getNavigationWidth(double screenWidth) {
-    return screenWidth >= _largeScreenBreakpoint ? _largeNavWidth : _defaultNavWidth;
+    return screenWidth >= _largeScreenBreakpoint
+        ? _largeNavWidth
+        : _defaultNavWidth;
   }
 
   NavigationSizes _getNavigationSizes(double screenWidth) {
     final isLargeScreen = screenWidth >= _largeScreenBreakpoint;
-    
+
     return NavigationSizes(
       itemHeight: isLargeScreen ? _largeItemHeight : _defaultItemHeight,
       iconSize: isLargeScreen ? _largeIconSize : _defaultIconSize,
@@ -353,48 +347,36 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
   }
 
   Color _getIconColor(BuildContext context, bool isSelected) {
-    return isSelected 
+    return isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurface;
   }
 
   Color _getTextColor(BuildContext context, bool isSelected) {
-    return isSelected 
+    return isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurface;
   }
 
   List<NavigationItem> _getNavigationItems(BuildContext context) {
     return [
-      NavigationItem(
-        icon: Icons.history,
-        label: context.loc.history,
-        index: 0,
-      ),
-      NavigationItem(
-        icon: Icons.all_inbox,
-        label: context.loc.all,
-        index: 1,
-      ),
-      NavigationItem(
-        icon: Icons.live_tv,
-        label: context.loc.live,
-        index: 2,
-      ),
-      NavigationItem(
-        icon: Icons.movie_outlined,
-        label: context.loc.movie,
-        index: 3,
-      ),
-      NavigationItem(
-        icon: Icons.tv,
-        label: context.loc.series_plural,
-        index: 4,
-      ),
+      NavigationItem(icon: Icons.history, label: context.loc.history, index: 0),
+      NavigationItem(icon: Icons.all_inbox, label: context.loc.all, index: 1),
+      // NavigationItem(icon: Icons.live_tv, label: context.loc.live, index: 2),
+      // NavigationItem(
+      //   icon: Icons.movie_outlined,
+      //   label: context.loc.movie,
+      //   index: 3,
+      // ),
+      // NavigationItem(
+      //   icon: Icons.tv,
+      //   label: context.loc.series_plural,
+      //   index: 4,
+      // ),
       NavigationItem(
         icon: Icons.settings,
         label: context.loc.settings,
-        index: 5,
+        index: 2,
       ),
     ];
   }

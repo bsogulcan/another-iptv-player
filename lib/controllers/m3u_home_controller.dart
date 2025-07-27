@@ -63,7 +63,6 @@ class M3UHomeController extends ChangeNotifier {
     _currentIndex = index;
     notifyListeners();
 
-    // Sadece PageController bağlıysa animateToPage çağır
     if (_pageController.hasClients) {
       _pageController.animateToPage(
         index,

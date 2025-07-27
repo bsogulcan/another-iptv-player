@@ -566,7 +566,7 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
 
   Widget _buildCoverImage() {
     final apiCover = widget.contentItem.coverPath;
-    final apiBackdrop = episodes.first.cover;
+    final apiBackdrop = episodes.firstOrNull?.cover;
 
     final hasBackdrop =
         (apiBackdrop?.isNotEmpty == true) ||

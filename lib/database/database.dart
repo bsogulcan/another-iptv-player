@@ -1289,7 +1289,6 @@ class AppDatabase extends _$AppDatabase {
         : null;
   }
 
-  // Clear operations
   Future<int> clearSeriesData(String seriesId, String playlistId) async {
     await (delete(episodes)..where(
           (tbl) =>
@@ -1409,9 +1408,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<M3uItem?> getM3uItemsByUrlAndPlaylist(
-      String playlistId,
-      String url,
-      ) async {
+    String playlistId,
+    String url,
+  ) async {
     final query = select(m3uItems)
       ..where((tbl) => tbl.url.equals(url) & tbl.playlistId.equals(playlistId));
     final data = await query.getSingleOrNull();
@@ -1419,7 +1418,6 @@ class AppDatabase extends _$AppDatabase {
     if (data == null) return null;
     return M3uItem.fromData(data);
   }
-
 
   Future<List<M3uItem>> getM3uItemsByCategory(String categoryId) async {
     final data = await (select(

@@ -14,7 +14,6 @@ class FavoritesRepository {
 
   FavoritesRepository();
 
-  // Favori ekle
   Future<void> addFavorite(ContentItem contentItem) async {
     final playlistId = AppState.currentPlaylist!.id;
 
@@ -48,7 +47,6 @@ class FavoritesRepository {
     await _database.insertFavorite(favorite);
   }
 
-  // Favori kaldır
   Future<void> removeFavorite(
     String streamId,
     ContentType contentType, {
@@ -56,7 +54,6 @@ class FavoritesRepository {
   }) async {
     final playlistId = AppState.currentPlaylist!.id;
 
-    // Favoriyi bul
     final favorites = await _database.getFavoritesByPlaylist(playlistId);
     final favorite = favorites.firstWhere(
       (f) =>
@@ -69,7 +66,6 @@ class FavoritesRepository {
     await _database.deleteFavorite(favorite.id);
   }
 
-  // Favori var mı kontrol et
   Future<bool> isFavorite(
     String streamId,
     ContentType contentType, {
@@ -84,13 +80,11 @@ class FavoritesRepository {
     );
   }
 
-  // Tüm favorileri getir
   Future<List<Favorite>> getAllFavorites() async {
     final playlistId = AppState.currentPlaylist!.id;
     return await _database.getFavoritesByPlaylist(playlistId);
   }
 
-  // İçerik tipine göre favorileri getir
   Future<List<Favorite>> getFavoritesByContentType(
     ContentType contentType,
   ) async {
@@ -128,28 +122,24 @@ class FavoritesRepository {
     );
   }
 
-  // Favori toggle (ekle/kaldır)
   Future<bool> toggleFavorite(ContentItem contentItem) async {
     final playlistId = AppState.currentPlaylist!.id;
     final isCurrentlyFavorite = await _database.isFavorite(
       playlistId,
       contentItem.id,
       contentItem.contentType,
-      contentItem.contentType == ContentType.series ? contentItem.id : null,
+      null
     );
 
     if (isCurrentlyFavorite) {
       await removeFavorite(
         contentItem.id,
-        contentItem.contentType,
-        episodeId: contentItem.contentType == ContentType.series
-            ? contentItem.id
-            : null,
+        contentItem.contentType
       );
-      return false; // Favorilerden kaldırıldı
+      return false;
     } else {
       await addFavorite(contentItem);
-      return true; // Favorilere eklendi
+      return true;
     }
   }
 
@@ -243,13 +233,10 @@ class FavoritesRepository {
             break;
 
           case ContentType.vod:
-            final m3uItems = await repository.getM3uItemsByCategoryId(
-              categoryId: '',
-              contentType: ContentType.vod,
+            final m3uItem = await repository.getM3uItemById(
+              id: favorite.m3uItemId ?? '',
             );
-            final m3uItem = m3uItems?.firstWhere(
-              (item) => item.url == favorite.streamId,
-            );
+
             if (m3uItem != null) {
               return ContentItem(
                 m3uItem.url,
@@ -262,18 +249,17 @@ class FavoritesRepository {
             break;
 
           case ContentType.series:
-            final series = await repository.getSeriesByCategoryId(
-              categoryId: '',
+            final m3uItem = await repository.getM3uItemById(
+              id: favorite.m3uItemId ?? '',
             );
-            final m3uSerie = series?.firstWhere(
-              (serie) => serie.seriesId == favorite.streamId,
-            );
-            if (m3uSerie != null) {
+
+            if (m3uItem != null) {
               return ContentItem(
-                m3uSerie.seriesId,
-                m3uSerie.name,
-                m3uSerie.cover ?? '',
+                m3uItem.id,
+                m3uItem.name ?? '',
+                m3uItem.tvgLogo ?? '',
                 ContentType.series,
+                m3uItem: m3uItem,
               );
             }
             break;

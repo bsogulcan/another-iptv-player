@@ -216,9 +216,9 @@ class WatchHistoryController extends ChangeNotifier {
         ),
       );
     } else if (isM3u) {
-      final movie = await _database.getM3uItemsByIdAndPlaylist(
+      var movie = await _database.getM3uItemsByIdAndPlaylist(
         AppState.currentPlaylist!.id,
-        history.streamId
+        history.streamId,
       );
 
       navigateByContentType(
@@ -267,7 +267,7 @@ class WatchHistoryController extends ChangeNotifier {
     } else if (isM3u) {
       var m3uItem = await _database.getM3uItemsByIdAndPlaylist(
         AppState.currentPlaylist!.id,
-        history.streamId
+        history.streamId,
       );
 
       Navigator.push(

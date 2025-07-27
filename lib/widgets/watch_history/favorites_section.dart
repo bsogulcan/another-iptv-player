@@ -49,9 +49,9 @@ class FavoritesSection extends StatelessWidget {
             children: [
               Text(
                 context.loc.favorites,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (onSeeAllTap != null && favorites.length > 10)
                 TextButton(
@@ -101,9 +101,10 @@ class FavoritesSection extends StatelessWidget {
                   ),
                 );
               }
-              
-              final contentItem = snapshot.data ?? _convertFavoriteToContentItem(favorite);
-              
+
+              final contentItem =
+                  snapshot.data ?? _convertFavoriteToContentItem(favorite);
+
               return ContentCard(
                 content: contentItem,
                 width: cardWidth,
@@ -126,11 +127,7 @@ class FavoritesSection extends StatelessWidget {
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                    size: 16,
-                  ),
+                  child: Icon(Icons.favorite, color: Colors.red, size: 16),
                 ),
               ),
             ),
@@ -147,7 +144,8 @@ class FavoritesSection extends StatelessWidget {
             streamId: favorite.streamId,
             name: favorite.name,
             streamIcon: favorite.imagePath ?? '',
-            categoryId: '', // Bu bilgi favorilerde saklanmıyor
+            categoryId: '',
+            // Bu bilgi favorilerde saklanmıyor
             epgChannelId: '', // Bu bilgi favorilerde saklanmıyor
           );
           return ContentItem(
@@ -163,9 +161,12 @@ class FavoritesSection extends StatelessWidget {
             streamId: favorite.streamId,
             name: favorite.name,
             streamIcon: favorite.imagePath ?? '',
-            categoryId: '', // Bu bilgi favorilerde saklanmıyor
-            rating: '', // Bu bilgi favorilerde saklanmıyor
-            rating5based: 0.0, // Bu bilgi favorilerde saklanmıyor
+            categoryId: '',
+            // Bu bilgi favorilerde saklanmıyor
+            rating: '',
+            // Bu bilgi favorilerde saklanmıyor
+            rating5based: 0.0,
+            // Bu bilgi favorilerde saklanmıyor
             containerExtension: '', // Bu bilgi favorilerde saklanmıyor
           );
           return ContentItem(
@@ -181,7 +182,8 @@ class FavoritesSection extends StatelessWidget {
             seriesId: favorite.streamId,
             name: favorite.name,
             cover: favorite.imagePath ?? '',
-            categoryId: '', // Bu bilgi favorilerde saklanmıyor
+            categoryId: '',
+            // Bu bilgi favorilerde saklanmıyor
             playlistId: favorite.playlistId,
           );
           return ContentItem(
@@ -193,7 +195,6 @@ class FavoritesSection extends StatelessWidget {
           );
       }
     }
-    // M3U için
     else if (isM3u) {
       final m3uItem = M3uItem(
         id: favorite.m3uItemId ?? favorite.streamId,
@@ -212,7 +213,6 @@ class FavoritesSection extends StatelessWidget {
       );
     }
 
-    // Fallback: Basit ContentItem oluştur
     return ContentItem(
       favorite.streamId,
       favorite.name,
@@ -229,4 +229,4 @@ class FavoritesSection extends StatelessWidget {
   void _navigateToContent(BuildContext context, ContentItem contentItem) {
     navigateByContentType(context, contentItem);
   }
-} 
+}
