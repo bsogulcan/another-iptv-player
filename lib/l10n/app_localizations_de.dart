@@ -316,6 +316,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get empty_playlist_button => 'Meine Erste Wiedergabeliste Erstellen';
 
   @override
+  String get favorites => 'Favoriten';
+
+  @override
+  String get see_all_favorites => 'Alle Anzeigen';
+
+  @override
+  String get added_to_favorites => 'Zu Favoriten hinzugefügt';
+
+  @override
+  String get removed_from_favorites => 'Aus Favoriten entfernt';
+
+  @override
   String get select_playlist_type => 'Wiedergabelisten-Typ Auswählen';
 
   @override

@@ -187,5 +187,9 @@
   "episode_short": "Ep",
   "season_number": "Temporada {number}",
   "image_loading": "Cargando imagen...",
-  "image_not_found": "Imagen no encontrada"
+  "image_not_found": "Imagen no encontrada",
+  "favorites": "Favoritos",
+  "see_all_favorites": "Ver Todo",
+  "added_to_favorites": "Agregado a favoritos",
+  "removed_from_favorites": "Eliminado de favoritos"
 }

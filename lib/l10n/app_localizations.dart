@@ -696,6 +696,30 @@ abstract class AppLocalizations {
   /// **'Create My First Playlist'**
   String get empty_playlist_button;
 
+  /// No description provided for @favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get favorites;
+
+  /// No description provided for @see_all_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'See All'**
+  String get see_all_favorites;
+
+  /// No description provided for @added_to_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to favorites'**
+  String get added_to_favorites;
+
+  /// No description provided for @removed_from_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from favorites'**
+  String get removed_from_favorites;
+
   /// No description provided for @select_playlist_type.
   ///
   /// In en, this message translates to:

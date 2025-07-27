@@ -10,6 +10,8 @@ import '../../../utils/responsive_helper.dart';
 import '../../../widgets/content_item_card_widget.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
+import '../../../controllers/favorites_controller.dart';
+import '../../../models/favorite.dart';
 
 class LiveStreamScreen extends StatefulWidget {
   final ContentItem content;
@@ -26,12 +28,16 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   bool allContentsLoaded = false;
   int selectedContentItemIndex = 0;
   late StreamSubscription contentItemIndexChangedSubscription;
+  late FavoritesController _favoritesController;
+  bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     contentItem = widget.content;
+    _favoritesController = FavoritesController();
     _initializeQueue();
+    _checkFavoriteStatus();
   }
 
   Future<void> _initializeQueue() async {
@@ -75,13 +81,46 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
             selectedContentItemIndex = index;
             contentItem = allContents[selectedContentItemIndex];
           });
+          
+          // Yeni içerik için favori durumunu kontrol et
+          _checkFavoriteStatus();
         });
   }
 
   @override
   void dispose() {
     contentItemIndexChangedSubscription.cancel();
+    _favoritesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      contentItem.id,
+      contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -143,6 +182,15 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                               contentItem.name,
                               style: Theme.of(context).textTheme.headlineSmall
                                   ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          // Favori butonu
+                          IconButton(
+                            onPressed: _toggleFavorite,
+                            icon: Icon(
+                              _isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: _isFavorite ? Colors.red : Colors.grey,
+                              size: 28,
                             ),
                           ),
                         ],

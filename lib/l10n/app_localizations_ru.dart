@@ -313,6 +313,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get empty_playlist_button => 'Создать первый плейлист';
 
   @override
+  String get favorites => 'Избранное';
+
+  @override
+  String get see_all_favorites => 'Посмотреть Все';
+
+  @override
+  String get added_to_favorites => 'Добавлено в избранное';
+
+  @override
+  String get removed_from_favorites => 'Удалено из избранного';
+
+  @override
   String get select_playlist_type => 'Выберите тип плейлиста';
 
   @override

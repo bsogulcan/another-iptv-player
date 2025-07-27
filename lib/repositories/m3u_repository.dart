@@ -38,20 +38,28 @@ class M3uRepository {
     return null;
   }
 
+  Future<M3uItem?> getM3uItemById({required String id}) async {
+    var m3uItem = await _database.getM3uItemsByIdAndPlaylist(_playlistId, id);
+    return m3uItem;
+  }
+
+  Future<M3uItem?> getM3uItemByUrl({required String url}) async {
+    var m3uItem = await _database.getM3uItemsByUrlAndPlaylist(_playlistId, url);
+    return m3uItem;
+  }
+
+
   Future<List<M3uItem>?> getM3uItems({
     int? top,
     ContentType? contentType,
   }) async {
-    var liveStreams = await _database.getM3uItemsByPlaylist(
-      _playlistId,
-    );
+    var liveStreams = await _database.getM3uItemsByPlaylist(_playlistId);
 
     if (liveStreams.isNotEmpty) {
       return liveStreams;
     }
     return null;
   }
-
 
   Future<List<LiveStream>> searchLiveStreams(String query) async {
     return await _database.searchLiveStreams(_playlistId, query);
@@ -67,7 +75,7 @@ class M3uRepository {
 
   Future<List<M3uSerie>?> getSeriesByCategoryId({
     required String categoryId,
-    int? top
+    int? top,
   }) async {
     var liveStreams = await _database.getM3uSeriesByCategoryId(
       _playlistId,
@@ -81,10 +89,12 @@ class M3uRepository {
     return null;
   }
 
-  Future<List<M3uEpisode>?> getM3uEpisodesBySeriesId({required String seriesId}) async {
+  Future<List<M3uEpisode>?> getM3uEpisodesBySeriesId({
+    required String seriesId,
+  }) async {
     var episodes = await _database.getM3uEpisodesBySeriesId(
       _playlistId,
-      seriesId
+      seriesId,
     );
 
     if (episodes.isNotEmpty) {

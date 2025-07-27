@@ -50,10 +50,27 @@ class WatchHistoryController extends ChangeNotifier {
       _seriesHistory.isEmpty;
 
   Future<void> loadWatchHistory() async {
+    print('WatchHistoryController: loadWatchHistory başladı');
     _setLoading(true);
     _clearError();
 
+    // Mevcut verileri temizle
+    _continueWatching.clear();
+    _recentlyWatched.clear();
+    _liveHistory.clear();
+    _movieHistory.clear();
+    _seriesHistory.clear();
+    notifyListeners();
+
+    if (AppState.currentPlaylist == null) {
+      print('WatchHistoryController: Aktif playlist bulunamadı');
+      _setError('Aktif playlist bulunamadı');
+      _setLoading(false);
+      return;
+    }
+
     final playlistId = AppState.currentPlaylist!.id;
+    print('WatchHistoryController: Playlist ID: $playlistId');
 
     try {
       final futures = await Future.wait([
@@ -163,14 +180,14 @@ class WatchHistoryController extends ChangeNotifier {
       );
     } else if (isM3u) {
       final liveStream = await _database.getM3uItemsByIdAndPlaylist(
-        history.streamId,
         AppState.currentPlaylist!.id,
+        history.streamId,
       );
 
       navigateByContentType(
         context,
         ContentItem(
-          history.streamId,
+          liveStream!.url,
           history.title,
           history.imagePath ?? '',
           history.contentType,
@@ -200,14 +217,14 @@ class WatchHistoryController extends ChangeNotifier {
       );
     } else if (isM3u) {
       final movie = await _database.getM3uItemsByIdAndPlaylist(
-        history.streamId,
         AppState.currentPlaylist!.id,
+        history.streamId
       );
 
       navigateByContentType(
         context,
         ContentItem(
-          history.streamId,
+          movie!.url,
           history.title,
           history.imagePath ?? '',
           history.contentType,
@@ -249,8 +266,8 @@ class WatchHistoryController extends ChangeNotifier {
       );
     } else if (isM3u) {
       var m3uItem = await _database.getM3uItemsByIdAndPlaylist(
-        history.streamId,
         AppState.currentPlaylist!.id,
+        history.streamId
       );
 
       Navigator.push(
@@ -258,7 +275,7 @@ class WatchHistoryController extends ChangeNotifier {
         MaterialPageRoute(
           builder: (context) => M3uPlayerScreen(
             contentItem: ContentItem(
-              m3uItem!.url,
+              m3uItem!.id,
               m3uItem.name ?? '',
               m3uItem.tvgLogo ?? '',
               m3uItem.contentType,

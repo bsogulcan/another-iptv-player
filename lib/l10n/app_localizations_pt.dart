@@ -314,6 +314,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get empty_playlist_button => 'Criar Minha Primeira Playlist';
 
   @override
+  String get favorites => 'Favoritos';
+
+  @override
+  String get see_all_favorites => 'Ver Todos';
+
+  @override
+  String get added_to_favorites => 'Adicionado aos favoritos';
+
+  @override
+  String get removed_from_favorites => 'Removido dos favoritos';
+
+  @override
   String get select_playlist_type => 'Selecionar Tipo de Playlist';
 
   @override

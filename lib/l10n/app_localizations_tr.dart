@@ -312,6 +312,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get empty_playlist_button => 'İlk Playlist\'imi Oluştur';
 
   @override
+  String get favorites => 'Favoriler';
+
+  @override
+  String get see_all_favorites => 'Tümünü Gör';
+
+  @override
+  String get added_to_favorites => 'Favorilere eklendi';
+
+  @override
+  String get removed_from_favorites => 'Favorilerden kaldırıldı';
+
+  @override
   String get select_playlist_type => 'Playlist Türü Seçin';
 
   @override

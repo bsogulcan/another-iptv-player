@@ -311,6 +311,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get empty_playlist_button => 'إنشاء قائمة التشغيل الأولى';
 
   @override
+  String get favorites => 'المفضلة';
+
+  @override
+  String get see_all_favorites => 'عرض الكل';
+
+  @override
+  String get added_to_favorites => 'تمت الإضافة إلى المفضلة';
+
+  @override
+  String get removed_from_favorites => 'تمت الإزالة من المفضلة';
+
+  @override
   String get select_playlist_type => 'اختر نوع قائمة التشغيل';
 
   @override

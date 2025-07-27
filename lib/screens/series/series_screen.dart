@@ -6,6 +6,8 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import '../../../controllers/favorites_controller.dart';
+import '../../../models/favorite.dart';
 
 import 'episode_screen.dart';
 
@@ -20,17 +22,21 @@ class SeriesScreen extends StatefulWidget {
 
 class _SeriesScreenState extends State<SeriesScreen> {
   late IptvRepository _repository;
+  late FavoritesController _favoritesController;
   SeriesInfosData? seriesInfo;
   List<SeasonsData> seasons = [];
   List<EpisodesData> episodes = [];
   bool isLoading = true;
   String? error;
+  bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     _initializeRepository();
+    _favoritesController = FavoritesController();
     _loadSeriesDetails();
+    _checkFavoriteStatus();
   }
 
   void _initializeRepository() {
@@ -73,6 +79,35 @@ class _SeriesScreenState extends State<SeriesScreen> {
         error = context.loc.preparing_series_exception_2(e.toString());
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
     }
   }
 
@@ -123,21 +158,36 @@ class _SeriesScreenState extends State<SeriesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              seriesInfo?.name ?? widget.contentItem.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    offset: Offset(0, 1),
-                                    blurRadius: 3,
-                                    color: Colors.black54,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    seriesInfo?.name ?? widget.contentItem.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                      decoration: TextDecoration.none,
+                                    ),
                                   ),
-                                ],
-                                decoration: TextDecoration.none,
-                              ),
+                                ),
+                                // Favori butonu
+                                IconButton(
+                                  onPressed: _toggleFavorite,
+                                  icon: Icon(
+                                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                                    color: _isFavorite ? Colors.red : Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ],
                             ),
                             if (seriesInfo?.genre != null ||
                                 widget.contentItem.seriesStream?.genre !=

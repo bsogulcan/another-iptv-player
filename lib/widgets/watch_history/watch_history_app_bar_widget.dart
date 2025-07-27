@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 class WatchHistoryAppBar extends StatelessWidget {
   final VoidCallback? onRefresh;
   final VoidCallback? onClearAll;
+  final VoidCallback? onRefreshFavorites;
 
-  const WatchHistoryAppBar({super.key, this.onRefresh, this.onClearAll});
+  const WatchHistoryAppBar({
+    super.key, 
+    this.onRefresh, 
+    this.onClearAll,
+    this.onRefreshFavorites,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +60,7 @@ class WatchHistoryAppBar extends StatelessWidget {
     switch (action) {
       case 'refresh':
         onRefresh?.call();
+        onRefreshFavorites?.call();
         break;
       case 'clear_all':
         _onClearAllTap(context);

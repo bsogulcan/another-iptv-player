@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
 import '../../widgets/player_widget.dart';
+import '../../controllers/favorites_controller.dart';
 
 class M3uPlayerScreen extends StatefulWidget {
   final ContentItem contentItem;
@@ -12,6 +14,51 @@ class M3uPlayerScreen extends StatefulWidget {
 }
 
 class _M3uPlayerScreenState extends State<M3uPlayerScreen> {
+  late FavoritesController _favoritesController;
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritesController = FavoritesController();
+    _checkFavoriteStatus();
+  }
+
+  @override
+  void dispose() {
+    _favoritesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,6 +97,15 @@ class _M3uPlayerScreenState extends State<M3uPlayerScreen> {
                                           ?.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
+                                    ),
+                                  ),
+                                  // Favori butonu
+                                  IconButton(
+                                    onPressed: _toggleFavorite,
+                                    icon: Icon(
+                                      _isFavorite ? Icons.favorite : Icons.favorite_border,
+                                      color: _isFavorite ? Colors.red : Colors.grey,
+                                      size: 28,
                                     ),
                                   ),
                                 ],

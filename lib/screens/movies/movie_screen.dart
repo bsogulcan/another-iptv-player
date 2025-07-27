@@ -2,6 +2,8 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
+import '../../../controllers/favorites_controller.dart';
+import '../../../models/favorite.dart';
 
 import '../../../widgets/player_widget.dart';
 
@@ -15,6 +17,51 @@ class MovieScreen extends StatefulWidget {
 }
 
 class _MovieScreenState extends State<MovieScreen> {
+  late FavoritesController _favoritesController;
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritesController = FavoritesController();
+    _checkFavoriteStatus();
+  }
+
+  @override
+  void dispose() {
+    _favoritesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,7 +77,7 @@ class _MovieScreenState extends State<MovieScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kanal Başlığı
+                      // Film Başlığı
                       Row(
                         children: [
                           Expanded(
@@ -38,6 +85,15 @@ class _MovieScreenState extends State<MovieScreen> {
                               widget.contentItem.name,
                               style: Theme.of(context).textTheme.headlineSmall
                                   ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          // Favori butonu
+                          IconButton(
+                            onPressed: _toggleFavorite,
+                            icon: Icon(
+                              _isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: _isFavorite ? Colors.red : Colors.grey,
+                              size: 28,
                             ),
                           ),
                           if (isXtreamCode)

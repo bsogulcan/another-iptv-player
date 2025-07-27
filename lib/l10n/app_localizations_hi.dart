@@ -312,6 +312,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get empty_playlist_button => 'मेरी पहली प्लेलिस्ट बनाएं';
 
   @override
+  String get favorites => 'पसंदीदा';
+
+  @override
+  String get see_all_favorites => 'सभी देखें';
+
+  @override
+  String get added_to_favorites => 'पसंदीदा में जोड़ा गया';
+
+  @override
+  String get removed_from_favorites => 'पसंदीदा से हटाया गया';
+
+  @override
   String get select_playlist_type => 'प्लेलिस्ट प्रकार चुनें';
 
   @override

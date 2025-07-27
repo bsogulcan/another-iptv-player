@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import '../../../controllers/favorites_controller.dart';
+import '../../../models/favorite.dart';
 
 import '../../../models/content_type.dart';
 
@@ -19,15 +21,19 @@ class M3uSeriesScreen extends StatefulWidget {
 
 class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
   final M3uRepository _repository = AppState.m3uRepository!;
+  late FavoritesController _favoritesController;
   List<int> seasons = [];
   List<M3uEpisode> episodes = [];
   bool isLoading = true;
   String? error;
+  bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
+    _favoritesController = FavoritesController();
     _loadSeriesDetails();
+    _checkFavoriteStatus();
   }
 
   Future<void> _loadSeriesDetails() async {
@@ -68,6 +74,39 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
     int seasonNumber,
   ) {
     return episodes.where((e) => e.seasonNumber == seasonNumber).toList();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(
+      widget.contentItem,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_favorites
+                : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -117,21 +156,39 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              widget.contentItem.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    offset: Offset(0, 1),
-                                    blurRadius: 3,
-                                    color: Colors.black54,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.contentItem.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                      decoration: TextDecoration.none,
+                                    ),
                                   ),
-                                ],
-                                decoration: TextDecoration.none,
-                              ),
+                                ),
+                                IconButton(
+                                  onPressed: _toggleFavorite,
+                                  icon: Icon(
+                                    _isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isFavorite
+                                        ? Colors.red
+                                        : Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -415,8 +472,11 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
+        onTap: () async {
           Navigator.pop(context);
+
+          var m3uItem = await _repository.getM3uItemByUrl(url: episode.url);
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -424,11 +484,12 @@ class _M3uSeriesScreenState extends State<M3uSeriesScreen> {
                 seasons: seasons,
                 episodes: episodes,
                 contentItem: ContentItem(
-                  episode.url,
+                  m3uItem!.id,
                   episode.name,
                   episode.cover ?? "",
                   ContentType.series,
                   season: episode.seasonNumber,
+                  m3uItem: m3uItem
                 ),
               ),
             ),

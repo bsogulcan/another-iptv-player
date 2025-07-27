@@ -187,5 +187,9 @@
   "episode_short": "集",
   "season_number": "第{number}季",
   "image_loading": "正在加载图片...",
-  "image_not_found": "图片未找到"
+  "image_not_found": "图片未找到",
+  "favorites": "收藏",
+  "see_all_favorites": "查看全部",
+  "added_to_favorites": "已添加到收藏",
+  "removed_from_favorites": "已从收藏中移除"
 }

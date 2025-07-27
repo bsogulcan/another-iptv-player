@@ -146,7 +146,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
 
   List<Widget> _buildPages(XtreamCodeHomeController controller) {
     return [
-      WatchHistoryScreen(playlistId: widget.playlist.id),
+      WatchHistoryScreen(
+        key: ValueKey('watch_history_${controller.currentIndex}'),
+        playlistId: widget.playlist.id,
+      ),
       _buildContentPage(
         controller.liveCategories!,
         ContentType.liveStream,

@@ -37,6 +37,6 @@ class ContentItem {
     this.season,
     this.m3uItem,
   }) {
-    url = isXtreamCode ? buildMediaUrl(this) : id;
+    url = isXtreamCode ? buildMediaUrl(this) : m3uItem?.url ?? id;
   }
 }

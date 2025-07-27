@@ -133,7 +133,10 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
 
   List<Widget> _buildPages(M3UHomeController controller) {
     return [
-      WatchHistoryScreen(playlistId: widget.playlist.id),
+      WatchHistoryScreen(
+        key: ValueKey('watch_history_${controller.currentIndex}'),
+        playlistId: widget.playlist.id,
+      ),
       M3uItemsScreen(m3uItems: controller.m3uItems!),
       _buildContentPage(controller.liveCategories!, controller),
       _buildContentPage(controller.vodCategories!, controller),

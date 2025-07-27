@@ -187,5 +187,9 @@
   "episode_short": "Folge",
   "season_number": "{number}. Staffel",
   "image_loading": "Bild wird geladen...",
-  "image_not_found": "Bild nicht gefunden"
+  "image_not_found": "Bild nicht gefunden",
+  "favorites": "Favoriten",
+  "see_all_favorites": "Alle Anzeigen",
+  "added_to_favorites": "Zu Favoriten hinzugefügt",
+  "removed_from_favorites": "Aus Favoriten entfernt"
 }

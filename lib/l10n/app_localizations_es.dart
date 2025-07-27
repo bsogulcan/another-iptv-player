@@ -315,6 +315,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get empty_playlist_button => 'Crear Mi Primera Lista';
 
   @override
+  String get favorites => 'Favoritos';
+
+  @override
+  String get see_all_favorites => 'Ver Todo';
+
+  @override
+  String get added_to_favorites => 'Agregado a favoritos';
+
+  @override
+  String get removed_from_favorites => 'Eliminado de favoritos';
+
+  @override
   String get select_playlist_type => 'Seleccionar Tipo de Lista';
 
   @override

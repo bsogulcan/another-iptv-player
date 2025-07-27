@@ -15,6 +15,7 @@ import '../models/category_type.dart';
 import '../models/m3u_item.dart';
 import '../models/m3u_series.dart';
 import '../models/playlist_model.dart';
+import '../models/favorite.dart';
 
 part 'database.g.dart';
 
@@ -413,6 +414,32 @@ class M3uEpisodes extends Table {
   };
 }
 
+@DataClassName('FavoritesData')
+class Favorites extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get playlistId => text()();
+
+  IntColumn get contentType => integer()();
+
+  TextColumn get streamId => text()();
+
+  TextColumn get episodeId => text().nullable()();
+
+  TextColumn get m3uItemId => text().nullable()();
+
+  TextColumn get name => text()();
+
+  TextColumn get imagePath => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Playlists,
@@ -429,6 +456,7 @@ class M3uEpisodes extends Table {
     M3uItems,
     M3uSeries,
     M3uEpisodes,
+    Favorites,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -456,7 +484,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1369,16 +1397,29 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<M3uItem?> getM3uItemsByIdAndPlaylist(
-    String id,
     String playlistId,
+    String id,
   ) async {
     final query = select(m3uItems)
-      ..where((tbl) => tbl.url.equals(id) & tbl.playlistId.equals(playlistId));
+      ..where((tbl) => tbl.id.equals(id) & tbl.playlistId.equals(playlistId));
     final data = await query.getSingleOrNull();
 
     if (data == null) return null;
     return M3uItem.fromData(data);
   }
+
+  Future<M3uItem?> getM3uItemsByUrlAndPlaylist(
+      String playlistId,
+      String url,
+      ) async {
+    final query = select(m3uItems)
+      ..where((tbl) => tbl.url.equals(url) & tbl.playlistId.equals(playlistId));
+    final data = await query.getSingleOrNull();
+
+    if (data == null) return null;
+    return M3uItem.fromData(data);
+  }
+
 
   Future<List<M3uItem>> getM3uItemsByCategory(String categoryId) async {
     final data = await (select(
@@ -1459,6 +1500,100 @@ class AppDatabase extends _$AppDatabase {
     return rows.map((row) => M3uEpisode.fromData(row)).toList();
   }
 
+  // === FAVORİLER İŞLEMLERİ ===
+
+  // Favori ekle
+  Future<void> insertFavorite(Favorite favorite) async {
+    await into(favorites).insert(favorite.toCompanion());
+  }
+
+  // Favori güncelle
+  Future<void> updateFavorite(Favorite favorite) async {
+    await (update(
+      favorites,
+    )..where((f) => f.id.equals(favorite.id))).write(favorite.toCompanion());
+  }
+
+  // Favori sil
+  Future<void> deleteFavorite(String id) async {
+    await (delete(favorites)..where((f) => f.id.equals(id))).go();
+  }
+
+  // Tüm favorileri getir
+  Future<List<Favorite>> getAllFavorites() async {
+    final favoritesData = await select(favorites).get();
+    return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
+  }
+
+  // Playlist'e ait favorileri getir
+  Future<List<Favorite>> getFavoritesByPlaylist(String playlistId) async {
+    final query = select(favorites)
+      ..where((f) => f.playlistId.equals(playlistId))
+      ..orderBy([(f) => OrderingTerm.desc(f.createdAt)]);
+    final favoritesData = await query.get();
+    return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
+  }
+
+  // İçerik tipine göre favorileri getir
+  Future<List<Favorite>> getFavoritesByContentType(
+    String playlistId,
+    ContentType contentType,
+  ) async {
+    final query = select(favorites)
+      ..where(
+        (f) =>
+            f.playlistId.equals(playlistId) &
+            f.contentType.equals(contentType.index),
+      )
+      ..orderBy([(f) => OrderingTerm.desc(f.createdAt)]);
+    final favoritesData = await query.get();
+    return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
+  }
+
+  // Favori var mı kontrol et
+  Future<bool> isFavorite(
+    String playlistId,
+    String streamId,
+    ContentType contentType,
+    String? episodeId,
+  ) async {
+    final query = select(favorites)
+      ..where(
+        (f) =>
+            f.playlistId.equals(playlistId) &
+            f.streamId.equals(streamId) &
+            f.contentType.equals(contentType.index) &
+            (episodeId == null
+                ? f.episodeId.isNull()
+                : f.episodeId.equals(episodeId)),
+      );
+    final result = await query.getSingleOrNull();
+    return result != null;
+  }
+
+  // Favori sayısını getir
+  Future<int> getFavoriteCount(String playlistId) async {
+    final query = select(favorites)
+      ..where((f) => f.playlistId.equals(playlistId));
+    final result = await query.get();
+    return result.length;
+  }
+
+  // İçerik tipine göre favori sayısını getir
+  Future<int> getFavoriteCountByContentType(
+    String playlistId,
+    ContentType contentType,
+  ) async {
+    final query = select(favorites)
+      ..where(
+        (f) =>
+            f.playlistId.equals(playlistId) &
+            f.contentType.equals(contentType.index),
+      );
+    final result = await query.get();
+    return result.length;
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
@@ -1505,6 +1640,10 @@ class AppDatabase extends _$AppDatabase {
       if (from <= 6) {
         await m.deleteTable('m3u_items');
         await m.createTable(m3uItems);
+      }
+
+      if (from <= 7) {
+        await m.createTable(favorites);
       }
     },
   );

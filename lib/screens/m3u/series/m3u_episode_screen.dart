@@ -9,6 +9,8 @@ import '../../../models/content_type.dart';
 import '../../../services/event_bus.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
+import '../../../controllers/favorites_controller.dart';
+import '../../../models/favorite.dart';
 
 class M3uEpisodeScreen extends StatefulWidget {
   final List<int> seasons;
@@ -35,19 +37,53 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
   int selectedContentItemIndex = 0;
   late StreamSubscription contentItemIndexChangedSubscription;
   final ScrollController _scrollController = ScrollController();
+  late FavoritesController _favoritesController;
+  bool _isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     contentItem = widget.contentItem;
+    _favoritesController = FavoritesController();
     _initializeQueue();
+    _checkFavoriteStatus();
   }
 
   @override
   void dispose() {
     contentItemIndexChangedSubscription.cancel();
     _scrollController.dispose();
+    _favoritesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFavorite = await _favoritesController.isFavorite(
+      contentItem.id,
+      contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _initializeQueue() async {
@@ -86,6 +122,9 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
             selectedContentItemIndex = index;
             contentItem = allContents[selectedContentItemIndex];
           });
+          
+          // Yeni içerik için favori durumunu kontrol et
+          _checkFavoriteStatus();
         });
   }
 
@@ -155,6 +194,15 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                                             ?.copyWith(
                                               fontWeight: FontWeight.bold,
                                             ),
+                                      ),
+                                    ),
+                                    // Favori butonu
+                                    IconButton(
+                                      onPressed: _toggleFavorite,
+                                      icon: Icon(
+                                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                                        color: _isFavorite ? Colors.red : Colors.grey,
+                                        size: 28,
                                       ),
                                     ),
                                     Text(

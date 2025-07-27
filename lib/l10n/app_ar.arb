@@ -187,5 +187,9 @@
   "episode_short": "حلقة",
   "season_number": "الموسم {number}",
   "image_loading": "تحميل الصورة...",
-  "image_not_found": "الصورة غير موجودة"
+  "image_not_found": "الصورة غير موجودة",
+  "favorites": "المفضلة",
+  "see_all_favorites": "عرض الكل",
+  "added_to_favorites": "تمت الإضافة إلى المفضلة",
+  "removed_from_favorites": "تمت الإزالة من المفضلة"
 }

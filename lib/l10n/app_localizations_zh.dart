@@ -309,6 +309,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get empty_playlist_button => '创建我的第一个播放列表';
 
   @override
+  String get favorites => '收藏';
+
+  @override
+  String get see_all_favorites => '查看全部';
+
+  @override
+  String get added_to_favorites => '已添加到收藏';
+
+  @override
+  String get removed_from_favorites => '已从收藏中移除';
+
+  @override
   String get select_playlist_type => '选择播放列表类型';
 
   @override

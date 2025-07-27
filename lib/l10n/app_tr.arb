@@ -187,5 +187,9 @@
   "episode_short": "Bölüm",
   "season_number": "{number}. Sezon",
   "image_loading": "Görsel yükleniyor...",
-  "image_not_found": "Görsel Bulunamadı"
+  "image_not_found": "Görsel Bulunamadı",
+  "favorites": "Favoriler",
+  "see_all_favorites": "Tümünü Gör",
+  "added_to_favorites": "Favorilere eklendi",
+  "removed_from_favorites": "Favorilerden kaldırıldı"
 }

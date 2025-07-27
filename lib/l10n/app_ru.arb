@@ -187,5 +187,9 @@
   "episode_short": "Эп",
   "season_number": "{number} сезон",
   "image_loading": "Загрузка изображения...",
-  "image_not_found": "Изображение не найдено"
+  "image_not_found": "Изображение не найдено",
+  "favorites": "Избранное",
+  "see_all_favorites": "Посмотреть Все",
+  "added_to_favorites": "Добавлено в избранное",
+  "removed_from_favorites": "Удалено из избранного"
 }

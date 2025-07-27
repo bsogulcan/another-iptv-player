@@ -63,11 +63,14 @@ class M3UHomeController extends ChangeNotifier {
     _currentIndex = index;
     notifyListeners();
 
-    _pageController.animateToPage(
-      index,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    // Sadece PageController bağlıysa animateToPage çağır
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void onPageChanged(int index) {

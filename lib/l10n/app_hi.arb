@@ -187,5 +187,9 @@
   "episode_short": "एप",
   "season_number": "सीजन {number}",
   "image_loading": "चित्र लोड हो रहा है...",
-  "image_not_found": "चित्र नहीं मिला"
+  "image_not_found": "चित्र नहीं मिला",
+  "favorites": "पसंदीदा",
+  "see_all_favorites": "सभी देखें",
+  "added_to_favorites": "पसंदीदा में जोड़ा गया",
+  "removed_from_favorites": "पसंदीदा से हटाया गया"
 }

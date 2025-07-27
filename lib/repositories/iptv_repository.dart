@@ -145,6 +145,16 @@ class IptvRepository {
     }
   }
 
+  Future<LiveStream?> findLiveStreamById(String streamId) async {
+    try {
+      var liveStream = await _database.findLiveStreamById(streamId, _playlistId);
+      return liveStream;
+    } catch (e) {
+      print('Live Channels Error: $e');
+      return null;
+    }
+  }
+
   Future<List<VodStream>?> getMoviesFromApi({
     String? categoryId,
     bool forceRefresh = false,
