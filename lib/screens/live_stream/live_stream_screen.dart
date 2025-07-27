@@ -81,8 +81,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
             selectedContentItemIndex = index;
             contentItem = allContents[selectedContentItemIndex];
           });
-          
-          // Yeni içerik için favori durumunu kontrol et
           _checkFavoriteStatus();
         });
   }
@@ -184,7 +182,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
-                          // Favori butonu
                           IconButton(
                             onPressed: _toggleFavorite,
                             icon: Icon(
@@ -214,7 +211,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Kanal Bilgileri
                       SelectableText(
                         context.loc.channel_information,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -322,8 +318,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   }
 
   String _getQualityText() {
-    // Bu fonksiyon content modeline göre kalite bilgisini döndürebilir
-    // Şu an için sabit bir değer döndürüyorum
     return 'HD';
   }
 

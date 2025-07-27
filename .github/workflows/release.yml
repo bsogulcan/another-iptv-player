@@ -77,32 +77,32 @@ jobs:
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  build-macos:
-    needs: create-release
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.32.4'
-          channel: 'stable'
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Generate files
-        run: flutter packages pub run build_runner build --delete-conflicting-outputs
-      - name: Build macOS
-        run: flutter build macos
-      - name: Create macOS Archive
-        run: |
-          cd build/macos/Build/Products/Release
-          zip -r ../../../../../another-iptv-player-macos-${{ github.ref_name }}.zip .
-      - name: Upload macOS Release Asset
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ github.ref_name }}
-          artifacts: another-iptv-player-macos-${{ github.ref_name }}.zip
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+#  build-macos:
+#    needs: create-release
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: subosito/flutter-action@v2
+#        with:
+#          flutter-version: '3.32.4'
+#          channel: 'stable'
+#      - name: Install dependencies
+#        run: flutter pub get
+#      - name: Generate files
+#        run: flutter packages pub run build_runner build --delete-conflicting-outputs
+#      - name: Build macOS
+#        run: flutter build macos
+#      - name: Create macOS Archive
+#        run: |
+#          cd build/macos/Build/Products/Release
+#          zip -r ../../../../../another-iptv-player-macos-${{ github.ref_name }}.zip .
+#      - name: Upload macOS Release Asset
+#        uses: ncipollo/release-action@v1
+#        with:
+#          tag: ${{ github.ref_name }}
+#          artifacts: another-iptv-player-macos-${{ github.ref_name }}.zip
+#          allowUpdates: true
+#          token: ${{ secrets.GITHUB_TOKEN }}
 
   build-linux:
     needs: create-release

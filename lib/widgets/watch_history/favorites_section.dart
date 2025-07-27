@@ -36,7 +36,6 @@ class FavoritesSection extends StatelessWidget {
       return SizedBox.shrink();
     }
 
-    // Son 10 favoriyi al
     final recentFavorites = favorites.take(10).toList();
 
     return Column(
@@ -112,7 +111,6 @@ class FavoritesSection extends StatelessWidget {
               );
             },
           ),
-          // Favori kaldır butonu
           if (onFavoriteRemove != null)
             Positioned(
               top: 8,
@@ -145,8 +143,7 @@ class FavoritesSection extends StatelessWidget {
             name: favorite.name,
             streamIcon: favorite.imagePath ?? '',
             categoryId: '',
-            // Bu bilgi favorilerde saklanmıyor
-            epgChannelId: '', // Bu bilgi favorilerde saklanmıyor
+            epgChannelId: '',
           );
           return ContentItem(
             favorite.streamId,
@@ -162,12 +159,9 @@ class FavoritesSection extends StatelessWidget {
             name: favorite.name,
             streamIcon: favorite.imagePath ?? '',
             categoryId: '',
-            // Bu bilgi favorilerde saklanmıyor
             rating: '',
-            // Bu bilgi favorilerde saklanmıyor
             rating5based: 0.0,
-            // Bu bilgi favorilerde saklanmıyor
-            containerExtension: '', // Bu bilgi favorilerde saklanmıyor
+            containerExtension: '',
           );
           return ContentItem(
             favorite.streamId,
@@ -183,7 +177,6 @@ class FavoritesSection extends StatelessWidget {
             name: favorite.name,
             cover: favorite.imagePath ?? '',
             categoryId: '',
-            // Bu bilgi favorilerde saklanmıyor
             playlistId: favorite.playlistId,
           );
           return ContentItem(

@@ -123,7 +123,6 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
             contentItem = allContents[selectedContentItemIndex];
           });
           
-          // Yeni içerik için favori durumunu kontrol et
           _checkFavoriteStatus();
         });
   }
@@ -196,7 +195,6 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
                                             ),
                                       ),
                                     ),
-                                    // Favori butonu
                                     IconButton(
                                       onPressed: _toggleFavorite,
                                       icon: Icon(

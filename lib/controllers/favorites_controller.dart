@@ -11,37 +11,30 @@ class FavoritesController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  // Getters
   List<Favorite> get favorites => _favorites;
   bool get isLoading => _isLoading;
   String? get error => _error;
   
-  // Canlı yayın favorileri
   List<Favorite> get liveStreamFavorites => 
       _favorites.where((f) => f.contentType == ContentType.liveStream).toList();
   
-  // Film favorileri
   List<Favorite> get movieFavorites => 
       _favorites.where((f) => f.contentType == ContentType.vod).toList();
   
-  // Dizi favorileri
   List<Favorite> get seriesFavorites => 
       _favorites.where((f) => f.contentType == ContentType.series).toList();
 
-  // Favori sayıları
   int get totalFavoriteCount => _favorites.length;
   int get liveStreamFavoriteCount => liveStreamFavorites.length;
   int get movieFavoriteCount => movieFavorites.length;
   int get seriesFavoriteCount => seriesFavorites.length;
 
-  // Favorileri yükle
   Future<void> loadFavorites() async {
     print('FavoritesController: loadFavorites başladı');
     try {
       _setLoading(true);
       _setError(null);
       
-      // Mevcut favorileri temizle
       _favorites.clear();
       notifyListeners();
       
@@ -70,13 +63,11 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
-  // Favori kaldır
   Future<bool> removeFavorite(String streamId, ContentType contentType, {String? episodeId}) async {
     try {
       _setError(null);
       
       await _repository.removeFavorite(streamId, contentType, episodeId: episodeId);
-      // Hızlı güncelleme için listeyi yenile
       await loadFavorites();
       
       return true;

@@ -99,7 +99,6 @@ class _M3uPlayerScreenState extends State<M3uPlayerScreen> {
                                           ),
                                     ),
                                   ),
-                                  // Favori butonu
                                   IconButton(
                                     onPressed: _toggleFavorite,
                                     icon: Icon(

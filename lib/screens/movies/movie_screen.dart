@@ -77,7 +77,6 @@ class _MovieScreenState extends State<MovieScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Film Başlığı
                       Row(
                         children: [
                           Expanded(
@@ -87,7 +86,6 @@ class _MovieScreenState extends State<MovieScreen> {
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
-                          // Favori butonu
                           IconButton(
                             onPressed: _toggleFavorite,
                             icon: Icon(

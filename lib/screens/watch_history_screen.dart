@@ -140,7 +140,6 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
   }
 
   void _showAllFavorites() {
-    // TODO: Favoriler listesi ekranını oluştur
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Favoriler listesi yakında eklenecek')),
     );

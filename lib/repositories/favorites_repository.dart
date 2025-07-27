@@ -17,12 +17,11 @@ class FavoritesRepository {
   Future<void> addFavorite(ContentItem contentItem) async {
     final playlistId = AppState.currentPlaylist!.id;
 
-    // Önce favori var mı kontrol et
     final isAlreadyFavorite = await _database.isFavorite(
       playlistId,
       contentItem.id,
       contentItem.contentType,
-      contentItem.season != null ? contentItem.id : null, // Episode ID için
+      contentItem.season != null ? contentItem.id : null,
     );
 
     if (isAlreadyFavorite) {
@@ -34,9 +33,6 @@ class FavoritesRepository {
       playlistId: playlistId,
       contentType: contentItem.contentType,
       streamId: contentItem.id,
-      // episodeId: contentItem.contentType == ContentType.series
-      //     ? contentItem.id
-      //     : null,
       m3uItemId: contentItem.m3uItem?.id,
       name: contentItem.name,
       imagePath: contentItem.imagePath,
@@ -92,28 +88,23 @@ class FavoritesRepository {
     return await _database.getFavoritesByContentType(playlistId, contentType);
   }
 
-  // Canlı yayın favorilerini getir
   Future<List<Favorite>> getLiveStreamFavorites() async {
     return await getFavoritesByContentType(ContentType.liveStream);
   }
 
-  // Film favorilerini getir
   Future<List<Favorite>> getMovieFavorites() async {
     return await getFavoritesByContentType(ContentType.vod);
   }
 
-  // Dizi favorilerini getir
   Future<List<Favorite>> getSeriesFavorites() async {
     return await getFavoritesByContentType(ContentType.series);
   }
 
-  // Favori sayısını getir
   Future<int> getFavoriteCount() async {
     final playlistId = AppState.currentPlaylist!.id;
     return await _database.getFavoriteCount(playlistId);
   }
 
-  // İçerik tipine göre favori sayısını getir
   Future<int> getFavoriteCountByContentType(ContentType contentType) async {
     final playlistId = AppState.currentPlaylist!.id;
     return await _database.getFavoriteCountByContentType(
@@ -143,12 +134,10 @@ class FavoritesRepository {
     }
   }
 
-  // Favori güncelle
   Future<void> updateFavorite(Favorite favorite) async {
     await _database.updateFavorite(favorite);
   }
 
-  // Tüm favorileri sil (playlist değiştiğinde)
   Future<void> clearAllFavorites() async {
     final playlistId = AppState.currentPlaylist!.id;
     final favorites = await _database.getFavoritesByPlaylist(playlistId);
@@ -266,7 +255,6 @@ class FavoritesRepository {
         }
       }
 
-      // Eğer gerçek veri bulunamazsa, basit ContentItem döndür
       return ContentItem(
         favorite.streamId,
         favorite.name,
@@ -274,7 +262,6 @@ class FavoritesRepository {
         favorite.contentType,
       );
     } catch (e) {
-      // Hata durumunda basit ContentItem döndür
       return ContentItem(
         favorite.streamId,
         favorite.name,
