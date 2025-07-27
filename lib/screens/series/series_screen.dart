@@ -7,8 +7,6 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../../controllers/favorites_controller.dart';
-import '../../../models/favorite.dart';
-
 import 'episode_screen.dart';
 
 class SeriesScreen extends StatefulWidget {
@@ -87,6 +85,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       widget.contentItem.id,
       widget.contentItem.contentType,
     );
+
     if (mounted) {
       setState(() {
         _isFavorite = isFavorite;

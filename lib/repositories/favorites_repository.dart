@@ -35,9 +35,9 @@ class FavoritesRepository {
       playlistId: playlistId,
       contentType: contentItem.contentType,
       streamId: contentItem.id,
-      episodeId: contentItem.contentType == ContentType.series
-          ? contentItem.id
-          : null,
+      // episodeId: contentItem.contentType == ContentType.series
+      //     ? contentItem.id
+      //     : null,
       m3uItemId: contentItem.m3uItem?.id,
       name: contentItem.name,
       imagePath: contentItem.imagePath,
