@@ -97,6 +97,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
           top: 10,
         );
 
+        if (liveStreams == null) {
+          continue;
+        }
+
         var categoryViewModel = CategoryViewModel(
           category: liveCategory,
           contentItems: liveStreams!
@@ -120,6 +124,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
           categoryId: movieCategory.categoryId,
           top: 10,
         );
+
+        if (movies == null) {
+          continue;
+        }
 
         var categoryViewModel = CategoryViewModel(
           category: movieCategory,
@@ -146,6 +154,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
           categoryId: seriesCategory.categoryId,
           top: 10,
         );
+
+        if (series == null) {
+          continue;
+        }
 
         var categoryViewModel = CategoryViewModel(
           category: seriesCategory,
