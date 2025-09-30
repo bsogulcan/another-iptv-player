@@ -191,5 +191,8 @@
   "favorites": "Favoriler",
   "see_all_favorites": "Tümünü Gör",
   "added_to_favorites": "Favorilere eklendi",
-  "removed_from_favorites": "Favorilerden kaldırıldı"
+  "removed_from_favorites": "Favorilerden kaldırıldı",
+  "select_all": "Tümünü Seç",
+  "deselect_all": "Tümünün Seçimini Kaldır",
+  "hide_category": "Kategorileri Gizle"
 }

@@ -27,7 +27,6 @@ class XtreamCodeHomeScreen extends StatefulWidget {
 
 class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   late XtreamCodeHomeController _controller;
-
   static const double _desktopBreakpoint = 900.0;
   static const double _largeScreenBreakpoint = 1200.0;
   static const double _defaultNavWidth = 80.0;
@@ -38,6 +37,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   static const double _largeIconSize = 28.0;
   static const double _defaultFontSize = 10.0;
   static const double _largeFontSize = 11.0;
+  int? _hoveredIndex;
 
   @override
   void initState() {
@@ -60,9 +60,8 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       ),
       widget.playlist.id,
     );
-
     AppState.xtreamCodeRepository = repository;
-    _controller = XtreamCodeHomeController();
+    _controller = XtreamCodeHomeController(false);
   }
 
   @override
@@ -77,19 +76,17 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildMainContent(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      ) {
     if (controller.isLoading) {
       return _buildLoadingScreen(context);
     }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= _desktopBreakpoint) {
           return _buildDesktopLayout(context, controller, constraints);
         }
-
         return _buildMobileLayout(context, controller);
       },
     );
@@ -111,9 +108,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildMobileLayout(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      ) {
     return Scaffold(
       body: _buildPageView(controller),
       bottomNavigationBar: _buildBottomNavigationBar(context, controller),
@@ -121,17 +118,15 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildDesktopLayout(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      BoxConstraints constraints,
+      ) {
     return Scaffold(
       body: Row(
         children: [
           _buildDesktopNavigationBar(context, controller, constraints),
-          Expanded(
-            child: _buildPageView(controller),
-          ),
+          Expanded(child: _buildPageView(controller)),
         ],
       ),
     );
@@ -156,12 +151,12 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
         controller,
       ),
       _buildContentPage(
-        controller.movieCategories!,
+        controller.movieCategories,
         ContentType.vod,
         controller,
       ),
       _buildContentPage(
-        controller.seriesCategories!,
+        controller.seriesCategories,
         ContentType.series,
         controller,
       ),
@@ -170,10 +165,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildContentPage(
-    List<CategoryViewModel> categories,
-    ContentType contentType,
-    XtreamCodeHomeController controller,
-  ) {
+      List<CategoryViewModel> categories,
+      ContentType contentType,
+      XtreamCodeHomeController controller,
+      ) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         _buildSliverAppBar(context, controller, contentType),
@@ -183,21 +178,20 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   SliverAppBar _buildSliverAppBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    ContentType contentType,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      ContentType contentType,
+      ) {
     if (ResponsiveHelper.isDesktopOrTV(context)) {
       return _buildDesktopSliverAppBar(context, contentType);
     }
-
     return _buildMobileSliverAppBar(context, controller, contentType);
   }
 
   SliverAppBar _buildDesktopSliverAppBar(
-    BuildContext context,
-    ContentType contentType,
-  ) {
+      BuildContext context,
+      ContentType contentType,
+      ) {
     return SliverAppBar(
       title: SelectableText(
         _getDesktopTitle(context, contentType),
@@ -227,10 +221,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   SliverAppBar _buildMobileSliverAppBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    ContentType contentType,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      ContentType contentType,
+      ) {
     return SliverAppBar(
       title: SelectableText(
         controller.getPageTitle(context),
@@ -258,9 +252,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildCategoryList(
-    List<CategoryViewModel> categories,
-    ContentType contentType,
-  ) {
+      List<CategoryViewModel> categories,
+      ContentType contentType,
+      ) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: categories.length,
@@ -270,9 +264,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildCategorySection(
-    CategoryViewModel category,
-    ContentType contentType,
-  ) {
+      CategoryViewModel category,
+      ContentType contentType,
+      ) {
     return CategorySection(
       category: category,
       cardWidth: ResponsiveHelper.getCardWidth(context),
@@ -292,9 +286,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   BottomNavigationBar _buildBottomNavigationBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      ) {
     return BottomNavigationBar(
       currentIndex: controller.currentIndex,
       onTap: controller.onNavigationTap,
@@ -304,23 +298,19 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   List<BottomNavigationBarItem> _buildBottomNavigationItems(
-    BuildContext context,
-  ) {
+      BuildContext context,
+      ) {
     return _getNavigationItems(context).map((item) {
-      return BottomNavigationBarItem(
-        icon: Icon(item.icon),
-        label: item.label,
-      );
+      return BottomNavigationBarItem(icon: Icon(item.icon), label: item.label);
     }).toList();
   }
 
   Widget _buildDesktopNavigationBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      BoxConstraints constraints,
+      ) {
     final navWidth = _getNavigationWidth(constraints.maxWidth);
-    
     return Container(
       width: navWidth,
       decoration: _getNavigationBarDecoration(context),
@@ -334,13 +324,12 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildDesktopNavigationItems(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
+      BuildContext context,
+      XtreamCodeHomeController controller,
+      BoxConstraints constraints,
+      ) {
     final items = _getNavigationItems(context);
     final sizes = _getNavigationSizes(constraints.maxWidth);
-
     return Column(
       children: items.map((item) {
         final isSelected = controller.currentIndex == item.index;
@@ -349,49 +338,56 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
           item,
           isSelected,
           sizes,
-          () => controller.onNavigationTap(item.index),
+              () => controller.onNavigationTap(item.index),
         );
       }).toList(),
     );
   }
 
   Widget _buildNavigationItem(
-    BuildContext context,
-    NavigationItem item,
-    bool isSelected,
-    NavigationSizes sizes,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      width: double.infinity,
-      height: sizes.itemHeight,
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected 
-            ? Theme.of(context).colorScheme.primaryContainer
-            : Colors.transparent,
-      ),
-      child: InkWell(
+      BuildContext context,
+      NavigationItem item,
+      bool isSelected,
+      NavigationSizes sizes,
+      VoidCallback onTap,
+      ) {
+    return Focus(
+      onFocusChange: (hasFocus) {
+        setState(() => _hoveredIndex = hasFocus ? item.index : null);
+      },
+      child: GestureDetector(
         onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              item.icon,
-              color: _getIconColor(context, isSelected),
-              size: sizes.iconSize,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              item.label,
-              style: TextStyle(
-                color: _getTextColor(context, isSelected),
-                fontSize: sizes.fontSize,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        child: Container(
+          width: double.infinity,
+          height: sizes.itemHeight,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Theme.of(context).colorScheme.primaryContainer
+                : (_hoveredIndex == item.index
+                ? Colors.grey.withOpacity(0.2)
+                : Colors.transparent),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                item.icon,
+                color: _getIconColor(context, isSelected),
+                size: sizes.iconSize,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                item.label,
+                style: TextStyle(
+                  color: _getTextColor(context, isSelected),
+                  fontSize: sizes.fontSize,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -401,21 +397,19 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     return BoxDecoration(
       color: Theme.of(context).colorScheme.surface,
       border: Border(
-        right: BorderSide(
-          color: Theme.of(context).dividerColor,
-          width: 0.5,
-        ),
+        right: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
       ),
     );
   }
 
   double _getNavigationWidth(double screenWidth) {
-    return screenWidth >= _largeScreenBreakpoint ? _largeNavWidth : _defaultNavWidth;
+    return screenWidth >= _largeScreenBreakpoint
+        ? _largeNavWidth
+        : _defaultNavWidth;
   }
 
   NavigationSizes _getNavigationSizes(double screenWidth) {
     final isLargeScreen = screenWidth >= _largeScreenBreakpoint;
-    
     return NavigationSizes(
       itemHeight: isLargeScreen ? _largeItemHeight : _defaultItemHeight,
       iconSize: isLargeScreen ? _largeIconSize : _defaultIconSize,
@@ -424,29 +418,21 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Color _getIconColor(BuildContext context, bool isSelected) {
-    return isSelected 
+    return isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurface;
   }
 
   Color _getTextColor(BuildContext context, bool isSelected) {
-    return isSelected 
+    return isSelected
         ? Theme.of(context).colorScheme.primary
         : Theme.of(context).colorScheme.onSurface;
   }
 
   List<NavigationItem> _getNavigationItems(BuildContext context) {
     return [
-      NavigationItem(
-        icon: Icons.history,
-        label: context.loc.history,
-        index: 0,
-      ),
-      NavigationItem(
-        icon: Icons.live_tv,
-        label: context.loc.live,
-        index: 1,
-      ),
+      NavigationItem(icon: Icons.history, label: context.loc.history, index: 0),
+      NavigationItem(icon: Icons.live_tv, label: context.loc.live, index: 1),
       NavigationItem(
         icon: Icons.movie_outlined,
         label: context.loc.movie,

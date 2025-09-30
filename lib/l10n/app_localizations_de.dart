@@ -639,4 +639,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get image_not_found => 'Bild nicht gefunden';
+
+  @override
+  String get select_all => 'Alles auswählen';
+
+  @override
+  String get deselect_all => 'Auswahl aufheben';
+
+  @override
+  String get hide_category => 'Kategorien ausblenden';
 }

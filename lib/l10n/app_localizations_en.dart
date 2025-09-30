@@ -632,4 +632,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get image_not_found => 'Image Not Found';
+
+  @override
+  String get select_all => 'Select All';
+
+  @override
+  String get deselect_all => 'Deselect All';
+
+  @override
+  String get hide_category => 'Hide categories';
 }

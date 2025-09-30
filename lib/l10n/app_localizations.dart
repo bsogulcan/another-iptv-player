@@ -1271,6 +1271,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image Not Found'**
   String get image_not_found;
+
+  /// No description provided for @select_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get select_all;
+
+  /// No description provided for @deselect_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselect_all;
+
+  /// No description provided for @hide_category.
+  ///
+  /// In en, this message translates to:
+  /// **'Masquer les catégories'**
+  String get hide_category;
 }
 
 class _AppLocalizationsDelegate

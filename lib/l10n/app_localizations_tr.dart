@@ -631,4 +631,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get image_not_found => 'Görsel Bulunamadı';
+
+  @override
+  String get select_all => 'Tümünü Seç';
+
+  @override
+  String get deselect_all => 'Tümünün Seçimini Kaldır';
+
+  @override
+  String get hide_category => 'Kategorileri Gizle';
 }

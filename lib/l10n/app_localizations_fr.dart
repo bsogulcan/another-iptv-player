@@ -640,4 +640,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get image_not_found => 'Image non trouvée';
+
+  @override
+  String get select_all => 'Tout Sélectionner';
+
+  @override
+  String get deselect_all => 'Tout Désélectionner';
+
+  @override
+  String get hide_category => 'Masquer les catégories';
 }
