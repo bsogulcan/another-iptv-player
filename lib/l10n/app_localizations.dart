@@ -1287,7 +1287,7 @@ abstract class AppLocalizations {
   /// No description provided for @hide_category.
   ///
   /// In en, this message translates to:
-  /// **'Masquer les catégories'**
+  /// **'Hide categories'**
   String get hide_category;
 }
 

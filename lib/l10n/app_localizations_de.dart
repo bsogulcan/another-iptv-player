@@ -641,7 +641,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get image_not_found => 'Bild nicht gefunden';
 
   @override
-  String get select_all => 'Alles auswählen';
+  String get select_all => 'Alle auswählen';
 
   @override
   String get deselect_all => 'Auswahl aufheben';

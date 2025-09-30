@@ -639,5 +639,5 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deselect_all => 'إلغاء تحديد الكل';
 
   @override
-  String get hide_category => 'إخفاء الفئات';
+  String get hide_category => 'إخفاء الفئا';
 }
