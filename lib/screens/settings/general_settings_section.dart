@@ -21,6 +21,7 @@ import '../m3u/m3u_data_loader_screen.dart';
 import '../playlist_screen.dart';
 import '../xtream-codes/xtream_code_data_loader_screen.dart';
 import 'category_settings_section.dart';
+
 final controller = XtreamCodeHomeController(true);
 
 class GeneralSettingsWidget extends StatefulWidget {
@@ -102,40 +103,40 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 value: _backgroundPlayEnabled,
                 onChanged: _saveBackgroundPlaySetting,
               ),
+              if (isXtreamCode) const Divider(height: 1),
+              if (isXtreamCode)
+                ListTile(
+                  leading: const Icon(Icons.subtitles_outlined),
+                  title: Text(context.loc.hide_category),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CategorySettingsScreen(controller: controller),
+                      ),
+                    );
 
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.subtitles_outlined),
-                title: Text(context.loc.hide_category),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CategorySettingsScreen(controller: controller),
-                    ),
-                  );
-
-                  if (result == "done") {
-                    if (isXtreamCode) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => XtreamCodeDataLoaderScreen(
-                            playlist: AppState.currentPlaylist!,
-                            refreshAll: true,
+                    if (result == "done") {
+                      if (isXtreamCode) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => XtreamCodeDataLoaderScreen(
+                              playlist: AppState.currentPlaylist!,
+                              refreshAll: true,
+                            ),
                           ),
-                        ),
-                      );
-                    }
+                        );
+                      }
 
-                    if (isM3u) {
-                      refreshM3uPlaylist();
+                      if (isM3u) {
+                        refreshM3uPlaylist();
+                      }
                     }
-                  }
-                },
-              ),
-
+                  },
+                ),
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.subtitles_outlined),
@@ -182,7 +183,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 value: Localizations.localeOf(context),
                 items: [
                   ...supportedLanguages.map(
-                        (language) => DropdownMenuItem(
+                    (language) => DropdownMenuItem(
                       value: Locale(language['code']),
                       child: Text(language['name']),
                     ),
@@ -201,7 +202,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       ],
     );
   }
-
 
   refreshM3uPlaylist() async {
     List<M3uItem> oldM3uItems = AppState.m3uItems!;
