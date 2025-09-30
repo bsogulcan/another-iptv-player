@@ -23,10 +23,10 @@ class Category {
   });
 
   factory Category.fromJson(
-    Map<String, dynamic> json,
-    String playlistId,
-    CategoryType type,
-  ) {
+      Map<String, dynamic> json,
+      String playlistId,
+      CategoryType type,
+      ) {
     return Category(
       categoryId: safeString(json['category_id']),
       categoryName: safeString(json['category_name']),

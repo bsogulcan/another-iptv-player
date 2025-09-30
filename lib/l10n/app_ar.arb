@@ -191,5 +191,8 @@
   "favorites": "المفضلة",
   "see_all_favorites": "عرض الكل",
   "added_to_favorites": "تمت الإضافة إلى المفضلة",
-  "removed_from_favorites": "تمت الإزالة من المفضلة"
+  "removed_from_favorites": "تمت الإزالة من المفضلة",
+  "select_all": "حدد الكل",
+  "deselect_all" : "إلغاء تحديد الكل",
+  "hide_category" : ""إخفاء الفئا"
 }

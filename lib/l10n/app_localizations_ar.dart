@@ -631,4 +631,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get image_not_found => 'الصورة غير موجودة';
+
+  @override
+  String get select_all => 'حدد الكل';
+
+  @override
+  String get deselect_all => 'إلغاء تحديد الكل';
+
+  @override
+  String get hide_category => 'إخفاء الفئات';
 }

@@ -632,4 +632,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get image_not_found => 'चित्र नहीं मिला';
+
+  @override
+  String get select_all => 'सबका चयन करें';
+
+  @override
+  String get deselect_all => 'सबको अचयनित करो';
+
+  @override
+  String get hide_category => 'श्रेणियाँ छिपाएँ';
 }

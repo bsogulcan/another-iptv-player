@@ -191,5 +191,8 @@
   "favorites": "Избранное",
   "see_all_favorites": "Посмотреть Все",
   "added_to_favorites": "Добавлено в избранное",
-  "removed_from_favorites": "Удалено из избранного"
+  "removed_from_favorites": "Удалено из избранного",
+  "select_all": "Выбрать всё",
+  "deselect_all": "Отменить выбор всего",
+  "hide_category": "Скрыть категории"
 }

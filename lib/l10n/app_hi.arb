@@ -191,5 +191,8 @@
   "favorites": "पसंदीदा",
   "see_all_favorites": "सभी देखें",
   "added_to_favorites": "पसंदीदा में जोड़ा गया",
-  "removed_from_favorites": "पसंदीदा से हटाया गया"
+  "removed_from_favorites": "पसंदीदा से हटाया गया",
+  "select_all": "सभी चुनें",
+  "deselect_all": "सभी का चयन रद्द करें",
+  "hide_category": "श्रेणियाँ छिपाएँ"
 }

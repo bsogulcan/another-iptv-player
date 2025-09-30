@@ -634,4 +634,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get image_not_found => 'Изображение не найдено';
+
+  @override
+  String get select_all => 'Выбрать всё';
+
+  @override
+  String get deselect_all => 'Отменить выбор всего';
+
+  @override
+  String get hide_category => 'Скрыть категории';
 }

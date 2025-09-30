@@ -616,4 +616,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get image_not_found => '图片未找到';
+
+  @override
+  String get select_all => '全選';
+
+  @override
+  String get deselect_all => '取消全選';
+
+  @override
+  String get hide_category => '隱藏類別';
 }

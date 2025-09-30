@@ -191,5 +191,8 @@
   "episode_short": "Ep",
   "season_number": "{number}. Season",
   "image_loading": "Loading image...",
-  "image_not_found": "Image Not Found"
+  "image_not_found": "Image Not Found",
+  "select_all": "Select All",
+  "deselect_all" : "Deselect All",
+  "hide_category" : "Hide categories"
 }

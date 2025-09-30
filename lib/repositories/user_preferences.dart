@@ -18,6 +18,7 @@ class UserPreferences {
   static const String _keySubtitleTextAlign = 'subtitle_text_align';
   static const String _keySubtitlePadding = 'subtitle_padding';
   static const String _keyLocale = 'locale';
+  static const String _hiddenCategoriesKey = 'hidden_categories';
 
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -193,5 +194,20 @@ class UserPreferences {
   static Future<void> removeLocale() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyLocale);
+  }
+
+  static Future<void> setHiddenCategories(List<String> categoryIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs. setStringList(_hiddenCategoriesKey, categoryIds);
+  }
+
+  static Future<bool> getHiddenCategory(String categoryId) async {
+    final hidden = await getHiddenCategories();
+    return hidden.contains(categoryId);
+  }
+
+  static Future<List<String>> getHiddenCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_hiddenCategoriesKey) ?? [];
   }
 }

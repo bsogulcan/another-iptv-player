@@ -191,5 +191,8 @@
   "favorites": "Favoris",
   "see_all_favorites": "Voir Tout",
   "added_to_favorites": "Ajouté aux favoris",
-  "removed_from_favorites": "Retiré des favoris"
+  "removed_from_favorites": "Retiré des favoris",
+  "select_all": "Tout Sélectionner",
+  "deselect_all" : "Tout Désélectionner",
+  "hide_category" : "Masquer les catégories"
 }

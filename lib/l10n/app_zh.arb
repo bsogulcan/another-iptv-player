@@ -191,5 +191,8 @@
   "favorites": "收藏",
   "see_all_favorites": "查看全部",
   "added_to_favorites": "已添加到收藏",
-  "removed_from_favorites": "已从收藏中移除"
+  "removed_from_favorites": "已从收藏中移除",
+  "select_all": "全選",
+  "deselect_all": "取消全選",
+  "hide_category": "隱藏類別"
 }

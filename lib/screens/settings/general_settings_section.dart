@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../controllers/locale_provider.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 import '../../l10n/supported_languages.dart';
 import '../../models/m3u_item.dart';
 import '../../repositories/user_preferences.dart';
@@ -19,6 +20,8 @@ import '../../widgets/section_title_widget.dart';
 import '../m3u/m3u_data_loader_screen.dart';
 import '../playlist_screen.dart';
 import '../xtream-codes/xtream_code_data_loader_screen.dart';
+import 'category_settings_section.dart';
+final controller = XtreamCodeHomeController(true);
 
 class GeneralSettingsWidget extends StatefulWidget {
   const GeneralSettingsWidget({super.key});
@@ -99,6 +102,40 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 value: _backgroundPlayEnabled,
                 onChanged: _saveBackgroundPlaySetting,
               ),
+
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.subtitles_outlined),
+                title: Text(context.loc.hide_category),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CategorySettingsScreen(controller: controller),
+                    ),
+                  );
+
+                  if (result == "done") {
+                    if (isXtreamCode) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => XtreamCodeDataLoaderScreen(
+                            playlist: AppState.currentPlaylist!,
+                            refreshAll: true,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (isM3u) {
+                      refreshM3uPlaylist();
+                    }
+                  }
+                },
+              ),
+
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.subtitles_outlined),
@@ -145,7 +182,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 value: Localizations.localeOf(context),
                 items: [
                   ...supportedLanguages.map(
-                    (language) => DropdownMenuItem(
+                        (language) => DropdownMenuItem(
                       value: Locale(language['code']),
                       child: Text(language['name']),
                     ),
@@ -164,6 +201,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       ],
     );
   }
+
 
   refreshM3uPlaylist() async {
     List<M3uItem> oldM3uItems = AppState.m3uItems!;
