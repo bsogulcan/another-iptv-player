@@ -649,4 +649,31 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hide_category => 'Masquer les catégories';
+
+  @override
+  String get remove_from_history => 'Retirer de l\'historique';
+
+  @override
+  String get remove_from_history_confirmation =>
+      'Êtes-vous sûr de vouloir retirer cet élément de l\'historique de lecture ?';
+
+  @override
+  String get remove => 'Retirer';
+
+  @override
+  String get clear_old_records => 'Effacer les anciens enregistrements';
+
+  @override
+  String get clear_old_records_confirmation =>
+      'Êtes-vous sûr de vouloir supprimer les enregistrements de lecture de plus de 30 jours ?';
+
+  @override
+  String get clear_old => 'Effacer anciens';
+
+  @override
+  String get clear_all_history => 'Effacer tout l\'historique';
+
+  @override
+  String get clear_all_history_confirmation =>
+      'Êtes-vous sûr de vouloir supprimer tout l\'historique de lecture ?';
 }

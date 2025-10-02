@@ -640,4 +640,31 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hide_category => 'Kategorileri Gizle';
+
+  @override
+  String get remove_from_history => 'Geçmişten Kaldır';
+
+  @override
+  String get remove_from_history_confirmation =>
+      'Bu öğeyi izleme geçmişinden kaldırmak istediğinizden emin misiniz?';
+
+  @override
+  String get remove => 'Kaldır';
+
+  @override
+  String get clear_old_records => 'Eski Kayıtları Temizle';
+
+  @override
+  String get clear_old_records_confirmation =>
+      '30 günden eski izleme kayıtlarını silmek istediğinizden emin misiniz?';
+
+  @override
+  String get clear_old => 'Temizle';
+
+  @override
+  String get clear_all_history => 'Tümünü Temizle';
+
+  @override
+  String get clear_all_history_confirmation =>
+      'Tüm izleme geçmişini silmek istediğinizden emin misiniz?';
 }

@@ -625,4 +625,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hide_category => '隱藏類別';
+
+  @override
+  String get remove_from_history => '從歷史記錄中移除';
+
+  @override
+  String get remove_from_history_confirmation => '您確定要從觀看歷史中移除此項目嗎？';
+
+  @override
+  String get remove => '移除';
+
+  @override
+  String get clear_old_records => '清除舊記錄';
+
+  @override
+  String get clear_old_records_confirmation => '您確定要刪除30天前的觀看記錄嗎？';
+
+  @override
+  String get clear_old => '清除舊的';
+
+  @override
+  String get clear_all_history => '清除所有歷史記錄';
+
+  @override
+  String get clear_all_history_confirmation => '您確定要刪除所有觀看歷史嗎？';
 }

@@ -194,5 +194,13 @@
   "removed_from_favorites": "تمت الإزالة من المفضلة",
   "select_all": "حدد الكل",
   "deselect_all" : "إلغاء تحديد الكل",
-  "hide_category" : "إخفاء الفئا"
+  "hide_category" : "إخفاء الفئا",
+  "remove_from_history": "إزالة من السجل",
+  "remove_from_history_confirmation": "هل أنت متأكد من أنك تريد إزالة هذا العنصر من سجل المشاهدة؟",
+  "remove": "إزالة",
+  "clear_old_records": "مسح السجلات القديمة",
+  "clear_old_records_confirmation": "هل أنت متأكد من أنك تريد حذف سجلات المشاهدة الأقدم من 30 يومًا؟",
+  "clear_old": "مسح القديم",
+  "clear_all_history": "مسح كل السجل",
+  "clear_all_history_confirmation": "هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟"
 }

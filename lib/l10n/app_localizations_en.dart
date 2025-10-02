@@ -641,4 +641,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hide_category => 'Hide categories';
+
+  @override
+  String get remove_from_history => 'Remove from History';
+
+  @override
+  String get remove_from_history_confirmation =>
+      'Are you sure you want to remove this item from watch history?';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get clear_old_records => 'Clear Old Records';
+
+  @override
+  String get clear_old_records_confirmation =>
+      'Are you sure you want to delete watch records older than 30 days?';
+
+  @override
+  String get clear_old => 'Clear Old';
+
+  @override
+  String get clear_all_history => 'Clear All History';
+
+  @override
+  String get clear_all_history_confirmation =>
+      'Are you sure you want to delete all watch history?';
 }

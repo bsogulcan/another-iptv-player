@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 
 class WatchHistoryDialogs {
   static void showRemoveDialog(
@@ -8,21 +9,21 @@ class WatchHistoryDialogs {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Geçmişten Kaldır'),
-        content: const Text(
-          'Bu öğeyi izleme geçmişinden kaldırmak istediğinizden emin misiniz?',
+        title: Text(context.loc.remove_from_history),
+        content: Text(
+          context.loc.remove_from_history_confirmation,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
+            child: Text(context.loc.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
             },
-            child: const Text('Kaldır', style: TextStyle(color: Colors.red)),
+            child: Text(context.loc.remove, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -36,21 +37,21 @@ class WatchHistoryDialogs {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eski Kayıtları Temizle'),
-        content: const Text(
-          '30 günden eski izleme kayıtlarını silmek istediğinizden emin misiniz?',
+        title: Text(context.loc.clear_old_records),
+        content: Text(
+          context.loc.clear_old_records_confirmation,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
+            child: Text(context.loc.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
             },
-            child: const Text('Temizle'),
+            child: Text(context.loc.clear_old),
           ),
         ],
       ),
@@ -64,21 +65,21 @@ class WatchHistoryDialogs {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tümünü Temizle'),
-        content: const Text(
-          'Tüm izleme geçmişini silmek istediğinizden emin misiniz?',
+        title: Text(context.loc.clear_all_history),
+        content: Text(
+          context.loc.clear_all_history_confirmation,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
+            child: Text(context.loc.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onConfirm();
             },
-            child: const Text('Sil', style: TextStyle(color: Colors.red)),
+            child: Text(context.loc.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

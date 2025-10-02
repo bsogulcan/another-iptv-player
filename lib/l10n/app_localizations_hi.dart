@@ -641,4 +641,31 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get hide_category => 'श्रेणियाँ छिपाएँ';
+
+  @override
+  String get remove_from_history => 'इतिहास से हटाएं';
+
+  @override
+  String get remove_from_history_confirmation =>
+      'क्या आप वाकई इस आइटम को देखने के इतिहास से हटाना चाहते हैं?';
+
+  @override
+  String get remove => 'हटाएं';
+
+  @override
+  String get clear_old_records => 'पुराने रिकॉर्ड साफ़ करें';
+
+  @override
+  String get clear_old_records_confirmation =>
+      'क्या आप 30 दिन से पुराने देखने के रिकॉर्ड को हटाना चाहते हैं?';
+
+  @override
+  String get clear_old => 'पुराने साफ़ करें';
+
+  @override
+  String get clear_all_history => 'सभी इतिहास साफ़ करें';
+
+  @override
+  String get clear_all_history_confirmation =>
+      'क्या आप सभी देखने का इतिहास हटाना चाहते हैं?';
 }
