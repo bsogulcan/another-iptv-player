@@ -625,4 +625,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hide_category => '隱藏類別';
+
+  @override
+  String get rating => '等級';
 }

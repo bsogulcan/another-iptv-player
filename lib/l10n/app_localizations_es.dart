@@ -649,4 +649,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hide_category => 'Ocultar categorías';
+
+  @override
+  String get rating => 'Clasificación';
 }

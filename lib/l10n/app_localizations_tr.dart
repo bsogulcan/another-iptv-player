@@ -640,4 +640,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hide_category => 'Kategorileri Gizle';
+
+  @override
+  String get rating => 'Derecelendirme';
 }

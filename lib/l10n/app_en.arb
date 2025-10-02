@@ -194,5 +194,6 @@
   "image_not_found": "Image Not Found",
   "select_all": "Select All",
   "deselect_all" : "Deselect All",
-  "hide_category" : "Hide categories"
+  "hide_category" : "Hide categories",
+  "rating" : "Rating"
 }

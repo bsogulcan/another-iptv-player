@@ -194,5 +194,6 @@
   "removed_from_favorites": "Retiré des favoris",
   "select_all": "Tout Sélectionner",
   "deselect_all" : "Tout Désélectionner",
-  "hide_category" : "Masquer les catégories"
+  "hide_category" : "Masquer les catégories",
+  "rating" : "Note"
 }

@@ -194,5 +194,6 @@
   "removed_from_favorites": "已从收藏中移除",
   "select_all": "全選",
   "deselect_all": "取消全選",
-  "hide_category": "隱藏類別"
+  "hide_category": "隱藏類別",
+  "rating" : "等級"
 }

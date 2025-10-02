@@ -194,5 +194,6 @@
   "removed_from_favorites": "Favorilerden kaldırıldı",
   "select_all": "Tümünü Seç",
   "deselect_all": "Tümünün Seçimini Kaldır",
-  "hide_category": "Kategorileri Gizle"
+  "hide_category": "Kategorileri Gizle",
+  "rating" : "Derecelendirme"
 }

@@ -640,4 +640,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hide_category => 'إخفاء الفئا';
+
+  @override
+  String get rating => 'تصنيف';
 }

@@ -648,4 +648,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hide_category => 'Kategorien ausblenden';
+
+  @override
+  String get rating => 'Bewertung';
 }

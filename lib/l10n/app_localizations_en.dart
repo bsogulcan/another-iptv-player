@@ -641,4 +641,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hide_category => 'Hide categories';
+
+  @override
+  String get rating => 'Rating';
 }

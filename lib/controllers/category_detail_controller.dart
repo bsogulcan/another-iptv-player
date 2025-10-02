@@ -72,4 +72,45 @@ class CategoryDetailController extends ChangeNotifier {
     _errorMessage = error;
     notifyListeners();
   }
+
+  void sortItems(String order) {
+    switch (order) {
+      case "ascending":
+        displayItems.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+        break;
+      case "descending":
+        displayItems.sort((a, b) => (b.name ?? '').compareTo(a.name ?? ''));
+        break;
+      case "release_date":
+        displayItems.sort((a, b) {
+          final dateA;
+          final dateB;
+          if (a.contentType.name=="series") {
+            dateA = DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ?? DateTime(1970);
+            dateB = DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ?? DateTime(1970);
+          }else{
+            dateA = a.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ?? 0.0;
+            dateB = b.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ?? 0.0;
+          }
+
+          return dateB.compareTo(dateA);
+        });
+        break;
+      case "rating":
+        displayItems.sort((a, b) {
+          final ratingA ;
+          final ratingB ;
+          if (a.contentType.name=="series") {
+            ratingA = double.tryParse(a.seriesStream?.rating ?? '0') ?? 0.0;
+            ratingB = double.tryParse(b.seriesStream?.rating ?? '0') ?? 0.0;
+          }else{
+            ratingA = double.tryParse(a.vodStream?.rating ?? '0') ?? 0.0;
+            ratingB = double.tryParse(b.vodStream?.rating ?? '0') ?? 0.0;
+          }
+          return ratingB.compareTo(ratingA);
+        });
+        break;
+    }
+    notifyListeners();
+  }
 }

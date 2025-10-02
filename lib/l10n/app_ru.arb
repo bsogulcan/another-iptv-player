@@ -194,5 +194,6 @@
   "removed_from_favorites": "Удалено из избранного",
   "select_all": "Выбрать всё",
   "deselect_all": "Отменить выбор всего",
-  "hide_category": "Скрыть категории"
+  "hide_category": "Скрыть категории",
+  "rating" : ""
 }

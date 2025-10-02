@@ -194,5 +194,6 @@
   "removed_from_favorites": "تمت الإزالة من المفضلة",
   "select_all": "حدد الكل",
   "deselect_all" : "إلغاء تحديد الكل",
-  "hide_category" : "إخفاء الفئا"
+  "hide_category" : "إخفاء الفئا",
+  "rating" : "تصنيف"
 }

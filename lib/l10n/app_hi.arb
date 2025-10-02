@@ -194,5 +194,6 @@
   "removed_from_favorites": "पसंदीदा से हटाया गया",
   "select_all": "सभी चुनें",
   "deselect_all": "सभी का चयन रद्द करें",
-  "hide_category": "श्रेणियाँ छिपाएँ"
+  "hide_category": "श्रेणियाँ छिपाएँ",
+  "rating" : "रेटिंग"
 }

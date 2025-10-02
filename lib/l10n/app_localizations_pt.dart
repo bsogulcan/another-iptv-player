@@ -646,4 +646,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get hide_category => 'Ocultar categorias';
+
+  @override
+  String get rating => 'Avaliação';
 }

@@ -649,4 +649,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hide_category => 'Masquer les catégories';
+
+  @override
+  String get rating => 'Note';
 }
