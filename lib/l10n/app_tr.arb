@@ -195,5 +195,13 @@
   "select_all": "Tümünü Seç",
   "deselect_all": "Tümünün Seçimini Kaldır",
   "hide_category": "Kategorileri Gizle",
-  "rating" : "Derecelendirme"
+  "rating" : "Puan",
+  "remove_from_history": "Geçmişten Kaldır",
+  "remove_from_history_confirmation": "Bu öğeyi izleme geçmişinden kaldırmak istediğinizden emin misiniz?",
+  "remove": "Kaldır",
+  "clear_old_records": "Eski Kayıtları Temizle",
+  "clear_old_records_confirmation": "30 günden eski izleme kayıtlarını silmek istediğinizden emin misiniz?",
+  "clear_old": "Temizle",
+  "clear_all_history": "Tümünü Temizle",
+  "clear_all_history_confirmation": "Tüm izleme geçmişini silmek istediğinizden emin misiniz?"
 }

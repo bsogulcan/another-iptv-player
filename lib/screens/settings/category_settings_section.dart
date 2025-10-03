@@ -19,6 +19,7 @@ class CategorySettingsScreen extends StatefulWidget {
 
 class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
   Set<String> _hiddenCategories = {};
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
 
   Future<void> _toggleHidden(bool isVisible, String categoryId) async {
     setState(() {
+      _hasChanges = true;
       if (isVisible) {
         _hiddenCategories.remove(categoryId);
       } else {
@@ -47,6 +49,7 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
 
   Future<void> _setAllCategoriesVisible(Iterable<String> ids, bool visible) async {
     setState(() {
+      _hasChanges = true;
       if (visible) {
         _hiddenCategories.removeAll(ids);
       } else {
@@ -57,13 +60,20 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
     widget.controller.notifyListeners();
   }
 
+  void _closeScreen(BuildContext context) {
+    if (_hasChanges) {
+      widget.controller.notifyListeners();
+    }
+    Navigator.pop(context, _hasChanges);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: widget.controller,
       child: WillPopScope(
         onWillPop: () async {
-          Navigator.pop(context, "done");
+          Navigator.pop(context, _hasChanges);
           return false;
         },
         child: Scaffold(
@@ -72,7 +82,7 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                Navigator.pop(context, "done");
+                Navigator.pop(context, _hasChanges);
               },
             ),
           ),

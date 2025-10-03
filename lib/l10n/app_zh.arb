@@ -195,5 +195,13 @@
   "select_all": "全選",
   "deselect_all": "取消全選",
   "hide_category": "隱藏類別",
-  "rating" : "等級"
+  "rating" : "等級",
+  "remove_from_history": "從歷史記錄中移除",
+  "remove_from_history_confirmation": "您確定要從觀看歷史中移除此項目嗎？",
+  "remove": "移除",
+  "clear_old_records": "清除舊記錄",
+  "clear_old_records_confirmation": "您確定要刪除30天前的觀看記錄嗎？",
+  "clear_old": "清除舊的",
+  "clear_all_history": "清除所有歷史記錄",
+  "clear_all_history_confirmation": "您確定要刪除所有觀看歷史嗎？"
 }

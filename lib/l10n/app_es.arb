@@ -195,5 +195,13 @@
   "select_all": "Seleccionar todo",
   "deselect_all": "Deseleccionar todo",
   "hide_category": "Ocultar categorías",
-  "rating" : "Clasificación"
+  "rating" : "Clasificación",
+  "remove_from_history": "Eliminar del historial",
+  "remove_from_history_confirmation": "¿Estás seguro de que quieres eliminar este elemento del historial de reproducción?",
+  "remove": "Eliminar",
+  "clear_old_records": "Limpiar registros antiguos",
+  "clear_old_records_confirmation": "¿Estás seguro de que quieres eliminar los registros de reproducción de más de 30 días?",
+  "clear_old": "Limpiar antiguos",
+  "clear_all_history": "Limpiar todo el historial",
+  "clear_all_history_confirmation": "¿Estás seguro de que quieres eliminar todo el historial de reproducción?"
 }

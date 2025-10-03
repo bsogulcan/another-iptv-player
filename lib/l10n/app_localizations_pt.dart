@@ -649,4 +649,31 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get rating => 'Avaliação';
+
+  @override
+  String get remove_from_history => 'Remover do histórico';
+
+  @override
+  String get remove_from_history_confirmation =>
+      'Tem certeza de que deseja remover este item do histórico de reprodução?';
+
+  @override
+  String get remove => 'Remover';
+
+  @override
+  String get clear_old_records => 'Limpar registros antigos';
+
+  @override
+  String get clear_old_records_confirmation =>
+      'Tem certeza de que deseja excluir registros de reprodução com mais de 30 dias?';
+
+  @override
+  String get clear_old => 'Limpar antigos';
+
+  @override
+  String get clear_all_history => 'Limpar todo o histórico';
+
+  @override
+  String get clear_all_history_confirmation =>
+      'Tem certeza de que deseja excluir todo o histórico de reprodução?';
 }

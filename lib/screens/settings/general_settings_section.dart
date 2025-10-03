@@ -118,7 +118,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       ),
                     );
 
-                    if (result == "done") {
+                    if (result == true) {
                       if (isXtreamCode) {
                         Navigator.pushReplacement(
                           context,

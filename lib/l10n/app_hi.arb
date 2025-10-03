@@ -195,5 +195,13 @@
   "select_all": "सभी चुनें",
   "deselect_all": "सभी का चयन रद्द करें",
   "hide_category": "श्रेणियाँ छिपाएँ",
-  "rating" : "रेटिंग"
+  "rating" : "रेटिंग",
+  "remove_from_history": "इतिहास से हटाएं",
+  "remove_from_history_confirmation": "क्या आप वाकई इस आइटम को देखने के इतिहास से हटाना चाहते हैं?",
+  "remove": "हटाएं",
+  "clear_old_records": "पुराने रिकॉर्ड साफ़ करें",
+  "clear_old_records_confirmation": "क्या आप 30 दिन से पुराने देखने के रिकॉर्ड को हटाना चाहते हैं?",
+  "clear_old": "पुराने साफ़ करें",
+  "clear_all_history": "सभी इतिहास साफ़ करें",
+  "clear_all_history_confirmation": "क्या आप सभी देखने का इतिहास हटाना चाहते हैं?"
 }
