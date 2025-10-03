@@ -651,7 +651,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rating => 'Bewertung';
-  
+
   @override
   String get remove_from_history => 'Aus Verlauf entfernen';
 

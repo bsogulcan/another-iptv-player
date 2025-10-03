@@ -8,6 +8,7 @@ class CategoryAppBar extends StatelessWidget {
   final VoidCallback onSearchStart;
   final VoidCallback onSearchStop;
   final ValueChanged<String> onSearchChanged;
+  final VoidCallback? onSortPressed;
 
   const CategoryAppBar({
     super.key,
@@ -17,6 +18,7 @@ class CategoryAppBar extends StatelessWidget {
     required this.onSearchStart,
     required this.onSearchStop,
     required this.onSearchChanged,
+    this.onSortPressed,
   });
 
   @override
@@ -29,6 +31,11 @@ class CategoryAppBar extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       actions: [
+        if (onSortPressed != null)
+          IconButton(
+            icon: const Icon(Icons.sort),
+            onPressed: onSortPressed,
+          ),
         IconButton(
           icon: Icon(isSearching ? Icons.clear : Icons.search),
           onPressed: isSearching ? onSearchStop : onSearchStart,

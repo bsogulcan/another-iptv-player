@@ -644,7 +644,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rating => 'Rating';
- 
+
   @override
   String get remove_from_history => 'Remove from History';
 

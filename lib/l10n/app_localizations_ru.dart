@@ -645,7 +645,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hide_category => 'Скрыть категории';
 
   @override
-  String get rating => '';
+  String get rating => 'рейтинг';
 
   @override
   String get remove_from_history => 'Удалить из истории';

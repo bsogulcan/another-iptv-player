@@ -643,7 +643,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rating => 'تصنيف';
-  
+
   @override
   String get remove_from_history => 'إزالة من السجل';
 

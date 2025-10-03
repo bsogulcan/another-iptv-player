@@ -56,6 +56,7 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
                   _searchController.clear();
                 },
                 onSearchChanged: controller.searchContent,
+                onSortPressed: () => _showSortOptions(controller),
               ),
             ],
             body: _buildBody(controller),
@@ -76,16 +77,6 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
     if (controller.isEmpty) return const EmptyState();
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              icon: const Icon(Icons.sort),
-              onPressed: () => _showSortOptions(controller),
-            ),
-          ),
-        ),
         Expanded(
           child: ContentGrid(
             items: controller.displayItems,
@@ -100,38 +91,42 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
     showModalBottomSheet(
       context: context,
       builder: (_) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('A → Z'),
-              onTap: () {
-                controller.sortItems("ascending");
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Z → A'),
-              onTap: () {
-                controller.sortItems("descending");
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title:  Text(context.loc.release_date),
-              onTap: () {
-                controller.sortItems("release_date");
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: Text(context.loc.rating),
-              onTap: () {
-                controller.sortItems("rating");
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('A → Z'),
+                onTap: () {
+                  controller.sortItems("ascending");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Z → A'),
+                onTap: () {
+                  controller.sortItems("descending");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.event),
+                title: Text(context.loc.release_date),
+                onTap: () {
+                  controller.sortItems("release_date");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star_rate),
+                title: Text(context.loc.rating),
+                onTap: () {
+                  controller.sortItems("rating");
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         );
       },
     );
