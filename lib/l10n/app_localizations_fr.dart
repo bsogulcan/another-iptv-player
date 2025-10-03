@@ -651,6 +651,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hide_category => 'Masquer les catégories';
 
   @override
+  String get rating => 'Note';
+
+  @override
   String get remove_from_history => 'Retirer de l\'historique';
 
   @override

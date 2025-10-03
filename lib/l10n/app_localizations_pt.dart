@@ -648,6 +648,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get hide_category => 'Ocultar categorias';
 
   @override
+  String get rating => 'Avaliação';
+
+  @override
   String get remove_from_history => 'Remover do histórico';
 
   @override

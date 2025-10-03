@@ -651,6 +651,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hide_category => 'Ocultar categorías';
 
   @override
+  String get rating => 'Clasificación';
+
+  @override
   String get remove_from_history => 'Eliminar del historial';
 
   @override

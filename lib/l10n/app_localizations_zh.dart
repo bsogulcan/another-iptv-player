@@ -627,6 +627,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hide_category => '隱藏類別';
 
   @override
+  String get rating => '等級';
+
+  @override
   String get remove_from_history => '從歷史記錄中移除';
 
   @override

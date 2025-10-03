@@ -650,6 +650,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hide_category => 'Kategorien ausblenden';
 
   @override
+  String get rating => 'Bewertung';
+  
+  @override
   String get remove_from_history => 'Aus Verlauf entfernen';
 
   @override

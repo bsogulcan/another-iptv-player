@@ -195,6 +195,7 @@
   "select_all": "حدد الكل",
   "deselect_all" : "إلغاء تحديد الكل",
   "hide_category" : "إخفاء الفئا",
+  "rating" : "تصنيف",
   "remove_from_history": "إزالة من السجل",
   "remove_from_history_confirmation": "هل أنت متأكد من أنك تريد إزالة هذا العنصر من سجل المشاهدة؟",
   "remove": "إزالة",

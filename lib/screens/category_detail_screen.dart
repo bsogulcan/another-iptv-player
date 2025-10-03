@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/models/category_view_model.dart';
@@ -43,7 +44,8 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
       builder: (context, controller, child) {
         return Scaffold(
           body: NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            headerSliverBuilder: (context, innerBoxIsScrolled) =>
+            [
               CategoryAppBar(
                 title: controller.category.category.categoryName,
                 isSearching: controller.isSearching,
@@ -72,10 +74,66 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
       );
     }
     if (controller.isEmpty) return const EmptyState();
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              icon: const Icon(Icons.sort),
+              onPressed: () => _showSortOptions(controller),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ContentGrid(
+            items: controller.displayItems,
+            onItemTap: (item) => navigateByContentType(context, item),
+          ),
+        ),
+      ],
+    );
+  }
 
-    return ContentGrid(
-      items: controller.displayItems,
-      onItemTap: (item) => navigateByContentType(context, item),
+  void _showSortOptions(CategoryDetailController controller) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('A → Z'),
+              onTap: () {
+                controller.sortItems("ascending");
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('Z → A'),
+              onTap: () {
+                controller.sortItems("descending");
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title:  Text(context.loc.release_date),
+              onTap: () {
+                controller.sortItems("release_date");
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(context.loc.rating),
+              onTap: () {
+                controller.sortItems("rating");
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -195,6 +195,7 @@
   "select_all": "Tümünü Seç",
   "deselect_all": "Tümünün Seçimini Kaldır",
   "hide_category": "Kategorileri Gizle",
+  "rating" : "Puan",
   "remove_from_history": "Geçmişten Kaldır",
   "remove_from_history_confirmation": "Bu öğeyi izleme geçmişinden kaldırmak istediğinizden emin misiniz?",
   "remove": "Kaldır",

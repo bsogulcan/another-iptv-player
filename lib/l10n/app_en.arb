@@ -195,6 +195,7 @@
   "select_all": "Select All",
   "deselect_all" : "Deselect All",
   "hide_category" : "Hide categories",
+  "rating" : "Rating",
   "remove_from_history": "Remove from History",
   "remove_from_history_confirmation": "Are you sure you want to remove this item from watch history?",
   "remove": "Remove",

@@ -195,6 +195,7 @@
   "select_all": "Alle auswählen",
   "deselect_all": "Auswahl aufheben",
   "hide_category": "Kategorien ausblenden",
+  "rating" : "Bewertung",
   "remove_from_history": "Aus Verlauf entfernen",
   "remove_from_history_confirmation": "Sind Sie sicher, dass Sie diesen Artikel aus dem Wiedergabeverlauf entfernen möchten?",
   "remove": "Entfernen",

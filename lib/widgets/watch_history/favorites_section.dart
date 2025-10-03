@@ -162,6 +162,7 @@ class FavoritesSection extends StatelessWidget {
             rating: '',
             rating5based: 0.0,
             containerExtension: '',
+            createdAt: DateTime.now(),
           );
           return ContentItem(
             favorite.streamId,

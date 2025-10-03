@@ -195,6 +195,7 @@
   "select_all": "Tout Sélectionner",
   "deselect_all" : "Tout Désélectionner",
   "hide_category" : "Masquer les catégories",
+  "rating" : "Note",
   "remove_from_history": "Retirer de l'historique",
   "remove_from_history_confirmation": "Êtes-vous sûr de vouloir retirer cet élément de l'historique de lecture ?",
   "remove": "Retirer",

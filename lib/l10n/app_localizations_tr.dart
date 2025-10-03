@@ -642,6 +642,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hide_category => 'Kategorileri Gizle';
 
   @override
+  String get rating => 'Derecelendirme';
+
+  @override
   String get remove_from_history => 'Geçmişten Kaldır';
 
   @override

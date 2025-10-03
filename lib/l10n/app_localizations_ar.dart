@@ -642,6 +642,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hide_category => 'إخفاء الفئا';
 
   @override
+  String get rating => 'تصنيف';
+  
+  @override
   String get remove_from_history => 'إزالة من السجل';
 
   @override

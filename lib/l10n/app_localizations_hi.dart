@@ -643,6 +643,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hide_category => 'श्रेणियाँ छिपाएँ';
 
   @override
+  String get rating => 'रेटिंग';
+
+  @override
   String get remove_from_history => 'इतिहास से हटाएं';
 
   @override

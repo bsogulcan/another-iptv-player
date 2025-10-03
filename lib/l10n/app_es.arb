@@ -195,6 +195,7 @@
   "select_all": "Seleccionar todo",
   "deselect_all": "Deseleccionar todo",
   "hide_category": "Ocultar categorías",
+  "rating" : "Clasificación",
   "remove_from_history": "Eliminar del historial",
   "remove_from_history_confirmation": "¿Estás seguro de que quieres eliminar este elemento del historial de reproducción?",
   "remove": "Eliminar",

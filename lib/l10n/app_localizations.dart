@@ -1290,6 +1290,11 @@ abstract class AppLocalizations {
   /// **'Hide categories'**
   String get hide_category;
 
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
   /// No description provided for @remove_from_history.
   ///
   /// In en, this message translates to:
