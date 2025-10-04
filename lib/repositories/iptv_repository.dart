@@ -147,7 +147,10 @@ class IptvRepository {
 
   Future<LiveStream?> findLiveStreamById(String streamId) async {
     try {
-      var liveStream = await _database.findLiveStreamById(streamId, _playlistId);
+      var liveStream = await _database.findLiveStreamById(
+        streamId,
+        _playlistId,
+      );
       return liveStream;
     } catch (e) {
       print('Live Channels Error: $e');
@@ -536,7 +539,7 @@ class IptvRepository {
       }
 
       final seasons = data['seasons'];
-      if (seasons is List) {
+      if (seasons is List && seasons.isNotEmpty) {
         for (final season in seasons) {
           final seasonCompanion = SeasonsCompanion(
             seriesId: drift.Value(seriesId),
@@ -557,6 +560,8 @@ class IptvRepository {
       }
 
       final episodes = data['episodes'];
+      Set<int> seasonNumbersFromEpisodes = {};
+
       if (episodes is Map<String, dynamic>) {
         for (final seasonKey in episodes.keys) {
           final seasonEpisodes = episodes[seasonKey];
@@ -564,6 +569,10 @@ class IptvRepository {
           if (seasonEpisodes is List) {
             for (final episode in seasonEpisodes) {
               dynamic info = episode['info'];
+
+              // Get season number from episodes
+              final seasonNumber = safeInt(episode['season']) ?? 1;
+              seasonNumbersFromEpisodes.add(seasonNumber);
 
               final episodeCompanion = EpisodesCompanion(
                 seriesId: drift.Value(seriesId),
@@ -574,7 +583,7 @@ class IptvRepository {
                 containerExtension: drift.Value(
                   safeString(episode['container_extension']),
                 ),
-                season: drift.Value(safeInt(episode['season']) ?? 1),
+                season: drift.Value(seasonNumber),
                 customSid: drift.Value(safeString(episode['custom_sid'])),
                 added: drift.Value(safeString(episode['added'])),
                 directSource: drift.Value(safeString(episode['direct_source'])),
@@ -609,6 +618,58 @@ class IptvRepository {
 
               await _database.insertEpisode(episodeCompanion);
             }
+          }
+        }
+      }
+
+      // Compare season numbers from episodes with existing seasons
+      // Create missing seasons
+      if (seasonNumbersFromEpisodes.isNotEmpty) {
+        // Get existing seasons
+        final existingSeasons = await _database.getSeasonsBySeriesId(
+          seriesId,
+          _playlistId,
+        );
+        final existingSeasonNumbers = existingSeasons
+            .map((s) => s.seasonNumber)
+            .toSet();
+
+        // Compare season numbers from episodes with existing seasons
+        for (final seasonNumber in seasonNumbersFromEpisodes) {
+          if (!existingSeasonNumbers.contains(seasonNumber)) {
+            // Calculate episode count for this season
+            int episodeCount = 0;
+            if (episodes is Map<String, dynamic>) {
+              for (final seasonKey in episodes.keys) {
+                final seasonEpisodes = episodes[seasonKey];
+                if (seasonEpisodes is List) {
+                  for (final episode in seasonEpisodes) {
+                    if ((safeInt(episode['season']) ?? 1) == seasonNumber) {
+                      episodeCount++;
+                    }
+                  }
+                }
+              }
+            }
+
+            final seasonCompanion = SeasonsCompanion(
+              seriesId: drift.Value(seriesId),
+              playlistId: drift.Value(_playlistId),
+              airDate: drift.Value(null),
+              episodeCount: drift.Value(episodeCount),
+              seasonId: drift.Value(0),
+              name: drift.Value('$seasonNumber'),
+              overview: drift.Value(null),
+              seasonNumber: drift.Value(seasonNumber),
+              voteAverage: drift.Value(null),
+              cover: drift.Value(null),
+              coverBig: drift.Value(null),
+            );
+
+            await _database.insertSeason(seasonCompanion);
+            print(
+              'Created missing season: $seasonNumber with $episodeCount episodes',
+            );
           }
         }
       }
