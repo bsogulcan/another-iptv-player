@@ -6,8 +6,6 @@
 ![GitHub](https://img.shields.io/github/license/bsogulcan/another-iptv-player?color=brightgreen&label=License)
 ![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-windows.yml/badge.svg)
 ![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-linux.yml/badge.svg)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-macos.yml/badge.svg)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-ios.yml/badge.svg)
 ![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-android.yml/badge.svg)
 ![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-web.yml/badge.svg)
 
@@ -51,6 +49,8 @@ Official documentation: [https://www.another-iptv-player.com](https://www.anothe
 - The project name "Another IPTV Player" is inspired by [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager).
 - This project uses [media_kit](https://github.com/media-kit/media-kit) as the cross-platform video & audio player for Flutter & Dart.
 - Special thanks to [JUL1EN094](https://github.com/JUL1EN094) for documenting and sharing detailed information about Xtream Code API implementation. See the [discussion](https://github.com/AndreyPavlenko/Fermata/discussions/434) for more details.
+- Special thanks to [ls-hidden](https://github.com/ls-hidden) for contributing with issues and pull requests.
+- Special thanks to [mode0192](https://github.com/mode0192) for providing detailed issues and a test account.
 
 ## Contributing
 
