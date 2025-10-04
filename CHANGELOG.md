@@ -1,4 +1,52 @@
-# [](https://github.com/bsogulcan/iptv-player/compare/v0.9.1...v) (2025-08-02)
+# [](https://github.com/bsogulcan/iptv-player/compare/v1.0.1...v) (2025-10-04)
+
+
+
+## [1.0.1](https://github.com/bsogulcan/iptv-player/compare/v1.0.0...v1.0.1) (2025-10-04)
+
+
+### Bug Fixes
+
+* improves series season handling ([b1b3e51](https://github.com/bsogulcan/iptv-player/commit/b1b3e514799d44cbcd3b85426da8d56d6e63984c)), closes [#18](https://github.com/bsogulcan/iptv-player/issues/18)
+
+
+
+# [1.0.0](https://github.com/bsogulcan/iptv-player/compare/v0.9.4...v1.0.0) (2025-10-03)
+
+
+### Bug Fixes
+
+* reload playlist unncessarily refreshes after close hide category ([#26](https://github.com/bsogulcan/iptv-player/issues/26)) ([efbe5a5](https://github.com/bsogulcan/iptv-player/commit/efbe5a5d2c7d2e5ef6fd76a17b802237f5b245c7))
+* sorting options moved to app bar ([fb9a35f](https://github.com/bsogulcan/iptv-player/commit/fb9a35f88d3a11b140308de78eb2b4c071fe986b))
+* **watch-history:** missing localization ([855d624](https://github.com/bsogulcan/iptv-player/commit/855d6247a0b4fd73314534dd916d6ecc61a69f68)), closes [#16](https://github.com/bsogulcan/iptv-player/issues/16) [#21](https://github.com/bsogulcan/iptv-player/issues/21)
+
+
+
+## [0.9.4](https://github.com/bsogulcan/iptv-player/compare/v0.9.3...v0.9.4) (2025-10-02)
+
+
+### Bug Fixes
+
+* build error ([22434b3](https://github.com/bsogulcan/iptv-player/commit/22434b31b4ddfcbf8d84766c37e6dc0a63ff65ee))
+* hide categories only xtream type ([8c0b75c](https://github.com/bsogulcan/iptv-player/commit/8c0b75cb04155666626d87046c7ff990ad2eadd6))
+
+
+
+## [0.9.3](https://github.com/bsogulcan/iptv-player/compare/v0.9.2...v0.9.3) (2025-09-24)
+
+
+### Features
+
+* adds null checks for stream data ([211bb05](https://github.com/bsogulcan/iptv-player/commit/211bb05c7590e8a014fb533c97397222d020e8e0))
+
+
+
+## [0.9.2](https://github.com/bsogulcan/iptv-player/compare/v0.9.1...v0.9.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* live stream network issue ([0da55b4](https://github.com/bsogulcan/iptv-player/commit/0da55b483a7dc42ab988446b83d95d603e6ee7e3))
 
 
 
