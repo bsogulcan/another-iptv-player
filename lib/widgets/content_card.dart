@@ -33,13 +33,16 @@ class ContentCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
-              child: content.imagePath.isNotEmpty
-                  ? CachedNetworkImage(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: content.imagePath.isNotEmpty
+                        ? CachedNetworkImage(
                       imageUrl: content.imagePath,
                       fit: _getFitForContentType(),
                       placeholder: (context, url) => Container(
                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        child: Center(
+                        child: const Center(
                           child: SizedBox(
                             width: 16,
                             height: 16,
@@ -47,16 +50,68 @@ class ContentCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      errorWidget: (context, url, error) =>
-                          _buildTitleCard(context),
+                      errorWidget: (context, url, error) => _buildTitleCard(context),
                     )
-                  : _buildTitleCard(context),
+                        : _buildTitleCard(context),
+                  ),
+                  if (content.contentType != ContentType.liveStream)
+                    Builder(
+                      builder: (context) {
+                        final rating = content.contentType == ContentType.series
+                            ? content.seriesStream?.rating
+                            : content.vodStream?.rating;
+                        if (rating != null && rating.toString().isNotEmpty) {
+                          return Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                rating.toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      },
+                    ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      color: Colors.black.withOpacity(0.7),
+                      child: Text(
+                        content.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
-
     return cardWidget;
   }
 
