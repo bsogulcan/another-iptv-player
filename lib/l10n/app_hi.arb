@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "क्या आप 30 दिन से पुराने देखने के रिकॉर्ड को हटाना चाहते हैं?",
   "clear_old": "पुराने साफ़ करें",
   "clear_all_history": "सभी इतिहास साफ़ करें",
-  "clear_all_history_confirmation": "क्या आप सभी देखने का इतिहास हटाना चाहते हैं?"
+  "clear_all_history_confirmation": "क्या आप सभी देखने का इतिहास हटाना चाहते हैं?",
+   "Appearance": "दिखावट",
+   "Theme":"थीम"
+   "Default":"डिफ़ॉल्ट",
+   "Light":"हल्का",
+   "Dark":"गहरा"
 }

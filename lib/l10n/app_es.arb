@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "¿Estás seguro de que quieres eliminar los registros de reproducción de más de 30 días?",
   "clear_old": "Limpiar antiguos",
   "clear_all_history": "Limpiar todo el historial",
-  "clear_all_history_confirmation": "¿Estás seguro de que quieres eliminar todo el historial de reproducción?"
+  "clear_all_history_confirmation": "¿Estás seguro de que quieres eliminar todo el historial de reproducción?",
+   "Appearance": "Apariencia",
+   "Theme":"Tema"
+   "Default":"Predeterminado",
+   "Light":"Claro",
+   "Dark":"Oscuro"
 }

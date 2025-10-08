@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../controllers/locale_provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
+import '../../controllers/theme_provider.dart';
 import '../../l10n/supported_languages.dart';
 import '../../models/m3u_item.dart';
 import '../../repositories/user_preferences.dart';
@@ -38,6 +39,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   bool _isLoading = true;
   String? _selectedFilePath;
   String? _selectedFileName;
+  String _selectedTheme = 'system';
 
   @override
   void initState() {
@@ -48,14 +50,38 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   Future<void> _loadSettings() async {
     try {
       final backgroundPlay = await UserPreferences.getBackgroundPlay();
+      final themeMode = await UserPreferences.getThemeMode();
       setState(() {
         _backgroundPlayEnabled = backgroundPlay;
+        _selectedTheme = _themeModeToString(themeMode);
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  String _themeModeToString(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      default:
+        return 'system';
+    }
+  }
+
+  ThemeMode _stringToThemeMode(String value) {
+    switch (value) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
     }
   }
 
@@ -74,9 +100,48 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SectionTitleWidget(title: context.loc.Appearance),
+        Card(
+          child: Column(
+            children: [
+              DropdownTileWidget<String>(
+                icon: Icons.color_lens_outlined,
+                label: context.loc.Theme,
+                value: _selectedTheme,
+                items: [
+                  DropdownMenuItem(
+                    value: 'system',
+                    child: Text(context.loc.Default),
+                  ),
+                  DropdownMenuItem(
+                    value: 'light',
+                    child: Text(context.loc.Light),
+                  ),
+                  DropdownMenuItem(
+                    value: 'dark',
+                    child: Text(context.loc.Dark),
+                  ),
+                ],
+                onChanged: (value) async {
+                  if (value != null) {
+                    final themeMode = _stringToThemeMode(value);
+                    await themeProvider.setTheme(themeMode);
+                    setState(() {
+                      _selectedTheme = value;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         SectionTitleWidget(title: context.loc.general_settings),
         Card(
           child: Column(
@@ -90,7 +155,8 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                   if (mounted) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => PlaylistScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => PlaylistScreen()),
                     );
                   }
                 },
@@ -99,7 +165,8 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
               SwitchListTile(
                 secondary: const Icon(Icons.play_circle_outline),
                 title: Text(context.loc.continue_on_background),
-                subtitle: Text(context.loc.continue_on_background_description),
+                subtitle: Text(
+                    context.loc.continue_on_background_description),
                 value: _backgroundPlayEnabled,
                 onChanged: _saveBackgroundPlaySetting,
               ),
@@ -113,8 +180,9 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            CategorySettingsScreen(controller: controller),
+                        builder: (context) => CategorySettingsScreen(
+                          controller: controller,
+                        ),
                       ),
                     );
 
@@ -123,10 +191,11 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => XtreamCodeDataLoaderScreen(
-                              playlist: AppState.currentPlaylist!,
-                              refreshAll: true,
-                            ),
+                            builder: (context) =>
+                                XtreamCodeDataLoaderScreen(
+                                  playlist: AppState.currentPlaylist!,
+                                  refreshAll: true,
+                                ),
                           ),
                         );
                       }
@@ -141,13 +210,15 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
               ListTile(
                 leading: const Icon(Icons.subtitles_outlined),
                 title: Text(context.loc.subtitle_settings),
-                subtitle: Text(context.loc.subtitle_settings_description),
+                subtitle:
+                Text(context.loc.subtitle_settings_description),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SubtitleSettingsScreen(),
+                      builder: (context) =>
+                      const SubtitleSettingsScreen(),
                     ),
                   );
                 },
@@ -175,7 +246,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                   }
                 },
               ),
-
               const Divider(height: 1),
               DropdownTileWidget<Locale>(
                 icon: Icons.language,
@@ -183,7 +253,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 value: Localizations.localeOf(context),
                 items: [
                   ...supportedLanguages.map(
-                    (language) => DropdownMenuItem(
+                        (language) => DropdownMenuItem(
                       value: Locale(language['code']),
                       child: Text(language['name']),
                     ),
@@ -216,9 +286,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       newM3uItems = await compute(M3uParser.parseM3uUrl, params);
     } else {
       await _pickFile();
-      if (_selectedFilePath == null) {
-        return;
-      }
+      if (_selectedFilePath == null) return;
 
       showLoadingDialog(context, context.loc.loading_m3u);
       final params = {
@@ -255,8 +323,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         type: FileType.custom,
         allowedExtensions: ['m3u', 'm3u8'],
         allowMultiple: false,
-        withData: false,
-        withReadStream: false,
       );
 
       if (result != null) {
@@ -266,9 +332,9 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.loc.file_selection_error)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.file_selection_error)),
+      );
     }
   }
 
@@ -277,14 +343,10 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
     required List<M3uItem> newItems,
   }) {
     Map<String, List<MapEntry<int, String>>> groupedOldItems = {};
-
     for (int i = 0; i < oldItems.length; i++) {
       M3uItem item = oldItems[i];
       String key = "${item.url}|||${item.name}";
-
-      if (!groupedOldItems.containsKey(key)) {
-        groupedOldItems[key] = [];
-      }
+      groupedOldItems.putIfAbsent(key, () => []);
       groupedOldItems[key]!.add(MapEntry(i, item.id));
     }
 
@@ -292,7 +354,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
     List<M3uItem> updatedItems = [];
 
     for (int i = 0; i < newItems.length; i++) {
-      print(i);
       M3uItem newItem = newItems[i];
       String key = "${newItem.url}|||${newItem.name}";
 
