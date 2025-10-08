@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "您確定要刪除30天前的觀看記錄嗎？",
   "clear_old": "清除舊的",
   "clear_all_history": "清除所有歷史記錄",
-  "clear_all_history_confirmation": "您確定要刪除所有觀看歷史嗎？"
+  "clear_all_history_confirmation": "您確定要刪除所有觀看歷史嗎？",
+  "Appearance": "外觀",
+  "Theme":"主題"
+  "Default":"預設",
+  "Light":"淺色",
+  "Dark":"深色"
 }

@@ -679,4 +679,19 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get clear_all_history_confirmation =>
       'Êtes-vous sûr de vouloir supprimer tout l\'historique de lecture ?';
+
+  @override
+  String get Appearance => 'Apparence';
+
+  @override
+  String get Dark => "Sombre";
+
+  @override
+  String get Default => "Défaut";
+
+  @override
+  String get Light => "Clair";
+
+  @override
+  String get Theme => "Thème";
 }

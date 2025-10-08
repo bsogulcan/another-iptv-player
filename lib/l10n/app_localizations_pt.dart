@@ -676,4 +676,19 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get clear_all_history_confirmation =>
       'Tem certeza de que deseja excluir todo o histórico de reprodução?';
+
+  @override
+  String get Appearance => 'Aparência';
+
+  @override
+  String get Dark => "Tema";
+
+  @override
+  String get Default => "Padrão";
+
+  @override
+  String get Light => "Claro";
+
+  @override
+  String get Theme => "Escuro";
 }

@@ -671,4 +671,19 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get clear_all_history_confirmation =>
       'क्या आप सभी देखने का इतिहास हटाना चाहते हैं?';
+
+  @override
+  String get Appearance => 'रूप';
+
+  @override
+  String get Dark => "थीम";
+
+  @override
+  String get Default => "डिफ़ॉल्ट";
+
+  @override
+  String get Light => "हल्का";
+
+  @override
+  String get Theme => "हल्का";
 }

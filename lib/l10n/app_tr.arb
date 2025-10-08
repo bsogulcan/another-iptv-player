@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "30 günden eski izleme kayıtlarını silmek istediğinizden emin misiniz?",
   "clear_old": "Temizle",
   "clear_all_history": "Tümünü Temizle",
-  "clear_all_history_confirmation": "Tüm izleme geçmişini silmek istediğinizden emin misiniz?"
+  "clear_all_history_confirmation": "Tüm izleme geçmişini silmek istediğinizden emin misiniz?",
+  "Appearance": "Görünüm",
+  "Theme":"Tema"
+  "Default":"Varsayılan",
+  "Light":"Açık",
+  "Dark":"Koyu"
 }

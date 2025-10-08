@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserPreferences {
@@ -19,6 +20,7 @@ class UserPreferences {
   static const String _keySubtitlePadding = 'subtitle_padding';
   static const String _keyLocale = 'locale';
   static const String _hiddenCategoriesKey = 'hidden_categories';
+  static const String _keyThemeMode = 'theme_mode';
 
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -133,7 +135,7 @@ class UserPreferences {
 
   static Future<void> setSubtitleTextColor(Color textColor) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keySubtitleTextColor, textColor.toARGB32());
+    await prefs.setInt(_keySubtitleTextColor, textColor.value);
   }
 
   static Future<Color> getSubtitleBackgroundColor() async {
@@ -144,7 +146,7 @@ class UserPreferences {
 
   static Future<void> setSubtitleBackgroundColor(Color backgroundColor) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keySubtitleBackgroundColor, backgroundColor.toARGB32());
+    await prefs.setInt(_keySubtitleBackgroundColor, backgroundColor.value);
   }
 
   static Future<FontWeight> getSubtitleFontWeight() async {
@@ -198,7 +200,7 @@ class UserPreferences {
 
   static Future<void> setHiddenCategories(List<String> categoryIds) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs. setStringList(_hiddenCategoriesKey, categoryIds);
+    await prefs.setStringList(_hiddenCategoriesKey, categoryIds);
   }
 
   static Future<bool> getHiddenCategory(String categoryId) async {
@@ -209,5 +211,23 @@ class UserPreferences {
   static Future<List<String>> getHiddenCategories() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getStringList(_hiddenCategoriesKey) ?? [];
+  }
+  
+  static Future<void> setThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyThemeMode, mode.toString().split('.').last);
+  }
+
+  static Future<ThemeMode> getThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mode = prefs.getString(_keyThemeMode) ?? 'system';
+    switch (mode) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
   }
 }

@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "هل أنت متأكد من أنك تريد حذف سجلات المشاهدة الأقدم من 30 يومًا؟",
   "clear_old": "مسح القديم",
   "clear_all_history": "مسح كل السجل",
-  "clear_all_history_confirmation": "هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟"
+  "clear_all_history_confirmation": "هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟",
+   "Appearance": "مظهر",
+   "Theme":"سمة",
+   "Default":"تقصير",
+   "Light":"ضوء",
+   "Dark":"مظلم"
 }

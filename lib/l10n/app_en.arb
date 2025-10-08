@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "Are you sure you want to delete watch records older than 30 days?",
   "clear_old": "Clear Old",
   "clear_all_history": "Clear All History",
-  "clear_all_history_confirmation": "Are you sure you want to delete all watch history?"
+  "clear_all_history_confirmation": "Are you sure you want to delete all watch history?",
+   "Appearance": "Appearence",
+   "Theme":"Theme",
+   "Default":"Default",
+   "Light":"Light",
+   "Dark":"Dark"
 }

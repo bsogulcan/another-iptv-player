@@ -679,4 +679,19 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get clear_all_history_confirmation =>
       '¿Estás seguro de que quieres eliminar todo el historial de reproducción?';
+
+  @override
+  String get Appearance => 'Apariencia';
+
+  @override
+  String get Dark => "Tema";
+
+  @override
+  String get Default => "Predeterminado";
+
+  @override
+  String get Light => "Claro";
+
+  @override
+  String get Theme => "Oscuro";
 }

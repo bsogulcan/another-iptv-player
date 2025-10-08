@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "Вы уверены, что хотите удалить записи просмотров старше 30 дней?",
   "clear_old": "Очистить старые",
   "clear_all_history": "Очистить всю историю",
-  "clear_all_history_confirmation": "Вы уверены, что хотите удалить всю историю просмотров?"
+  "clear_all_history_confirmation": "Вы уверены, что хотите удалить всю историю просмотров?",
+   "Appearance": "Внешний вид",
+   "Theme":"Тема"
+   "Default":"По умолчанию",
+   "Light":"Светлый",
+   "Dark":"Темный"
 }

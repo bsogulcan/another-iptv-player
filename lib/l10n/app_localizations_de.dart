@@ -678,4 +678,19 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get clear_all_history_confirmation =>
       'Sind Sie sicher, dass Sie den gesamten Wiedergabeverlauf löschen möchten?';
+
+  @override
+  String get Appearance => 'Aussehen';
+
+  @override
+  String get Dark => "Design";
+
+  @override
+  String get Default => "Standard";
+
+  @override
+  String get Light => "Hell";
+
+  @override
+  String get Theme => "Dunkel";
 }

@@ -203,5 +203,10 @@
   "clear_old_records_confirmation": "Sind Sie sicher, dass Sie Wiedergabeeinträge älter als 30 Tage löschen möchten?",
   "clear_old": "Alte löschen",
   "clear_all_history": "Gesamten Verlauf löschen",
-  "clear_all_history_confirmation": "Sind Sie sicher, dass Sie den gesamten Wiedergabeverlauf löschen möchten?"
+  "clear_all_history_confirmation": "Sind Sie sicher, dass Sie den gesamten Wiedergabeverlauf löschen möchten?",
+   "Appearance": "Aussehen",
+   "Theme":"Design"
+   "Default":"Standard",
+   "Light":"Hell",
+   "Dark":"Dunkel"
 }
