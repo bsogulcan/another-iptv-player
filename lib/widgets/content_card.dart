@@ -1,8 +1,8 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/content_type.dart';
-
 
 class ContentCard extends StatelessWidget {
   final ContentItem content;
@@ -20,12 +20,31 @@ class ContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isRecent = false;
+    String? releaseDateStr;
+    DateTime? releaseDate;
+
+    if (content.contentType == ContentType.series) {
+      releaseDateStr = content.seriesStream?.releaseDate;
+    }
+
+    if (releaseDateStr != null && releaseDateStr.isNotEmpty) {
+      try {
+        releaseDate = DateTime.parse(releaseDateStr);
+      } catch (e) {
+        releaseDate = null;
+      }
+    }
+
+    if (releaseDate != null) {
+      final diff = DateTime.now().difference(releaseDate).inDays;
+      isRecent = diff <= 15;
+    }
+
     Widget cardWidget = Card(
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.fromLTRB(0, 0, 0, 1),
-      color: isSelected
-          ? Theme.of(context).colorScheme.primaryContainer
-          : null, // null = default card color
+      color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
       child: InkWell(
         onTap: onTap,
         child: Column(
@@ -38,20 +57,25 @@ class ContentCard extends StatelessWidget {
                   Positioned.fill(
                     child: content.imagePath.isNotEmpty
                         ? CachedNetworkImage(
-                      imageUrl: content.imagePath,
-                      fit: _getFitForContentType(),
-                      placeholder: (context, url) => Container(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => _buildTitleCard(context),
-                    )
+                            imageUrl: content.imagePath,
+                            fit: _getFitForContentType(),
+                            placeholder: (context, url) => Container(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                _buildTitleCard(context),
+                          )
                         : _buildTitleCard(context),
                   ),
                   if (content.contentType != ContentType.liveStream)
@@ -65,7 +89,10 @@ class ContentCard extends StatelessWidget {
                             top: 0,
                             right: 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.blueAccent,
                                 borderRadius: BorderRadius.circular(4),
@@ -85,12 +112,38 @@ class ContentCard extends StatelessWidget {
                         }
                       },
                     ),
+                  if (isRecent)
+                    Positioned(
+                      top: 4,
+                      left: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          context.loc.new_ep,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
                       color: Colors.black.withOpacity(0.7),
                       child: Text(
                         content.name,
@@ -116,11 +169,9 @@ class ContentCard extends StatelessWidget {
   }
 
   BoxFit _getFitForContentType() {
-    // Canlı yayınlar için contain kullan (logolar için)
     if (content.contentType == ContentType.liveStream) {
       return BoxFit.contain;
     }
-    // Film ve diziler için cover kullan (posterler için)
     return BoxFit.cover;
   }
 
