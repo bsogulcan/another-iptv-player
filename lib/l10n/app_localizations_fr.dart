@@ -681,17 +681,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Êtes-vous sûr de vouloir supprimer tout l\'historique de lecture ?';
 
   @override
-  String get Appearance => 'Apparence';
+  String get appearance => 'Apparence';
 
   @override
-  String get Dark => "Sombre";
+  String get theme => 'Thème';
 
   @override
-  String get Default => "Défaut";
+  String get standard => 'Défaut';
 
   @override
-  String get Light => "Clair";
+  String get light => 'Clair';
 
   @override
-  String get Theme => "Thème";
+  String get dark => 'Sombre';
+
+  @override
+  String get trailer => 'Bande-annonce';
 }

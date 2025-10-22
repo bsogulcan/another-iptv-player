@@ -673,17 +673,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to delete all watch history?';
 
   @override
-  String get Appearance => 'Appearance';
+  String get appearance => 'Appearence';
 
   @override
-  String get Dark => "Dark";
+  String get theme => 'Theme';
 
   @override
-  String get Default => "Default";
+  String get standard => 'Default';
 
   @override
-  String get Light => "Light";
+  String get light => 'Light';
 
   @override
-  String get Theme => "Theme";
+  String get dark => 'Dark';
+
+  @override
+  String get trailer => 'Trailer';
 }

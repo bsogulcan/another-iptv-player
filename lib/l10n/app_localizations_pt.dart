@@ -678,17 +678,20 @@ class AppLocalizationsPt extends AppLocalizations {
       'Tem certeza de que deseja excluir todo o histórico de reprodução?';
 
   @override
-  String get Appearance => 'Aparência';
+  String get appearance => 'Aparência';
 
   @override
-  String get Dark => "Tema";
+  String get theme => 'Tema';
 
   @override
-  String get Default => "Padrão";
+  String get standard => 'Padrão';
 
   @override
-  String get Light => "Claro";
+  String get light => 'Claro';
 
   @override
-  String get Theme => "Escuro";
+  String get dark => 'Escuro';
+
+  @override
+  String get trailer => 'Reboque';
 }

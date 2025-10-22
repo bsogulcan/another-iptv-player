@@ -195,7 +195,7 @@
   "select_all": "Selecionar tudo",
   "deselect_all": "Desmarcar tudo",
   "hide_category": "Ocultar categorias",
-  "rating" : "Avaliação",
+  "rating": "Avaliação",
   "remove_from_history": "Remover do histórico",
   "remove_from_history_confirmation": "Tem certeza de que deseja remover este item do histórico de reprodução?",
   "remove": "Remover",
@@ -204,9 +204,10 @@
   "clear_old": "Limpar antigos",
   "clear_all_history": "Limpar todo o histórico",
   "clear_all_history_confirmation": "Tem certeza de que deseja excluir todo o histórico de reprodução?",
-   "Appearance": "Aparência",
-   "Theme":"Tema"
-   "Default":"Padrão",
-   "Light":"Claro",
-   "Dark":"Escuro"
+  "appearance": "Aparência",
+  "theme": "Tema",
+  "standard": "Padrão",
+  "light": "Claro",
+  "dark": "Escuro",
+  "trailer": "Reboque"
 }

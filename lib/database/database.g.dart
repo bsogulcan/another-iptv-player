@@ -3204,6 +3204,7 @@ class VodStreamsCompanion extends UpdateCompanion<VodStreamsData> {
   final Value<String> playlistId;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
+  final Value<String> youtubeTrailer;
   const VodStreamsCompanion({
     this.streamId = const Value.absent(),
     this.name = const Value.absent(),
@@ -3215,6 +3216,7 @@ class VodStreamsCompanion extends UpdateCompanion<VodStreamsData> {
     this.playlistId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
+    this.youtubeTrailer = const Value.absent(),
   });
   VodStreamsCompanion.insert({
     required String streamId,
@@ -3227,6 +3229,7 @@ class VodStreamsCompanion extends UpdateCompanion<VodStreamsData> {
     required String playlistId,
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
+    this.youtubeTrailer = const Value.absent(),
   }) : streamId = Value(streamId),
        name = Value(name),
        streamIcon = Value(streamIcon),
@@ -3246,6 +3249,7 @@ class VodStreamsCompanion extends UpdateCompanion<VodStreamsData> {
     Expression<String>? playlistId,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
+    Expression<String>? youtubeTrailer,
   }) {
     return RawValuesInsertable({
       if (streamId != null) 'stream_id': streamId,
@@ -3258,6 +3262,7 @@ class VodStreamsCompanion extends UpdateCompanion<VodStreamsData> {
       if (playlistId != null) 'playlist_id': playlistId,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
+      if (rowid != null) 'youtubeTrailer': ?youtubeTrailer,
     });
   }
 

@@ -195,7 +195,7 @@
   "select_all": "全選",
   "deselect_all": "取消全選",
   "hide_category": "隱藏類別",
-  "rating" : "等級",
+  "rating": "等級",
   "remove_from_history": "從歷史記錄中移除",
   "remove_from_history_confirmation": "您確定要從觀看歷史中移除此項目嗎？",
   "remove": "移除",
@@ -204,9 +204,10 @@
   "clear_old": "清除舊的",
   "clear_all_history": "清除所有歷史記錄",
   "clear_all_history_confirmation": "您確定要刪除所有觀看歷史嗎？",
-  "Appearance": "外觀",
-  "Theme":"主題"
-  "Default":"預設",
-  "Light":"淺色",
-  "Dark":"深色"
+  "appearance": "外觀",
+  "theme": "主題",
+  "standard": "預設",
+  "light": "淺色",
+  "dark": "深色",
+  "trailer": "拖車"
 }

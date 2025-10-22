@@ -675,17 +675,20 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вы уверены, что хотите удалить всю историю просмотров?';
 
   @override
-  String get Appearance => 'Внешний вид';
+  String get appearance => 'Внешний вид';
 
   @override
-  String get Dark => "Тема";
+  String get theme => 'Тема';
 
   @override
-  String get Default => "По умолчанию";
+  String get standard => 'По умолчанию';
 
   @override
-  String get Light => "Светлая";
+  String get light => 'Светлый';
 
   @override
-  String get Theme => "Тёмная";
+  String get dark => 'Темный';
+
+  @override
+  String get trailer => 'трейлер';
 }

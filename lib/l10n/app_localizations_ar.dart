@@ -672,17 +672,20 @@ class AppLocalizationsAr extends AppLocalizations {
       'هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟';
 
   @override
-  String get Appearance => 'المظهر';
+  String get appearance => 'مظهر';
 
   @override
-  String get Dark => "المظهر";
+  String get theme => 'سمة';
 
   @override
-  String get Default => "لافتراضي";
+  String get standard => 'تقصير';
 
   @override
-  String get Light => "فاتح";
+  String get light => 'ضوء';
 
   @override
-  String get Theme => "داكن";
+  String get dark => 'مظلم';
+
+  @override
+  String get trailer => 'جَرَّار';
 }

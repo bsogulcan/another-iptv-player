@@ -1344,36 +1344,41 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete all watch history?'**
   String get clear_all_history_confirmation;
 
-  /// No description provided for @clear_all_history_confirmation.
+  /// No description provided for @appearance.
   ///
   /// In en, this message translates to:
-  /// **'Default Theme'**
-  String get Default;
+  /// **'Appearence'**
+  String get appearance;
 
-  /// No description provided for @clear_all_history_confirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Light Theme'**
-  String get Light;
-
-  /// No description provided for @clear_all_history_confirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Dark Theme'**
-  String get Dark;
-
-  /// No description provided for @clear_all_history_confirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Appearance'**
-  String get Appearance;
-
-  /// No description provided for @clear_all_history_confirmation.
+  /// No description provided for @theme.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
-  String get Theme;
+  String get theme;
 
+  /// No description provided for @standard.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get standard;
+
+  /// No description provided for @light.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get light;
+
+  /// No description provided for @dark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get dark;
+
+  /// No description provided for @trailer.
+  ///
+  /// In en, this message translates to:
+  /// **'Trailer'**
+  String get trailer;
 }
 
 class _AppLocalizationsDelegate

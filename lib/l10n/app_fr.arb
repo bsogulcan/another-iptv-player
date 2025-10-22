@@ -204,9 +204,10 @@
   "clear_old": "Effacer anciens",
   "clear_all_history": "Effacer tout l'historique",
   "clear_all_history_confirmation": "Êtes-vous sûr de vouloir supprimer tout l'historique de lecture ?",
-  "Appearance": "Apparence",
-  "Theme":"Thème"
-  "Default":"Défaut",
-  "Light":"Clair",
-  "Dark":"Sombre"
+  "appearance": "Apparence",
+  "theme":"Thème",
+  "standard":"Défaut",
+  "light":"Clair",
+  "dark":"Sombre",
+  "trailer": "Bande-annonce"
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import '../../../controllers/favorites_controller.dart';
 import '../../../models/favorite.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import '../../../widgets/player_widget.dart';
 
 class MovieScreen extends StatefulWidget {
@@ -51,7 +51,7 @@ class _MovieScreenState extends State<MovieScreen> {
       setState(() {
         _isFavorite = result;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -135,6 +135,9 @@ class _MovieScreenState extends State<MovieScreen> {
                             ),
                         ],
                       ),
+
+                      const SizedBox(height: 12),
+                      _buildTrailerCard(),
 
                       const SizedBox(height: 12),
                       _buildDetailCard(
@@ -241,5 +244,63 @@ class _MovieScreenState extends State<MovieScreen> {
     } catch (e) {
       return 'Bilinmiyor';
     }
+  }
+
+  Widget _buildTrailerCard() {
+    final String? _trailerKey = widget.contentItem.vodStream?.youtubeTrailer;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        String urlString;
+        if (_trailerKey != null && _trailerKey.isNotEmpty) {
+          urlString = "https://www.youtube.com/watch?v=$_trailerKey";
+        } else {
+          final trailerText = context.loc.trailer;
+          final languageCode = Localizations.localeOf(context).languageCode;
+          final query = Uri.encodeQueryComponent("${widget.contentItem.name} $trailerText $languageCode");
+          urlString = "https://www.youtube.com/results?search_query=$query";
+        }
+
+        final Uri url = Uri.parse(urlString);
+        try {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.loc.error_occurred_title)),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.ondemand_video, size: 20, color: Colors.red),
+            ),
+            const SizedBox(width: 16),
+             Text(
+              context.loc.trailer,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
   }
 }

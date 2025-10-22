@@ -60,7 +60,7 @@ class WatchHistoryCard extends StatelessWidget {
                   history.watchDuration != null &&
                   history.totalDuration != null)
                 Positioned(
-                  bottom: 40,
+                  bottom: 30,
                   left: 8,
                   right: 8,
                   child: _buildProgressBar(),

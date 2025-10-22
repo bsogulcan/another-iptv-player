@@ -195,7 +195,7 @@
   "select_all": "Выбрать всё",
   "deselect_all": "Отменить выбор всего",
   "hide_category": "Скрыть категории",
-  "rating" : "рейтинг",
+  "rating": "рейтинг",
   "remove_from_history": "Удалить из истории",
   "remove_from_history_confirmation": "Вы уверены, что хотите удалить этот элемент из истории просмотров?",
   "remove": "Удалить",
@@ -204,9 +204,10 @@
   "clear_old": "Очистить старые",
   "clear_all_history": "Очистить всю историю",
   "clear_all_history_confirmation": "Вы уверены, что хотите удалить всю историю просмотров?",
-   "Appearance": "Внешний вид",
-   "Theme":"Тема"
-   "Default":"По умолчанию",
-   "Light":"Светлый",
-   "Dark":"Темный"
+  "appearance": "Внешний вид",
+  "theme": "Тема",
+  "standard": "По умолчанию",
+  "light": "Светлый",
+  "dark": "Темный",
+  "trailer": "трейлер"
 }
