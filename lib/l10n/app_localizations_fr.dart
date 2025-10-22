@@ -697,4 +697,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get trailer => 'Bande-annonce';
+
+  @override
+  String get new_ep => 'Nouveau';
 }

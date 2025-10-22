@@ -1379,6 +1379,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trailer'**
   String get trailer;
+
+  /// No description provided for @new_ep.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get new_ep;
 }
 
 class _AppLocalizationsDelegate

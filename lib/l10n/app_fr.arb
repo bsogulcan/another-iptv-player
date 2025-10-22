@@ -209,5 +209,6 @@
   "standard":"Défaut",
   "light":"Clair",
   "dark":"Sombre",
-  "trailer": "Bande-annonce"
+  "trailer": "Bande-annonce",
+  "new_ep": "Nouveau"
 }

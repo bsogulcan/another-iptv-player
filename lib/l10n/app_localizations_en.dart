@@ -689,4 +689,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trailer => 'Trailer';
+
+  @override
+  String get new_ep => 'New';
 }

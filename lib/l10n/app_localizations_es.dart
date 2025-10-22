@@ -697,4 +697,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get trailer => 'Tráiler';
+
+  @override
+  String get new_ep => 'Nuevo';
 }

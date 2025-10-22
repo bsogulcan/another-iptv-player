@@ -48,11 +48,13 @@ dependencies:
   path_provider: any
   path: any
   meta: any
-  file_picker: ^10.2.0
+  file_picker: ^8.0.0+1
   uuid: ^4.5.1
   collection: ^1.19.1
   connectivity_plus: ^6.1.4
   url_launcher: ^6.3.2
+  package_info_plus: ^8.0.0
+  wakelock_plus: ^1.2.5
 
 dependency_overrides:
   media_kit:

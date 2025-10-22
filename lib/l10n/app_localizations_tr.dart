@@ -688,4 +688,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get trailer => 'Römork';
+
+  @override
+  String get new_ep => 'Yeni';
 }

@@ -691,4 +691,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get trailer => 'трейлер';
+
+  @override
+  String get new_ep => 'новый';
 }

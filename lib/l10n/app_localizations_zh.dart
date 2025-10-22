@@ -670,4 +670,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get trailer => '拖車';
+
+  @override
+  String get new_ep => '新的';
 }

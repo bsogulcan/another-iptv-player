@@ -689,4 +689,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get trailer => 'ट्रेलर';
+
+  @override
+  String get new_ep => 'नया';
 }
