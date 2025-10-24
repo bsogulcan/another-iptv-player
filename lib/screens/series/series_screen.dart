@@ -6,6 +6,7 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../controllers/favorites_controller.dart';
 import 'episode_screen.dart';
 
@@ -99,7 +100,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       setState(() {
         _isFavorite = result;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -299,7 +300,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
     final rating = seriesInfo?.rating5based ?? 0;
     final ratingText =
         widget.contentItem.seriesStream?.rating5based?.toStringAsFixed(1) ??
-        '0.0';
+            '0.0';
 
     return Row(
       children: [
@@ -493,7 +494,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
     // Bölüm Süresi
     final episodeRunTime =
         seriesInfo?.episodeRunTime ??
-        widget.contentItem.seriesStream?.episodeRunTime;
+            widget.contentItem.seriesStream?.episodeRunTime;
     if (episodeRunTime != null && episodeRunTime.isNotEmpty) {
       details.add({
         'icon': Icons.access_time,
@@ -514,8 +515,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
     // Dizi ID
     final seriesIdValue =
         seriesInfo?.seriesId ??
-        widget.contentItem.seriesStream?.seriesId.toString() ??
-        widget.contentItem.id.toString();
+            widget.contentItem.seriesStream?.seriesId.toString() ??
+            widget.contentItem.id.toString();
     details.add({
       'icon': Icons.tag,
       'title': context.loc.series_id,
@@ -523,18 +524,19 @@ class _SeriesScreenState extends State<SeriesScreen> {
     });
 
     return Column(
-      children: details
-          .map(
-            (detail) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildDetailCard(
-                icon: detail['icon'],
-                title: detail['title'],
-                value: detail['value'],
-              ),
-            ),
-          )
-          .toList(),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTrailerCard(),
+        const SizedBox(height: 12),
+        ...details.map((detail) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildDetailCard(
+            icon: detail['icon'],
+            title: detail['title'],
+            value: detail['value'],
+          ),
+        )).toList(),
+      ],
     );
   }
 
@@ -671,27 +673,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
-                    episode.movieImage != null && episode.movieImage!.isNotEmpty
+                episode.movieImage != null && episode.movieImage!.isNotEmpty
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          episode.movieImage!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Center(
-                              child: Text(
-                                '${episode.episodeNum}',
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                    : Center(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    episode.movieImage!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
                         child: Text(
                           '${episode.episodeNum}',
                           style: TextStyle(
@@ -700,7 +689,20 @@ class _SeriesScreenState extends State<SeriesScreen> {
                             fontSize: 16,
                           ),
                         ),
-                      ),
+                      );
+                    },
+                  ),
+                )
+                    : Center(
+                  child: Text(
+                    '${episode.episodeNum}',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
 
@@ -800,10 +802,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
     final hasBackdrop =
         (apiBackdrop?.isNotEmpty == true) ||
-        (widget.contentItem.seriesStream?.backdropPath?.isNotEmpty == true);
+            (widget.contentItem.seriesStream?.backdropPath?.isNotEmpty == true);
     final hasCover =
         (apiCover?.isNotEmpty == true) ||
-        (widget.contentItem.seriesStream?.cover?.isNotEmpty == true);
+            (widget.contentItem.seriesStream?.cover?.isNotEmpty == true);
 
     if (hasBackdrop || hasCover) {
       String? imageUrl;
@@ -837,7 +839,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                           : null,
                       color: Colors.grey.shade400,
                     ),
@@ -953,6 +955,64 @@ class _SeriesScreenState extends State<SeriesScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTrailerCard() {
+    final String? _trailerKey = seriesInfo?.youtubeTrailer;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        String urlString;
+        if (_trailerKey != null && _trailerKey.isNotEmpty) {
+          urlString = "https://www.youtube.com/watch?v=$_trailerKey";
+        } else {
+          final trailerText = context.loc.trailer;
+          final languageCode = Localizations.localeOf(context).languageCode;
+          final query = Uri.encodeQueryComponent("${widget.contentItem.name} $trailerText $languageCode");
+          urlString = "https://www.youtube.com/results?search_query=$query";
+        }
+
+        final Uri url = Uri.parse(urlString);
+        try {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.loc.error_occurred_title)),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.ondemand_video, size: 20, color: Colors.red),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              context.loc.trailer,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

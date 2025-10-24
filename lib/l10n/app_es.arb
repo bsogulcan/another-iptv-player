@@ -195,7 +195,7 @@
   "select_all": "Seleccionar todo",
   "deselect_all": "Deseleccionar todo",
   "hide_category": "Ocultar categorías",
-  "rating" : "Clasificación",
+  "rating": "Clasificación",
   "remove_from_history": "Eliminar del historial",
   "remove_from_history_confirmation": "¿Estás seguro de que quieres eliminar este elemento del historial de reproducción?",
   "remove": "Eliminar",
@@ -204,9 +204,10 @@
   "clear_old": "Limpiar antiguos",
   "clear_all_history": "Limpiar todo el historial",
   "clear_all_history_confirmation": "¿Estás seguro de que quieres eliminar todo el historial de reproducción?",
-   "Appearance": "Apariencia",
-   "Theme":"Tema"
-   "Default":"Predeterminado",
-   "Light":"Claro",
-   "Dark":"Oscuro"
+  "Appearance": "Apariencia",
+  "theme": "Tema",
+  "standard": "Predeterminado",
+  "light": "Claro",
+  "dark": "Oscuro",
+  "trailer": "Tráiler"
 }

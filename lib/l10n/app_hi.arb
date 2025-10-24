@@ -195,7 +195,7 @@
   "select_all": "सभी चुनें",
   "deselect_all": "सभी का चयन रद्द करें",
   "hide_category": "श्रेणियाँ छिपाएँ",
-  "rating" : "रेटिंग",
+  "rating": "रेटिंग",
   "remove_from_history": "इतिहास से हटाएं",
   "remove_from_history_confirmation": "क्या आप वाकई इस आइटम को देखने के इतिहास से हटाना चाहते हैं?",
   "remove": "हटाएं",
@@ -204,9 +204,10 @@
   "clear_old": "पुराने साफ़ करें",
   "clear_all_history": "सभी इतिहास साफ़ करें",
   "clear_all_history_confirmation": "क्या आप सभी देखने का इतिहास हटाना चाहते हैं?",
-   "Appearance": "दिखावट",
-   "Theme":"थीम"
-   "Default":"डिफ़ॉल्ट",
-   "Light":"हल्का",
-   "Dark":"गहरा"
+  "appearance": "दिखावट",
+  "theme": "थीम",
+  "standard": "डिफ़ॉल्ट",
+  "light": "हल्का",
+  "dark": "गहरा",
+  "trailer": "ट्रेलर"
 }

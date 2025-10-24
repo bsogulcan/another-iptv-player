@@ -654,17 +654,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clear_all_history_confirmation => '您確定要刪除所有觀看歷史嗎？';
 
   @override
-  String get Appearance => '外觀';
+  String get appearance => '外觀';
 
   @override
-  String get Dark => "主題";
+  String get theme => '主題';
 
   @override
-  String get Default => "預設";
+  String get standard => '預設';
 
   @override
-  String get Light => "淺色";
+  String get light => '淺色';
 
   @override
-  String get Theme => "深色";
+  String get dark => '深色';
+
+  @override
+  String get trailer => '拖車';
 }

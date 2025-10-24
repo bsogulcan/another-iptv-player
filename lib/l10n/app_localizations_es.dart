@@ -681,17 +681,20 @@ class AppLocalizationsEs extends AppLocalizations {
       '¿Estás seguro de que quieres eliminar todo el historial de reproducción?';
 
   @override
-  String get Appearance => 'Apariencia';
+  String get appearance => 'Appearence';
 
   @override
-  String get Dark => "Tema";
+  String get theme => 'Tema';
 
   @override
-  String get Default => "Predeterminado";
+  String get standard => 'Predeterminado';
 
   @override
-  String get Light => "Claro";
+  String get light => 'Claro';
 
   @override
-  String get Theme => "Oscuro";
+  String get dark => 'Oscuro';
+
+  @override
+  String get trailer => 'Tráiler';
 }

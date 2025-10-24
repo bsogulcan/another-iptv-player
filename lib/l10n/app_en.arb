@@ -193,9 +193,9 @@
   "image_loading": "Loading image...",
   "image_not_found": "Image Not Found",
   "select_all": "Select All",
-  "deselect_all" : "Deselect All",
-  "hide_category" : "Hide categories",
-  "rating" : "Rating",
+  "deselect_all": "Deselect All",
+  "hide_category": "Hide categories",
+  "rating": "Rating",
   "remove_from_history": "Remove from History",
   "remove_from_history_confirmation": "Are you sure you want to remove this item from watch history?",
   "remove": "Remove",
@@ -204,9 +204,10 @@
   "clear_old": "Clear Old",
   "clear_all_history": "Clear All History",
   "clear_all_history_confirmation": "Are you sure you want to delete all watch history?",
-   "Appearance": "Appearence",
-   "Theme":"Theme",
-   "Default":"Default",
-   "Light":"Light",
-   "Dark":"Dark"
+  "appearance": "Appearence",
+  "theme": "Theme",
+  "standard": "Default",
+  "light": "Light",
+  "dark": "Dark",
+  "trailer": "Trailer"
 }

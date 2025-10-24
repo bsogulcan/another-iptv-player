@@ -106,26 +106,26 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionTitleWidget(title: context.loc.Appearance),
+        SectionTitleWidget(title: context.loc.appearance),
         Card(
           child: Column(
             children: [
               DropdownTileWidget<String>(
                 icon: Icons.color_lens_outlined,
-                label: context.loc.Theme,
+                label: context.loc.theme,
                 value: _selectedTheme,
                 items: [
                   DropdownMenuItem(
                     value: 'system',
-                    child: Text(context.loc.Default),
+                    child: Text(context.loc.standard),
                   ),
                   DropdownMenuItem(
                     value: 'light',
-                    child: Text(context.loc.Light),
+                    child: Text(context.loc.light),
                   ),
                   DropdownMenuItem(
                     value: 'dark',
-                    child: Text(context.loc.Dark),
+                    child: Text(context.loc.dark),
                   ),
                 ],
                 onChanged: (value) async {

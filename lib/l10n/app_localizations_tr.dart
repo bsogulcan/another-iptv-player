@@ -672,17 +672,20 @@ class AppLocalizationsTr extends AppLocalizations {
       'Tüm izleme geçmişini silmek istediğinizden emin misiniz?';
 
   @override
-  String get Appearance => 'Görünüm';
+  String get appearance => 'Görünüm';
 
   @override
-  String get Dark => "Tema";
+  String get theme => 'Tema';
 
   @override
-  String get Default => "Varsayılan";
+  String get standard => 'Varsayılan';
 
   @override
-  String get Light => "Açık";
+  String get light => 'Açık';
 
   @override
-  String get Theme => "Koyu";
+  String get dark => 'Koyu';
+
+  @override
+  String get trailer => 'Römork';
 }

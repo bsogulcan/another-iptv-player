@@ -12,6 +12,7 @@ class VodStream {
   final String containerExtension;
   final String? playlistId;
   final DateTime? createdAt;
+  final String? youtubeTrailer;
 
   VodStream({
     required this.streamId,
@@ -23,6 +24,7 @@ class VodStream {
     required this.containerExtension,
     this.playlistId,
     required this.createdAt,
+    this.youtubeTrailer,
   });
 
   factory VodStream.fromJson(Map<String, dynamic> json, String playlistId) {
@@ -36,6 +38,7 @@ class VodStream {
       containerExtension: safeString(json['container_extension']),
       playlistId: safeString(playlistId),
       createdAt:(json['createdAt']),
+      youtubeTrailer: safeString(json['youtube_trailer']),
     );
   }
 
@@ -65,6 +68,7 @@ class VodStream {
       rating5based: Value(rating5based),
       containerExtension: Value(containerExtension),
       playlistId: Value(playlistId ?? ''),
+      youtubeTrailer: Value(youtubeTrailer ?? ''),
     );
   }
 }

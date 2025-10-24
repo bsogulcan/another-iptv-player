@@ -195,7 +195,7 @@
   "select_all": "Alle auswählen",
   "deselect_all": "Auswahl aufheben",
   "hide_category": "Kategorien ausblenden",
-  "rating" : "Bewertung",
+  "rating": "Bewertung",
   "remove_from_history": "Aus Verlauf entfernen",
   "remove_from_history_confirmation": "Sind Sie sicher, dass Sie diesen Artikel aus dem Wiedergabeverlauf entfernen möchten?",
   "remove": "Entfernen",
@@ -204,9 +204,10 @@
   "clear_old": "Alte löschen",
   "clear_all_history": "Gesamten Verlauf löschen",
   "clear_all_history_confirmation": "Sind Sie sicher, dass Sie den gesamten Wiedergabeverlauf löschen möchten?",
-   "Appearance": "Aussehen",
-   "Theme":"Design"
-   "Default":"Standard",
-   "Light":"Hell",
-   "Dark":"Dunkel"
+  "appearance": "Aussehen",
+  "theme": "Design",
+  "standard": "Standard",
+  "light": "Hell",
+  "dark": "Dunkel",
+  "trailer": "Anhänger"
 }

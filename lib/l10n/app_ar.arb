@@ -193,9 +193,9 @@
   "added_to_favorites": "تمت الإضافة إلى المفضلة",
   "removed_from_favorites": "تمت الإزالة من المفضلة",
   "select_all": "حدد الكل",
-  "deselect_all" : "إلغاء تحديد الكل",
-  "hide_category" : "إخفاء الفئا",
-  "rating" : "تصنيف",
+  "deselect_all": "إلغاء تحديد الكل",
+  "hide_category": "إخفاء الفئا",
+  "rating": "تصنيف",
   "remove_from_history": "إزالة من السجل",
   "remove_from_history_confirmation": "هل أنت متأكد من أنك تريد إزالة هذا العنصر من سجل المشاهدة؟",
   "remove": "إزالة",
@@ -204,9 +204,10 @@
   "clear_old": "مسح القديم",
   "clear_all_history": "مسح كل السجل",
   "clear_all_history_confirmation": "هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟",
-   "Appearance": "مظهر",
-   "Theme":"سمة",
-   "Default":"تقصير",
-   "Light":"ضوء",
-   "Dark":"مظلم"
+  "appearance": "مظهر",
+  "theme": "سمة",
+  "standard": "تقصير",
+  "light": "ضوء",
+  "dark": "مظلم",
+  "trailer": "جَرَّار"
 }
