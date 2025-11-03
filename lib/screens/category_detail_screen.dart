@@ -44,8 +44,7 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
       builder: (context, controller, child) {
         return Scaffold(
           body: NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) =>
-            [
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
               CategoryAppBar(
                 title: controller.category.category.categoryName,
                 isSearching: controller.isSearching,
@@ -77,6 +76,11 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
     if (controller.isEmpty) return const EmptyState();
     return Column(
       children: [
+        if (controller.genres.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: _buildGenreSelector(controller),
+          ),
         Expanded(
           child: ContentGrid(
             items: controller.displayItems,
@@ -84,6 +88,31 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGenreSelector(CategoryDetailController controller) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          ChoiceChip(
+            label: Text(context.loc.all),
+            selected: controller.selectedGenre == null,
+            onSelected: (_) => controller.filterByGenre(null),
+          ),
+          ...controller.genres.map(
+                (g) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: ChoiceChip(
+                label: Text(g),
+                selected: controller.selectedGenre == g,
+                onSelected: (_) => controller.filterByGenre(g),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
