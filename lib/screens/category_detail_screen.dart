@@ -105,7 +105,7 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
                 (g) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: ChoiceChip(
-                label: Text(g),
+                label: Text(_capitalizeGenre(g)),
                 selected: controller.selectedGenre == g,
                 onSelected: (_) => controller.filterByGenre(g),
               ),
@@ -159,5 +159,18 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
         );
       },
     );
+  }
+
+  String _capitalizeGenre(String genre) {
+    if (genre.isEmpty) return genre;
+    return genre
+        .split(' ')
+        .map((word) {
+      if (word.isEmpty) return word;
+      final first = word.characters.first.toUpperCase();
+      final rest = word.characters.skip(1).join();
+      return '$first$rest';
+    })
+        .join(' ');
   }
 }

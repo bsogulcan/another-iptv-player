@@ -41,9 +41,13 @@ class ContentCard extends StatelessWidget {
       isRecent = diff <= 15;
     }
 
+    final bool isLiveStream = content.contentType == ContentType.liveStream;
+    final Widget? ratingBadge =
+    isLiveStream ? null : _buildRatingBadge(context);
+
     Widget cardWidget = Card(
       clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.fromLTRB(0, 0, 0, 1),
+      margin: const EdgeInsets.fromLTRB(0, 0, 0, 1),
       color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
       child: InkWell(
         onTap: onTap,
@@ -57,61 +61,28 @@ class ContentCard extends StatelessWidget {
                   Positioned.fill(
                     child: content.imagePath.isNotEmpty
                         ? CachedNetworkImage(
-                            imageUrl: content.imagePath,
-                            fit: _getFitForContentType(),
-                            placeholder: (context, url) => Container(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
-                              child: const Center(
-                                child: SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
+                      imageUrl: content.imagePath,
+                      fit: _getFitForContentType(),
+                      placeholder: (context, url) => Container(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
                             ),
-                            errorWidget: (context, url, error) =>
-                                _buildTitleCard(context),
-                          )
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          _buildTitleCard(context),
+                    )
                         : _buildTitleCard(context),
                   ),
-                  if (content.contentType != ContentType.liveStream)
-                    Builder(
-                      builder: (context) {
-                        final rating = content.contentType == ContentType.series
-                            ? content.seriesStream?.rating
-                            : content.vodStream?.rating;
-                        if (rating != null && rating.toString().isNotEmpty) {
-                          return Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blueAccent,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                rating.toString(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      },
-                    ),
+                  if (ratingBadge != null) ratingBadge,
                   if (isRecent)
                     Positioned(
                       top: 4,
@@ -127,7 +98,7 @@ class ContentCard extends StatelessWidget {
                         ),
                         child: Text(
                           context.loc.new_ep,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -182,7 +153,7 @@ class ContentCard extends StatelessWidget {
           : Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(6),
+          padding: const EdgeInsets.all(6),
           child: Text(
             content.name,
             style: TextStyle(
@@ -199,5 +170,84 @@ class ContentCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget? _buildRatingBadge(BuildContext context) {
+    final dynamic rawRating = content.contentType == ContentType.series
+        ? content.seriesStream?.rating
+        : content.vodStream?.rating;
+
+    final double? rating = _parseRating(rawRating);
+    if (rating == null || rating <= 0) {
+      return null;
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final formattedRating = rating % 1 == 0
+        ? rating.toStringAsFixed(0)
+        : rating.toStringAsFixed(1);
+
+    return Positioned(
+      top: 6,
+      right: 6,
+      child: Semantics(
+        label: 'Rating $formattedRating',
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                colorScheme.secondaryContainer.withOpacity(0.93),
+                colorScheme.secondary.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colorScheme.onSecondaryContainer.withOpacity(0.16),
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.22),
+                offset: const Offset(0, 1),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star_rounded,
+                size: 14,
+                color: colorScheme.onSecondaryContainer.withOpacity(0.9),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                formattedRating,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11.5,
+                  color: colorScheme.onSecondaryContainer,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  double? _parseRating(dynamic rating) {
+    if (rating == null) return null;
+    if (rating is num) return rating.toDouble();
+    if (rating is String && rating.isNotEmpty) {
+      final normalized = rating.replaceAll(',', '.');
+      return double.tryParse(normalized);
+    }
+    return null;
   }
 }

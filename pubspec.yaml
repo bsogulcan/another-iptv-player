@@ -2,13 +2,13 @@ name: another_iptv_player
 description: "Another IPTV Player"
 publish_to: "none"
 
-version: 1.0.1+18
+version: 1.1.0+19
 
 environment:
-  sdk: ^3.8.1
+  sdk: ^3.9.2
 
 dependencies:
-  flutter:
+  flutter :
     sdk: flutter
   flutter_localizations:
     sdk: flutter
