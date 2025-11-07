@@ -209,5 +209,6 @@
   "standard": "Default",
   "light": "Light",
   "dark": "Dark",
-  "trailer": "Trailer"
+  "trailer": "Trailer",
+  "new_ep": "New"
 }

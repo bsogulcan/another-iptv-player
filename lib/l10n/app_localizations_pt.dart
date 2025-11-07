@@ -694,4 +694,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get trailer => 'Reboque';
+
+  @override
+  String get new_ep => 'Novo';
 }

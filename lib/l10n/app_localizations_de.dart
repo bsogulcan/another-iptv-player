@@ -696,4 +696,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get trailer => 'Anhänger';
+
+  @override
+  String get new_ep => 'Neu';
 }
