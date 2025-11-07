@@ -1,4 +1,16 @@
-# [](https://github.com/bsogulcan/iptv-player/compare/v1.0.1...v) (2025-10-04)
+# [](https://github.com/bsogulcan/iptv-player/compare/v1.0.1...v) (2025-11-07)
+
+
+### Bug Fixes
+
+* db ([d339b44](https://github.com/bsogulcan/iptv-player/commit/d339b44baea6eb200ffb7df8346bd0806e7e8411))
+* updates flutter version to 3.35.7 ([b5137d1](https://github.com/bsogulcan/iptv-player/commit/b5137d13262e183d0e5f330583e0a976a3ee1187))
+
+
+### Features
+
+* adds url launcher dependency ([f10b220](https://github.com/bsogulcan/iptv-player/commit/f10b220a91b90b6c019178286b2291adad097045))
+* localization and ui issues ([03a4294](https://github.com/bsogulcan/iptv-player/commit/03a42940050b871435fa2278f3d26f8c7702c72a))
 
 
 
