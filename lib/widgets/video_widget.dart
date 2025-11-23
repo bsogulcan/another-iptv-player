@@ -17,7 +17,6 @@ Widget getVideo(
     VideoController controller,
     SubtitleViewConfiguration subtitleViewConfiguration,
     ) {
-  final streamUrl = _getCurrentStreamUrl(); // <--- URL taken directly from content.url
 
   switch (Theme.of(context).platform) {
     case TargetPlatform.android:
@@ -32,7 +31,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(streamUrl: streamUrl),
+            VideoSettingsWidget(),
           ],
         ),
         fullscreen: MaterialVideoControlsThemeData().copyWith(
@@ -44,7 +43,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(streamUrl: streamUrl),
+            VideoSettingsWidget(),
           ],
           seekBarMargin: EdgeInsets.fromLTRB(0, 0, 0, 10),
         ),
@@ -67,7 +66,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(streamUrl: streamUrl),
+            VideoSettingsWidget(),
           ],
         ),
         fullscreen: MaterialDesktopVideoControlsThemeData().copyWith(
@@ -76,7 +75,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(streamUrl: streamUrl),
+            VideoSettingsWidget(),
           ],
         ),
         child: Scaffold(
