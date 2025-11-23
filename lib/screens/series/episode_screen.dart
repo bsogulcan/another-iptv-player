@@ -215,11 +215,41 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
 
   Widget _buildEpisodeCard(EpisodesData episode, int index) {
     bool isRecent = false;
-    if (episode.releasedate != null && episode.releasedate!.isNotEmpty) {
+
+    // 1. Try 'added' date first (Server Upload Date)
+    String? dateStr = episode.added;
+
+    // 2. Fallback to 'releasedate' if 'added' is missing
+    if (dateStr == null || dateStr.isEmpty) {
+      dateStr = episode.releasedate;
+    }
+
+    // 3. Parse the date logic
+    if (dateStr != null && dateStr.isNotEmpty) {
       try {
-        final releaseDate = DateTime.parse(episode.releasedate!);
-        final diff = DateTime.now().difference(releaseDate).inDays;
-        isRecent = diff <= 15;
+        DateTime? checkDate;
+        // Handle Unix Timestamp (digits only)
+        if (RegExp(r'^\d+$').hasMatch(dateStr)) {
+          int? timestamp = int.tryParse(dateStr);
+          if (timestamp != null) {
+            // Convert seconds (10 digits) to milliseconds if needed
+            if (dateStr.length <= 10) timestamp *= 1000;
+            checkDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
+          }
+        } else {
+          // Handle Standard Date String
+          checkDate = DateTime.tryParse(dateStr);
+        }
+
+        // 4. Check if New (15 days)
+        if (checkDate != null) {
+          final diff = DateTime
+              .now()
+              .difference(checkDate)
+              .inDays;
+          // Use -2 to handle slight server timezone differences
+          isRecent = diff >= -2 && diff <= 15;
+        }
       } catch (e) {}
     }
 
