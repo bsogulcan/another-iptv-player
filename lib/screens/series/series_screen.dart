@@ -373,43 +373,33 @@ class _SeriesScreenState extends State<SeriesScreen> {
     );
   }
 
-  /// Builds the "Continue: S x, Episode y" pill button shown on the series page.
+  /// Builds the "Resume: Sx , Episode y" pill button shown on the series page.
   Widget _buildResumeWatchingButton() {
-    // Episode we should resume from (already set in state from history).
     final episode = _lastOpenedEpisode!;
-    final seasonNum = episode.season ?? 0;
-    final epNum = episode.episodeNum ?? 0;
+    final seasonNum = episode.season;
+    final epNum = episode.episodeNum;
+    final label = 'Resume: S$seasonNum, Episode $epNum';
 
-    // Text that appears inside the pill.
-    final label = 'Resume: S$seasonNum , Episode $epNum';
+    // --- FIX: Dynamic Colors for Light/Dark Theme ---
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // In Dark mode: White button. In Light mode: Dark button (High contrast)
+    final bgColor = isDark ? Colors.white : Colors.black87;
+    final contentColor = isDark ? Colors.black87 : Colors.white;
+    // ------------------------------------------------
 
     return Align(
-      // Keep the pill aligned to the left under the rating, not centered/full width.
       alignment: Alignment.centerLeft,
       child: Material(
-        // Needed so InkWell ripple respects rounded corners.
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          // Same radius as the white pill so ripple is clipped correctly.
-          borderRadius: BorderRadius.circular(10),
-          // What happens when user taps the pill.
+          borderRadius: BorderRadius.circular(12),
           onTap: () => _openEpisodeFromSeries(episode),
           child: Container(
-            // Padding:
-            //  - first value (left)  = space before the triangle
-            //  - last value (right) = space after the last letter
-            padding: const EdgeInsets.fromLTRB(
-              14, // left: small margin before the play icon
-              10,  // top: overall pill height
-              18, // right: small margin after the text
-              10,  // bottom
-            ),
+            padding: const EdgeInsets.fromLTRB(14, 10, 18, 10),
             decoration: BoxDecoration(
-              color: Colors.white,
-              // Rounded corners similar to your Trailer card.
-              borderRadius: BorderRadius.circular(10),
-              // Light shadow so the pill pops from the dark background.
+              color: bgColor, // <--- Updated
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.10),
@@ -419,28 +409,20 @@ class _SeriesScreenState extends State<SeriesScreen> {
               ],
             ),
             child: Row(
-              // Only be as wide as the content (icon + text).
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Play triangle icon.
-                const Icon(
+                Icon(
                   Icons.play_arrow,
-                  color: Colors.black87,
+                  color: contentColor,
                   size: 18,
                 ),
-
-                // Horizontal space between the icon and the text.
-                // Reduce this value to bring text closer to the icon.
-                const SizedBox(width: 6),
-
-                // The "Continue: S x, Episode y" label.
-                const SizedBox(width: 4), // no extra space before text baseline
+                const SizedBox(width: 10),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,           // text size inside the pill
+                  style: TextStyle(
+                    color: contentColor,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
