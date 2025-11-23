@@ -631,39 +631,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   Widget _buildEpisodeCard(EpisodesData episode) {
     bool isRecent = false;
-
-    // --- FIX: Smart Date Logic ---
-    // 1. Try 'added' date first (Server Upload Date)
-    String? dateStr = episode.added;
-
-    // 2. Fallback to 'releasedate' if 'added' is missing
-    if (dateStr == null || dateStr.isEmpty) {
-      dateStr = episode.releasedate;
-    }
-
-    // 3. Parse the date
-    if (dateStr != null && dateStr.isNotEmpty) {
+    if (episode.releasedate != null && episode.releasedate!.isNotEmpty) {
       try {
-        DateTime? checkDate;
-        // Handle Unix Timestamp (digits only)
-        if (RegExp(r'^\d+$').hasMatch(dateStr)) {
-          int? timestamp = int.tryParse(dateStr);
-          if (timestamp != null) {
-            // Convert seconds to milliseconds if needed
-            if (dateStr.length <= 10) timestamp *= 1000;
-            checkDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
-          }
-        } else {
-          // Handle Standard Date String
-          checkDate = DateTime.tryParse(dateStr);
-        }
-
-        // 4. Calculate if Recent (New)
-        if (checkDate != null) {
-          final diff = DateTime.now().difference(checkDate).inDays;
-          // New if added in the last 15 days
-          isRecent = diff >= -2 && diff <= 15;
-        }
+        final releaseDate = DateTime.parse(episode.releasedate!);
+        final diff = DateTime.now().difference(releaseDate).inDays;
+        isRecent = diff <= 15;
       } catch (e) {}
     }
 
