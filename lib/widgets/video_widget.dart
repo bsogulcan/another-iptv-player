@@ -17,7 +17,6 @@ Widget getVideo(
     VideoController controller,
     SubtitleViewConfiguration subtitleViewConfiguration,
     ) {
-  final streamUrl = _getCurrentStreamUrl(); // <--- URL taken directly from content.url
 
   switch (Theme.of(context).platform) {
     case TargetPlatform.android:
