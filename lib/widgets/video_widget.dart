@@ -5,13 +5,6 @@ import 'package:another_iptv_player/widgets/player-buttons/video_title_widget.da
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-// Helper function to get the current stream URL
-String _getCurrentStreamUrl() {
-  // Use the same URL that the player is actually opening
-  final content = PlayerState.currentContent;
-  return content?.url ?? '';
-}
-
 Widget getVideo(
     BuildContext context,
     VideoController controller,
