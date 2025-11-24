@@ -909,17 +909,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
                       ],
                     ),
 
-                    if (episode.duration != null &&
-                        episode.duration!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        context.loc.duration(episode.duration!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
                     // Süre bilgisi
                     if (episode.duration != null &&
                         episode.duration!.isNotEmpty) ...[
