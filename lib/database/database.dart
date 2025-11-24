@@ -466,27 +466,27 @@ class Favorites extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e])
-    : super(
-        e ??
-            driftDatabase(
-              name: 'another-iptv-player',
-              native: const DriftNativeOptions(
-                databaseDirectory: getApplicationSupportDirectory,
-              ),
-              web: DriftWebOptions(
-                sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-                driftWorker: Uri.parse('drift_worker.js'),
-                onResult: (result) {
-                  if (result.missingFeatures.isNotEmpty) {
-                    debugPrint(
-                      'Using ${result.chosenImplementation} due to unsupported '
+      : super(
+    e ??
+        driftDatabase(
+          name: 'another-iptv-player',
+          native: const DriftNativeOptions(
+            databaseDirectory: getApplicationSupportDirectory,
+          ),
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+            driftWorker: Uri.parse('drift_worker.js'),
+            onResult: (result) {
+              if (result.missingFeatures.isNotEmpty) {
+                debugPrint(
+                  'Using ${result.chosenImplementation} due to unsupported '
                       'browser features: ${result.missingFeatures}',
-                    );
-                  }
-                },
-              ),
-            ),
-      );
+                );
+              }
+            },
+          ),
+        ),
+  );
 
   @override
   int get schemaVersion => 8;
@@ -554,16 +554,16 @@ class AppDatabase extends _$AppDatabase {
 
   // Kategorileri tip ve playlist'e göre getir
   Future<List<Category>> getCategoriesByTypeAndPlaylist(
-    String playlistId,
-    CategoryType type,
-  ) async {
+      String playlistId,
+      CategoryType type,
+      ) async {
     final categoriesData =
-        await (select(categories)..where(
-              (tbl) =>
-                  tbl.playlistId.equals(playlistId) &
-                  tbl.type.equals(type.value),
-            ))
-            .get();
+    await (select(categories)..where(
+          (tbl) =>
+      tbl.playlistId.equals(playlistId) &
+      tbl.type.equals(type.value),
+    ))
+        .get();
 
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
@@ -587,13 +587,13 @@ class AppDatabase extends _$AppDatabase {
 
   // Belirli tip ve playlist'teki kategorileri sil
   Future<void> deleteCategoriesByTypeAndPlaylist(
-    String playlistId,
-    CategoryType type,
-  ) async {
+      String playlistId,
+      CategoryType type,
+      ) async {
     await (delete(categories)..where(
           (tbl) =>
-              tbl.playlistId.equals(playlistId) & tbl.type.equals(type.value),
-        ))
+      tbl.playlistId.equals(playlistId) & tbl.type.equals(type.value),
+    ))
         .go();
   }
 
@@ -606,59 +606,59 @@ class AppDatabase extends _$AppDatabase {
 
   // Parent kategorileri getir
   Future<List<Category>> getParentCategories(
-    String playlistId,
-    CategoryType type,
-  ) async {
+      String playlistId,
+      CategoryType type,
+      ) async {
     final categoriesData =
-        await (select(categories)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.type.equals(type.value) &
-                    tbl.parentId.equals(0),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
-            .get();
+    await (select(categories)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.type.equals(type.value) &
+        tbl.parentId.equals(0),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
+        .get();
 
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
 
   // Alt kategorileri getir
   Future<List<Category>> getSubCategories(
-    String playlistId,
-    CategoryType type,
-    String parentId,
-  ) async {
+      String playlistId,
+      CategoryType type,
+      String parentId,
+      ) async {
     final categoriesData =
-        await (select(categories)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.type.equals(type.value) &
-                    tbl.parentId.equals(int.parse(parentId)),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
-            .get();
+    await (select(categories)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.type.equals(type.value) &
+        tbl.parentId.equals(int.parse(parentId)),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
+        .get();
 
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
 
   // Kategori ara
   Future<List<Category>> searchCategories(
-    String playlistId,
-    CategoryType type,
-    String query,
-  ) async {
+      String playlistId,
+      CategoryType type,
+      String query,
+      ) async {
     final categoriesData =
-        await (select(categories)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.type.equals(type.value) &
-                    tbl.categoryName.contains(query),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
-            .get();
+    await (select(categories)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.type.equals(type.value) &
+        tbl.categoryName.contains(query),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
+        .get();
 
     return categoriesData.map((cat) => Category.fromDrift(cat)).toList();
   }
@@ -666,25 +666,25 @@ class AppDatabase extends _$AppDatabase {
   // Kategori sayısını getir
   Future<int> getCategoryCount(String playlistId, CategoryType type) async {
     final result =
-        await (select(categories)..where(
-              (tbl) =>
-                  tbl.playlistId.equals(playlistId) &
-                  tbl.type.equals(type.value),
-            ))
-            .get();
+    await (select(categories)..where(
+          (tbl) =>
+      tbl.playlistId.equals(playlistId) &
+      tbl.type.equals(type.value),
+    ))
+        .get();
 
     return result.length;
   }
 
   // Tüm kategorileri getir (tüm tipler)
   Future<Map<CategoryType, List<Category>>> getAllCategoriesByPlaylist(
-    String playlistId,
-  ) async {
+      String playlistId,
+      ) async {
     final allCategoriesData =
-        await (select(categories)
-              ..where((tbl) => tbl.playlistId.equals(playlistId))
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
-            .get();
+    await (select(categories)
+      ..where((tbl) => tbl.playlistId.equals(playlistId))
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.categoryName)]))
+        .get();
 
     final result = <CategoryType, List<Category>>{};
 
@@ -700,8 +700,8 @@ class AppDatabase extends _$AppDatabase {
 
   // Playlist'in kategori istatistiklerini getir
   Future<Map<CategoryType, int>> getCategoryStatsByPlaylist(
-    String playlistId,
-  ) async {
+      String playlistId,
+      ) async {
     final result = <CategoryType, int>{};
 
     for (final type in CategoryType.values) {
@@ -714,16 +714,16 @@ class AppDatabase extends _$AppDatabase {
 
   // Kategori ID'sine göre tek kategori getir
   Future<Category?> getCategoryById(
-    String playlistId,
-    String categoryId,
-    CategoryType type,
-  ) async {
+      String playlistId,
+      String categoryId,
+      CategoryType type,
+      ) async {
     final query = select(categories)
       ..where(
-        (tbl) =>
-            tbl.playlistId.equals(playlistId) &
-            tbl.categoryId.equals(categoryId) &
-            tbl.type.equals(type.value),
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.categoryId.equals(categoryId) &
+        tbl.type.equals(type.value),
       );
 
     final result = await query.getSingleOrNull();
@@ -732,10 +732,10 @@ class AppDatabase extends _$AppDatabase {
 
   // Kategori var mı kontrol et
   Future<bool> categoryExists(
-    String playlistId,
-    String categoryId,
-    CategoryType type,
-  ) async {
+      String playlistId,
+      String categoryId,
+      CategoryType type,
+      ) async {
     final category = await getCategoryById(playlistId, categoryId, type);
     return category != null;
   }
@@ -834,23 +834,23 @@ class AppDatabase extends _$AppDatabase {
     return results
         .map(
           (result) => UserInfo(
-            id: result.id,
-            playlistId: result.playlistId,
-            username: result.username,
-            password: result.password,
-            message: result.message,
-            auth: result.auth,
-            status: result.status,
-            expDate: result.expDate,
-            isTrial: result.isTrial,
-            activeCons: result.activeCons,
-            createdAt: result.createdAt,
-            maxConnections: result.maxConnections,
-            allowedOutputFormats: result.allowedOutputFormats.isNotEmpty
-                ? result.allowedOutputFormats.split(',')
-                : [],
-          ),
-        )
+        id: result.id,
+        playlistId: result.playlistId,
+        username: result.username,
+        password: result.password,
+        message: result.message,
+        auth: result.auth,
+        status: result.status,
+        expDate: result.expDate,
+        isTrial: result.isTrial,
+        activeCons: result.activeCons,
+        createdAt: result.createdAt,
+        maxConnections: result.maxConnections,
+        allowedOutputFormats: result.allowedOutputFormats.isNotEmpty
+            ? result.allowedOutputFormats.split(',')
+            : [],
+      ),
+    )
         .toList();
   }
 
@@ -931,18 +931,18 @@ class AppDatabase extends _$AppDatabase {
     return results
         .map(
           (result) => ServerInfo(
-            id: result.id,
-            playlistId: result.playlistId,
-            url: result.url,
-            port: result.port,
-            httpsPort: result.httpsPort,
-            serverProtocol: result.serverProtocol,
-            rtmpPort: result.rtmpPort,
-            timezone: result.timezone,
-            timestampNow: result.timestampNow,
-            timeNow: result.timeNow,
-          ),
-        )
+        id: result.id,
+        playlistId: result.playlistId,
+        url: result.url,
+        port: result.port,
+        httpsPort: result.httpsPort,
+        serverProtocol: result.serverProtocol,
+        rtmpPort: result.rtmpPort,
+        timezone: result.timezone,
+        timestampNow: result.timestampNow,
+        timeNow: result.timeNow,
+      ),
+    )
         .toList();
   }
 
@@ -958,14 +958,14 @@ class AppDatabase extends _$AppDatabase {
     final liveStreamsCompanions = liveStreams
         .map(
           (liveStream) => LiveStreamsCompanion(
-            streamId: Value(liveStream.streamId),
-            name: Value(liveStream.name),
-            streamIcon: Value(liveStream.streamIcon),
-            categoryId: Value(liveStream.categoryId),
-            epgChannelId: Value(liveStream.epgChannelId),
-            playlistId: Value(liveStream.playlistId ?? ''),
-          ),
-        )
+        streamId: Value(liveStream.streamId),
+        name: Value(liveStream.name),
+        streamIcon: Value(liveStream.streamIcon),
+        categoryId: Value(liveStream.categoryId),
+        epgChannelId: Value(liveStream.epgChannelId),
+        playlistId: Value(liveStream.playlistId ?? ''),
+      ),
+    )
         .toList();
 
     await batch((batch) {
@@ -982,14 +982,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<LiveStream>> getLiveStreamsByCategoryId(
-    String playlistId,
-    String categoryId, {
-    int? top,
-  }) async {
+      String playlistId,
+      String categoryId, {
+        int? top,
+      }) async {
     var query = select(liveStreams)
       ..where(
-        (ls) =>
-            ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
+            (ls) =>
+        ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
       );
 
     if (top != null) {
@@ -1033,8 +1033,8 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     var query = select(vodStreams)
       ..where(
-        (vs) =>
-            vs.categoryId.equals(categoryId) & vs.playlistId.equals(playlistId),
+            (vs) =>
+        vs.categoryId.equals(categoryId) & vs.playlistId.equals(playlistId),
       );
 
     if (top != null) {
@@ -1063,8 +1063,8 @@ class AppDatabase extends _$AppDatabase {
 
     if (categoryId != null && playlistId != null) {
       query.where(
-        (vs) =>
-            vs.categoryId.equals(categoryId) & vs.playlistId.equals(playlistId),
+            (vs) =>
+        vs.categoryId.equals(categoryId) & vs.playlistId.equals(playlistId),
       );
     } else if (categoryId != null) {
       query.where((vs) => vs.categoryId.equals(categoryId));
@@ -1092,9 +1092,9 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     await (delete(vodStreams)..where(
           (vs) =>
-              vs.categoryId.equals(categoryId) &
-              vs.playlistId.equals(playlistId),
-        ))
+      vs.categoryId.equals(categoryId) &
+      vs.playlistId.equals(playlistId),
+    ))
         .go();
   }
 
@@ -1112,8 +1112,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<SeriesStream>> getSeriesStreamsByPlaylistId(
-    String playlistId,
-  ) async {
+      String playlistId,
+      ) async {
     final rows = await (select(
       seriesStreams,
     )..where((ss) => ss.playlistId.equals(playlistId))).get();
@@ -1128,8 +1128,8 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     var query = select(seriesStreams)
       ..where(
-        (ss) =>
-            ss.categoryId.equals(categoryId) & ss.playlistId.equals(playlistId),
+            (ss) =>
+        ss.categoryId.equals(categoryId) & ss.playlistId.equals(playlistId),
       );
 
     if (top != null) {
@@ -1142,8 +1142,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<SeriesStream>> getSeriesStreamsByCategory(
-    String categoryId,
-  ) async {
+      String categoryId,
+      ) async {
     final rows = await (select(
       seriesStreams,
     )..where((ss) => ss.categoryId.equals(categoryId))).get();
@@ -1160,8 +1160,8 @@ class AppDatabase extends _$AppDatabase {
 
     if (categoryId != null && playlistId != null) {
       query.where(
-        (ss) =>
-            ss.categoryId.equals(categoryId) & ss.playlistId.equals(playlistId),
+            (ss) =>
+        ss.categoryId.equals(categoryId) & ss.playlistId.equals(playlistId),
       );
     } else if (categoryId != null) {
       query.where((ss) => ss.categoryId.equals(categoryId));
@@ -1189,9 +1189,9 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     await (delete(seriesStreams)..where(
           (ss) =>
-              ss.categoryId.equals(categoryId) &
-              ss.playlistId.equals(playlistId),
-        ))
+      ss.categoryId.equals(categoryId) &
+      ss.playlistId.equals(playlistId),
+    ))
         .go();
   }
 
@@ -1203,8 +1203,8 @@ class AppDatabase extends _$AppDatabase {
   Future<SeriesInfosData?> getSeriesInfo(String seriesId, String playlistId) {
     return (select(seriesInfos)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .getSingleOrNull();
   }
 
@@ -1214,13 +1214,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<SeasonsData>> getSeasonsBySeriesId(
-    String seriesId,
-    String playlistId,
-  ) {
+      String seriesId,
+      String playlistId,
+      ) {
     return (select(seasons)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .get();
   }
 
@@ -1230,47 +1230,47 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<EpisodesData>> getEpisodesBySeriesId(
-    String seriesId,
-    String playlistId,
-  ) {
+      String seriesId,
+      String playlistId,
+      ) {
     return (select(episodes)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .get();
   }
 
   Future<List<EpisodesData>> getEpisodesBySeason(
-    String seriesId,
-    int seasonNumber,
-    String playlistId,
-  ) {
+      String seriesId,
+      int seasonNumber,
+      String playlistId,
+      ) {
     return (select(episodes)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) &
-              tbl.season.equals(seasonNumber) &
-              tbl.seriesId.equals(seriesId),
-        ))
+      tbl.seriesId.equals(seriesId) &
+      tbl.season.equals(seasonNumber) &
+      tbl.playlistId.equals(playlistId),
+    ))
         .get();
   }
 
   Future<EpisodesData?> findEpisodesById(String episodeId, String playlistId) {
     return (select(episodes)..where(
           (tbl) =>
-              tbl.playlistId.equals(playlistId) &
-              tbl.episodeId.equals(episodeId),
-        ))
+      tbl.playlistId.equals(playlistId) &
+      tbl.episodeId.equals(episodeId),
+    ))
         .getSingleOrNull();
   }
 
   Future<VodStream?> findMovieById(String streamId, String playlistId) async {
     var vodStreamData =
-        await (select(vodStreams)..where(
-              (tbl) =>
-                  tbl.playlistId.equals(playlistId) &
-                  tbl.streamId.equals(streamId),
-            ))
-            .getSingleOrNull();
+    await (select(vodStreams)..where(
+          (tbl) =>
+      tbl.playlistId.equals(playlistId) &
+      tbl.streamId.equals(streamId),
+    ))
+        .getSingleOrNull();
 
     return vodStreamData != null
         ? VodStream.fromDriftVodStream(vodStreamData)
@@ -1278,16 +1278,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<LiveStream?> findLiveStreamById(
-    String streamId,
-    String playlistId,
-  ) async {
+      String streamId,
+      String playlistId,
+      ) async {
     var liveStreamData =
-        await (select(liveStreams)..where(
-              (tbl) =>
-                  tbl.playlistId.equals(playlistId) &
-                  tbl.streamId.equals(streamId),
-            ))
-            .getSingleOrNull();
+    await (select(liveStreams)..where(
+          (tbl) =>
+      tbl.playlistId.equals(playlistId) &
+      tbl.streamId.equals(streamId),
+    ))
+        .getSingleOrNull();
 
     return liveStreamData != null
         ? LiveStream.fromDriftLiveStream(liveStreamData)
@@ -1297,35 +1297,35 @@ class AppDatabase extends _$AppDatabase {
   Future<int> clearSeriesData(String seriesId, String playlistId) async {
     await (delete(episodes)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .go();
     await (delete(seasons)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .go();
     return await (delete(seriesInfos)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
-        ))
+      tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+    ))
         .go();
   }
 
   Future<List<LiveStream>> searchLiveStreams(
-    String playlistId,
-    String query,
-  ) async {
+      String playlistId,
+      String query,
+      ) async {
     final liveStreamList =
-        await (select(liveStreams)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.name.contains(query),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
-              ..limit(20))
-            .get();
+    await (select(liveStreams)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.name.contains(query),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
+      ..limit(20))
+        .get();
 
     return liveStreamList
         .map((x) => LiveStream.fromDriftLiveStream(x))
@@ -1334,15 +1334,15 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<VodStream>> searchMovie(String playlistId, String query) async {
     final movieList =
-        await (select(vodStreams)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.name.contains(query),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
-              ..limit(20))
-            .get();
+    await (select(vodStreams)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.name.contains(query),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
+      ..limit(20))
+        .get();
 
     return movieList.map((x) => VodStream.fromDriftVodStream(x)).toList();
   }
@@ -1362,15 +1362,15 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<M3uItem>> getM3uItemsByCategoryId(
-    String playlistId,
-    String categoryId, {
-    int? top,
-    ContentType? contentType,
-  }) async {
+      String playlistId,
+      String categoryId, {
+        int? top,
+        ContentType? contentType,
+      }) async {
     var query = select(m3uItems)
       ..where(
-        (ls) =>
-            ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
+            (ls) =>
+        ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
       );
 
     if (top != null) {
@@ -1389,7 +1389,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteM3uItem(String playlistId, String url) {
     return (delete(m3uItems)..where(
           (tbl) => tbl.playlistId.equals(playlistId) & tbl.url.equals(url),
-        ))
+    ))
         .go();
   }
 
@@ -1407,9 +1407,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<M3uItem?> getM3uItemsByIdAndPlaylist(
-    String playlistId,
-    String id,
-  ) async {
+      String playlistId,
+      String id,
+      ) async {
     final query = select(m3uItems)
       ..where((tbl) => tbl.id.equals(id) & tbl.playlistId.equals(playlistId));
     final data = await query.getSingleOrNull();
@@ -1419,9 +1419,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<M3uItem?> getM3uItemsByUrlAndPlaylist(
-    String playlistId,
-    String url,
-  ) async {
+      String playlistId,
+      String url,
+      ) async {
     final query = select(m3uItems)
       ..where((tbl) => tbl.url.equals(url) & tbl.playlistId.equals(playlistId));
     final data = await query.getSingleOrNull();
@@ -1438,19 +1438,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<SeriesStream>> searchSeries(
-    String playlistId,
-    String query,
-  ) async {
+      String playlistId,
+      String query,
+      ) async {
     final seriesList =
-        await (select(seriesStreams)
-              ..where(
-                (tbl) =>
-                    tbl.playlistId.equals(playlistId) &
-                    tbl.name.contains(query),
-              )
-              ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
-              ..limit(20))
-            .get();
+    await (select(seriesStreams)
+      ..where(
+            (tbl) =>
+        tbl.playlistId.equals(playlistId) &
+        tbl.name.contains(query),
+      )
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)])
+      ..limit(20))
+        .get();
 
     return seriesList
         .map((x) => SeriesStream.fromDriftSeriesStream(x))
@@ -1464,8 +1464,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> insertM3uEpisodes(
-    List<M3uEpisodesCompanion> episodesList,
-  ) async {
+      List<M3uEpisodesCompanion> episodesList,
+      ) async {
     await batch((batch) {
       batch.insertAll(
         m3uEpisodes,
@@ -1476,14 +1476,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<M3uSerie>> getM3uSeriesByCategoryId(
-    String playlistId,
-    String categoryId, {
-    int? top,
-  }) async {
+      String playlistId,
+      String categoryId, {
+        int? top,
+      }) async {
     var query = select(m3uSeries)
       ..where(
-        (ls) =>
-            ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
+            (ls) =>
+        ls.playlistId.equals(playlistId) & ls.categoryId.equals(categoryId),
       );
 
     if (top != null) {
@@ -1496,12 +1496,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<M3uEpisode>> getM3uEpisodesBySeriesId(
-    String playlistId,
-    String seriesId,
-  ) async {
+      String playlistId,
+      String seriesId,
+      ) async {
     var query = select(m3uEpisodes)
       ..where(
-        (ls) => ls.playlistId.equals(playlistId) & ls.seriesId.equals(seriesId),
+            (ls) => ls.playlistId.equals(playlistId) & ls.seriesId.equals(seriesId),
       );
 
     final rows = await query.get();
@@ -1537,14 +1537,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<Favorite>> getFavoritesByContentType(
-    String playlistId,
-    ContentType contentType,
-  ) async {
+      String playlistId,
+      ContentType contentType,
+      ) async {
     final query = select(favorites)
       ..where(
-        (f) =>
-            f.playlistId.equals(playlistId) &
-            f.contentType.equals(contentType.index),
+            (f) =>
+        f.playlistId.equals(playlistId) &
+        f.contentType.equals(contentType.index),
       )
       ..orderBy([(f) => OrderingTerm.desc(f.createdAt)]);
     final favoritesData = await query.get();
@@ -1552,20 +1552,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<bool> isFavorite(
-    String playlistId,
-    String streamId,
-    ContentType contentType,
-    String? episodeId,
-  ) async {
+      String playlistId,
+      String streamId,
+      ContentType contentType,
+      String? episodeId,
+      ) async {
     final query = select(favorites)
       ..where(
-        (f) =>
-            f.playlistId.equals(playlistId) &
-            f.streamId.equals(streamId) &
-            f.contentType.equals(contentType.index) &
-            (episodeId == null
-                ? f.episodeId.isNull()
-                : f.episodeId.equals(episodeId)),
+            (f) =>
+        f.playlistId.equals(playlistId) &
+        f.streamId.equals(streamId) &
+        f.contentType.equals(contentType.index) &
+        (episodeId == null
+            ? f.episodeId.isNull()
+            : f.episodeId.equals(episodeId)),
       );
     final result = await query.getSingleOrNull();
     return result != null;
@@ -1581,14 +1581,14 @@ class AppDatabase extends _$AppDatabase {
 
   // İçerik tipine göre favori sayısını getir
   Future<int> getFavoriteCountByContentType(
-    String playlistId,
-    ContentType contentType,
-  ) async {
+      String playlistId,
+      ContentType contentType,
+      ) async {
     final query = select(favorites)
       ..where(
-        (f) =>
-            f.playlistId.equals(playlistId) &
-            f.contentType.equals(contentType.index),
+            (f) =>
+        f.playlistId.equals(playlistId) &
+        f.contentType.equals(contentType.index),
       );
     final result = await query.get();
     return result.length;

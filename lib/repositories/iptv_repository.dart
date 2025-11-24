@@ -12,6 +12,7 @@ import 'package:another_iptv_player/models/series.dart';
 import 'package:another_iptv_player/utils/type_convertions.dart';
 import '../models/category_type.dart';
 import '../services/service_locator.dart';
+import 'package:another_iptv_player/services/event_bus.dart';
 
 class IptvRepository {
   final ApiConfig _config;
@@ -21,12 +22,17 @@ class IptvRepository {
   IptvRepository(this._config, this._playlistId);
 
   Future<http.Response> _makeRequest(
-    String endpoint, {
-    Map<String, String>? additionalParams,
-  }) async {
+      String endpoint, {
+        Map<String, String>? additionalParams,
+        bool cacheBuster = false, // only add timestamp when true
+      }) async {
     final params = Map<String, String>.from(_config.baseParams);
     if (additionalParams != null) {
       params.addAll(additionalParams);
+    }
+
+    if (cacheBuster) {
+      params['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
     }
 
     final uri = Uri.parse(
@@ -51,7 +57,7 @@ class IptvRepository {
         }
       }
 
-      final response = await _makeRequest('player_api.php');
+      final response = await _makeRequest('player_api.php', cacheBuster: false);
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -86,6 +92,7 @@ class IptvRepository {
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: additionalParams,
+        cacheBuster: true,
       );
 
       if (response.statusCode == 200) {
@@ -173,6 +180,7 @@ class IptvRepository {
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: additionalParams,
+        cacheBuster: true,
       );
 
       if (response.statusCode == 200) {
@@ -240,6 +248,7 @@ class IptvRepository {
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: additionalParams,
+        cacheBuster: true,
       );
 
       if (response.statusCode == 200) {
@@ -315,10 +324,10 @@ class IptvRepository {
   }
 
   Future<List<Category>?> _getCategories(
-    CategoryType type,
-    String action,
-    bool forceRefresh,
-  ) async {
+      CategoryType type,
+      String action,
+      bool forceRefresh,
+      ) async {
     try {
       if (!forceRefresh) {
         final cachedCategories = await _database.getCategoriesByTypeAndPlaylist(
@@ -335,6 +344,7 @@ class IptvRepository {
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: additionalParams,
+        cacheBuster: true,
       );
 
       if (response.statusCode == 200) {
@@ -393,9 +403,9 @@ class IptvRepository {
   }
 
   Future<List<Category>> searchCategories(
-    CategoryType type,
-    String query,
-  ) async {
+      CategoryType type,
+      String query,
+      ) async {
     return await _database.searchCategories(_playlistId, type, query);
   }
 
@@ -412,34 +422,59 @@ class IptvRepository {
   }
 
   Future<SeriesDetailResponse?> getSeriesInfo(
-    String seriesId, {
-    bool forceRefresh = false,
-  }) async {
+      String seriesId, {
+        bool forceRefresh = false,
+      }) async {
     try {
+      // --- SMART CACHE: check cached series + lastModified + episodes presence ---
       if (!forceRefresh) {
         final seriesInfo = await _database.getSeriesInfo(seriesId, _playlistId);
-        final seasons = await _database.getSeasonsBySeriesId(
-          seriesId,
-          _playlistId,
-        );
-        final episodes = await _database.getEpisodesBySeriesId(
-          seriesId,
-          _playlistId,
-        );
 
-        if (seriesInfo != null && seasons.isNotEmpty) {
-          return SeriesDetailResponse(
-            seriesInfo: seriesInfo,
-            seasons: seasons,
-            episodes: episodes,
-            playlistId: _playlistId,
-          );
+        if (seriesInfo != null) {
+          // fetch main list to compare lastModified
+          final allSeries = await _database.getSeriesStreamsByPlaylistId(_playlistId);
+
+          bool isStale = false;
+          try {
+            final seriesItem = allSeries.firstWhere((s) => s.seriesId == seriesId);
+
+            final cachedLast = (seriesItem.lastModified ?? '').toString().trim();
+            final infoLast = (seriesInfo.lastModified ?? '').toString().trim();
+
+            if (cachedLast.isEmpty || infoLast.isEmpty || cachedLast != infoLast) {
+              isStale = true;
+            }
+          } catch (e) {
+            // series not found in list -> conservative: treat as stale
+            isStale = true;
+          }
+
+          if (!isStale) {
+            final seasons = await _database.getSeasonsBySeriesId(
+              seriesId,
+              _playlistId,
+            );
+            final episodes = await _database.getEpisodesBySeriesId(
+              seriesId,
+              _playlistId,
+            );
+
+            if (seasons.isNotEmpty && episodes.isNotEmpty) {
+              return SeriesDetailResponse(
+                seriesInfo: seriesInfo,
+                seasons: seasons,
+                episodes: episodes,
+                playlistId: _playlistId,
+              );
+            }
+          }
         }
       }
 
       final response = await _makeRequest(
         'player_api.php',
         additionalParams: {'action': 'get_series_info', 'series_id': seriesId},
+        cacheBuster: true,
       );
 
       if (response.statusCode == 200) {
@@ -475,10 +510,10 @@ class IptvRepository {
   }
 
   Future<List<EpisodesData>> getSeriesEpisodesBySeason(
-    String seriesId,
-    int seasonNumber, {
-    bool forceRefresh = false,
-  }) async {
+      String seriesId,
+      int seasonNumber, {
+        bool forceRefresh = false,
+      }) async {
     try {
       if (!forceRefresh) {
         final episodes = await _database.getEpisodesBySeason(
@@ -506,9 +541,9 @@ class IptvRepository {
   }
 
   Future<void> _saveSeriesDataToDatabase(
-    String seriesId,
-    Map<String, dynamic> data,
-  ) async {
+      String seriesId,
+      Map<String, dynamic> data,
+      ) async {
     try {
       await _database.clearSeriesData(seriesId, _playlistId);
 
@@ -570,8 +605,11 @@ class IptvRepository {
             for (final episode in seasonEpisodes) {
               dynamic info = episode['info'];
 
-              // Get season number from episodes
-              final seasonNumber = safeInt(episode['season']) ?? 1;
+              // Get season number from episodes, fallback to seasonKey if needed
+              int seasonNumber = safeInt(episode['season']) ?? 0;
+              if (seasonNumber == 0) {
+                seasonNumber = safeInt(seasonKey) ?? 1;
+              }
               seasonNumbersFromEpisodes.add(seasonNumber);
 
               final episodeCompanion = EpisodesCompanion(
@@ -614,9 +652,11 @@ class IptvRepository {
                 ),
               );
 
-              print('TMDB ->${info is Map ? info['tmdb_id'] : null}');
-
-              await _database.insertEpisode(episodeCompanion);
+              try {
+                await _database.insertEpisode(episodeCompanion);
+              } catch (e) {
+                print('Error inserting episode ${episode['id']} for series $seriesId: $e');
+              }
             }
           }
         }
@@ -644,7 +684,8 @@ class IptvRepository {
                 final seasonEpisodes = episodes[seasonKey];
                 if (seasonEpisodes is List) {
                   for (final episode in seasonEpisodes) {
-                    if ((safeInt(episode['season']) ?? 1) == seasonNumber) {
+                    final epSeason = safeInt(episode['season']) ?? safeInt(seasonKey) ?? 1;
+                    if (epSeason == seasonNumber) {
                       episodeCount++;
                     }
                   }
