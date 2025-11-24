@@ -7,6 +7,7 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:another_iptv_player/services/watch_history_service.dart';
 import '../../../controllers/favorites_controller.dart';
 import 'episode_screen.dart';
 
@@ -22,6 +23,8 @@ class SeriesScreen extends StatefulWidget {
 class _SeriesScreenState extends State<SeriesScreen> {
   late IptvRepository _repository;
   late FavoritesController _favoritesController;
+  late WatchHistoryService _watchHistoryService;
+
   SeriesInfosData? seriesInfo;
   List<SeasonsData> seasons = [];
   List<EpisodesData> episodes = [];
@@ -29,11 +32,15 @@ class _SeriesScreenState extends State<SeriesScreen> {
   String? error;
   bool _isFavorite = false;
 
+  // Last opened episode for this series (for Continue Watching button)
+  EpisodesData? _lastOpenedEpisode;
+
   @override
   void initState() {
     super.initState();
     _initializeRepository();
     _favoritesController = FavoritesController();
+    _watchHistoryService = WatchHistoryService();
     _loadSeriesDetails();
     _checkFavoriteStatus();
   }
@@ -67,6 +74,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
           episodes = seriesResponse.episodes;
           isLoading = false;
         });
+
+        // After episodes are loaded, fetch last opened episode from history
+        await _loadLastOpenedEpisodeFromHistory();
       } else {
         setState(() {
           error = context.loc.preparing_series_exception_1;
@@ -77,6 +87,39 @@ class _SeriesScreenState extends State<SeriesScreen> {
       setState(() {
         error = context.loc.preparing_series_exception_2(e.toString());
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLastOpenedEpisodeFromHistory() async {
+    if (episodes.isEmpty) return;
+
+    final playlistId = AppState.currentPlaylist!.id;
+
+    // Get all series-type history entries for this playlist
+    final allSeriesHistory = await _watchHistoryService
+        .getWatchHistoryByContentType(ContentType.series, playlistId);
+
+    if (!mounted || allSeriesHistory.isEmpty) return;
+
+    // Build a map episodeId -> EpisodesData for fast lookup
+    final Map<String, EpisodesData> byId = {
+      for (final ep in episodes) ep.episodeId.toString(): ep,
+    };
+
+    // Find the most recent history entry whose streamId is one of this series' episode ids
+    EpisodesData? matched;
+    for (final history in allSeriesHistory) {
+      final ep = byId[history.streamId];
+      if (ep != null) {
+        matched = ep;
+        break;
+      }
+    }
+
+    if (matched != null && mounted) {
+      setState(() {
+        _lastOpenedEpisode = matched;
       });
     }
   }
@@ -109,6 +152,33 @@ class _SeriesScreenState extends State<SeriesScreen> {
         ),
       );
     }
+  }
+
+  // Centralized navigation for episodes (used by list + Continue button)
+  void _openEpisodeFromSeries(EpisodesData episode) {
+    // Update in-memory last opened so button text updates immediately
+    setState(() {
+      _lastOpenedEpisode = episode;
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EpisodeScreen(
+          seriesInfo: seriesInfo,
+          seasons: seasons,
+          episodes: episodes,
+          contentItem: ContentItem(
+            episode.episodeId,
+            episode.title,
+            episode.movieImage ?? "",
+            ContentType.series,
+            containerExtension: episode.containerExtension,
+            season: episode.season,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -283,6 +353,13 @@ class _SeriesScreenState extends State<SeriesScreen> {
           _buildRatingSection(),
           const SizedBox(height: 20),
 
+          // Continue Watching button (only when we have last opened episode)
+          if (_lastOpenedEpisode != null) ...[
+            _buildResumeWatchingButton(),
+            const SizedBox(height: 20),
+          ],
+
+
           // Sezonlar Bölümü
           _buildSeasonsSection(),
           const SizedBox(height: 24),
@@ -295,6 +372,69 @@ class _SeriesScreenState extends State<SeriesScreen> {
       ),
     );
   }
+
+  /// Builds the "Resume: Sx , Episode y" pill button shown on the series page.
+  Widget _buildResumeWatchingButton() {
+    final episode = _lastOpenedEpisode!;
+    final seasonNum = episode.season;
+    final epNum = episode.episodeNum;
+    final label = 'Resume: S$seasonNum, Episode $epNum';
+
+    // --- FIX: Dynamic Colors for Light/Dark Theme ---
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // In Dark mode: White button. In Light mode: Dark button (High contrast)
+    final bgColor = isDark ? Colors.white : Colors.black87;
+    final contentColor = isDark ? Colors.black87 : Colors.white;
+    // ------------------------------------------------
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _openEpisodeFromSeries(episode),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 18, 10),
+            decoration: BoxDecoration(
+              color: bgColor, // <--- Updated
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  offset: const Offset(0, 2),
+                  blurRadius: 3,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.play_arrow,
+                  color: contentColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: contentColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
 
   Widget _buildRatingSection() {
     final rating = seriesInfo?.rating5based ?? 0;
@@ -631,11 +771,39 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   Widget _buildEpisodeCard(EpisodesData episode) {
     bool isRecent = false;
-    if (episode.releasedate != null && episode.releasedate!.isNotEmpty) {
+
+    // --- FIX: Smart Date Logic ---
+    // 1. Try 'added' date first (Server Upload Date)
+    String? dateStr = episode.added;
+
+    // 2. Fallback to 'releasedate' if 'added' is missing
+    if (dateStr == null || dateStr.isEmpty) {
+      dateStr = episode.releasedate;
+    }
+
+    // 3. Parse the date
+    if (dateStr != null && dateStr.isNotEmpty) {
       try {
-        final releaseDate = DateTime.parse(episode.releasedate!);
-        final diff = DateTime.now().difference(releaseDate).inDays;
-        isRecent = diff <= 15;
+        DateTime? checkDate;
+        // Handle Unix Timestamp (digits only)
+        if (RegExp(r'^\d+$').hasMatch(dateStr)) {
+          int? timestamp = int.tryParse(dateStr);
+          if (timestamp != null) {
+            // Convert seconds to milliseconds if needed
+            if (dateStr.length <= 10) timestamp *= 1000;
+            checkDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
+          }
+        } else {
+          // Handle Standard Date String
+          checkDate = DateTime.tryParse(dateStr);
+        }
+
+        // 4. Calculate if Recent (New)
+        if (checkDate != null) {
+          final diff = DateTime.now().difference(checkDate).inDays;
+          // New if added in the last 15 days
+          isRecent = diff >= -2 && diff <= 15;
+        }
       } catch (e) {}
     }
 
@@ -652,24 +820,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
         borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EpisodeScreen(
-                seriesInfo: seriesInfo,
-                seasons: seasons,
-                episodes: episodes,
-                contentItem: ContentItem(
-                  episode.episodeId,
-                  episode.title,
-                  episode.movieImage ?? "",
-                  ContentType.series,
-                  containerExtension: episode.containerExtension,
-                  season: episode.season,
-                ),
-              ),
-            ),
-          );
+          _openEpisodeFromSeries(episode);
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -758,6 +909,17 @@ class _SeriesScreenState extends State<SeriesScreen> {
                       ],
                     ),
 
+                    if (episode.duration != null &&
+                        episode.duration!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        context.loc.duration(episode.duration!),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                     // Süre bilgisi
                     if (episode.duration != null &&
                         episode.duration!.isNotEmpty) ...[

@@ -24,7 +24,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(),
+            VideoSettingsWidget(streamUrl: streamUrl),
           ],
         ),
         fullscreen: MaterialVideoControlsThemeData().copyWith(
@@ -36,7 +36,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(),
+            VideoSettingsWidget(streamUrl: streamUrl),
           ],
           seekBarMargin: EdgeInsets.fromLTRB(0, 0, 0, 10),
         ),
@@ -59,7 +59,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(),
+            VideoSettingsWidget(streamUrl: streamUrl),
           ],
         ),
         fullscreen: MaterialDesktopVideoControlsThemeData().copyWith(
@@ -68,7 +68,7 @@ Widget getVideo(
           topButtonBar: [
             BackButtonWidget(),
             Expanded(child: VideoTitleWidget()),
-            VideoSettingsWidget(),
+            VideoSettingsWidget(streamUrl: streamUrl),
           ],
         ),
         child: Scaffold(
