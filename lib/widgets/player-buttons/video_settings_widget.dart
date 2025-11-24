@@ -7,7 +7,6 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class VideoSettingsWidget extends StatefulWidget {
-  // Removed streamUrl parameter: settings will fetch fresh URL when needed.
   const VideoSettingsWidget({super.key});
 
   @override
