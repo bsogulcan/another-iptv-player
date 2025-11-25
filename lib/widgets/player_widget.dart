@@ -63,7 +63,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool _wasDisconnected = false;
   bool _isFirstCheck = true;
 
-  // --- FIX: Memory variable for background resume ---
+  // Memory variable for background resume
   bool _wasPlayingBeforeBackground = false;
 
   @override
@@ -107,7 +107,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   void dispose() {
-    // FIX: Cancel subscriptions FIRST to prevent "Callback invoked after deleted" that may cause crash
+    // Cancel subscriptions FIRST to prevent "Callback invoked after deleted" that may cause crash
     videoTrackSubscription.cancel();
     audioTrackSubscription.cancel();
     subtitleTrackSubscription.cancel();
@@ -127,7 +127,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
     super.dispose();
   }
 
-  // FIX: Manual Lifecycle Logic for ios pause on entering fullscreen (as we disabled disabled auto-pause in video_widget )
+  // FIX: Added manual lifecycle logic to handle iOS pause when entering fullscreen,
+  // since auto-pause was disabled in video_widget.
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
