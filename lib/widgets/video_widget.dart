@@ -44,9 +44,7 @@ Widget getVideo(
           body: Video(
             controller: controller,
             resumeUponEnteringForegroundMode: true,
-            // FIX: Disabled auto-pause to prevent iOS fullscreen bug.
-            // Manual lifecycle pausing is now handled in player_widget.dart.
-            pauseUponEnteringBackgroundMode: false,
+            pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
         ),
@@ -77,9 +75,7 @@ Widget getVideo(
           body: Video(
             controller: controller,
             resumeUponEnteringForegroundMode: true,
-            // FIX: Disabled auto-pause to prevent iOS fullscreen bug.
-            // Manual lifecycle pausing is now handled in player_widget.dart.
-            pauseUponEnteringBackgroundMode: false,
+            pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
         ),
@@ -89,9 +85,7 @@ Widget getVideo(
         controller: controller,
         controls: NoVideoControls,
         resumeUponEnteringForegroundMode: true,
-        // FIX: Disabled auto-pause to prevent iOS fullscreen bug.
-        // Manual lifecycle pausing is now handled in player_widget.dart.
-        pauseUponEnteringBackgroundMode: false,
+        pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
         subtitleViewConfiguration: subtitleViewConfiguration,
       );
   }
