@@ -43,8 +43,8 @@ Widget getVideo(
         child: Scaffold(
           body: Video(
             controller: controller,
-            // plugin auto lifecycle handling turned off.
-            resumeUponEnteringForegroundMode: false,
+            resumeUponEnteringForegroundMode: true,
+            // FIX: Set to false to prevent iOS fullscreen (disabled auto-pause) and Manual Lifecycle Logic added in player_widget
             pauseUponEnteringBackgroundMode: false,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
@@ -75,8 +75,8 @@ Widget getVideo(
         child: Scaffold(
           body: Video(
             controller: controller,
-            // plugin auto lifecycle handling turned off.
-            resumeUponEnteringForegroundMode: false,
+            resumeUponEnteringForegroundMode: true,
+            // FIX: Set to false to prevent iOS fullscreen (disabled auto-pause) and Manual Lifecycle Logic added in player_widget
             pauseUponEnteringBackgroundMode: false,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
@@ -86,8 +86,8 @@ Widget getVideo(
       return Video(
         controller: controller,
         controls: NoVideoControls,
-        // plugin auto lifecycle handling turned off.
-        resumeUponEnteringForegroundMode: false,
+        resumeUponEnteringForegroundMode: true,
+        // FIX: Set to false to prevent iOS fullscreen (disabled auto-pause)  and Manual Lifecycle Logic added in player_widget
         pauseUponEnteringBackgroundMode: false,
         subtitleViewConfiguration: subtitleViewConfiguration,
       );

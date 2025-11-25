@@ -63,8 +63,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool _wasDisconnected = false;
   bool _isFirstCheck = true;
 
-  // NEW: remember whether we paused the player due to lifecycle backgrounding
-  bool _pausedByLifecycle = false;
+  // --- FIX: Memory variable for background resume ---
+  bool _wasPlayingBeforeBackground = false;
 
   @override
   void initState() {
@@ -107,19 +107,71 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   void dispose() {
-    // Remove observer to avoid leaks / duplicate callbacks
-    WidgetsBinding.instance.removeObserver(this);
-
-    _player.dispose();
-    _audioHandler.setPlayer(null);
-    _audioHandler.stop();
+    // FIX: Cancel subscriptions FIRST to prevent "Callback invoked after deleted" that may cause crash
     videoTrackSubscription.cancel();
     audioTrackSubscription.cancel();
     subtitleTrackSubscription.cancel();
     contentItemIndexChangedSubscription.cancel();
     _connectivitySubscription.cancel();
-    _errorHandler.reset();
+
+    // Stop observing lifecycle
+    WidgetsBinding.instance.removeObserver(this);
+
+    // Stop helpers
+    try { _errorHandler.reset(); } catch (_) {}
+    _audioHandler.setPlayer(null);
+    try { _audioHandler.stop(); } catch (_) {}
+
+    // Kill player LAST
+    _player.dispose();
     super.dispose();
+  }
+
+  // FIX: Manual Lifecycle Logic for ios pause on entering fullscreen (as we disabled disabled auto-pause in video_widget )
+  @override
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
+    switch (state) {
+      case AppLifecycleState.paused:
+        // App went to background (Home screen)
+        if (!PlayerState.backgroundPlay) {
+           try {
+             // Check if playing so we know if we should auto-resume later
+             final isPlaying = _player.state.playing;
+             if (isPlaying) {
+               _wasPlayingBeforeBackground = true;
+               await _player.pause();
+             } else {
+               _wasPlayingBeforeBackground = false;
+             }
+           } catch (e) {
+             print('Error pausing: $e');
+           }
+        }
+        break;
+      case AppLifecycleState.resumed:
+        // App returned to foreground
+        if (_wasPlayingBeforeBackground) {
+           try {
+             await _player.play();
+           } catch (e) {
+             print('Error resuming: $e');
+           } finally {
+             _wasPlayingBeforeBackground = false;
+           }
+        }
+        break;
+      case AppLifecycleState.detached:
+        try {
+          await _player.dispose();
+          _audioHandler.setPlayer(null);
+          await _audioHandler.stop();
+        } catch (e) {
+           print('Error disposing: $e');
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   Future<void> _initializePlayer() async {
@@ -431,52 +483,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       setState(() {
         isLoading = false;
       });
-    }
-  }
-
-  @override
-  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    switch (state) {
-      case AppLifecycleState.paused:
-        // App went to background. If user hasn't allowed background play, pause and remember.
-        if (!PlayerState.backgroundPlay) {
-          try {
-            final isPlaying = _player.state.playing;
-            if (isPlaying) {
-              await _player.pause();
-              _pausedByLifecycle = true;
-            } else {
-              _pausedByLifecycle = false;
-            }
-          } catch (e) {
-            print('Error pausing player on background: $e');
-            _pausedByLifecycle = false;
-          }
-        }
-        break;
-      case AppLifecycleState.resumed:
-        // App returned to foreground. If we paused it because of backgrounding, resume.
-        if (_pausedByLifecycle) {
-          try {
-            await _player.play();
-          } catch (e) {
-            print('Error resuming player on foreground: $e');
-          } finally {
-            _pausedByLifecycle = false;
-          }
-        }
-        break;
-      case AppLifecycleState.detached:
-        try {
-          await _player.dispose();
-          _audioHandler.setPlayer(null);
-          await _audioHandler.stop();
-        } catch (e) {
-          print('Error disposing player on detached: $e');
-        }
-        break;
-      default:
-        break;
     }
   }
 
