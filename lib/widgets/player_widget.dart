@@ -63,6 +63,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool _wasDisconnected = false;
   bool _isFirstCheck = true;
 
+  // NEW: remember whether we paused the player due to lifecycle backgrounding
+  bool _pausedByLifecycle = false;
+
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
@@ -104,6 +107,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   void dispose() {
+    // Remove observer to avoid leaks / duplicate callbacks
+    WidgetsBinding.instance.removeObserver(this);
+
     _player.dispose();
     _audioHandler.setPlayer(null);
     _audioHandler.stop();
@@ -431,10 +437,43 @@ class _PlayerWidgetState extends State<PlayerWidget>
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
+      case AppLifecycleState.paused:
+        // App went to background. If user hasn't allowed background play, pause and remember.
+        if (!PlayerState.backgroundPlay) {
+          try {
+            final isPlaying = _player.state.playing;
+            if (isPlaying) {
+              await _player.pause();
+              _pausedByLifecycle = true;
+            } else {
+              _pausedByLifecycle = false;
+            }
+          } catch (e) {
+            print('Error pausing player on background: $e');
+            _pausedByLifecycle = false;
+          }
+        }
+        break;
+      case AppLifecycleState.resumed:
+        // App returned to foreground. If we paused it because of backgrounding, resume.
+        if (_pausedByLifecycle) {
+          try {
+            await _player.play();
+          } catch (e) {
+            print('Error resuming player on foreground: $e');
+          } finally {
+            _pausedByLifecycle = false;
+          }
+        }
+        break;
       case AppLifecycleState.detached:
-        await _player.dispose();
-        _audioHandler.setPlayer(null);
-        await _audioHandler.stop();
+        try {
+          await _player.dispose();
+          _audioHandler.setPlayer(null);
+          await _audioHandler.stop();
+        } catch (e) {
+          print('Error disposing player on detached: $e');
+        }
         break;
       default:
         break;

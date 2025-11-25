@@ -43,8 +43,9 @@ Widget getVideo(
         child: Scaffold(
           body: Video(
             controller: controller,
-            resumeUponEnteringForegroundMode: true,
-            pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
+            // plugin auto lifecycle handling turned off.
+            resumeUponEnteringForegroundMode: false,
+            pauseUponEnteringBackgroundMode: false,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
         ),
@@ -74,8 +75,9 @@ Widget getVideo(
         child: Scaffold(
           body: Video(
             controller: controller,
-            resumeUponEnteringForegroundMode: true,
-            pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
+            // plugin auto lifecycle handling turned off.
+            resumeUponEnteringForegroundMode: false,
+            pauseUponEnteringBackgroundMode: false,
             subtitleViewConfiguration: subtitleViewConfiguration,
           ),
         ),
@@ -84,8 +86,9 @@ Widget getVideo(
       return Video(
         controller: controller,
         controls: NoVideoControls,
-        resumeUponEnteringForegroundMode: true,
-        pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
+        // plugin auto lifecycle handling turned off.
+        resumeUponEnteringForegroundMode: false,
+        pauseUponEnteringBackgroundMode: false,
         subtitleViewConfiguration: subtitleViewConfiguration,
       );
   }
