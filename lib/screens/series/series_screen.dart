@@ -431,7 +431,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
           ],
         ),
       ),
