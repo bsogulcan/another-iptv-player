@@ -355,7 +355,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
           // Continue Watching button (only when we have last opened episode)
           if (_lastOpenedEpisode != null) ...[
-            _buildResumeWatchingButton(),
+            _buildContinueWatchingButton(),
             const SizedBox(height: 20),
           ],
 
@@ -373,62 +373,66 @@ class _SeriesScreenState extends State<SeriesScreen> {
     );
   }
 
-  /// Builds the "Resume: Sx , Episode y" pill button shown on the series page.
-  Widget _buildResumeWatchingButton() {
+  /// Builds the "Continue: S x Episode y" pill button shown on the series page.
+  Widget _buildContinueWatchingButton() {
     final episode = _lastOpenedEpisode!;
     final seasonNum = episode.season;
     final epNum = episode.episodeNum;
-    final label = 'Resume: S$seasonNum, Episode $epNum';
+    final label = 'Continue: S $seasonNum Episode $epNum    ';
 
-    // --- FIX: Dynamic Colors for Light/Dark Theme ---
+    // 1. Check if the app is currently in Dark Mode
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // In Dark mode: White button. In Light mode: Dark button (High contrast)
-    final bgColor = isDark ? Colors.white : Colors.black87;
-    final contentColor = isDark ? Colors.black87 : Colors.white;
-    // ------------------------------------------------
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
+    // 2. Define colors based on the theme
+    // Dark Mode -> White Button. Light Mode -> Black Button.
+    final backgroundColor = isDark ? Colors.white : Colors.black87;
+    // Dark Mode -> Black Text. Light Mode -> White Text.
+    final contentColor = isDark ? Colors.black87 : Colors.white;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => _openEpisodeFromSeries(episode),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: backgroundColor, // <--- Uses the dynamic color
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _openEpisodeFromSeries(episode),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 10, 18, 10),
-            decoration: BoxDecoration(
-              color: bgColor, // <--- Updated
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.10),
-                  offset: const Offset(0, 2),
-                  blurRadius: 3,
-                ),
-              ],
+          // Optional: Add a subtle shadow in light mode to make it pop
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.play_arrow,
+                size: 25,
+                color: contentColor, // <--- Uses dynamic color
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.play_arrow,
-                  color: contentColor,
-                  size: 18,
+            const SizedBox(width: 6),
+            Flexible(
+              fit: FlexFit.loose,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: contentColor, // <--- Uses dynamic color
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: contentColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
