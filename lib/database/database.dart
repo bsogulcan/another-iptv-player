@@ -1235,7 +1235,7 @@ class AppDatabase extends _$AppDatabase {
   ) {
     return (select(episodes)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
+              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
         ))
         .get();
   }
@@ -1249,7 +1249,7 @@ class AppDatabase extends _$AppDatabase {
           (tbl) =>
               tbl.seriesId.equals(seriesId) &
               tbl.season.equals(seasonNumber) &
-              tbl.seriesId.equals(seriesId),
+              tbl.playlistId.equals(playlistId),
         ))
         .get();
   }
@@ -1297,17 +1297,17 @@ class AppDatabase extends _$AppDatabase {
   Future<int> clearSeriesData(String seriesId, String playlistId) async {
     await (delete(episodes)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
+              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
         ))
         .go();
     await (delete(seasons)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
+              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
         ))
         .go();
     return await (delete(seriesInfos)..where(
           (tbl) =>
-              tbl.seriesId.equals(seriesId) & tbl.seriesId.equals(seriesId),
+              tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
         ))
         .go();
   }

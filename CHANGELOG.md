@@ -1,4 +1,27 @@
-# [](https://github.com/bsogulcan/iptv-player/compare/v1.0.1...v) (2025-11-07)
+# [](https://github.com/bsogulcan/iptv-player/compare/v1.2.0...v) (2025-11-25)
+
+
+
+# [1.2.0](https://github.com/bsogulcan/iptv-player/compare/v1.1.0...v1.2.0) (2025-11-25)
+
+
+### Bug Fixes
+
+* removes duplicate duration text ([#56](https://github.com/bsogulcan/iptv-player/issues/56)) ([1f54c38](https://github.com/bsogulcan/iptv-player/commit/1f54c38ea9a93837195fde13ee72091b17d2b5b8))
+
+
+### Features
+
+* **ci:** adds pr trigger to ci workflows ([#57](https://github.com/bsogulcan/iptv-player/issues/57)) ([df2f315](https://github.com/bsogulcan/iptv-player/commit/df2f315b19bad4a31d2f3222f3ea88202cfa2f15))
+
+
+### Reverts
+
+* Revert "Temporary Fix: video player pause when entering fullscreen in iOS (#62)" ([85e1070](https://github.com/bsogulcan/iptv-player/commit/85e107076a804c62246327b5bfbd5a7b3b91beb6)), closes [#62](https://github.com/bsogulcan/iptv-player/issues/62)
+
+
+
+# [1.1.0](https://github.com/bsogulcan/iptv-player/compare/v1.0.1...v1.1.0) (2025-11-07)
 
 
 ### Bug Fixes
