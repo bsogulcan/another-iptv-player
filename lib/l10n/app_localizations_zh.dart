@@ -673,4 +673,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get new_ep => '新的';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return '继续观看：第 $season 季 第 $episode 集';
+  }
 }

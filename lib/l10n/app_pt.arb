@@ -210,5 +210,6 @@
   "light": "Claro",
   "dark": "Escuro",
   "trailer": "Reboque",
-  "new_ep": "Novo"
+  "new_ep": "Novo",
+  "continue_watching_label": "Continuar: T {season} Episódio {episode}"
 }

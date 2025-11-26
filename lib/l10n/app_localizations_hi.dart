@@ -692,4 +692,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get new_ep => 'नया';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return 'जारी रखें: सीजन $season एपिसोड $episode';
+  }
 }

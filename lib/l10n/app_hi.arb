@@ -210,5 +210,6 @@
   "light": "हल्का",
   "dark": "गहरा",
   "trailer": "ट्रेलर",
-  "new_ep": "नया"
+  "new_ep": "नया",
+  "continue_watching_label": "जारी रखें: सीजन {season} एपिसोड {episode}"
 }

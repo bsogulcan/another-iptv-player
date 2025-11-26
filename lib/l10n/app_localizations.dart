@@ -1385,6 +1385,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New'**
   String get new_ep;
+
+  /// No description provided for @continue_watching_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue: S {season} Episode {episode}'**
+  String continue_watching_label(String season, String episode);
 }
 
 class _AppLocalizationsDelegate

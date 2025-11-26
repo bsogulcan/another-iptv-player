@@ -258,7 +258,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get justify => 'ضبط';
 
   @override
-  String get pick_color => 'اختر لون';
+  String get pick_color => 'اختر لوناً';
 
   @override
   String get my_playlists => 'قوائم التشغيل الخاصة بي';
@@ -557,7 +557,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get file_selection_error => 'حدث خطأ أثناء اختيار الملف';
 
   @override
-  String get processing => 'جاري المعالجة...';
+  String get processing => 'جارٍ المعالجة...';
 
   @override
   String get create_playlist => 'إنشاء قائمة التشغيل';
@@ -639,7 +639,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deselect_all => 'إلغاء تحديد الكل';
 
   @override
-  String get hide_category => 'إخفاء الفئا';
+  String get hide_category => 'إخفاء الفئة';
 
   @override
   String get rating => 'تصنيف';
@@ -672,23 +672,28 @@ class AppLocalizationsAr extends AppLocalizations {
       'هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟';
 
   @override
-  String get appearance => 'مظهر';
+  String get appearance => 'المظهر';
 
   @override
   String get theme => 'سمة';
 
   @override
-  String get standard => 'تقصير';
+  String get standard => 'قياسي';
 
   @override
-  String get light => 'ضوء';
+  String get light => 'فاتح';
 
   @override
-  String get dark => 'مظلم';
+  String get dark => 'داكن';
 
   @override
-  String get trailer => 'جَرَّار';
+  String get trailer => 'الإعلان';
 
   @override
   String get new_ep => 'جديد';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return 'متابعة: الموسم $season الحلقة $episode';
+  }
 }
