@@ -7,8 +7,7 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class VideoSettingsWidget extends StatefulWidget {
-  final String? streamUrl; // <-- added
-  const VideoSettingsWidget({super.key,this.streamUrl});
+  const VideoSettingsWidget({super.key});
 
   @override
   State<VideoSettingsWidget> createState() => _VideoSettingsWidgetState();
@@ -114,25 +113,37 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
                 onTap: () => _showSubtitleTrackSelection(context),
               ),
 
-              // --- NEW: Copy Stream URL action ---
-              if (widget.streamUrl != null && widget.streamUrl!.isNotEmpty)
-                ListTile(
-                  leading: const Icon(Icons.link, color: Colors.blue),
-                  title: const Text('Copy stream URL'),
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: widget.streamUrl!));
+              // Copy Stream URL action: compute URL at tap time so it's always fresh
+              ListTile(
+                leading: const Icon(Icons.link, color: Colors.blue),
+                title: const Text('Copy stream URL'),
+                onTap: () async {
+                  final url = PlayerState.currentContent?.url ?? '';
 
+                  if (url.isEmpty) {
                     if (!context.mounted) return;
-
-                    Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Stream URL copied to clipboard'),
+                        content: Text('No stream URL available'),
                         duration: Duration(seconds: 2),
                       ),
                     );
-                  },
-                ),
+                    return;
+                  }
+
+                  await Clipboard.setData(ClipboardData(text: url));
+
+                  if (!context.mounted) return;
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Stream URL copied to clipboard'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
               // -----------------------------------
 
               SizedBox(height: 20),
