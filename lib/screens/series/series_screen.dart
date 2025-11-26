@@ -481,6 +481,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 
   Widget _buildSeasonsSection() {
+    final validSeasons = seasons.where((season) {
+      return episodes.any((episode) => episode.season == season.seasonNumber);
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -491,7 +495,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        if (seasons.isEmpty)
+
+        // CHECK validSeasons instead of the raw seasons list
+        if (validSeasons.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -512,9 +518,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
             height: 130,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: seasons.length,
+              // Use validSeasons count
+              itemCount: validSeasons.length,
               itemBuilder: (context, index) {
-                final season = seasons[index];
+                // Use the filtered season
+                final season = validSeasons[index];
                 return _buildSeasonCard(season, index);
               },
             ),
@@ -524,6 +532,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 
   Widget _buildSeasonCard(SeasonsData season, int index) {
+    // FIX: Calculate the real count by filtering the full episodes list
+    // matching the current season number.
+    final int realEpisodeCount = episodes
+        .where((e) => e.season == season.seasonNumber)
+        .length;
+
+    // NEW WAY (Only trust what we actually have)
+    final String displayCount = realEpisodeCount.toString();
     return Container(
       width: 200,
       margin: const EdgeInsets.only(right: 12),
@@ -573,9 +589,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  context.loc.episode_count(
-                    (season.episodeCount ?? 0).toString(),
-                  ),
+                  context.loc.episode_count(displayCount),
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),
                 if (season.airDate != null) ...[
@@ -685,6 +699,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 
   void _showSeasonEpisodes(SeasonsData season) async {
+        // FIX: Calculate the real count by filtering the full episodes list
+    // matching the current season number.
+    final int realEpisodeCount = episodes
+        .where((e) => e.season == season.seasonNumber)
+        .length;
+
+    // NEW WAY (Only trust what we actually have)
+    final String displayCount = realEpisodeCount.toString();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -724,9 +746,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                         ),
                       ),
                       Text(
-                        context.loc.episode_count(
-                          (season.episodeCount ?? 0).toString(),
-                        ),
+                        context.loc.episode_count(displayCount),
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 14,
