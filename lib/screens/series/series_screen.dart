@@ -394,7 +394,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
       borderRadius: BorderRadius.circular(12),
       onTap: () => _openEpisodeFromSeries(episode),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
@@ -412,14 +412,13 @@ class _SeriesScreenState extends State<SeriesScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(4),
               child: Icon(
-                Icons.play_arrow,
-                size: 25,
+                Icons.play_arrow_rounded,
+                size: 30,
                 color: contentColor,
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 6),
             Flexible(
               fit: FlexFit.loose,
               child: Text(
@@ -432,7 +431,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 11),
+            const SizedBox(width: 8),
           ],
         ),
       ),
