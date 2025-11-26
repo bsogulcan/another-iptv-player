@@ -210,5 +210,6 @@
   "light": "Açık",
   "dark": "Koyu",
   "trailer": "Fragman",
-  "new_ep": "Yeni"
+  "new_ep": "Yeni",
+  "continue_watching_label": "Devam Et: {season}. Sezon {episode}. Bölüm"
 }

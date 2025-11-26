@@ -691,4 +691,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get new_ep => 'Yeni';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return 'Devam Et: $season. Sezon $episode. Bölüm';
+  }
 }

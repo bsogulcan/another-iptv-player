@@ -376,17 +376,18 @@ class _SeriesScreenState extends State<SeriesScreen> {
   /// Builds the "Continue: S x Episode y" pill button shown on the series page.
   Widget _buildContinueWatchingButton() {
     final episode = _lastOpenedEpisode!;
-    final seasonNum = episode.season;
-    final epNum = episode.episodeNum;
-    final label = 'Continue: S $seasonNum Episode $epNum    ';
+
+    // Convert numbers to strings for the translation
+    final seasonNum = episode.season.toString();
+    final epNum = episode.episodeNum.toString();
+
+    final label = context.loc.continue_watching_label(seasonNum, epNum);
 
     // 1. Check if the app is currently in Dark Mode
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 2. Define colors based on the theme
-    // Dark Mode -> White Button. Light Mode -> Black Button.
     final backgroundColor = isDark ? Colors.white : Colors.black87;
-    // Dark Mode -> Black Text. Light Mode -> White Text.
     final contentColor = isDark ? Colors.black87 : Colors.white;
 
     return InkWell(
@@ -395,9 +396,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: backgroundColor, // <--- Uses the dynamic color
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
-          // Optional: Add a subtle shadow in light mode to make it pop
           boxShadow: isDark
               ? []
               : [
@@ -416,22 +416,23 @@ class _SeriesScreenState extends State<SeriesScreen> {
               child: Icon(
                 Icons.play_arrow,
                 size: 25,
-                color: contentColor, // <--- Uses dynamic color
+                color: contentColor,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             Flexible(
               fit: FlexFit.loose,
               child: Text(
                 label,
                 style: TextStyle(
-                  color: contentColor, // <--- Uses dynamic color
+                  color: contentColor,
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 11),
           ],
         ),
       ),

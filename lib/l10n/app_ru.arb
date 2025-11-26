@@ -210,5 +210,6 @@
   "light": "Светлый",
   "dark": "Темный",
   "trailer": "трейлер",
-  "new_ep": "новый"
+  "new_ep": "новый",
+  "continue_watching_label": "Продолжить: Сезон {season} Серия {episode}"
 }

@@ -210,5 +210,12 @@
   "light": "Light",
   "dark": "Dark",
   "trailer": "Trailer",
-  "new_ep": "New"
+  "new_ep": "New",
+  "continue_watching_label": "Continue: S {season} Episode {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  }
 }

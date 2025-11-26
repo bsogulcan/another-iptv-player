@@ -210,5 +210,6 @@
   "light": "Hell",
   "dark": "Dunkel",
   "trailer": "Anhänger",
-  "new_ep": "Neu"
+  "new_ep": "Neu",
+  "continue_watching_label": "Fortsetzen: S {season} Folge {episode}"
 }

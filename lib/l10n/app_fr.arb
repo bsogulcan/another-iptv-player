@@ -210,5 +210,6 @@
   "light":"Clair",
   "dark":"Sombre",
   "trailer": "Bande-annonce",
-  "new_ep": "Nouveau"
+  "new_ep": "Nouveau",
+  "continue_watching_label": "Continuer : S {season} Épisode {episode}"
 }

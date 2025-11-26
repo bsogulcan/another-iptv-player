@@ -694,4 +694,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get new_ep => 'новый';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return 'Продолжить: Сезон $season Серия $episode';
+  }
 }

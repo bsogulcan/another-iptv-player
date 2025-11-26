@@ -691,4 +691,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get new_ep => 'جديد';
+
+  @override
+  String continue_watching_label(String season, String episode) {
+    return 'متابعة: الموسم $season الحلقة $episode';
+  }
 }
