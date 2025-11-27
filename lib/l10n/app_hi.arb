@@ -46,6 +46,7 @@
   "release_date": "रिलीज़ की तारीख",
   "genre": "शैली",
   "cast": "कलाकार",
+  "director": "निर्देशक",
   "description": "विवरण",
   "video_track": "वीडियो ट्रैक",
   "audio_track": "ऑडियो ट्रैक",
@@ -211,5 +212,35 @@
   "dark": "गहरा",
   "trailer": "ट्रेलर",
   "new_ep": "नया",
-  "continue_watching_label": "जारी रखें: सीजन {season} एपिसोड {episode}"
+  "continue_watching": "देखना जारी रखें",
+  "@continue_watching": {
+    "description": "प्लेबैक फिर से शुरू करने के लिए मुख्य बटन का लेबल"
+  },
+  "start_watching": "देखना शुरू करें",
+  "@start_watching": {
+    "description": "प्लेबैक प्रारंभ करने के लिए मुख्य बटन का लेबल"
+  },
+  "continue_watching_label": "जारी रखें: सीजन {season} एपिसोड {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "प्लेयर सेटिंग्स",
+  "brightness_gesture": "चमक जेस्चर",
+  "brightness_gesture_description": "बाईं ओर लंबवत स्वाइप करके चमक नियंत्रित करें",
+  "volume_gesture": "वॉल्यूम जेस्चर",
+  "volume_gesture_description": "दाईं ओर लंबवत स्वाइप करके वॉल्यूम नियंत्रित करें",
+  "seek_gesture": "सीक जेस्चर",
+  "seek_gesture_description": "क्षैतिज रूप से स्वाइप करके खोजें",
+  "speed_up_on_long_press": "लंबे दबाव पर गति बढ़ाएं",
+  "speed_up_on_long_press_description": "लंबे दबाव पर प्लेबैक गति बढ़ाएं",
+  "seek_on_double_tap": "डबल टैप पर खोजें",
+  "seek_on_double_tap_description": "डबल टैप करके आगे/पीछे खोजें",
+  "copied_to_clipboard": "क्लिपबोर्ड पर कॉपी किया गया",
+  "about": "के बारे में",
+  "app_version": "ऐप संस्करण",
+  "support_on_github": "GitHub पर समर्थन करें",
+  "support_on_github_description": "GitHub पर प्रोजेक्ट में योगदान दें"
 }

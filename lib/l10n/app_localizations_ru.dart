@@ -156,6 +156,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cast => 'В ролях';
 
   @override
+  String get director => 'Режиссер';
+
+  @override
   String get description => 'Описание';
 
   @override
@@ -696,7 +699,65 @@ class AppLocalizationsRu extends AppLocalizations {
   String get new_ep => 'новый';
 
   @override
+  String get continue_watching => 'Продолжить просмотр';
+
+  @override
+  String get start_watching => 'Начать просмотр';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Продолжить: Сезон $season Серия $episode';
   }
+
+  @override
+  String get player_settings => 'Настройки плеера';
+
+  @override
+  String get brightness_gesture => 'Жест яркости';
+
+  @override
+  String get brightness_gesture_description =>
+      'Управление яркостью вертикальным свайпом слева';
+
+  @override
+  String get volume_gesture => 'Жест громкости';
+
+  @override
+  String get volume_gesture_description =>
+      'Управление громкостью вертикальным свайпом справа';
+
+  @override
+  String get seek_gesture => 'Жест поиска';
+
+  @override
+  String get seek_gesture_description => 'Поиск горизонтальным свайпом';
+
+  @override
+  String get speed_up_on_long_press => 'Ускорение при долгом нажатии';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Ускорение воспроизведения при долгом нажатии';
+
+  @override
+  String get seek_on_double_tap => 'Поиск при двойном нажатии';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Поиск вперед/назад двойным нажатием';
+
+  @override
+  String get copied_to_clipboard => 'Скопировано в буфер обмена';
+
+  @override
+  String get about => 'О приложении';
+
+  @override
+  String get app_version => 'Версия приложения';
+
+  @override
+  String get support_on_github => 'Поддержать на GitHub';
+
+  @override
+  String get support_on_github_description => 'Внести вклад в проект на GitHub';
 }

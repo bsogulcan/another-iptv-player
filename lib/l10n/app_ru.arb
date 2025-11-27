@@ -46,6 +46,7 @@
   "release_date": "Дата выхода",
   "genre": "Жанр",
   "cast": "В ролях",
+  "director": "Режиссер",
   "description": "Описание",
   "video_track": "Видеодорожка",
   "audio_track": "Аудиодорожка",
@@ -211,5 +212,35 @@
   "dark": "Темный",
   "trailer": "трейлер",
   "new_ep": "новый",
-  "continue_watching_label": "Продолжить: Сезон {season} Серия {episode}"
+  "continue_watching": "Продолжить просмотр",
+  "@continue_watching": {
+    "description": "Надпись кнопки для продолжения воспроизведения"
+  },
+  "start_watching": "Начать просмотр",
+  "@start_watching": {
+    "description": "Надпись кнопки для начала воспроизведения"
+  },
+  "continue_watching_label": "Продолжить: Сезон {season} Серия {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Настройки плеера",
+  "brightness_gesture": "Жест яркости",
+  "brightness_gesture_description": "Управление яркостью вертикальным свайпом слева",
+  "volume_gesture": "Жест громкости",
+  "volume_gesture_description": "Управление громкостью вертикальным свайпом справа",
+  "seek_gesture": "Жест поиска",
+  "seek_gesture_description": "Поиск горизонтальным свайпом",
+  "speed_up_on_long_press": "Ускорение при долгом нажатии",
+  "speed_up_on_long_press_description": "Ускорение воспроизведения при долгом нажатии",
+  "seek_on_double_tap": "Поиск при двойном нажатии",
+  "seek_on_double_tap_description": "Поиск вперед/назад двойным нажатием",
+  "copied_to_clipboard": "Скопировано в буфер обмена",
+  "about": "О приложении",
+  "app_version": "Версия приложения",
+  "support_on_github": "Поддержать на GitHub",
+  "support_on_github_description": "Внести вклад в проект на GitHub"
 }

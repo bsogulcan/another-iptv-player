@@ -155,6 +155,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get cast => 'कलाकार';
 
   @override
+  String get director => 'निर्देशक';
+
+  @override
   String get description => 'विवरण';
 
   @override
@@ -694,7 +697,65 @@ class AppLocalizationsHi extends AppLocalizations {
   String get new_ep => 'नया';
 
   @override
+  String get continue_watching => 'देखना जारी रखें';
+
+  @override
+  String get start_watching => 'देखना शुरू करें';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'जारी रखें: सीजन $season एपिसोड $episode';
   }
+
+  @override
+  String get player_settings => 'प्लेयर सेटिंग्स';
+
+  @override
+  String get brightness_gesture => 'चमक जेस्चर';
+
+  @override
+  String get brightness_gesture_description =>
+      'बाईं ओर लंबवत स्वाइप करके चमक नियंत्रित करें';
+
+  @override
+  String get volume_gesture => 'वॉल्यूम जेस्चर';
+
+  @override
+  String get volume_gesture_description =>
+      'दाईं ओर लंबवत स्वाइप करके वॉल्यूम नियंत्रित करें';
+
+  @override
+  String get seek_gesture => 'सीक जेस्चर';
+
+  @override
+  String get seek_gesture_description => 'क्षैतिज रूप से स्वाइप करके खोजें';
+
+  @override
+  String get speed_up_on_long_press => 'लंबे दबाव पर गति बढ़ाएं';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'लंबे दबाव पर प्लेबैक गति बढ़ाएं';
+
+  @override
+  String get seek_on_double_tap => 'डबल टैप पर खोजें';
+
+  @override
+  String get seek_on_double_tap_description => 'डबल टैप करके आगे/पीछे खोजें';
+
+  @override
+  String get copied_to_clipboard => 'क्लिपबोर्ड पर कॉपी किया गया';
+
+  @override
+  String get about => 'के बारे में';
+
+  @override
+  String get app_version => 'ऐप संस्करण';
+
+  @override
+  String get support_on_github => 'GitHub पर समर्थन करें';
+
+  @override
+  String get support_on_github_description =>
+      'GitHub पर प्रोजेक्ट में योगदान दें';
 }

@@ -46,6 +46,7 @@
   "release_date": "تاريخ الإصدار",
   "genre": "النوع",
   "cast": "فريق التمثيل",
+  "director": "المخرج",
   "description": "الوصف",
   "video_track": "مسار الفيديو",
   "audio_track": "مسار الصوت",
@@ -211,5 +212,35 @@
   "dark": "داكن",
   "trailer": "الإعلان",
   "new_ep": "جديد",
-  "continue_watching_label": "متابعة: الموسم {season} الحلقة {episode}"
+  "continue_watching": "متابعة المشاهدة",
+  "@continue_watching": {
+    "description": "تسمية زر متابعة إعادة التشغيل"
+  },
+  "start_watching": "ابدأ المشاهدة",
+  "@start_watching": {
+    "description": "تسمية زر بدء التشغيل"
+  },
+  "continue_watching_label": "متابعة: الموسم {season} الحلقة {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "إعدادات المشغل",
+  "brightness_gesture": "إيماءة السطوع",
+  "brightness_gesture_description": "التحكم في السطوع عن طريق السحب عموديًا على الجانب الأيسر",
+  "volume_gesture": "إيماءة الصوت",
+  "volume_gesture_description": "التحكم في الصوت عن طريق السحب عموديًا على الجانب الأيمن",
+  "seek_gesture": "إيماءة البحث",
+  "seek_gesture_description": "البحث عن طريق السحب أفقيًا",
+  "speed_up_on_long_press": "تسريع عند الضغط الطويل",
+  "speed_up_on_long_press_description": "تسريع التشغيل عند الضغط الطويل",
+  "seek_on_double_tap": "البحث عند النقر المزدوج",
+  "seek_on_double_tap_description": "البحث للأمام/للخلف بالنقر المزدوج",
+  "copied_to_clipboard": "تم النسخ إلى الحافظة",
+  "about": "حول",
+  "app_version": "إصدار التطبيق",
+  "support_on_github": "دعم على GitHub",
+  "support_on_github_description": "ساهم في المشروع على GitHub"
 }

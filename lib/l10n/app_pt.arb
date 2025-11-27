@@ -46,6 +46,7 @@
   "release_date": "Data de Lançamento",
   "genre": "Gênero",
   "cast": "Elenco",
+  "director": "Diretor",
   "description": "Descrição",
   "video_track": "Faixa de Vídeo",
   "audio_track": "Faixa de Áudio",
@@ -211,5 +212,35 @@
   "dark": "Escuro",
   "trailer": "Reboque",
   "new_ep": "Novo",
-  "continue_watching_label": "Continuar: T {season} Episódio {episode}"
+  "continue_watching": "Continuar assistindo",
+  "@continue_watching": {
+    "description": "Rótulo do botão principal para retomar a reprodução"
+  },
+  "start_watching": "Começar a assistir",
+  "@start_watching": {
+    "description": "Rótulo do botão principal para iniciar a reprodução"
+  },
+  "continue_watching_label": "Continuar: T {season} Episódio {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Configurações do reprodutor",
+  "brightness_gesture": "Gesto de brilho",
+  "brightness_gesture_description": "Controlar o brilho deslizando verticalmente no lado esquerdo",
+  "volume_gesture": "Gesto de volume",
+  "volume_gesture_description": "Controlar o volume deslizando verticalmente no lado direito",
+  "seek_gesture": "Gesto de busca",
+  "seek_gesture_description": "Buscar deslizando horizontalmente",
+  "speed_up_on_long_press": "Acelerar com toque longo",
+  "speed_up_on_long_press_description": "Acelerar a reprodução ao manter pressionado",
+  "seek_on_double_tap": "Buscar com toque duplo",
+  "seek_on_double_tap_description": "Buscar para frente/trás com toque duplo",
+  "copied_to_clipboard": "Copiado para a área de transferência",
+  "about": "Sobre",
+  "app_version": "Versão do aplicativo",
+  "support_on_github": "Apoiar no GitHub",
+  "support_on_github_description": "Contribuir para o projeto no GitHub"
 }

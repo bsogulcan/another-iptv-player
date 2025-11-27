@@ -396,6 +396,12 @@ abstract class AppLocalizations {
   /// **'Cast'**
   String get cast;
 
+  /// No description provided for @director.
+  ///
+  /// In en, this message translates to:
+  /// **'Director'**
+  String get director;
+
   /// No description provided for @description.
   ///
   /// In en, this message translates to:
@@ -1386,11 +1392,119 @@ abstract class AppLocalizations {
   /// **'New'**
   String get new_ep;
 
+  /// Primary action button label when resuming playback
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Watching'**
+  String get continue_watching;
+
+  /// Primary action button label when starting playback
+  ///
+  /// In en, this message translates to:
+  /// **'Start Watching'**
+  String get start_watching;
+
   /// No description provided for @continue_watching_label.
   ///
   /// In en, this message translates to:
   /// **'Continue: S {season} Episode {episode}'**
   String continue_watching_label(String season, String episode);
+
+  /// No description provided for @player_settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Player Settings'**
+  String get player_settings;
+
+  /// No description provided for @brightness_gesture.
+  ///
+  /// In en, this message translates to:
+  /// **'Brightness Gesture'**
+  String get brightness_gesture;
+
+  /// No description provided for @brightness_gesture_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Control brightness by swiping vertically on the left side'**
+  String get brightness_gesture_description;
+
+  /// No description provided for @volume_gesture.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume Gesture'**
+  String get volume_gesture;
+
+  /// No description provided for @volume_gesture_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Control volume by swiping vertically on the right side'**
+  String get volume_gesture_description;
+
+  /// No description provided for @seek_gesture.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek Gesture'**
+  String get seek_gesture;
+
+  /// No description provided for @seek_gesture_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek by swiping horizontally'**
+  String get seek_gesture_description;
+
+  /// No description provided for @speed_up_on_long_press.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed Up on Long Press'**
+  String get speed_up_on_long_press;
+
+  /// No description provided for @speed_up_on_long_press_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed up playback when long pressing'**
+  String get speed_up_on_long_press_description;
+
+  /// No description provided for @seek_on_double_tap.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek on Double Tap'**
+  String get seek_on_double_tap;
+
+  /// No description provided for @seek_on_double_tap_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek forward/backward by double tapping'**
+  String get seek_on_double_tap_description;
+
+  /// No description provided for @copied_to_clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copied_to_clipboard;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @app_version.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get app_version;
+
+  /// No description provided for @support_on_github.
+  ///
+  /// In en, this message translates to:
+  /// **'Support on GitHub'**
+  String get support_on_github;
+
+  /// No description provided for @support_on_github_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Contribute to the project on GitHub'**
+  String get support_on_github_description;
 }
 
 class _AppLocalizationsDelegate

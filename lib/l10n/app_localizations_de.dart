@@ -157,6 +157,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cast => 'Besetzung';
 
   @override
+  String get director => 'Regisseur';
+
+  @override
   String get description => 'Beschreibung';
 
   @override
@@ -701,7 +704,66 @@ class AppLocalizationsDe extends AppLocalizations {
   String get new_ep => 'Neu';
 
   @override
+  String get continue_watching => 'Weiter ansehen';
+
+  @override
+  String get start_watching => 'Wiedergabe starten';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Fortsetzen: S $season Folge $episode';
   }
+
+  @override
+  String get player_settings => 'Player-Einstellungen';
+
+  @override
+  String get brightness_gesture => 'Helligkeits-Geste';
+
+  @override
+  String get brightness_gesture_description =>
+      'Helligkeit durch vertikales Wischen auf der linken Seite steuern';
+
+  @override
+  String get volume_gesture => 'Lautstärke-Geste';
+
+  @override
+  String get volume_gesture_description =>
+      'Lautstärke durch vertikales Wischen auf der rechten Seite steuern';
+
+  @override
+  String get seek_gesture => 'Such-Geste';
+
+  @override
+  String get seek_gesture_description => 'Durch horizontales Wischen suchen';
+
+  @override
+  String get speed_up_on_long_press => 'Bei langem Drücken beschleunigen';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Wiedergabe bei langem Drücken beschleunigen';
+
+  @override
+  String get seek_on_double_tap => 'Bei Doppeltippen suchen';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Durch Doppeltippen vorwärts/rückwärts suchen';
+
+  @override
+  String get copied_to_clipboard => 'In Zwischenablage kopiert';
+
+  @override
+  String get about => 'Über';
+
+  @override
+  String get app_version => 'App-Version';
+
+  @override
+  String get support_on_github => 'Auf GitHub unterstützen';
+
+  @override
+  String get support_on_github_description =>
+      'Zum Projekt auf GitHub beitragen';
 }

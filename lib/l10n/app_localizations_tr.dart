@@ -156,6 +156,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cast => 'Oyuncular';
 
   @override
+  String get director => 'Yönetmen';
+
+  @override
   String get description => 'Açıklama';
 
   @override
@@ -693,7 +696,65 @@ class AppLocalizationsTr extends AppLocalizations {
   String get new_ep => 'Yeni';
 
   @override
+  String get continue_watching => 'Devam Et';
+
+  @override
+  String get start_watching => 'İzlemeye Başla';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Devam Et: $season. Sezon $episode. Bölüm';
   }
+
+  @override
+  String get player_settings => 'Oynatıcı Ayarları';
+
+  @override
+  String get brightness_gesture => 'Parlaklık Hareketi';
+
+  @override
+  String get brightness_gesture_description =>
+      'Sol tarafta dikey kaydırarak parlaklığı kontrol et';
+
+  @override
+  String get volume_gesture => 'Ses Hareketi';
+
+  @override
+  String get volume_gesture_description =>
+      'Sağ tarafta dikey kaydırarak sesi kontrol et';
+
+  @override
+  String get seek_gesture => 'İleri/Sar Hareketi';
+
+  @override
+  String get seek_gesture_description => 'Yatay kaydırarak ileri/sar';
+
+  @override
+  String get speed_up_on_long_press => 'Uzun Basışta Hızlandır';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Uzun basıldığında oynatmayı hızlandır';
+
+  @override
+  String get seek_on_double_tap => 'Çift Dokunuşta İleri/Sar';
+
+  @override
+  String get seek_on_double_tap_description => 'Çift dokunarak ileri/geri sar';
+
+  @override
+  String get copied_to_clipboard => 'Panoya kopyalandı';
+
+  @override
+  String get about => 'Hakkında';
+
+  @override
+  String get app_version => 'Uygulama Sürümü';
+
+  @override
+  String get support_on_github => 'GitHub\'da Destekle';
+
+  @override
+  String get support_on_github_description =>
+      'Projeye GitHub üzerinden katkıda bulunun';
 }

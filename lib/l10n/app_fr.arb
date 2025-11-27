@@ -46,6 +46,7 @@
   "release_date": "Date de sortie",
   "genre": "Genre",
   "cast": "Distribution",
+  "director": "Réalisateur",
   "description": "Description",
   "video_track": "Piste vidéo",
   "audio_track": "Piste audio",
@@ -211,5 +212,35 @@
   "dark":"Sombre",
   "trailer": "Bande-annonce",
   "new_ep": "Nouveau",
-  "continue_watching_label": "Continuer : S {season} Épisode {episode}"
+  "continue_watching": "Continuer à regarder",
+  "@continue_watching": {
+    "description": "Libellé du bouton principal pour reprendre la lecture"
+  },
+  "start_watching": "Commencer à regarder",
+  "@start_watching": {
+    "description": "Libellé du bouton principal pour démarrer la lecture"
+  },
+  "continue_watching_label": "Continuer : S {season} Épisode {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Paramètres du lecteur",
+  "brightness_gesture": "Geste de luminosité",
+  "brightness_gesture_description": "Contrôler la luminosité en glissant verticalement sur le côté gauche",
+  "volume_gesture": "Geste de volume",
+  "volume_gesture_description": "Contrôler le volume en glissant verticalement sur le côté droit",
+  "seek_gesture": "Geste de recherche",
+  "seek_gesture_description": "Rechercher en glissant horizontalement",
+  "speed_up_on_long_press": "Accélérer avec appui long",
+  "speed_up_on_long_press_description": "Accélérer la lecture lors d'un appui long",
+  "seek_on_double_tap": "Rechercher avec double tap",
+  "seek_on_double_tap_description": "Rechercher avant/arrière avec double tap",
+  "copied_to_clipboard": "Copié dans le presse-papiers",
+  "about": "À propos",
+  "app_version": "Version de l'application",
+  "support_on_github": "Soutenir sur GitHub",
+  "support_on_github_description": "Contribuer au projet sur GitHub"
 }

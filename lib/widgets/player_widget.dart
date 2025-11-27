@@ -11,6 +11,7 @@ import 'package:another_iptv_player/widgets/video_widget.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 import 'package:media_kit_video/media_kit_video.dart';
 import '../../models/content_type.dart';
@@ -62,6 +63,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
   String errorMessage = '';
   bool _wasDisconnected = false;
   bool _isFirstCheck = true;
+  int _currentItemIndex = 0;
+  bool _showChannelList = false;
+  Timer? _watchHistoryTimer;
+  Duration? _pendingWatchDuration;
+  Duration? _pendingTotalDuration;
 
   @override
   void initState() {
@@ -71,6 +77,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     // --- INSERTION 1: INITIAL CONTENT SET ---
     PlayerState.currentContent = widget.contentItem;
+    PlayerState.queue = _queue;
+    PlayerState.currentIndex = 0;
     // ----------------------------------------
 
     PlayerState.title = widget.contentItem.name;
@@ -81,29 +89,38 @@ class _PlayerWidgetState extends State<PlayerWidget>
     videoTrackSubscription = EventBus()
         .on<VideoTrack>('video_track_changed')
         .listen((VideoTrack data) async {
-      _player.setVideoTrack(data);
-      await UserPreferences.setVideoTrack(data.id);
-    });
+          _player.setVideoTrack(data);
+          await UserPreferences.setVideoTrack(data.id);
+        });
 
     audioTrackSubscription = EventBus()
         .on<AudioTrack>('audio_track_changed')
         .listen((AudioTrack data) async {
-      _player.setAudioTrack(data);
-      await UserPreferences.setAudioTrack(data.language ?? 'null');
-    });
+          _player.setAudioTrack(data);
+          await UserPreferences.setAudioTrack(data.language ?? 'null');
+        });
 
     subtitleTrackSubscription = EventBus()
         .on<SubtitleTrack>('subtitle_track_changed')
         .listen((SubtitleTrack data) async {
-      _player.setSubtitleTrack(data);
-      await UserPreferences.setSubtitleTrack(data.language ?? 'null');
-    });
+          _player.setSubtitleTrack(data);
+          await UserPreferences.setSubtitleTrack(data.language ?? 'null');
+        });
 
     _initializePlayer();
   }
 
   @override
   void dispose() {
+    // Cancel timer and save watch history one last time before disposing
+    _watchHistoryTimer?.cancel();
+    if (_pendingWatchDuration != null) {
+      // Use unawaited to save without blocking dispose
+      _saveWatchHistory().catchError((e) {
+        // Ignore errors during dispose
+      });
+    }
+
     _player.dispose();
     _audioHandler.setPlayer(null);
     _audioHandler.stop();
@@ -114,6 +131,34 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _connectivitySubscription.cancel();
     _errorHandler.reset();
     super.dispose();
+  }
+
+  Future<void> _saveWatchHistory() async {
+    if (_pendingWatchDuration == null || !mounted) return;
+
+    try {
+      await watchHistoryService.saveWatchHistory(
+        WatchHistory(
+          playlistId: AppState.currentPlaylist!.id,
+          contentType: contentItem.contentType,
+          streamId: isXtreamCode
+              ? contentItem.id
+              : contentItem.m3uItem?.id ?? contentItem.id,
+          lastWatched: DateTime.now(),
+          title: contentItem.name,
+          imagePath: contentItem.imagePath,
+          totalDuration: _pendingTotalDuration,
+          watchDuration: _pendingWatchDuration,
+          seriesId: contentItem.seriesStream?.seriesId,
+        ),
+      );
+      _pendingWatchDuration = null;
+      _pendingTotalDuration = null;
+    } catch (e) {
+      // Silently handle database errors to prevent crashes
+      // The next save attempt will retry
+      print('Error saving watch history: $e');
+    }
   }
 
   Future<void> _initializePlayer() async {
@@ -152,16 +197,18 @@ class _PlayerWidgetState extends State<PlayerWidget>
             extras: {
               'url': item.url,
               'startPosition':
-              itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
+                  itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
             },
           ),
         );
 
         if (item.id == contentItem.id) {
           currentItemIndex = i;
+          _currentItemIndex = i;
 
           if (contentItem.contentType == ContentType.liveStream) {
             currentItemIndex = 0;
+            _currentItemIndex = 0;
             contentItem = item;
 
             mediaItems.add(
@@ -232,11 +279,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-        List<ConnectivityResult> results,
-        ) async {
+      List<ConnectivityResult> results,
+    ) async {
       bool hasConnection = results.any(
-            (connectivity) =>
-        connectivity == ConnectivityResult.mobile ||
+        (connectivity) =>
+            connectivity == ConnectivityResult.mobile ||
             connectivity == ConnectivityResult.wifi ||
             connectivity == ConnectivityResult.ethernet,
       );
@@ -244,8 +291,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
       if (_isFirstCheck) {
         final currentConnectivity = await Connectivity().checkConnectivity();
         hasConnection = currentConnectivity.any(
-              (connectivity) =>
-          connectivity == ConnectivityResult.mobile ||
+          (connectivity) =>
+              connectivity == ConnectivityResult.mobile ||
               connectivity == ConnectivityResult.wifi ||
               connectivity == ConnectivityResult.ethernet,
         );
@@ -301,7 +348,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       var selectedAudioLanguage = await UserPreferences.getAudioTrack();
       var possibleAudioTrack = event.audio.firstWhere(
-            (x) => x.language == selectedAudioLanguage,
+        (x) => x.language == selectedAudioLanguage,
         orElse: AudioTrack.auto,
       );
 
@@ -309,7 +356,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       var selectedSubtitleLanguage = await UserPreferences.getSubtitleTrack();
       var possibleSubtitleLanguage = event.subtitle.firstWhere(
-            (x) => x.language == selectedSubtitleLanguage,
+        (x) => x.language == selectedSubtitleLanguage,
         orElse: SubtitleTrack.auto,
       );
 
@@ -323,6 +370,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
       PlayerState.selectedAudio = _player.state.track.audio;
       PlayerState.selectedSubtitle = _player.state.track.subtitle;
 
+      // Track değişikliğini bildir
+      EventBus().emit('player_track_changed', null);
+
       var volume = await UserPreferences.getVolume();
       await _player.setVolume(volume);
     });
@@ -331,27 +381,20 @@ class _PlayerWidgetState extends State<PlayerWidget>
       await UserPreferences.setVolume(event);
     });
 
-    _player.stream.position.listen((position) async {
+    _player.stream.position.listen((position) {
       _player.state.playlist.medias[currentItemIndex] = Media(
         contentItem.url,
         start: position,
       );
 
-      await watchHistoryService.saveWatchHistory(
-        WatchHistory(
-          playlistId: AppState.currentPlaylist!.id,
-          contentType: contentItem.contentType,
-          streamId: isXtreamCode
-              ? contentItem.id
-              : contentItem.m3uItem?.id ?? contentItem.id,
-          lastWatched: DateTime.now(),
-          title: contentItem.name,
-          imagePath: contentItem.imagePath,
-          totalDuration: _player.state.duration,
-          watchDuration: position,
-          seriesId: contentItem.seriesStream?.seriesId,
-        ),
-      );
+      // Debounce: Save watch history every 5 seconds instead of on every position update
+      _pendingWatchDuration = position;
+      _pendingTotalDuration = _player.state.duration;
+
+      _watchHistoryTimer?.cancel();
+      _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
+        _saveWatchHistory();
+      });
     });
 
     _player.stream.error.listen((error) async {
@@ -359,12 +402,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
       if (error.contains('Failed to open')) {
         _errorHandler.handleError(
           error,
-              () async {
+          () async {
             if (contentItem.contentType == ContentType.liveStream) {
               await _player.open(Media(contentItem.url));
             }
           },
-              (errorMessage) {
+          (errorMessage) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(errorMessage),
@@ -383,16 +426,23 @@ class _PlayerWidgetState extends State<PlayerWidget>
         return;
       }
 
-      currentItemIndex = playlist.index;
+      _currentItemIndex = playlist.index;
+      currentItemIndex = _currentItemIndex;
       contentItem = _queue?[playlist.index] ?? widget.contentItem;
 
       // --- INSERTION 2: QUEUE CHANGE SETTER ---
       PlayerState.currentContent = contentItem;
+      PlayerState.currentIndex = _currentItemIndex;
       // ----------------------------------------
 
       PlayerState.title = contentItem.name;
       EventBus().emit('player_content_item', contentItem);
       EventBus().emit('player_content_item_index', playlist.index);
+
+      // Kanal listesi açıksa güncelle
+      if (_showChannelList && mounted) {
+        setState(() {});
+      }
     });
 
     _player.stream.completed.listen((playlist) async {
@@ -404,20 +454,61 @@ class _PlayerWidgetState extends State<PlayerWidget>
     contentItemIndexChangedSubscription = EventBus()
         .on<int>('player_content_item_index_changed')
         .listen((int index) async {
-      if (contentItem.contentType == ContentType.liveStream) {
-        final item = _queue![index];
-        contentItem = item;
+          if (contentItem.contentType == ContentType.liveStream) {
+            // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
+            final updatedQueue = PlayerState.queue ?? _queue;
+            if (updatedQueue == null || index >= updatedQueue.length) return;
 
-        // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
-        PlayerState.currentContent = contentItem;
-        // -------------------------------------------
+            final item = updatedQueue[index];
+            contentItem = item;
+            _queue = updatedQueue; // Queue'yu güncelle
 
-        await _player.open(Playlist([Media(item.url)]), play: true);
-        EventBus().emit('player_content_item', item);
-        EventBus().emit('player_content_item_index', index);
-        _errorHandler.reset();
-      } else {
-        _player.jump(index);
+            // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
+            PlayerState.currentContent = contentItem;
+            PlayerState.currentIndex = index;
+            PlayerState.title = item.name;
+            _currentItemIndex = index;
+            // -------------------------------------------
+
+            await _player.open(Playlist([Media(item.url)]), play: true);
+            EventBus().emit('player_content_item', item);
+            EventBus().emit('player_content_item_index', index);
+            _errorHandler.reset();
+
+            // Kanal listesi açıksa güncelle
+            if (_showChannelList && mounted) {
+              setState(() {});
+            }
+          } else {
+            _player.jump(index);
+          }
+        });
+
+    // Kanal listesi göster/gizle event'i
+    EventBus().on<bool>('toggle_channel_list').listen((bool show) {
+      if (mounted) {
+        setState(() {
+          _showChannelList = show;
+          PlayerState.showChannelList = show;
+        });
+      }
+    });
+
+    // Video bilgisi göster/gizle event'i
+    EventBus().on<bool>('toggle_video_info').listen((bool show) {
+      if (mounted) {
+        setState(() {
+          PlayerState.showVideoInfo = show;
+        });
+      }
+    });
+
+    // Video ayarları göster/gizle event'i
+    EventBus().on<bool>('toggle_video_settings').listen((bool show) {
+      if (mounted) {
+        setState(() {
+          PlayerState.showVideoSettings = show;
+        });
       }
     });
 
@@ -441,6 +532,296 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
+  void _changeChannel(int direction) {
+    if (_queue == null || _queue!.length <= 1) return;
+
+    final newIndex = _currentItemIndex + direction;
+    if (newIndex < 0 || newIndex >= _queue!.length) return;
+
+    EventBus().emit('player_content_item_index_changed', newIndex);
+  }
+
+  Widget _buildChannelListOverlay(BuildContext context) {
+    final items = _queue!;
+    final currentContent = PlayerState.currentContent;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final panelWidth = (screenWidth / 3).clamp(200.0, 400.0);
+
+    // Mevcut index'i bul
+    int selectedIndex = _currentItemIndex;
+    if (currentContent != null) {
+      final foundIndex = items.indexWhere(
+        (item) => item.id == currentContent.id,
+      );
+      if (foundIndex != -1) {
+        selectedIndex = foundIndex;
+      }
+    }
+
+    String overlayTitle = 'Kanal Seç';
+    if (currentContent?.contentType == ContentType.vod) {
+      overlayTitle = 'Filmler';
+    } else if (currentContent?.contentType == ContentType.series) {
+      overlayTitle = 'Bölümler';
+    }
+
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _showChannelList = false;
+          });
+        },
+        child: Container(
+          color: Colors.black.withOpacity(0.3),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {}, // Panel içine tıklanınca kapanmasın
+              child: Container(
+                width: panelWidth,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.95),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.8),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey[800]!,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              overlayTitle,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${selectedIndex + 1} / ${items.length}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                _showChannelList = false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Channel list
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          final isSelected = index == selectedIndex;
+
+                          return _buildChannelListItem(
+                            context,
+                            item,
+                            index,
+                            isSelected,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChannelListItem(
+    BuildContext context,
+    ContentItem item,
+    int index,
+    bool isSelected,
+  ) {
+    return InkWell(
+      onTap: () {
+        EventBus().emit('player_content_item_index_changed', index);
+        // Panel kapanmasın, sadece kanal değişsin
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: isSelected
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                )
+              : Border.all(color: Colors.grey[800]!, width: 1),
+        ),
+        child: Row(
+          children: [
+            // Thumbnail
+            if (item.imagePath.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.network(
+                  item.imagePath,
+                  width: 50,
+                  height: 35,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 50,
+                      height: 35,
+                      color: Colors.grey[800],
+                      child: const Icon(
+                        Icons.image,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                width: 50,
+                height: 35,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(
+                  Icons.video_library,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+              ),
+            const SizedBox(width: 10),
+            // Title and info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: Colors.white,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        _getContentTypeIcon(item.contentType),
+                        size: 11,
+                        color: Colors.grey[500],
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          _getContentTypeDisplayNameForItem(item.contentType),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getContentTypeIcon(ContentType contentType) {
+    switch (contentType) {
+      case ContentType.liveStream:
+        return Icons.live_tv;
+      case ContentType.vod:
+        return Icons.movie;
+      case ContentType.series:
+        return Icons.tv;
+    }
+  }
+
+  String _getContentTypeDisplayNameForItem(ContentType contentType) {
+    switch (contentType) {
+      case ContentType.liveStream:
+        return 'Canlı Yayın';
+      case ContentType.vod:
+        return 'Film';
+      case ContentType.series:
+        return 'Dizi';
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}s ${minutes}dk';
+    } else {
+      return '${minutes}dk';
+    }
+  }
+
   String _getContentTypeDisplayName() {
     switch (widget.contentItem.contentType) {
       case ContentType.liveStream:
@@ -457,6 +838,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final screenSize = MediaQuery.of(context).size;
     final isTablet = screenSize.shortestSide >= 600;
     final isLandscape = screenSize.width > screenSize.height;
+
+    // Series ve LiveStream için tam ekran modu
+    final isSeries = widget.contentItem.contentType == ContentType.series;
+    final isLiveStream =
+        widget.contentItem.contentType == ContentType.liveStream;
+    final isVod = widget.contentItem.contentType == ContentType.vod;
+    final isFullScreen = isSeries || isLiveStream || isVod;
+
     double calculateAspectRatio() {
       if (widget.aspectRatio != null) return widget.aspectRatio!;
 
@@ -477,31 +866,50 @@ class _PlayerWidgetState extends State<PlayerWidget>
       return null;
     }
 
-    Widget playerWidget = AspectRatio(
-      aspectRatio: calculateAspectRatio(),
-      child: isLoading
-          ? Container(
-        color: Colors.black,
-        child: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-      )
-          : _buildPlayerContent(),
-    );
+    Widget playerWidget;
 
-    if (isTablet) {
-      final maxHeight = calculateMaxHeight();
-      if (maxHeight != null) {
-        playerWidget = ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: playerWidget,
-        );
+    if (isFullScreen) {
+      // Series ve LiveStream için tam ekran
+      playerWidget = SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: isLoading
+            ? Container(
+                color: Colors.black,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              )
+            : _buildPlayerContent(),
+      );
+    } else {
+      // Diğer içerikler için aspect ratio kullan
+      playerWidget = AspectRatio(
+        aspectRatio: calculateAspectRatio(),
+        child: isLoading
+            ? Container(
+                color: Colors.black,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              )
+            : _buildPlayerContent(),
+      );
+
+      if (isTablet) {
+        final maxHeight = calculateMaxHeight();
+        if (maxHeight != null) {
+          playerWidget = ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: playerWidget,
+          );
+        }
       }
     }
 
     return Container(
       color: Colors.black,
-      child: Column(children: [playerWidget]),
+      child: isFullScreen ? playerWidget : Column(children: [playerWidget]),
     );
   }
 
@@ -527,21 +935,52 @@ class _PlayerWidgetState extends State<PlayerWidget>
       );
     }
 
-    return Stack(
-      children: [
-        getVideo(context, _videoController!, PlayerState.subtitleConfiguration),
+    return GestureDetector(
+      onVerticalDragEnd: (details) {
+        if (_queue == null || _queue!.length <= 1) return;
 
-        if (widget.onFullscreen != null)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              onPressed: widget.onFullscreen,
-              icon: const Icon(Icons.fullscreen, color: Colors.white, size: 24),
-              style: IconButton.styleFrom(backgroundColor: Colors.black54),
-            ),
+        // Yukarı swipe - sonraki kanal
+        if (details.primaryVelocity != null &&
+            details.primaryVelocity! < -500) {
+          _changeChannel(1);
+        }
+        // Aşağı swipe - önceki kanal
+        else if (details.primaryVelocity != null &&
+            details.primaryVelocity! > 500) {
+          _changeChannel(-1);
+        }
+      },
+      child: Stack(
+        children: [
+          getVideo(
+            context,
+            _videoController!,
+            PlayerState.subtitleConfiguration,
           ),
-      ],
+
+          if (widget.onFullscreen != null &&
+              (Theme.of(context).platform == TargetPlatform.macOS ||
+                  Theme.of(context).platform == TargetPlatform.windows ||
+                  Theme.of(context).platform == TargetPlatform.linux))
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                onPressed: widget.onFullscreen,
+                icon: const Icon(
+                  Icons.fullscreen,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                style: IconButton.styleFrom(backgroundColor: Colors.black54),
+              ),
+            ),
+
+          // Kanal listesi overlay - normal mod için
+          if (_showChannelList && _queue != null && _queue!.length > 1)
+            _buildChannelListOverlay(context),
+        ],
+      ),
     );
   }
 }

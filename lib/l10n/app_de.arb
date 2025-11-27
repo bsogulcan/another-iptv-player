@@ -46,6 +46,7 @@
   "release_date": "Erscheinungsdatum",
   "genre": "Genre",
   "cast": "Besetzung",
+  "director": "Regisseur",
   "description": "Beschreibung",
   "video_track": "Video-Spur",
   "audio_track": "Audio-Spur",
@@ -211,5 +212,35 @@
   "dark": "Dunkel",
   "trailer": "Anhänger",
   "new_ep": "Neu",
-  "continue_watching_label": "Fortsetzen: S {season} Folge {episode}"
+  "continue_watching": "Weiter ansehen",
+  "@continue_watching": {
+    "description": "Beschriftung der Hauptaktion zum Fortsetzen der Wiedergabe"
+  },
+  "start_watching": "Wiedergabe starten",
+  "@start_watching": {
+    "description": "Beschriftung der Hauptaktion zum Starten der Wiedergabe"
+  },
+  "continue_watching_label": "Fortsetzen: S {season} Folge {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Player-Einstellungen",
+  "brightness_gesture": "Helligkeits-Geste",
+  "brightness_gesture_description": "Helligkeit durch vertikales Wischen auf der linken Seite steuern",
+  "volume_gesture": "Lautstärke-Geste",
+  "volume_gesture_description": "Lautstärke durch vertikales Wischen auf der rechten Seite steuern",
+  "seek_gesture": "Such-Geste",
+  "seek_gesture_description": "Durch horizontales Wischen suchen",
+  "speed_up_on_long_press": "Bei langem Drücken beschleunigen",
+  "speed_up_on_long_press_description": "Wiedergabe bei langem Drücken beschleunigen",
+  "seek_on_double_tap": "Bei Doppeltippen suchen",
+  "seek_on_double_tap_description": "Durch Doppeltippen vorwärts/rückwärts suchen",
+  "copied_to_clipboard": "In Zwischenablage kopiert",
+  "about": "Über",
+  "app_version": "App-Version",
+  "support_on_github": "Auf GitHub unterstützen",
+  "support_on_github_description": "Zum Projekt auf GitHub beitragen"
 }

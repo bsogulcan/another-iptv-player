@@ -155,6 +155,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cast => 'فريق التمثيل';
 
   @override
+  String get director => 'المخرج';
+
+  @override
   String get description => 'الوصف';
 
   @override
@@ -693,7 +696,65 @@ class AppLocalizationsAr extends AppLocalizations {
   String get new_ep => 'جديد';
 
   @override
+  String get continue_watching => 'متابعة المشاهدة';
+
+  @override
+  String get start_watching => 'ابدأ المشاهدة';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'متابعة: الموسم $season الحلقة $episode';
   }
+
+  @override
+  String get player_settings => 'إعدادات المشغل';
+
+  @override
+  String get brightness_gesture => 'إيماءة السطوع';
+
+  @override
+  String get brightness_gesture_description =>
+      'التحكم في السطوع عن طريق السحب عموديًا على الجانب الأيسر';
+
+  @override
+  String get volume_gesture => 'إيماءة الصوت';
+
+  @override
+  String get volume_gesture_description =>
+      'التحكم في الصوت عن طريق السحب عموديًا على الجانب الأيمن';
+
+  @override
+  String get seek_gesture => 'إيماءة البحث';
+
+  @override
+  String get seek_gesture_description => 'البحث عن طريق السحب أفقيًا';
+
+  @override
+  String get speed_up_on_long_press => 'تسريع عند الضغط الطويل';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'تسريع التشغيل عند الضغط الطويل';
+
+  @override
+  String get seek_on_double_tap => 'البحث عند النقر المزدوج';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'البحث للأمام/للخلف بالنقر المزدوج';
+
+  @override
+  String get copied_to_clipboard => 'تم النسخ إلى الحافظة';
+
+  @override
+  String get about => 'حول';
+
+  @override
+  String get app_version => 'إصدار التطبيق';
+
+  @override
+  String get support_on_github => 'دعم على GitHub';
+
+  @override
+  String get support_on_github_description => 'ساهم في المشروع على GitHub';
 }

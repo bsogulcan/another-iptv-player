@@ -46,6 +46,7 @@
   "release_date": "Release Date",
   "genre": "Genre",
   "cast": "Cast",
+  "director": "Director",
   "description": "Description",
   "video_track": "Video Track",
   "audio_track": "Audio Track",
@@ -211,11 +212,35 @@
   "dark": "Dark",
   "trailer": "Trailer",
   "new_ep": "New",
+  "continue_watching": "Continue Watching",
+  "@continue_watching": {
+    "description": "Primary action button label when resuming playback"
+  },
+  "start_watching": "Start Watching",
+  "@start_watching": {
+    "description": "Primary action button label when starting playback"
+  },
   "continue_watching_label": "Continue: S {season} Episode {episode}",
   "@continue_watching_label": {
     "placeholders": {
       "season": { "type": "String" },
       "episode": { "type": "String" }
     }
-  }
+  },
+  "player_settings": "Player Settings",
+  "brightness_gesture": "Brightness Gesture",
+  "brightness_gesture_description": "Control brightness by swiping vertically on the left side",
+  "volume_gesture": "Volume Gesture",
+  "volume_gesture_description": "Control volume by swiping vertically on the right side",
+  "seek_gesture": "Seek Gesture",
+  "seek_gesture_description": "Seek by swiping horizontally",
+  "speed_up_on_long_press": "Speed Up on Long Press",
+  "speed_up_on_long_press_description": "Speed up playback when long pressing",
+  "seek_on_double_tap": "Seek on Double Tap",
+  "seek_on_double_tap_description": "Seek forward/backward by double tapping",
+  "copied_to_clipboard": "Copied to clipboard",
+  "about": "About",
+  "app_version": "App Version",
+  "support_on_github": "Support on GitHub",
+  "support_on_github_description": "Contribute to the project on GitHub"
 }

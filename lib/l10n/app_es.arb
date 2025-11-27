@@ -46,6 +46,7 @@
   "release_date": "Fecha de Estreno",
   "genre": "Género",
   "cast": "Reparto",
+  "director": "Director",
   "description": "Descripción",
   "video_track": "Pista de Video",
   "audio_track": "Pista de Audio",
@@ -211,5 +212,35 @@
   "dark": "Oscuro",
   "trailer": "Tráiler",
   "new_ep": "Nuevo",
-  "continue_watching_label": "Continuar: T {season} Episodio {episode}"
+  "continue_watching": "Seguir viendo",
+  "@continue_watching": {
+    "description": "Etiqueta del botón principal para reanudar la reproducción"
+  },
+  "start_watching": "Comenzar a ver",
+  "@start_watching": {
+    "description": "Etiqueta del botón principal para iniciar la reproducción"
+  },
+  "continue_watching_label": "Continuar: T {season} Episodio {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Configuración del reproductor",
+  "brightness_gesture": "Gesto de brillo",
+  "brightness_gesture_description": "Controlar el brillo deslizando verticalmente en el lado izquierdo",
+  "volume_gesture": "Gesto de volumen",
+  "volume_gesture_description": "Controlar el volumen deslizando verticalmente en el lado derecho",
+  "seek_gesture": "Gesto de búsqueda",
+  "seek_gesture_description": "Buscar deslizando horizontalmente",
+  "speed_up_on_long_press": "Acelerar con presión larga",
+  "speed_up_on_long_press_description": "Acelerar la reproducción al mantener presionado",
+  "seek_on_double_tap": "Buscar con doble toque",
+  "seek_on_double_tap_description": "Buscar adelante/atrás con doble toque",
+  "copied_to_clipboard": "Copiado al portapapeles",
+  "about": "Acerca de",
+  "app_version": "Versión de la aplicación",
+  "support_on_github": "Apoyar en GitHub",
+  "support_on_github_description": "Contribuir al proyecto en GitHub"
 }

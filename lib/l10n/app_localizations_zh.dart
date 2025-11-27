@@ -154,6 +154,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cast => '演员';
 
   @override
+  String get director => '导演';
+
+  @override
   String get description => '描述';
 
   @override
@@ -675,7 +678,61 @@ class AppLocalizationsZh extends AppLocalizations {
   String get new_ep => '新的';
 
   @override
+  String get continue_watching => '继续观看';
+
+  @override
+  String get start_watching => '开始观看';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return '继续观看：第 $season 季 第 $episode 集';
   }
+
+  @override
+  String get player_settings => '播放器设置';
+
+  @override
+  String get brightness_gesture => '亮度手势';
+
+  @override
+  String get brightness_gesture_description => '在左侧垂直滑动控制亮度';
+
+  @override
+  String get volume_gesture => '音量手势';
+
+  @override
+  String get volume_gesture_description => '在右侧垂直滑动控制音量';
+
+  @override
+  String get seek_gesture => '搜索手势';
+
+  @override
+  String get seek_gesture_description => '水平滑动搜索';
+
+  @override
+  String get speed_up_on_long_press => '长按时加速';
+
+  @override
+  String get speed_up_on_long_press_description => '长按时加速播放';
+
+  @override
+  String get seek_on_double_tap => '双击搜索';
+
+  @override
+  String get seek_on_double_tap_description => '双击前进/后退搜索';
+
+  @override
+  String get copied_to_clipboard => '已复制到剪贴板';
+
+  @override
+  String get about => '关于';
+
+  @override
+  String get app_version => '应用版本';
+
+  @override
+  String get support_on_github => '在 GitHub 上支持';
+
+  @override
+  String get support_on_github_description => '在 GitHub 上为项目做出贡献';
 }

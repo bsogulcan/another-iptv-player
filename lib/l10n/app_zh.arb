@@ -46,6 +46,7 @@
   "release_date": "发布日期",
   "genre": "类型",
   "cast": "演员",
+  "director": "导演",
   "description": "描述",
   "video_track": "视频轨道",
   "audio_track": "音频轨道",
@@ -211,5 +212,35 @@
   "dark": "深色",
   "trailer": "拖車",
   "new_ep": "新的",
-  "continue_watching_label": "继续观看：第 {season} 季 第 {episode} 集"
+  "continue_watching": "继续观看",
+  "@continue_watching": {
+    "description": "用于继续播放的主要按钮标签"
+  },
+  "start_watching": "开始观看",
+  "@start_watching": {
+    "description": "用于开始播放的主要按钮标签"
+  },
+  "continue_watching_label": "继续观看：第 {season} 季 第 {episode} 集",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "播放器设置",
+  "brightness_gesture": "亮度手势",
+  "brightness_gesture_description": "在左侧垂直滑动控制亮度",
+  "volume_gesture": "音量手势",
+  "volume_gesture_description": "在右侧垂直滑动控制音量",
+  "seek_gesture": "搜索手势",
+  "seek_gesture_description": "水平滑动搜索",
+  "speed_up_on_long_press": "长按时加速",
+  "speed_up_on_long_press_description": "长按时加速播放",
+  "seek_on_double_tap": "双击搜索",
+  "seek_on_double_tap_description": "双击前进/后退搜索",
+  "copied_to_clipboard": "已复制到剪贴板",
+  "about": "关于",
+  "app_version": "应用版本",
+  "support_on_github": "在 GitHub 上支持",
+  "support_on_github_description": "在 GitHub 上为项目做出贡献"
 }

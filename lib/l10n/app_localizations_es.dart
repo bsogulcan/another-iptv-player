@@ -156,6 +156,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cast => 'Reparto';
 
   @override
+  String get director => 'Director';
+
+  @override
   String get description => 'Descripción';
 
   @override
@@ -702,7 +705,66 @@ class AppLocalizationsEs extends AppLocalizations {
   String get new_ep => 'Nuevo';
 
   @override
+  String get continue_watching => 'Seguir viendo';
+
+  @override
+  String get start_watching => 'Comenzar a ver';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Continuar: T $season Episodio $episode';
   }
+
+  @override
+  String get player_settings => 'Configuración del reproductor';
+
+  @override
+  String get brightness_gesture => 'Gesto de brillo';
+
+  @override
+  String get brightness_gesture_description =>
+      'Controlar el brillo deslizando verticalmente en el lado izquierdo';
+
+  @override
+  String get volume_gesture => 'Gesto de volumen';
+
+  @override
+  String get volume_gesture_description =>
+      'Controlar el volumen deslizando verticalmente en el lado derecho';
+
+  @override
+  String get seek_gesture => 'Gesto de búsqueda';
+
+  @override
+  String get seek_gesture_description => 'Buscar deslizando horizontalmente';
+
+  @override
+  String get speed_up_on_long_press => 'Acelerar con presión larga';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Acelerar la reproducción al mantener presionado';
+
+  @override
+  String get seek_on_double_tap => 'Buscar con doble toque';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Buscar adelante/atrás con doble toque';
+
+  @override
+  String get copied_to_clipboard => 'Copiado al portapapeles';
+
+  @override
+  String get about => 'Acerca de';
+
+  @override
+  String get app_version => 'Versión de la aplicación';
+
+  @override
+  String get support_on_github => 'Apoyar en GitHub';
+
+  @override
+  String get support_on_github_description =>
+      'Contribuir al proyecto en GitHub';
 }

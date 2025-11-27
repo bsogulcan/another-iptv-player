@@ -156,6 +156,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cast => 'Distribution';
 
   @override
+  String get director => 'Réalisateur';
+
+  @override
   String get description => 'Description';
 
   @override
@@ -702,7 +705,66 @@ class AppLocalizationsFr extends AppLocalizations {
   String get new_ep => 'Nouveau';
 
   @override
+  String get continue_watching => 'Continuer à regarder';
+
+  @override
+  String get start_watching => 'Commencer à regarder';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Continuer : S $season Épisode $episode';
   }
+
+  @override
+  String get player_settings => 'Paramètres du lecteur';
+
+  @override
+  String get brightness_gesture => 'Geste de luminosité';
+
+  @override
+  String get brightness_gesture_description =>
+      'Contrôler la luminosité en glissant verticalement sur le côté gauche';
+
+  @override
+  String get volume_gesture => 'Geste de volume';
+
+  @override
+  String get volume_gesture_description =>
+      'Contrôler le volume en glissant verticalement sur le côté droit';
+
+  @override
+  String get seek_gesture => 'Geste de recherche';
+
+  @override
+  String get seek_gesture_description =>
+      'Rechercher en glissant horizontalement';
+
+  @override
+  String get speed_up_on_long_press => 'Accélérer avec appui long';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Accélérer la lecture lors d\'un appui long';
+
+  @override
+  String get seek_on_double_tap => 'Rechercher avec double tap';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Rechercher avant/arrière avec double tap';
+
+  @override
+  String get copied_to_clipboard => 'Copié dans le presse-papiers';
+
+  @override
+  String get about => 'À propos';
+
+  @override
+  String get app_version => 'Version de l\'application';
+
+  @override
+  String get support_on_github => 'Soutenir sur GitHub';
+
+  @override
+  String get support_on_github_description => 'Contribuer au projet sur GitHub';
 }
