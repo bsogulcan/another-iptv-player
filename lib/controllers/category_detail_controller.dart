@@ -53,9 +53,9 @@ class CategoryDetailController extends ChangeNotifier {
     for (final item in items) {
       final rawGenre = _getItemGenre(item);
       if (rawGenre != null && rawGenre.isNotEmpty) {
-        // Split on common separators (comma, slash, backslash, pipe, ampersand, semicolon)
+        // Split on common separators (comma, slash, backslash, pipe, ampersand, semicolon, Arabic comma) (with surrounding spaces)
         final parts = rawGenre
-            .split(RegExp(r'[,\/\\&\|;]+'))
+            .split(RegExp(r'\s*[,/\\|&;،]+\s*'))
             .map((g) => g.trim())
             .where((g) => g.isNotEmpty)
             .toSet();
@@ -91,7 +91,7 @@ class CategoryDetailController extends ChangeNotifier {
 
       // Use the same splitter logic to check if the item contains the selected genre
       final itemGenres = rawGenre
-          .split(RegExp(r'[,\/\\&\|;]+'))
+          .split(RegExp(r'\s*[,/\\|&;،]+\s*'))
           .map((g) => g.trim().toLowerCase());
 
       return itemGenres.contains(genreLower);
