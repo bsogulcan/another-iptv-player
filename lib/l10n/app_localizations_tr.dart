@@ -327,6 +327,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get removed_from_favorites => 'Favorilerden kaldırıldı';
 
   @override
+  String get remove_from_favorites => 'Favorilerden Kaldır';
+
+  @override
   String get select_playlist_type => 'Playlist Türü Seçin';
 
   @override
@@ -757,4 +760,85 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get support_on_github_description =>
       'Projeye GitHub üzerinden katkıda bulunun';
+
+  @override
+  String get select_channel => 'Kanal Seç';
+
+  @override
+  String get episodes => 'Bölümler';
+
+  @override
+  String get categories => 'Kategoriler';
+
+  @override
+  String get seasons => 'Sezonlar';
+
+  @override
+  String season_number_format(int number) {
+    return 'Sezon $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count bölüm';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count kanal';
+  }
+
+  @override
+  String get video_info => 'Video Bilgileri';
+
+  @override
+  String get video_info_not_found => 'Video bilgisi bulunamadı';
+
+  @override
+  String get name => 'İsim';
+
+  @override
+  String get content_type => 'İçerik Tipi';
+
+  @override
+  String get plot => 'Konu';
+
+  @override
+  String get duration_unknown => 'Bilinmiyor';
+
+  @override
+  String get url_copied_to_clipboard => 'URL panoya kopyalandı';
+
+  @override
+  String get stream_id => 'Stream ID';
+
+  @override
+  String get epg_channel_id => 'EPG Kanal ID';
+
+  @override
+  String get category => 'Kategori';
+
+  @override
+  String get add_to_favorites => 'Favorilere Ekle';
+
+  @override
+  String get no_tracks_available => 'Parça bulunamadı';
+
+  @override
+  String get live_stream_content_type => 'Canlı Yayın';
+
+  @override
+  String get movie_content_type => 'Film';
+
+  @override
+  String get series_content_type => 'Dizi';
+
+  @override
+  String get last_update => 'Son Güncelleme';
+
+  @override
+  String get minutes => 'dk';
+
+  @override
+  String get duration_label => 'Süre';
 }

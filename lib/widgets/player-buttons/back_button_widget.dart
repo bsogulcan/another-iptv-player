@@ -9,7 +9,6 @@ class BackButtonWidget extends StatelessWidget {
   const BackButtonWidget({super.key});
 
   void _handleBackPress(BuildContext context) {
-    // Önce açık overlay'leri kontrol et ve kapat
     if (PlayerState.showVideoInfo) {
       VideoInfoWidget.hideOverlay();
     }
@@ -20,7 +19,6 @@ class BackButtonWidget extends StatelessWidget {
       VideoSettingsWidget.hideOverlay();
     }
 
-    // Hiç overlay açık değilse normal geri navigasyonu yap
     Navigator.pop(context);
   }
 

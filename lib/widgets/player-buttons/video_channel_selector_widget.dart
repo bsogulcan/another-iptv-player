@@ -3,6 +3,7 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/player_state.dart';
 import 'package:another_iptv_player/services/playlist_content_state.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import '../../models/content_type.dart';
 import '../../utils/get_playlist_type.dart';
@@ -17,7 +18,6 @@ class VideoChannelSelectorWidget extends StatefulWidget {
   State<VideoChannelSelectorWidget> createState() =>
       _VideoChannelSelectorWidgetState();
 
-  // Static metod: Overlay'i dışarıdan kapatmak için
   static void hideOverlay() {
     _VideoChannelSelectorWidgetState.hideOverlay();
   }
@@ -29,14 +29,12 @@ class _VideoChannelSelectorWidgetState
   static StreamSubscription? _globalIndexSubscription;
   static StreamSubscription? _globalToggleSubscription;
   static BuildContext? _globalContext;
-  static String? _selectedCategoryId; // Seçili kategori
-  static bool _showCategories = false; // Kategoriler mi kanallar mı gösterilecek
-  static int? _selectedSeason; // Seçili sezon (diziler için)
-  static bool _showSeasons = false; // Sezonlar mı bölümler mi gösterilecek (diziler için)
-  static ScrollController? _categoriesScrollController; // Kategoriler scroll controller
-  static ScrollController? _channelsScrollController; // Kanallar scroll controller
-
-  // Static metod: Overlay'i dışarıdan kapatmak için
+  static String? _selectedCategoryId;
+  static bool _showCategories = false;
+  static int? _selectedSeason;
+  static bool _showSeasons = false;
+  static ScrollController? _categoriesScrollController;
+  static ScrollController? _channelsScrollController;
   static void hideOverlay() {
     _globalOverlayEntry?.remove();
     _globalOverlayEntry = null;
@@ -57,10 +55,8 @@ class _VideoChannelSelectorWidgetState
   void initState() {
     super.initState();
 
-    // Context'i güncelle
     _globalContext = context;
 
-    // Event listener'ı sadece bir kez oluştur
     if (_globalToggleSubscription == null) {
       _globalToggleSubscription = EventBus()
           .on<bool>('toggle_channel_list')
@@ -78,32 +74,27 @@ class _VideoChannelSelectorWidgetState
 
   @override
   void dispose() {
-    // Overlay'i kapatma - başka bir instance hala açık olabilir
-    // Overlay sadece kullanıcı kapatırsa veya tüm widget'lar dispose olduğunda kapanmalı
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // M3U playlist ise butonu gösterme
     if (isM3u) {
       return const SizedBox.shrink();
     }
 
-    // Queue yoksa veya tek öğe varsa butonu gösterme
     if (widget.queue == null || widget.queue!.length <= 1) {
       return const SizedBox.shrink();
     }
 
-    // Context'i her build'de güncelle
     _globalContext = context;
 
     final currentContent = PlayerState.currentContent;
-    String tooltip = 'Kanal Seç';
+    String tooltip = context.loc.select_channel;
     if (currentContent?.contentType == ContentType.vod) {
-      tooltip = 'Filmler';
+      tooltip = context.loc.movies;
     } else if (currentContent?.contentType == ContentType.series) {
-      tooltip = 'Bölümler';
+      tooltip = context.loc.episodes;
     }
 
     return IconButton(
@@ -130,13 +121,11 @@ class _VideoChannelSelectorWidgetState
 
     final currentContent = PlayerState.currentContent;
     
-    // Canlı yayın ise ve kategori bazlı içerik yüklü değilse yükle
     if (currentContent?.contentType == ContentType.liveStream) {
       if (PlaylistContentState.liveCategories.isEmpty) {
         await PlaylistContentState.loadLiveStreams();
       }
       
-      // Mevcut içeriğin kategori ID'sini al
       String? currentCategoryId;
       if (currentContent?.liveStream != null) {
         currentCategoryId = currentContent!.liveStream!.categoryId;
@@ -144,39 +133,32 @@ class _VideoChannelSelectorWidgetState
         currentCategoryId = currentContent!.m3uItem!.categoryId;
       }
       
-      // Eğer kategori ID bulunduysa ve bu kategori mevcut kategorilerde varsa
       if (currentCategoryId != null && 
           PlaylistContentState.liveCategories.any((c) => c.categoryId == currentCategoryId)) {
         _selectedCategoryId = currentCategoryId;
         _showCategories = false;
       } else {
-        // Kategori bulunamadıysa kategorileri göster
         _showCategories = true;
         _selectedCategoryId = null;
       }
       _showSeasons = false;
       _selectedSeason = null;
     } else if (currentContent?.contentType == ContentType.series) {
-      // Dizi ise sezon seçimi yap
       final items = widget.queue ?? [];
       if (items.isEmpty) return;
       
-      // Mevcut içeriğin sezon numarasını al
       final currentSeason = currentContent?.season;
       
-      // Eğer sezon numarası bulunduysa
       if (currentSeason != null) {
         _selectedSeason = currentSeason;
         _showSeasons = false;
       } else {
-        // Sezon bulunamadıysa sezonları göster
         _showSeasons = true;
         _selectedSeason = null;
       }
       _showCategories = false;
       _selectedCategoryId = null;
     } else {
-      // Diğer içerik tipleri için normal queue kullan
       final items = widget.queue ?? [];
       if (items.isEmpty) return;
       _showCategories = false;
@@ -185,15 +167,12 @@ class _VideoChannelSelectorWidgetState
       _selectedSeason = null;
     }
 
-    // Overlay'i oluşturmadan önce context'i kontrol et
     final overlayContext = _globalContext ?? context;
 
-    // Overlay'i güvenli bir şekilde al
     OverlayState? overlay;
     try {
       overlay = Overlay.of(overlayContext, rootOverlay: true);
     } catch (e) {
-      // Overlay bulunamazsa bir sonraki frame'de tekrar dene
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_globalOverlayEntry == null) {
           _showChannelSelector(overlayContext);
@@ -214,7 +193,6 @@ class _VideoChannelSelectorWidgetState
     overlay.insert(_globalOverlayEntry!);
     PlayerState.showChannelList = true;
 
-    // Kanal değiştiğinde overlay'i güncelle
     _globalIndexSubscription?.cancel();
     _globalIndexSubscription = EventBus()
         .on<int>('player_content_item_index')
@@ -231,14 +209,12 @@ class _VideoChannelSelectorWidgetState
     _globalIndexSubscription?.cancel();
     _globalIndexSubscription = null;
     PlayerState.showChannelList = false;
-    // Context'i null yapma - başka bir widget instance'ı hala kullanıyor olabilir
   }
 
   Widget _buildOverlay(
     BuildContext context,
     double panelWidth,
   ) {
-    // Overlay'in hala açık olduğundan emin ol
     if (_globalOverlayEntry == null) {
       return const SizedBox.shrink();
     }
@@ -254,14 +230,11 @@ class _VideoChannelSelectorWidgetState
     final isSeries = currentContent?.contentType == ContentType.series;
     final isVod = currentContent?.contentType == ContentType.vod;
 
-    // Kategoriler mi kanallar mı gösterilecek
     List<ContentItem> items = [];
-    int? selectedIndex; // null olabilir - hiçbir kanal seçili değilse
+    int? selectedIndex;
     
     if (_showCategories && isLiveStream) {
-      // Kategoriler gösterilecek - bu durumda items boş, kategoriler ayrı gösterilecek
     } else if (_selectedCategoryId != null && isLiveStream) {
-      // Seçili kategorideki kanallar
       items = PlaylistContentState.getLiveStreamsByCategory(_selectedCategoryId!);
       if (currentContent != null) {
         final foundIndex = items.indexWhere(
@@ -270,12 +243,9 @@ class _VideoChannelSelectorWidgetState
         if (foundIndex != -1) {
           selectedIndex = foundIndex;
         }
-        // Eğer mevcut içerik bu kategoride yoksa, selectedIndex null kalır
       }
     } else if (_showSeasons && isSeries) {
-      // Sezonlar gösterilecek - bu durumda items boş, sezonlar ayrı gösterilecek
     } else if (_selectedSeason != null && isSeries) {
-      // Seçili sezondaki bölümler
       final allItems = widget.queue ?? [];
       items = allItems.where((item) => item.season == _selectedSeason).toList();
       if (currentContent != null) {
@@ -287,7 +257,6 @@ class _VideoChannelSelectorWidgetState
         }
       }
     } else {
-      // Normal queue kullan (veya sezon seçiliyse o sezonun bölümleri)
       if (isSeries && _selectedSeason != null) {
         final allItems = widget.queue ?? [];
         items = allItems.where((item) => item.season == _selectedSeason).toList();
@@ -302,7 +271,6 @@ class _VideoChannelSelectorWidgetState
           selectedIndex = foundIndex;
         }
       }
-      // Eğer bulunamazsa widget.currentIndex kullan
       if (selectedIndex == null) {
         selectedIndex = widget.currentIndex ?? 0;
       }
@@ -329,7 +297,6 @@ class _VideoChannelSelectorWidgetState
             ),
             child: Column(
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -340,7 +307,6 @@ class _VideoChannelSelectorWidgetState
                   ),
                   child: Row(
                     children: [
-                      // Geri butonu (kategori veya sezon seçiliyse)
                       if ((_selectedCategoryId != null && isLiveStream) || 
                           (_selectedSeason != null && isSeries))
                         IconButton(
@@ -351,7 +317,6 @@ class _VideoChannelSelectorWidgetState
                             if (isLiveStream) {
                               _selectedCategoryId = null;
                               _showCategories = true;
-                              // Kategori listesine geri dönüldüğünde scroll'u en üste getir
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 _categoriesScrollController?.animateTo(
                                   0,
@@ -369,20 +334,20 @@ class _VideoChannelSelectorWidgetState
                       Expanded(
                         child: Text(
                           _showCategories && isLiveStream
-                              ? 'Kategoriler'
+                              ? context.loc.categories
                               : _selectedCategoryId != null && isLiveStream
                                   ? PlaylistContentState.liveCategories
                                       .firstWhere((c) => c.categoryId == _selectedCategoryId)
                                       .categoryName
                                       : _showSeasons && isSeries
-                                          ? 'Sezonlar'
+                                          ? context.loc.seasons
                                           : _selectedSeason != null && isSeries
-                                              ? 'Sezon $_selectedSeason'
+                                              ? context.loc.season_number_format(_selectedSeason!)
                                               : isVod
-                                                  ? 'Filmler'
+                                                  ? context.loc.movies
                                                   : isSeries
-                                                      ? 'Bölümler'
-                                                      : 'Kanal Seç',
+                                                      ? context.loc.episodes
+                                                      : context.loc.select_channel,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -410,7 +375,6 @@ class _VideoChannelSelectorWidgetState
                     ],
                   ),
                 ),
-                // Content
                 Expanded(
                   child: _showCategories && isLiveStream
                       ? _buildCategoriesList(context)
@@ -452,7 +416,6 @@ class _VideoChannelSelectorWidgetState
     final allItems = widget.queue ?? [];
     final currentContent = PlayerState.currentContent;
     
-    // Tüm sezonları al ve sırala
     final seasons = allItems
         .where((item) => item.season != null)
         .map((item) => item.season!)
@@ -460,7 +423,6 @@ class _VideoChannelSelectorWidgetState
         .toList()
       ..sort();
     
-    // Mevcut içeriğin sezon numarasını bul
     final currentSeason = currentContent?.season;
 
     return ListView.builder(
@@ -504,7 +466,7 @@ class _VideoChannelSelectorWidgetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sezon $season',
+                          context.loc.season_number_format(season),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -513,7 +475,7 @@ class _VideoChannelSelectorWidgetState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$episodeCount bölüm',
+                          context.loc.episode_count_format(episodeCount),
                           style: const TextStyle(
                             fontSize: 12,
                             color: secondaryTextColor,
@@ -554,7 +516,6 @@ class _VideoChannelSelectorWidgetState
     final categories = PlaylistContentState.liveCategories;
     final currentContent = PlayerState.currentContent;
     
-    // Mevcut içeriğin kategori ID'sini bul
     String? currentCategoryId;
     if (currentContent?.liveStream != null) {
       currentCategoryId = currentContent!.liveStream!.categoryId;
@@ -577,7 +538,6 @@ class _VideoChannelSelectorWidgetState
             onTap: () {
               _selectedCategoryId = category.categoryId;
               _showCategories = false;
-              // Kanal listesine geçildiğinde scroll'u en üste getir
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _channelsScrollController?.animateTo(
                   0,
@@ -621,7 +581,7 @@ class _VideoChannelSelectorWidgetState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$channelCount kanal',
+                          context.loc.channel_count_format(channelCount),
                           style: const TextStyle(
                             fontSize: 12,
                             color: secondaryTextColor,
@@ -672,7 +632,6 @@ class _VideoChannelSelectorWidgetState
         onTap: () {
           final isSeries = PlayerState.currentContent?.contentType == ContentType.series;
           
-          // Dizi içeriği için sezonu güncelle
           if (isSeries && item.season != null) {
             if (_selectedSeason != item.season) {
               _selectedSeason = item.season;
@@ -680,20 +639,16 @@ class _VideoChannelSelectorWidgetState
             }
           }
           
-          // Farklı kategoriden kanal seçildiğinde direkt ContentItem gönder
           if (_selectedCategoryId != null && 
               PlayerState.currentContent?.contentType == ContentType.liveStream) {
-            // Queue'yu güncelle
             final categoryItems = PlaylistContentState.getLiveStreamsByCategory(_selectedCategoryId!);
             PlayerState.queue = categoryItems;
             PlayerState.currentIndex = index;
             PlayerState.currentContent = item;
             
-            // Event gönder
             EventBus().emit('player_content_item_index_changed', index);
             EventBus().emit('player_content_item', item);
           } else {
-            // Normal queue kullanılıyorsa - gerçek index'i bul
             final allItems = widget.queue ?? [];
             final realIndex = allItems.indexWhere((queueItem) => queueItem.id == item.id);
             if (realIndex != -1) {
@@ -703,11 +658,9 @@ class _VideoChannelSelectorWidgetState
             }
           }
           
-          // Sezon değiştiyse overlay'i güncelle
           if (isSeries && item.season != null && _selectedSeason == item.season) {
             _globalOverlayEntry?.markNeedsBuild();
           }
-          // Panel kapanmasın
         },
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
@@ -723,7 +676,6 @@ class _VideoChannelSelectorWidgetState
           ),
           child: Row(
             children: [
-              // Thumbnail
               if (item.imagePath.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -761,7 +713,6 @@ class _VideoChannelSelectorWidgetState
                   ),
                 ),
               const SizedBox(width: 10),
-              // Title and info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,7 +740,7 @@ class _VideoChannelSelectorWidgetState
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            _getContentTypeDisplayName(item.contentType),
+                            _getContentTypeDisplayName(context, item.contentType),
                             style: TextStyle(
                               fontSize: 11,
                               color: secondaryTextColor,
@@ -822,14 +773,14 @@ class _VideoChannelSelectorWidgetState
     }
   }
 
-  String _getContentTypeDisplayName(ContentType contentType) {
+  String _getContentTypeDisplayName(BuildContext context, ContentType contentType) {
     switch (contentType) {
       case ContentType.liveStream:
-        return 'Canlı Yayın';
+        return context.loc.live_stream_content_type;
       case ContentType.vod:
-        return 'Film';
+        return context.loc.movie_content_type;
       case ContentType.series:
-        return 'Dizi';
+        return context.loc.series_content_type;
     }
   }
 }

@@ -193,6 +193,7 @@
   "see_all_favorites": "Ver Todos",
   "added_to_favorites": "Adicionado aos favoritos",
   "removed_from_favorites": "Removido dos favoritos",
+  "remove_from_favorites": "Remover dos Favoritos",
   "select_all": "Selecionar tudo",
   "deselect_all": "Desmarcar tudo",
   "hide_category": "Ocultar categorias",
@@ -242,5 +243,51 @@
   "about": "Sobre",
   "app_version": "Versão do aplicativo",
   "support_on_github": "Apoiar no GitHub",
-  "support_on_github_description": "Contribuir para o projeto no GitHub"
+  "support_on_github_description": "Contribuir para o projeto no GitHub",
+  "select_channel": "Selecionar Canal",
+  "episodes": "Episódios",
+  "categories": "Categorias",
+  "seasons": "Temporadas",
+  "season_number_format": "Temporada {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} episódios",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} canais",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Informações do Vídeo",
+  "video_info_not_found": "Informações do vídeo não encontradas",
+  "name": "Nome",
+  "content_type": "Tipo de Conteúdo",
+  "plot": "Enredo",
+  "duration_unknown": "Desconhecido",
+  "url_copied_to_clipboard": "URL copiada para a área de transferência",
+  "stream_id": "ID da Transmissão",
+  "epg_channel_id": "ID do Canal EPG",
+  "category": "Categoria",
+  "add_to_favorites": "Adicionar aos Favoritos",
+  "no_tracks_available": "Nenhuma faixa disponível",
+  "live_stream_content_type": "Transmissão ao Vivo",
+  "movie_content_type": "Filme",
+  "series_content_type": "Série",
+  "last_update": "Última Atualização",
+  "minutes": "min",
+  "duration_label": "Duração"
 }

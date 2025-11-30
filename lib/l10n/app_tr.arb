@@ -193,6 +193,7 @@
   "see_all_favorites": "Tümünü Gör",
   "added_to_favorites": "Favorilere eklendi",
   "removed_from_favorites": "Favorilerden kaldırıldı",
+  "remove_from_favorites": "Favorilerden Kaldır",
   "select_all": "Tümünü Seç",
   "deselect_all": "Tümünün Seçimini Kaldır",
   "hide_category": "Kategorileri Gizle",
@@ -236,5 +237,51 @@
   "about": "Hakkında",
   "app_version": "Uygulama Sürümü",
   "support_on_github": "GitHub'da Destekle",
-  "support_on_github_description": "Projeye GitHub üzerinden katkıda bulunun"
+  "support_on_github_description": "Projeye GitHub üzerinden katkıda bulunun",
+  "select_channel": "Kanal Seç",
+  "episodes": "Bölümler",
+  "categories": "Kategoriler",
+  "seasons": "Sezonlar",
+  "season_number_format": "Sezon {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} bölüm",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} kanal",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Video Bilgileri",
+  "video_info_not_found": "Video bilgisi bulunamadı",
+  "name": "İsim",
+  "content_type": "İçerik Tipi",
+  "plot": "Konu",
+  "duration_unknown": "Bilinmiyor",
+  "url_copied_to_clipboard": "URL panoya kopyalandı",
+  "stream_id": "Stream ID",
+  "epg_channel_id": "EPG Kanal ID",
+  "category": "Kategori",
+  "add_to_favorites": "Favorilere Ekle",
+  "no_tracks_available": "Parça bulunamadı",
+  "live_stream_content_type": "Canlı Yayın",
+  "movie_content_type": "Film",
+  "series_content_type": "Dizi",
+  "last_update": "Son Güncelleme",
+  "minutes": "dk",
+  "duration_label": "Süre"
 }

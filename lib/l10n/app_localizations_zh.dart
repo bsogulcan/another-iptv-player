@@ -324,6 +324,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get removed_from_favorites => '已从收藏中移除';
 
   @override
+  String get remove_from_favorites => '从收藏中移除';
+
+  @override
   String get select_playlist_type => '选择播放列表类型';
 
   @override
@@ -735,4 +738,85 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get support_on_github_description => '在 GitHub 上为项目做出贡献';
+
+  @override
+  String get select_channel => '选择频道';
+
+  @override
+  String get episodes => '剧集';
+
+  @override
+  String get categories => '分类';
+
+  @override
+  String get seasons => '季';
+
+  @override
+  String season_number_format(int number) {
+    return '第 $number 季';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count 集';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count 个频道';
+  }
+
+  @override
+  String get video_info => '视频信息';
+
+  @override
+  String get video_info_not_found => '未找到视频信息';
+
+  @override
+  String get name => '名称';
+
+  @override
+  String get content_type => '内容类型';
+
+  @override
+  String get plot => '剧情';
+
+  @override
+  String get duration_unknown => '未知';
+
+  @override
+  String get url_copied_to_clipboard => 'URL 已复制到剪贴板';
+
+  @override
+  String get stream_id => '流ID';
+
+  @override
+  String get epg_channel_id => 'EPG 频道ID';
+
+  @override
+  String get category => '分类';
+
+  @override
+  String get add_to_favorites => '添加到收藏';
+
+  @override
+  String get no_tracks_available => '没有可用的轨道';
+
+  @override
+  String get live_stream_content_type => '直播';
+
+  @override
+  String get movie_content_type => '电影';
+
+  @override
+  String get series_content_type => '剧集';
+
+  @override
+  String get last_update => 'Last Update';
+
+  @override
+  String get minutes => 'min';
+
+  @override
+  String get duration_label => 'Duration';
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/player_state.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -13,7 +14,6 @@ class VideoInfoWidget extends StatefulWidget {
   @override
   State<VideoInfoWidget> createState() => _VideoInfoWidgetState();
 
-  // Static metod: Overlay'i dışarıdan kapatmak için
   static void hideOverlay() {
     _VideoInfoWidgetState.hideOverlay();
   }
@@ -24,7 +24,6 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
   static StreamSubscription? _globalToggleSubscription;
   static BuildContext? _globalContext;
 
-  // Static metod: Overlay'i dışarıdan kapatmak için
   static void hideOverlay() {
     _globalOverlayEntry?.remove();
     _globalOverlayEntry = null;
@@ -35,10 +34,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
   void initState() {
     super.initState();
 
-    // Context'i güncelle
     _globalContext = context;
 
-    // Event listener'ı sadece bir kez oluştur
     if (_globalToggleSubscription == null) {
       _globalToggleSubscription = EventBus()
           .on<bool>('toggle_video_info')
@@ -61,11 +58,10 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Context'i her build'de güncelle
     _globalContext = context;
 
     return IconButton(
-      tooltip: 'Video Bilgileri',
+      tooltip: context.loc.video_info,
       icon: const Icon(Icons.info_outline, color: Colors.white),
       onPressed: () {
         if (_globalOverlayEntry == null) {
@@ -83,23 +79,20 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
     final currentContent = PlayerState.currentContent;
     if (currentContent == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Video bilgisi bulunamadı'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(context.loc.video_info_not_found),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    // Overlay'i oluşturmadan önce context'i kontrol et
     final overlayContext = _globalContext ?? context;
 
-    // Overlay'i güvenli bir şekilde al
     OverlayState? overlay;
     try {
       overlay = Overlay.of(overlayContext, rootOverlay: true);
     } catch (e) {
-      // Overlay bulunamazsa bir sonraki frame'de tekrar dene
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_globalOverlayEntry == null) {
           _showVideoInfo(overlayContext);
@@ -132,7 +125,6 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
     ContentItem currentContent,
     double panelWidth,
   ) {
-    // Overlay'in hala açık olduğundan emin ol
     if (_globalOverlayEntry == null) {
       return const SizedBox.shrink();
     }
@@ -160,7 +152,6 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
               ),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -173,7 +164,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Video Bilgileri',
+                            context.loc.video_info,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -194,7 +185,6 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                       ],
                     ),
                   ),
-                  // Info content
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
@@ -203,15 +193,16 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                         children: [
                           _buildInfoRow(
                             context,
-                            'İsim',
+                            context.loc.name,
                             currentContent.name,
                             Icons.title,
                           ),
                           const SizedBox(height: 12),
                           _buildInfoRow(
                             context,
-                            'İçerik Tipi',
+                            context.loc.content_type,
                             _getContentTypeDisplayName(
+                              context,
                               currentContent.contentType,
                             ),
                             Icons.category,
@@ -221,7 +212,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Format',
+                              context.loc.format,
                               currentContent.containerExtension!.toUpperCase(),
                               Icons.extension,
                             ),
@@ -231,7 +222,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Açıklama',
+                              context.loc.description,
                               currentContent.description!,
                               Icons.description,
                               isMultiline: true,
@@ -241,8 +232,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Süre',
-                              _formatDuration(currentContent.duration),
+                              context.loc.duration_label,
+                              _formatDuration(context, currentContent.duration),
                               Icons.access_time,
                             ),
                           ],
@@ -252,7 +243,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Değerlendirme',
+                                context.loc.rating,
                                 currentContent.vodStream!.rating,
                                 Icons.star,
                               ),
@@ -265,7 +256,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Tür',
+                                context.loc.genre,
                                 currentContent.vodStream!.genre!,
                                 Icons.movie,
                               ),
@@ -274,7 +265,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Eklenme Tarihi',
+                                context.loc.creation_date,
                                 DateFormat('dd.MM.yyyy HH:mm').format(
                                   currentContent.vodStream!.createdAt!,
                                 ),
@@ -284,7 +275,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Stream ID',
+                              context.loc.stream_id,
                               currentContent.vodStream!.streamId,
                               Icons.fingerprint,
                               isCopyable: true,
@@ -299,7 +290,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Konu',
+                                context.loc.plot,
                                 currentContent.seriesStream!.plot!,
                                 Icons.article,
                                 isMultiline: true,
@@ -313,7 +304,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Oyuncular',
+                                context.loc.cast,
                                 currentContent.seriesStream!.cast!,
                                 Icons.people,
                               ),
@@ -326,7 +317,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Yönetmen',
+                                context.loc.director,
                                 currentContent.seriesStream!.director!,
                                 Icons.person,
                               ),
@@ -339,7 +330,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Tür',
+                                context.loc.genre,
                                 currentContent.seriesStream!.genre!,
                                 Icons.movie,
                               ),
@@ -353,7 +344,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Yayın Tarihi',
+                                context.loc.release_date,
                                 currentContent.seriesStream!.releaseDate!,
                                 Icons.calendar_today,
                               ),
@@ -367,7 +358,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Değerlendirme',
+                                context.loc.rating,
                                 currentContent.seriesStream!.rating!,
                                 Icons.star,
                               ),
@@ -381,8 +372,8 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Bölüm Süresi',
-                                '${currentContent.seriesStream!.episodeRunTime} dk',
+                                context.loc.episode_duration,
+                                '${currentContent.seriesStream!.episodeRunTime} ${context.loc.minutes}',
                                 Icons.timer,
                               ),
                             ],
@@ -395,7 +386,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
-                                'Son Güncelleme',
+                                context.loc.last_update,
                                 _formatTimestamp(
                                   currentContent.seriesStream!.lastModified!,
                                 ),
@@ -405,7 +396,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Series ID',
+                              context.loc.series_id,
                               currentContent.seriesStream!.seriesId,
                               Icons.fingerprint,
                               isCopyable: true,
@@ -419,14 +410,14 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'EPG Kanal ID',
+                              context.loc.epg_channel_id,
                               currentContent.liveStream!.epgChannelId,
                               Icons.live_tv,
                             ),
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Stream ID',
+                              context.loc.stream_id,
                               currentContent.liveStream!.streamId,
                               Icons.fingerprint,
                               isCopyable: true,
@@ -438,7 +429,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
-                              'Kategori',
+                              context.loc.category,
                               currentContent.m3uItem!.groupTitle!,
                               Icons.folder,
                             ),
@@ -446,7 +437,7 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                           const SizedBox(height: 12),
                           _buildInfoRow(
                             context,
-                            'URL',
+                            context.loc.url,
                             currentContent.url,
                             Icons.link,
                             isCopyable: true,
@@ -464,19 +455,19 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
     );
   }
 
-  String _getContentTypeDisplayName(ContentType contentType) {
+  String _getContentTypeDisplayName(BuildContext context, ContentType contentType) {
     switch (contentType) {
       case ContentType.liveStream:
-        return 'Canlı Yayın';
+        return context.loc.live_stream_content_type;
       case ContentType.vod:
-        return 'Film';
+        return context.loc.movie_content_type;
       case ContentType.series:
-        return 'Dizi';
+        return context.loc.series_content_type;
     }
   }
 
-  String _formatDuration(Duration? duration) {
-    if (duration == null) return 'Bilinmiyor';
+  String _formatDuration(BuildContext context, Duration? duration) {
+    if (duration == null) return context.loc.duration_unknown;
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final seconds = duration.inSeconds.remainder(60);
@@ -523,9 +514,9 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
           ? () {
               Clipboard.setData(ClipboardData(text: value));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('URL panoya kopyalandı'),
-                  duration: Duration(seconds: 2),
+                SnackBar(
+                  content: Text(context.loc.url_copied_to_clipboard),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }

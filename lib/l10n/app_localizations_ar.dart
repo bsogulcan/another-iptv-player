@@ -326,6 +326,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get removed_from_favorites => 'تمت الإزالة من المفضلة';
 
   @override
+  String get remove_from_favorites => 'إزالة من المفضلة';
+
+  @override
   String get select_playlist_type => 'اختر نوع قائمة التشغيل';
 
   @override
@@ -757,4 +760,85 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get support_on_github_description => 'ساهم في المشروع على GitHub';
+
+  @override
+  String get select_channel => 'اختر القناة';
+
+  @override
+  String get episodes => 'حلقات';
+
+  @override
+  String get categories => 'الفئات';
+
+  @override
+  String get seasons => 'المواسم';
+
+  @override
+  String season_number_format(int number) {
+    return 'الموسم $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count حلقة';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count قناة';
+  }
+
+  @override
+  String get video_info => 'معلومات الفيديو';
+
+  @override
+  String get video_info_not_found => 'لم يتم العثور على معلومات الفيديو';
+
+  @override
+  String get name => 'الاسم';
+
+  @override
+  String get content_type => 'نوع المحتوى';
+
+  @override
+  String get plot => 'الحبكة';
+
+  @override
+  String get duration_unknown => 'غير معروف';
+
+  @override
+  String get url_copied_to_clipboard => 'تم نسخ الرابط إلى الحافظة';
+
+  @override
+  String get stream_id => 'معرف البث';
+
+  @override
+  String get epg_channel_id => 'معرف قناة EPG';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get add_to_favorites => 'إضافة إلى المفضلة';
+
+  @override
+  String get no_tracks_available => 'لا توجد مسارات متاحة';
+
+  @override
+  String get live_stream_content_type => 'بث مباشر';
+
+  @override
+  String get movie_content_type => 'فيلم';
+
+  @override
+  String get series_content_type => 'مسلسل';
+
+  @override
+  String get last_update => 'آخر تحديث';
+
+  @override
+  String get minutes => 'دقيقة';
+
+  @override
+  String get duration_label => 'المدة';
 }

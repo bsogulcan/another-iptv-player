@@ -328,6 +328,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get removed_from_favorites => 'Удалено из избранного';
 
   @override
+  String get remove_from_favorites => 'Удалить из Избранного';
+
+  @override
   String get select_playlist_type => 'Выберите тип плейлиста';
 
   @override
@@ -760,4 +763,85 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get support_on_github_description => 'Внести вклад в проект на GitHub';
+
+  @override
+  String get select_channel => 'Выбрать Канал';
+
+  @override
+  String get episodes => 'Эпизоды';
+
+  @override
+  String get categories => 'Категории';
+
+  @override
+  String get seasons => 'Сезоны';
+
+  @override
+  String season_number_format(int number) {
+    return 'Сезон $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count эпизодов';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count каналов';
+  }
+
+  @override
+  String get video_info => 'Информация о Видео';
+
+  @override
+  String get video_info_not_found => 'Информация о видео не найдена';
+
+  @override
+  String get name => 'Название';
+
+  @override
+  String get content_type => 'Тип Контента';
+
+  @override
+  String get plot => 'Сюжет';
+
+  @override
+  String get duration_unknown => 'Неизвестно';
+
+  @override
+  String get url_copied_to_clipboard => 'URL скопирован в буфер обмена';
+
+  @override
+  String get stream_id => 'ID Потока';
+
+  @override
+  String get epg_channel_id => 'ID Канала EPG';
+
+  @override
+  String get category => 'Категория';
+
+  @override
+  String get add_to_favorites => 'Добавить в Избранное';
+
+  @override
+  String get no_tracks_available => 'Дорожки недоступны';
+
+  @override
+  String get live_stream_content_type => 'Прямой Эфир';
+
+  @override
+  String get movie_content_type => 'Фильм';
+
+  @override
+  String get series_content_type => 'Сериал';
+
+  @override
+  String get last_update => 'Последнее Обновление';
+
+  @override
+  String get minutes => 'мин';
+
+  @override
+  String get duration_label => 'Продолжительность';
 }

@@ -193,6 +193,7 @@
   "see_all_favorites": "सभी देखें",
   "added_to_favorites": "पसंदीदा में जोड़ा गया",
   "removed_from_favorites": "पसंदीदा से हटाया गया",
+  "remove_from_favorites": "पसंदीदा से हटाएं",
   "select_all": "सभी चुनें",
   "deselect_all": "सभी का चयन रद्द करें",
   "hide_category": "श्रेणियाँ छिपाएँ",
@@ -242,5 +243,51 @@
   "about": "के बारे में",
   "app_version": "ऐप संस्करण",
   "support_on_github": "GitHub पर समर्थन करें",
-  "support_on_github_description": "GitHub पर प्रोजेक्ट में योगदान दें"
+  "support_on_github_description": "GitHub पर प्रोजेक्ट में योगदान दें",
+  "select_channel": "चैनल चुनें",
+  "episodes": "एपिसोड",
+  "categories": "श्रेणियां",
+  "seasons": "सीज़न",
+  "season_number_format": "सीज़न {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} एपिसोड",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} चैनल",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "वीडियो जानकारी",
+  "video_info_not_found": "वीडियो जानकारी नहीं मिली",
+  "name": "नाम",
+  "content_type": "सामग्री प्रकार",
+  "plot": "कथानक",
+  "duration_unknown": "अज्ञात",
+  "url_copied_to_clipboard": "URL क्लिपबोर्ड पर कॉपी किया गया",
+  "stream_id": "स्ट्रीम ID",
+  "epg_channel_id": "EPG चैनल ID",
+  "category": "श्रेणी",
+  "add_to_favorites": "पसंदीदा में जोड़ें",
+  "no_tracks_available": "कोई ट्रैक उपलब्ध नहीं",
+  "live_stream_content_type": "लाइव स्ट्रीम",
+  "movie_content_type": "फिल्म",
+  "series_content_type": "सीरियल",
+  "last_update": "अंतिम अपडेट",
+  "minutes": "मिनट",
+  "duration_label": "अवधि"
 }

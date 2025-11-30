@@ -331,6 +331,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get removed_from_favorites => 'Aus Favoriten entfernt';
 
   @override
+  String get remove_from_favorites => 'Aus Favoriten Entfernen';
+
+  @override
   String get select_playlist_type => 'Wiedergabelisten-Typ Auswählen';
 
   @override
@@ -766,4 +769,85 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get support_on_github_description =>
       'Zum Projekt auf GitHub beitragen';
+
+  @override
+  String get select_channel => 'Kanal Auswählen';
+
+  @override
+  String get episodes => 'Episoden';
+
+  @override
+  String get categories => 'Kategorien';
+
+  @override
+  String get seasons => 'Staffeln';
+
+  @override
+  String season_number_format(int number) {
+    return 'Staffel $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count Episoden';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count Kanäle';
+  }
+
+  @override
+  String get video_info => 'Video-Informationen';
+
+  @override
+  String get video_info_not_found => 'Video-Informationen nicht gefunden';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get content_type => 'Inhaltstyp';
+
+  @override
+  String get plot => 'Handlung';
+
+  @override
+  String get duration_unknown => 'Unbekannt';
+
+  @override
+  String get url_copied_to_clipboard => 'URL in Zwischenablage kopiert';
+
+  @override
+  String get stream_id => 'Stream-ID';
+
+  @override
+  String get epg_channel_id => 'EPG-Kanal-ID';
+
+  @override
+  String get category => 'Kategorie';
+
+  @override
+  String get add_to_favorites => 'Zu Favoriten Hinzufügen';
+
+  @override
+  String get no_tracks_available => 'Keine Spuren verfügbar';
+
+  @override
+  String get live_stream_content_type => 'Live-Stream';
+
+  @override
+  String get movie_content_type => 'Film';
+
+  @override
+  String get series_content_type => 'Serie';
+
+  @override
+  String get last_update => 'Letzte Aktualisierung';
+
+  @override
+  String get minutes => 'Min';
+
+  @override
+  String get duration_label => 'Dauer';
 }

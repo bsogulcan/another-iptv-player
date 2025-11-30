@@ -726,6 +726,12 @@ abstract class AppLocalizations {
   /// **'Removed from favorites'**
   String get removed_from_favorites;
 
+  /// No description provided for @remove_from_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
+  String get remove_from_favorites;
+
   /// No description provided for @select_playlist_type.
   ///
   /// In en, this message translates to:
@@ -1505,6 +1511,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contribute to the project on GitHub'**
   String get support_on_github_description;
+
+  /// No description provided for @select_channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Channel'**
+  String get select_channel;
+
+  /// No description provided for @episodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Episodes'**
+  String get episodes;
+
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @seasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasons'**
+  String get seasons;
+
+  /// No description provided for @season_number_format.
+  ///
+  /// In en, this message translates to:
+  /// **'Season {number}'**
+  String season_number_format(int number);
+
+  /// No description provided for @episode_count_format.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} episodes'**
+  String episode_count_format(int count);
+
+  /// No description provided for @channel_count_format.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} channels'**
+  String channel_count_format(int count);
+
+  /// No description provided for @video_info.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Information'**
+  String get video_info;
+
+  /// No description provided for @video_info_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'Video information not found'**
+  String get video_info_not_found;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @content_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Type'**
+  String get content_type;
+
+  /// No description provided for @plot.
+  ///
+  /// In en, this message translates to:
+  /// **'Plot'**
+  String get plot;
+
+  /// No description provided for @duration_unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get duration_unknown;
+
+  /// No description provided for @url_copied_to_clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'URL copied to clipboard'**
+  String get url_copied_to_clipboard;
+
+  /// No description provided for @stream_id.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream ID'**
+  String get stream_id;
+
+  /// No description provided for @epg_channel_id.
+  ///
+  /// In en, this message translates to:
+  /// **'EPG Channel ID'**
+  String get epg_channel_id;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @add_to_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
+  String get add_to_favorites;
+
+  /// No description provided for @no_tracks_available.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracks available'**
+  String get no_tracks_available;
+
+  /// No description provided for @live_stream_content_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Stream'**
+  String get live_stream_content_type;
+
+  /// No description provided for @movie_content_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Movie'**
+  String get movie_content_type;
+
+  /// No description provided for @series_content_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get series_content_type;
+
+  /// No description provided for @last_update.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Update'**
+  String get last_update;
+
+  /// No description provided for @minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get minutes;
+
+  /// No description provided for @duration_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration_label;
 }
 
 class _AppLocalizationsDelegate

@@ -193,6 +193,7 @@
   "see_all_favorites": "Alle Anzeigen",
   "added_to_favorites": "Zu Favoriten hinzugefügt",
   "removed_from_favorites": "Aus Favoriten entfernt",
+  "remove_from_favorites": "Aus Favoriten Entfernen",
   "select_all": "Alle auswählen",
   "deselect_all": "Auswahl aufheben",
   "hide_category": "Kategorien ausblenden",
@@ -242,5 +243,51 @@
   "about": "Über",
   "app_version": "App-Version",
   "support_on_github": "Auf GitHub unterstützen",
-  "support_on_github_description": "Zum Projekt auf GitHub beitragen"
+  "support_on_github_description": "Zum Projekt auf GitHub beitragen",
+  "select_channel": "Kanal Auswählen",
+  "episodes": "Episoden",
+  "categories": "Kategorien",
+  "seasons": "Staffeln",
+  "season_number_format": "Staffel {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} Episoden",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} Kanäle",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Video-Informationen",
+  "video_info_not_found": "Video-Informationen nicht gefunden",
+  "name": "Name",
+  "content_type": "Inhaltstyp",
+  "plot": "Handlung",
+  "duration_unknown": "Unbekannt",
+  "url_copied_to_clipboard": "URL in Zwischenablage kopiert",
+  "stream_id": "Stream-ID",
+  "epg_channel_id": "EPG-Kanal-ID",
+  "category": "Kategorie",
+  "add_to_favorites": "Zu Favoriten Hinzufügen",
+  "no_tracks_available": "Keine Spuren verfügbar",
+  "live_stream_content_type": "Live-Stream",
+  "movie_content_type": "Film",
+  "series_content_type": "Serie",
+  "last_update": "Letzte Aktualisierung",
+  "minutes": "Min",
+  "duration_label": "Dauer"
 }

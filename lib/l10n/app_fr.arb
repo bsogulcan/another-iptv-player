@@ -193,6 +193,7 @@
   "see_all_favorites": "Voir Tout",
   "added_to_favorites": "Ajouté aux favoris",
   "removed_from_favorites": "Retiré des favoris",
+  "remove_from_favorites": "Retirer des Favoris",
   "select_all": "Tout Sélectionner",
   "deselect_all" : "Tout Désélectionner",
   "hide_category" : "Masquer les catégories",
@@ -242,5 +243,51 @@
   "about": "À propos",
   "app_version": "Version de l'application",
   "support_on_github": "Soutenir sur GitHub",
-  "support_on_github_description": "Contribuer au projet sur GitHub"
+  "support_on_github_description": "Contribuer au projet sur GitHub",
+  "select_channel": "Sélectionner la Chaîne",
+  "episodes": "Épisodes",
+  "categories": "Catégories",
+  "seasons": "Saisons",
+  "season_number_format": "Saison {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} épisodes",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} chaînes",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Informations Vidéo",
+  "video_info_not_found": "Informations vidéo introuvables",
+  "name": "Nom",
+  "content_type": "Type de Contenu",
+  "plot": "Intrigue",
+  "duration_unknown": "Inconnu",
+  "url_copied_to_clipboard": "URL copiée dans le presse-papiers",
+  "stream_id": "ID de Flux",
+  "epg_channel_id": "ID de Chaîne EPG",
+  "category": "Catégorie",
+  "add_to_favorites": "Ajouter aux Favoris",
+  "no_tracks_available": "Aucune piste disponible",
+  "live_stream_content_type": "Diffusion en Direct",
+  "movie_content_type": "Film",
+  "series_content_type": "Série",
+  "last_update": "Dernière Mise à Jour",
+  "minutes": "min",
+  "duration_label": "Durée"
 }

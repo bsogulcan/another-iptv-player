@@ -193,6 +193,7 @@
   "see_all_favorites": "查看全部",
   "added_to_favorites": "已添加到收藏",
   "removed_from_favorites": "已从收藏中移除",
+  "remove_from_favorites": "从收藏中移除",
   "select_all": "全選",
   "deselect_all": "取消全選",
   "hide_category": "隱藏類別",
@@ -242,5 +243,48 @@
   "about": "关于",
   "app_version": "应用版本",
   "support_on_github": "在 GitHub 上支持",
-  "support_on_github_description": "在 GitHub 上为项目做出贡献"
+  "support_on_github_description": "在 GitHub 上为项目做出贡献",
+  "select_channel": "选择频道",
+  "episodes": "剧集",
+  "categories": "分类",
+  "seasons": "季",
+  "season_number_format": "第 {number} 季",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} 集",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} 个频道",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "视频信息",
+  "video_info_not_found": "未找到视频信息",
+  "name": "名称",
+  "content_type": "内容类型",
+  "plot": "剧情",
+  "duration_unknown": "未知",
+  "url_copied_to_clipboard": "URL 已复制到剪贴板",
+  "stream_id": "流ID",
+  "epg_channel_id": "EPG 频道ID",
+  "category": "分类",
+  "add_to_favorites": "添加到收藏",
+  "no_tracks_available": "没有可用的轨道",
+  "live_stream_content_type": "直播",
+  "movie_content_type": "电影",
+  "series_content_type": "剧集"
 }

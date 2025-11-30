@@ -327,6 +327,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get removed_from_favorites => 'पसंदीदा से हटाया गया';
 
   @override
+  String get remove_from_favorites => 'पसंदीदा से हटाएं';
+
+  @override
   String get select_playlist_type => 'प्लेलिस्ट प्रकार चुनें';
 
   @override
@@ -758,4 +761,85 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get support_on_github_description =>
       'GitHub पर प्रोजेक्ट में योगदान दें';
+
+  @override
+  String get select_channel => 'चैनल चुनें';
+
+  @override
+  String get episodes => 'एपिसोड';
+
+  @override
+  String get categories => 'श्रेणियां';
+
+  @override
+  String get seasons => 'सीज़न';
+
+  @override
+  String season_number_format(int number) {
+    return 'सीज़न $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count एपिसोड';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count चैनल';
+  }
+
+  @override
+  String get video_info => 'वीडियो जानकारी';
+
+  @override
+  String get video_info_not_found => 'वीडियो जानकारी नहीं मिली';
+
+  @override
+  String get name => 'नाम';
+
+  @override
+  String get content_type => 'सामग्री प्रकार';
+
+  @override
+  String get plot => 'कथानक';
+
+  @override
+  String get duration_unknown => 'अज्ञात';
+
+  @override
+  String get url_copied_to_clipboard => 'URL क्लिपबोर्ड पर कॉपी किया गया';
+
+  @override
+  String get stream_id => 'स्ट्रीम ID';
+
+  @override
+  String get epg_channel_id => 'EPG चैनल ID';
+
+  @override
+  String get category => 'श्रेणी';
+
+  @override
+  String get add_to_favorites => 'पसंदीदा में जोड़ें';
+
+  @override
+  String get no_tracks_available => 'कोई ट्रैक उपलब्ध नहीं';
+
+  @override
+  String get live_stream_content_type => 'लाइव स्ट्रीम';
+
+  @override
+  String get movie_content_type => 'फिल्म';
+
+  @override
+  String get series_content_type => 'सीरियल';
+
+  @override
+  String get last_update => 'अंतिम अपडेट';
+
+  @override
+  String get minutes => 'मिनट';
+
+  @override
+  String get duration_label => 'अवधि';
 }

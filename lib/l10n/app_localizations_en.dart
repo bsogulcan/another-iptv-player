@@ -326,6 +326,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removed_from_favorites => 'Removed from favorites';
 
   @override
+  String get remove_from_favorites => 'Remove from Favorites';
+
+  @override
   String get select_playlist_type => 'Select Playlist Type';
 
   @override
@@ -759,4 +762,85 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get support_on_github_description =>
       'Contribute to the project on GitHub';
+
+  @override
+  String get select_channel => 'Select Channel';
+
+  @override
+  String get episodes => 'Episodes';
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get seasons => 'Seasons';
+
+  @override
+  String season_number_format(int number) {
+    return 'Season $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count episodes';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count channels';
+  }
+
+  @override
+  String get video_info => 'Video Information';
+
+  @override
+  String get video_info_not_found => 'Video information not found';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get content_type => 'Content Type';
+
+  @override
+  String get plot => 'Plot';
+
+  @override
+  String get duration_unknown => 'Unknown';
+
+  @override
+  String get url_copied_to_clipboard => 'URL copied to clipboard';
+
+  @override
+  String get stream_id => 'Stream ID';
+
+  @override
+  String get epg_channel_id => 'EPG Channel ID';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get add_to_favorites => 'Add to Favorites';
+
+  @override
+  String get no_tracks_available => 'No tracks available';
+
+  @override
+  String get live_stream_content_type => 'Live Stream';
+
+  @override
+  String get movie_content_type => 'Movie';
+
+  @override
+  String get series_content_type => 'Series';
+
+  @override
+  String get last_update => 'Last Update';
+
+  @override
+  String get minutes => 'min';
+
+  @override
+  String get duration_label => 'Duration';
 }

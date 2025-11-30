@@ -101,6 +101,7 @@
   "see_all_favorites": "See All",
   "added_to_favorites": "Added to favorites",
   "removed_from_favorites": "Removed from favorites",
+  "remove_from_favorites": "Remove from Favorites",
   "select_playlist_type": "Select Playlist Type",
   "select_playlist_message": "Choose the type of playlist you want to create",
   "xtream_code_title": "Connect with API URL, Username, and Password",
@@ -242,5 +243,51 @@
   "about": "About",
   "app_version": "App Version",
   "support_on_github": "Support on GitHub",
-  "support_on_github_description": "Contribute to the project on GitHub"
+  "support_on_github_description": "Contribute to the project on GitHub",
+  "select_channel": "Select Channel",
+  "episodes": "Episodes",
+  "categories": "Categories",
+  "seasons": "Seasons",
+  "season_number_format": "Season {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} episodes",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} channels",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Video Information",
+  "video_info_not_found": "Video information not found",
+  "name": "Name",
+  "content_type": "Content Type",
+  "plot": "Plot",
+  "duration_unknown": "Unknown",
+  "url_copied_to_clipboard": "URL copied to clipboard",
+  "stream_id": "Stream ID",
+  "epg_channel_id": "EPG Channel ID",
+  "category": "Category",
+  "add_to_favorites": "Add to Favorites",
+  "no_tracks_available": "No tracks available",
+  "live_stream_content_type": "Live Stream",
+  "movie_content_type": "Movie",
+  "series_content_type": "Series",
+  "last_update": "Last Update",
+  "minutes": "min",
+  "duration_label": "Duration"
 }

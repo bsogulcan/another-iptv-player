@@ -330,6 +330,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get removed_from_favorites => 'Eliminado de favoritos';
 
   @override
+  String get remove_from_favorites => 'Eliminar de Favoritos';
+
+  @override
   String get select_playlist_type => 'Seleccionar Tipo de Lista';
 
   @override
@@ -767,4 +770,85 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get support_on_github_description =>
       'Contribuir al proyecto en GitHub';
+
+  @override
+  String get select_channel => 'Seleccionar Canal';
+
+  @override
+  String get episodes => 'Episodios';
+
+  @override
+  String get categories => 'Categorías';
+
+  @override
+  String get seasons => 'Temporadas';
+
+  @override
+  String season_number_format(int number) {
+    return 'Temporada $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count episodios';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count canales';
+  }
+
+  @override
+  String get video_info => 'Información del Video';
+
+  @override
+  String get video_info_not_found => 'Información del video no encontrada';
+
+  @override
+  String get name => 'Nombre';
+
+  @override
+  String get content_type => 'Tipo de Contenido';
+
+  @override
+  String get plot => 'Trama';
+
+  @override
+  String get duration_unknown => 'Desconocido';
+
+  @override
+  String get url_copied_to_clipboard => 'URL copiada al portapapeles';
+
+  @override
+  String get stream_id => 'ID de Transmisión';
+
+  @override
+  String get epg_channel_id => 'ID de Canal EPG';
+
+  @override
+  String get category => 'Categoría';
+
+  @override
+  String get add_to_favorites => 'Agregar a Favoritos';
+
+  @override
+  String get no_tracks_available => 'No hay pistas disponibles';
+
+  @override
+  String get live_stream_content_type => 'Transmisión en Vivo';
+
+  @override
+  String get movie_content_type => 'Película';
+
+  @override
+  String get series_content_type => 'Serie';
+
+  @override
+  String get last_update => 'Última Actualización';
+
+  @override
+  String get minutes => 'min';
+
+  @override
+  String get duration_label => 'Duración';
 }

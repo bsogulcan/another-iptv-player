@@ -193,6 +193,7 @@
   "see_all_favorites": "عرض الكل",
   "added_to_favorites": "تمت الإضافة إلى المفضلة",
   "removed_from_favorites": "تمت الإزالة من المفضلة",
+  "remove_from_favorites": "إزالة من المفضلة",
   "select_all": "حدد الكل",
   "deselect_all": "إلغاء تحديد الكل",
   "hide_category": "إخفاء الفئة",
@@ -242,5 +243,51 @@
   "about": "حول",
   "app_version": "إصدار التطبيق",
   "support_on_github": "دعم على GitHub",
-  "support_on_github_description": "ساهم في المشروع على GitHub"
+  "support_on_github_description": "ساهم في المشروع على GitHub",
+  "select_channel": "اختر القناة",
+  "episodes": "حلقات",
+  "categories": "الفئات",
+  "seasons": "المواسم",
+  "season_number_format": "الموسم {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} حلقة",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} قناة",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "معلومات الفيديو",
+  "video_info_not_found": "لم يتم العثور على معلومات الفيديو",
+  "name": "الاسم",
+  "content_type": "نوع المحتوى",
+  "plot": "الحبكة",
+  "duration_unknown": "غير معروف",
+  "url_copied_to_clipboard": "تم نسخ الرابط إلى الحافظة",
+  "stream_id": "معرف البث",
+  "epg_channel_id": "معرف قناة EPG",
+  "category": "الفئة",
+  "add_to_favorites": "إضافة إلى المفضلة",
+  "no_tracks_available": "لا توجد مسارات متاحة",
+  "live_stream_content_type": "بث مباشر",
+  "movie_content_type": "فيلم",
+  "series_content_type": "مسلسل",
+  "last_update": "آخر تحديث",
+  "minutes": "دقيقة",
+  "duration_label": "المدة"
 }

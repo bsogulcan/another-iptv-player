@@ -46,7 +46,6 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
 
   @override
   void dispose() {
-    // We don't cancel _globalToggleSubscription because it's static and meant to persist
     super.dispose();
   }
 
@@ -204,7 +203,6 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
 
     return Column(
       children: [
-        // Header
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -234,14 +232,12 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
             ],
           ),
         ),
-        // Settings content
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Video Track Section
                 _buildTrackSectionGeneric<VideoTrack>(
                   context,
                   icon: Icons.video_settings,
@@ -259,7 +255,6 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Audio Track Section
                 _buildTrackSectionGeneric<AudioTrack>(
                   context,
                   icon: Icons.audiotrack,
@@ -277,7 +272,6 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Subtitle Track Section
                 _buildTrackSectionGeneric<SubtitleTrack>(
                   context,
                   icon: Icons.subtitles,
@@ -359,7 +353,7 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
             Padding(
               padding: const EdgeInsets.only(left: 32, top: 8),
               child: Text(
-                'No tracks available',
+                context.loc.no_tracks_available,
                 style: TextStyle(
                   fontSize: 12,
                   color: secondaryTextColor,
@@ -436,22 +430,18 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
       parts.add(track.title!);
     }
 
-    // Resolution
     if (track.w != null && track.h != null && track.w! > 0 && track.h! > 0) {
       parts.add('${track.w}x${track.h}');
     }
 
-    // FPS
     if (track.fps != null && track.fps! > 0) {
       parts.add('${track.fps!.toStringAsFixed(2)} fps');
     }
 
-    // Codec
     if (track.codec != null && track.codec!.isNotEmpty) {
       parts.add(track.codec!);
     }
 
-    // Bitrate
     if (track.bitrate != null && track.bitrate! > 0) {
       parts.add('${(track.bitrate! / 1000).round()} kbps');
     }

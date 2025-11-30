@@ -19,7 +19,6 @@ class _VideoTitleWidgetState extends State<VideoTitleWidget> {
   void initState() {
     super.initState();
     
-    // İlk değeri güncelle
     if (PlayerState.currentContent != null) {
       videoTitle = PlayerState.currentContent!.name;
     } else if (PlayerState.title.isNotEmpty) {
@@ -45,7 +44,6 @@ class _VideoTitleWidgetState extends State<VideoTitleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Her build'de PlayerState'i kontrol et (güvenlik için)
     final currentContent = PlayerState.currentContent;
     final currentTitle = currentContent?.name ?? PlayerState.title;
     if (currentTitle.isNotEmpty && currentTitle != videoTitle) {
