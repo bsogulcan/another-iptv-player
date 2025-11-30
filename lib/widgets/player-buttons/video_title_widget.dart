@@ -13,11 +13,18 @@ class VideoTitleWidget extends StatefulWidget {
 
 class _VideoTitleWidgetState extends State<VideoTitleWidget> {
   late StreamSubscription subscription;
-  String videoTitle = PlayerState.title;
+  String videoTitle = PlayerState.currentContent?.name ?? PlayerState.title;
 
   @override
   void initState() {
     super.initState();
+    
+    if (PlayerState.currentContent != null) {
+      videoTitle = PlayerState.currentContent!.name;
+    } else if (PlayerState.title.isNotEmpty) {
+      videoTitle = PlayerState.title;
+    }
+    
     subscription = EventBus().on<ContentItem>('player_content_item').listen((
       ContentItem data,
     ) {
@@ -37,10 +44,22 @@ class _VideoTitleWidgetState extends State<VideoTitleWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final currentContent = PlayerState.currentContent;
+    final currentTitle = currentContent?.name ?? PlayerState.title;
+    if (currentTitle.isNotEmpty && currentTitle != videoTitle) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            videoTitle = currentTitle;
+          });
+        }
+      });
+    }
+    
     return Text(
       videoTitle,
-      style: TextStyle(
-        color:  Colors.white,
+      style: const TextStyle(
+        color: Colors.white,
       ),
       maxLines: 1,
       overflow: TextOverflow.clip,

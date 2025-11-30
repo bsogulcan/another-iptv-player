@@ -21,6 +21,11 @@ class UserPreferences {
   static const String _keyLocale = 'locale';
   static const String _hiddenCategoriesKey = 'hidden_categories';
   static const String _keyThemeMode = 'theme_mode';
+  static const String _keyBrightnessGesture = 'brightness_gesture';
+  static const String _keyVolumeGesture = 'volume_gesture';
+  static const String _keySeekGesture = 'seek_gesture';
+  static const String _keySpeedUpOnLongPress = 'speed_up_on_long_press';
+  static const String _keySeekOnDoubleTap = 'seek_on_double_tap';
 
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -229,5 +234,56 @@ class UserPreferences {
       default:
         return ThemeMode.system;
     }
+  }
+
+  // Player gesture settings
+  static Future<bool> getBrightnessGesture() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyBrightnessGesture) ?? false;
+  }
+
+  static Future<void> setBrightnessGesture(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyBrightnessGesture, value);
+  }
+
+  static Future<bool> getVolumeGesture() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyVolumeGesture) ?? false;
+  }
+
+  static Future<void> setVolumeGesture(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyVolumeGesture, value);
+  }
+
+  static Future<bool> getSeekGesture() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keySeekGesture) ?? false;
+  }
+
+  static Future<void> setSeekGesture(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySeekGesture, value);
+  }
+
+  static Future<bool> getSpeedUpOnLongPress() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keySpeedUpOnLongPress) ?? true;
+  }
+
+  static Future<void> setSpeedUpOnLongPress(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySpeedUpOnLongPress, value);
+  }
+
+  static Future<bool> getSeekOnDoubleTap() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keySeekOnDoubleTap) ?? true;
+  }
+
+  static Future<void> setSeekOnDoubleTap(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySeekOnDoubleTap, value);
   }
 }

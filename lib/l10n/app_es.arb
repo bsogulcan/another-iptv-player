@@ -46,6 +46,7 @@
   "release_date": "Fecha de Estreno",
   "genre": "Género",
   "cast": "Reparto",
+  "director": "Director",
   "description": "Descripción",
   "video_track": "Pista de Video",
   "audio_track": "Pista de Audio",
@@ -192,6 +193,7 @@
   "see_all_favorites": "Ver Todo",
   "added_to_favorites": "Agregado a favoritos",
   "removed_from_favorites": "Eliminado de favoritos",
+  "remove_from_favorites": "Eliminar de Favoritos",
   "select_all": "Seleccionar todo",
   "deselect_all": "Deseleccionar todo",
   "hide_category": "Ocultar categorías",
@@ -211,5 +213,81 @@
   "dark": "Oscuro",
   "trailer": "Tráiler",
   "new_ep": "Nuevo",
-  "continue_watching_label": "Continuar: T {season} Episodio {episode}"
+  "continue_watching": "Seguir viendo",
+  "@continue_watching": {
+    "description": "Etiqueta del botón principal para reanudar la reproducción"
+  },
+  "start_watching": "Comenzar a ver",
+  "@start_watching": {
+    "description": "Etiqueta del botón principal para iniciar la reproducción"
+  },
+  "continue_watching_label": "Continuar: T {season} Episodio {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Configuración del reproductor",
+  "brightness_gesture": "Gesto de brillo",
+  "brightness_gesture_description": "Controlar el brillo deslizando verticalmente en el lado izquierdo",
+  "volume_gesture": "Gesto de volumen",
+  "volume_gesture_description": "Controlar el volumen deslizando verticalmente en el lado derecho",
+  "seek_gesture": "Gesto de búsqueda",
+  "seek_gesture_description": "Buscar deslizando horizontalmente",
+  "speed_up_on_long_press": "Acelerar con presión larga",
+  "speed_up_on_long_press_description": "Acelerar la reproducción al mantener presionado",
+  "seek_on_double_tap": "Buscar con doble toque",
+  "seek_on_double_tap_description": "Buscar adelante/atrás con doble toque",
+  "copied_to_clipboard": "Copiado al portapapeles",
+  "about": "Acerca de",
+  "app_version": "Versión de la aplicación",
+  "support_on_github": "Apoyar en GitHub",
+  "support_on_github_description": "Contribuir al proyecto en GitHub",
+  "select_channel": "Seleccionar Canal",
+  "episodes": "Episodios",
+  "categories": "Categorías",
+  "seasons": "Temporadas",
+  "season_number_format": "Temporada {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} episodios",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} canales",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Información del Video",
+  "video_info_not_found": "Información del video no encontrada",
+  "name": "Nombre",
+  "content_type": "Tipo de Contenido",
+  "plot": "Trama",
+  "duration_unknown": "Desconocido",
+  "url_copied_to_clipboard": "URL copiada al portapapeles",
+  "stream_id": "ID de Transmisión",
+  "epg_channel_id": "ID de Canal EPG",
+  "category": "Categoría",
+  "add_to_favorites": "Agregar a Favoritos",
+  "no_tracks_available": "No hay pistas disponibles",
+  "live_stream_content_type": "Transmisión en Vivo",
+  "movie_content_type": "Película",
+  "series_content_type": "Serie",
+  "last_update": "Última Actualización",
+  "minutes": "min",
+  "duration_label": "Duración"
 }

@@ -46,6 +46,7 @@
   "release_date": "Date de sortie",
   "genre": "Genre",
   "cast": "Distribution",
+  "director": "Réalisateur",
   "description": "Description",
   "video_track": "Piste vidéo",
   "audio_track": "Piste audio",
@@ -192,6 +193,7 @@
   "see_all_favorites": "Voir Tout",
   "added_to_favorites": "Ajouté aux favoris",
   "removed_from_favorites": "Retiré des favoris",
+  "remove_from_favorites": "Retirer des Favoris",
   "select_all": "Tout Sélectionner",
   "deselect_all" : "Tout Désélectionner",
   "hide_category" : "Masquer les catégories",
@@ -211,5 +213,81 @@
   "dark":"Sombre",
   "trailer": "Bande-annonce",
   "new_ep": "Nouveau",
-  "continue_watching_label": "Continuer : S {season} Épisode {episode}"
+  "continue_watching": "Continuer à regarder",
+  "@continue_watching": {
+    "description": "Libellé du bouton principal pour reprendre la lecture"
+  },
+  "start_watching": "Commencer à regarder",
+  "@start_watching": {
+    "description": "Libellé du bouton principal pour démarrer la lecture"
+  },
+  "continue_watching_label": "Continuer : S {season} Épisode {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Paramètres du lecteur",
+  "brightness_gesture": "Geste de luminosité",
+  "brightness_gesture_description": "Contrôler la luminosité en glissant verticalement sur le côté gauche",
+  "volume_gesture": "Geste de volume",
+  "volume_gesture_description": "Contrôler le volume en glissant verticalement sur le côté droit",
+  "seek_gesture": "Geste de recherche",
+  "seek_gesture_description": "Rechercher en glissant horizontalement",
+  "speed_up_on_long_press": "Accélérer avec appui long",
+  "speed_up_on_long_press_description": "Accélérer la lecture lors d'un appui long",
+  "seek_on_double_tap": "Rechercher avec double tap",
+  "seek_on_double_tap_description": "Rechercher avant/arrière avec double tap",
+  "copied_to_clipboard": "Copié dans le presse-papiers",
+  "about": "À propos",
+  "app_version": "Version de l'application",
+  "support_on_github": "Soutenir sur GitHub",
+  "support_on_github_description": "Contribuer au projet sur GitHub",
+  "select_channel": "Sélectionner la Chaîne",
+  "episodes": "Épisodes",
+  "categories": "Catégories",
+  "seasons": "Saisons",
+  "season_number_format": "Saison {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} épisodes",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} chaînes",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Informations Vidéo",
+  "video_info_not_found": "Informations vidéo introuvables",
+  "name": "Nom",
+  "content_type": "Type de Contenu",
+  "plot": "Intrigue",
+  "duration_unknown": "Inconnu",
+  "url_copied_to_clipboard": "URL copiée dans le presse-papiers",
+  "stream_id": "ID de Flux",
+  "epg_channel_id": "ID de Chaîne EPG",
+  "category": "Catégorie",
+  "add_to_favorites": "Ajouter aux Favoris",
+  "no_tracks_available": "Aucune piste disponible",
+  "live_stream_content_type": "Diffusion en Direct",
+  "movie_content_type": "Film",
+  "series_content_type": "Série",
+  "last_update": "Dernière Mise à Jour",
+  "minutes": "min",
+  "duration_label": "Durée"
 }

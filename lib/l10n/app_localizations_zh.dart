@@ -154,6 +154,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cast => '演员';
 
   @override
+  String get director => '导演';
+
+  @override
   String get description => '描述';
 
   @override
@@ -319,6 +322,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get removed_from_favorites => '已从收藏中移除';
+
+  @override
+  String get remove_from_favorites => '从收藏中移除';
 
   @override
   String get select_playlist_type => '选择播放列表类型';
@@ -675,7 +681,142 @@ class AppLocalizationsZh extends AppLocalizations {
   String get new_ep => '新的';
 
   @override
+  String get continue_watching => '继续观看';
+
+  @override
+  String get start_watching => '开始观看';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return '继续观看：第 $season 季 第 $episode 集';
   }
+
+  @override
+  String get player_settings => '播放器设置';
+
+  @override
+  String get brightness_gesture => '亮度手势';
+
+  @override
+  String get brightness_gesture_description => '在左侧垂直滑动控制亮度';
+
+  @override
+  String get volume_gesture => '音量手势';
+
+  @override
+  String get volume_gesture_description => '在右侧垂直滑动控制音量';
+
+  @override
+  String get seek_gesture => '搜索手势';
+
+  @override
+  String get seek_gesture_description => '水平滑动搜索';
+
+  @override
+  String get speed_up_on_long_press => '长按时加速';
+
+  @override
+  String get speed_up_on_long_press_description => '长按时加速播放';
+
+  @override
+  String get seek_on_double_tap => '双击搜索';
+
+  @override
+  String get seek_on_double_tap_description => '双击前进/后退搜索';
+
+  @override
+  String get copied_to_clipboard => '已复制到剪贴板';
+
+  @override
+  String get about => '关于';
+
+  @override
+  String get app_version => '应用版本';
+
+  @override
+  String get support_on_github => '在 GitHub 上支持';
+
+  @override
+  String get support_on_github_description => '在 GitHub 上为项目做出贡献';
+
+  @override
+  String get select_channel => '选择频道';
+
+  @override
+  String get episodes => '剧集';
+
+  @override
+  String get categories => '分类';
+
+  @override
+  String get seasons => '季';
+
+  @override
+  String season_number_format(int number) {
+    return '第 $number 季';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count 集';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count 个频道';
+  }
+
+  @override
+  String get video_info => '视频信息';
+
+  @override
+  String get video_info_not_found => '未找到视频信息';
+
+  @override
+  String get name => '名称';
+
+  @override
+  String get content_type => '内容类型';
+
+  @override
+  String get plot => '剧情';
+
+  @override
+  String get duration_unknown => '未知';
+
+  @override
+  String get url_copied_to_clipboard => 'URL 已复制到剪贴板';
+
+  @override
+  String get stream_id => '流ID';
+
+  @override
+  String get epg_channel_id => 'EPG 频道ID';
+
+  @override
+  String get category => '分类';
+
+  @override
+  String get add_to_favorites => '添加到收藏';
+
+  @override
+  String get no_tracks_available => '没有可用的轨道';
+
+  @override
+  String get live_stream_content_type => '直播';
+
+  @override
+  String get movie_content_type => '电影';
+
+  @override
+  String get series_content_type => '剧集';
+
+  @override
+  String get last_update => 'Last Update';
+
+  @override
+  String get minutes => 'min';
+
+  @override
+  String get duration_label => 'Duration';
 }

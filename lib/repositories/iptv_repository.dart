@@ -272,34 +272,62 @@ class IptvRepository {
     }
   }
 
-  Future<List<SeriesStream>?> getSeries({
-    String? categoryId,
-    bool forceRefresh = false,
-    int? top,
-  }) async {
-    try {
-      if (categoryId != null) {
-        var series = await _database.getSeriesStreamsByCategoryAndPlaylistId(
-          categoryId: categoryId,
-          playlistId: _playlistId,
-          top: top,
-        );
+   Future<List<SeriesStream>?> getSeries({
+     String? categoryId,
+     bool forceRefresh = false,
+     int? top,
+   }) async {
+     try {
+       if (categoryId != null) {
+         var series = await _database.getSeriesStreamsByCategoryAndPlaylistId(
+           categoryId: categoryId,
+           playlistId: _playlistId,
+           top: top,
+         );
 
-        if (series.isNotEmpty) {
-          return series;
-        }
-      } else {
-        var series = await _database.getSeriesStreamsByPlaylistId(_playlistId);
+         if (series.isNotEmpty) {
+           return series;
+         }
+       } else {
+         var series = await _database.getSeriesStreamsByPlaylistId(_playlistId);
 
-        if (series.isNotEmpty) {
-          return series;
-        }
-      }
-    } catch (e) {
-      print('Series Error: $e');
-      return null;
-    }
-  }
+         if (series.isNotEmpty) {
+           return series;
+         }
+       }
+     } catch (e) {
+       print('Series Error: $e');
+       return null;
+     }
+   }
+
+   /// Fetch VOD movie info from API
+   Future<Map<String, dynamic>?> getVodInfo(String vodId) async {
+     try {
+       final response = await _makeRequest(
+         'player_api.php',
+         additionalParams: {'action': 'get_vod_info', 'vod_id': vodId},
+         cacheBuster: true,
+       );
+
+       if (response.statusCode == 200) {
+         final jsonData = json.decode(response.body);
+         if (jsonData is Map<String, dynamic>) {
+           return jsonData;
+         } else if (jsonData is Map) {
+           return Map<String, dynamic>.from(jsonData);
+         }
+         return null;
+       } else {
+         throw Exception(
+           'HTTP ${response.statusCode}: ${response.reasonPhrase}',
+         );
+       }
+     } catch (e) {
+       print('VOD Info Error: $e');
+       return null;
+     }
+   }
 
   Future<List<Category>?> getLiveCategories({bool forceRefresh = false}) async {
     return _getCategories(

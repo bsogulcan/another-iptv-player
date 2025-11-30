@@ -156,6 +156,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cast => 'Distribution';
 
   @override
+  String get director => 'Réalisateur';
+
+  @override
   String get description => 'Description';
 
   @override
@@ -325,6 +328,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get removed_from_favorites => 'Retiré des favoris';
+
+  @override
+  String get remove_from_favorites => 'Retirer des Favoris';
 
   @override
   String get select_playlist_type => 'Sélectionner le type de liste';
@@ -702,7 +708,147 @@ class AppLocalizationsFr extends AppLocalizations {
   String get new_ep => 'Nouveau';
 
   @override
+  String get continue_watching => 'Continuer à regarder';
+
+  @override
+  String get start_watching => 'Commencer à regarder';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Continuer : S $season Épisode $episode';
   }
+
+  @override
+  String get player_settings => 'Paramètres du lecteur';
+
+  @override
+  String get brightness_gesture => 'Geste de luminosité';
+
+  @override
+  String get brightness_gesture_description =>
+      'Contrôler la luminosité en glissant verticalement sur le côté gauche';
+
+  @override
+  String get volume_gesture => 'Geste de volume';
+
+  @override
+  String get volume_gesture_description =>
+      'Contrôler le volume en glissant verticalement sur le côté droit';
+
+  @override
+  String get seek_gesture => 'Geste de recherche';
+
+  @override
+  String get seek_gesture_description =>
+      'Rechercher en glissant horizontalement';
+
+  @override
+  String get speed_up_on_long_press => 'Accélérer avec appui long';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Accélérer la lecture lors d\'un appui long';
+
+  @override
+  String get seek_on_double_tap => 'Rechercher avec double tap';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Rechercher avant/arrière avec double tap';
+
+  @override
+  String get copied_to_clipboard => 'Copié dans le presse-papiers';
+
+  @override
+  String get about => 'À propos';
+
+  @override
+  String get app_version => 'Version de l\'application';
+
+  @override
+  String get support_on_github => 'Soutenir sur GitHub';
+
+  @override
+  String get support_on_github_description => 'Contribuer au projet sur GitHub';
+
+  @override
+  String get select_channel => 'Sélectionner la Chaîne';
+
+  @override
+  String get episodes => 'Épisodes';
+
+  @override
+  String get categories => 'Catégories';
+
+  @override
+  String get seasons => 'Saisons';
+
+  @override
+  String season_number_format(int number) {
+    return 'Saison $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count épisodes';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count chaînes';
+  }
+
+  @override
+  String get video_info => 'Informations Vidéo';
+
+  @override
+  String get video_info_not_found => 'Informations vidéo introuvables';
+
+  @override
+  String get name => 'Nom';
+
+  @override
+  String get content_type => 'Type de Contenu';
+
+  @override
+  String get plot => 'Intrigue';
+
+  @override
+  String get duration_unknown => 'Inconnu';
+
+  @override
+  String get url_copied_to_clipboard => 'URL copiée dans le presse-papiers';
+
+  @override
+  String get stream_id => 'ID de Flux';
+
+  @override
+  String get epg_channel_id => 'ID de Chaîne EPG';
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get add_to_favorites => 'Ajouter aux Favoris';
+
+  @override
+  String get no_tracks_available => 'Aucune piste disponible';
+
+  @override
+  String get live_stream_content_type => 'Diffusion en Direct';
+
+  @override
+  String get movie_content_type => 'Film';
+
+  @override
+  String get series_content_type => 'Série';
+
+  @override
+  String get last_update => 'Dernière Mise à Jour';
+
+  @override
+  String get minutes => 'min';
+
+  @override
+  String get duration_label => 'Durée';
 }

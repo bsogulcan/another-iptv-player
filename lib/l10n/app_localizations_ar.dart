@@ -155,6 +155,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cast => 'فريق التمثيل';
 
   @override
+  String get director => 'المخرج';
+
+  @override
   String get description => 'الوصف';
 
   @override
@@ -321,6 +324,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get removed_from_favorites => 'تمت الإزالة من المفضلة';
+
+  @override
+  String get remove_from_favorites => 'إزالة من المفضلة';
 
   @override
   String get select_playlist_type => 'اختر نوع قائمة التشغيل';
@@ -693,7 +699,146 @@ class AppLocalizationsAr extends AppLocalizations {
   String get new_ep => 'جديد';
 
   @override
+  String get continue_watching => 'متابعة المشاهدة';
+
+  @override
+  String get start_watching => 'ابدأ المشاهدة';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'متابعة: الموسم $season الحلقة $episode';
   }
+
+  @override
+  String get player_settings => 'إعدادات المشغل';
+
+  @override
+  String get brightness_gesture => 'إيماءة السطوع';
+
+  @override
+  String get brightness_gesture_description =>
+      'التحكم في السطوع عن طريق السحب عموديًا على الجانب الأيسر';
+
+  @override
+  String get volume_gesture => 'إيماءة الصوت';
+
+  @override
+  String get volume_gesture_description =>
+      'التحكم في الصوت عن طريق السحب عموديًا على الجانب الأيمن';
+
+  @override
+  String get seek_gesture => 'إيماءة البحث';
+
+  @override
+  String get seek_gesture_description => 'البحث عن طريق السحب أفقيًا';
+
+  @override
+  String get speed_up_on_long_press => 'تسريع عند الضغط الطويل';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'تسريع التشغيل عند الضغط الطويل';
+
+  @override
+  String get seek_on_double_tap => 'البحث عند النقر المزدوج';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'البحث للأمام/للخلف بالنقر المزدوج';
+
+  @override
+  String get copied_to_clipboard => 'تم النسخ إلى الحافظة';
+
+  @override
+  String get about => 'حول';
+
+  @override
+  String get app_version => 'إصدار التطبيق';
+
+  @override
+  String get support_on_github => 'دعم على GitHub';
+
+  @override
+  String get support_on_github_description => 'ساهم في المشروع على GitHub';
+
+  @override
+  String get select_channel => 'اختر القناة';
+
+  @override
+  String get episodes => 'حلقات';
+
+  @override
+  String get categories => 'الفئات';
+
+  @override
+  String get seasons => 'المواسم';
+
+  @override
+  String season_number_format(int number) {
+    return 'الموسم $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count حلقة';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count قناة';
+  }
+
+  @override
+  String get video_info => 'معلومات الفيديو';
+
+  @override
+  String get video_info_not_found => 'لم يتم العثور على معلومات الفيديو';
+
+  @override
+  String get name => 'الاسم';
+
+  @override
+  String get content_type => 'نوع المحتوى';
+
+  @override
+  String get plot => 'الحبكة';
+
+  @override
+  String get duration_unknown => 'غير معروف';
+
+  @override
+  String get url_copied_to_clipboard => 'تم نسخ الرابط إلى الحافظة';
+
+  @override
+  String get stream_id => 'معرف البث';
+
+  @override
+  String get epg_channel_id => 'معرف قناة EPG';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get add_to_favorites => 'إضافة إلى المفضلة';
+
+  @override
+  String get no_tracks_available => 'لا توجد مسارات متاحة';
+
+  @override
+  String get live_stream_content_type => 'بث مباشر';
+
+  @override
+  String get movie_content_type => 'فيلم';
+
+  @override
+  String get series_content_type => 'مسلسل';
+
+  @override
+  String get last_update => 'آخر تحديث';
+
+  @override
+  String get minutes => 'دقيقة';
+
+  @override
+  String get duration_label => 'المدة';
 }

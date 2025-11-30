@@ -46,6 +46,7 @@
   "release_date": "Дата выхода",
   "genre": "Жанр",
   "cast": "В ролях",
+  "director": "Режиссер",
   "description": "Описание",
   "video_track": "Видеодорожка",
   "audio_track": "Аудиодорожка",
@@ -192,6 +193,7 @@
   "see_all_favorites": "Посмотреть Все",
   "added_to_favorites": "Добавлено в избранное",
   "removed_from_favorites": "Удалено из избранного",
+  "remove_from_favorites": "Удалить из Избранного",
   "select_all": "Выбрать всё",
   "deselect_all": "Отменить выбор всего",
   "hide_category": "Скрыть категории",
@@ -211,5 +213,81 @@
   "dark": "Темный",
   "trailer": "трейлер",
   "new_ep": "новый",
-  "continue_watching_label": "Продолжить: Сезон {season} Серия {episode}"
+  "continue_watching": "Продолжить просмотр",
+  "@continue_watching": {
+    "description": "Надпись кнопки для продолжения воспроизведения"
+  },
+  "start_watching": "Начать просмотр",
+  "@start_watching": {
+    "description": "Надпись кнопки для начала воспроизведения"
+  },
+  "continue_watching_label": "Продолжить: Сезон {season} Серия {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Настройки плеера",
+  "brightness_gesture": "Жест яркости",
+  "brightness_gesture_description": "Управление яркостью вертикальным свайпом слева",
+  "volume_gesture": "Жест громкости",
+  "volume_gesture_description": "Управление громкостью вертикальным свайпом справа",
+  "seek_gesture": "Жест поиска",
+  "seek_gesture_description": "Поиск горизонтальным свайпом",
+  "speed_up_on_long_press": "Ускорение при долгом нажатии",
+  "speed_up_on_long_press_description": "Ускорение воспроизведения при долгом нажатии",
+  "seek_on_double_tap": "Поиск при двойном нажатии",
+  "seek_on_double_tap_description": "Поиск вперед/назад двойным нажатием",
+  "copied_to_clipboard": "Скопировано в буфер обмена",
+  "about": "О приложении",
+  "app_version": "Версия приложения",
+  "support_on_github": "Поддержать на GitHub",
+  "support_on_github_description": "Внести вклад в проект на GitHub",
+  "select_channel": "Выбрать Канал",
+  "episodes": "Эпизоды",
+  "categories": "Категории",
+  "seasons": "Сезоны",
+  "season_number_format": "Сезон {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} эпизодов",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} каналов",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Информация о Видео",
+  "video_info_not_found": "Информация о видео не найдена",
+  "name": "Название",
+  "content_type": "Тип Контента",
+  "plot": "Сюжет",
+  "duration_unknown": "Неизвестно",
+  "url_copied_to_clipboard": "URL скопирован в буфер обмена",
+  "stream_id": "ID Потока",
+  "epg_channel_id": "ID Канала EPG",
+  "category": "Категория",
+  "add_to_favorites": "Добавить в Избранное",
+  "no_tracks_available": "Дорожки недоступны",
+  "live_stream_content_type": "Прямой Эфир",
+  "movie_content_type": "Фильм",
+  "series_content_type": "Сериал",
+  "last_update": "Последнее Обновление",
+  "minutes": "мин",
+  "duration_label": "Продолжительность"
 }

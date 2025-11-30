@@ -156,6 +156,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cast => 'В ролях';
 
   @override
+  String get director => 'Режиссер';
+
+  @override
   String get description => 'Описание';
 
   @override
@@ -323,6 +326,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get removed_from_favorites => 'Удалено из избранного';
+
+  @override
+  String get remove_from_favorites => 'Удалить из Избранного';
 
   @override
   String get select_playlist_type => 'Выберите тип плейлиста';
@@ -696,7 +702,146 @@ class AppLocalizationsRu extends AppLocalizations {
   String get new_ep => 'новый';
 
   @override
+  String get continue_watching => 'Продолжить просмотр';
+
+  @override
+  String get start_watching => 'Начать просмотр';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Продолжить: Сезон $season Серия $episode';
   }
+
+  @override
+  String get player_settings => 'Настройки плеера';
+
+  @override
+  String get brightness_gesture => 'Жест яркости';
+
+  @override
+  String get brightness_gesture_description =>
+      'Управление яркостью вертикальным свайпом слева';
+
+  @override
+  String get volume_gesture => 'Жест громкости';
+
+  @override
+  String get volume_gesture_description =>
+      'Управление громкостью вертикальным свайпом справа';
+
+  @override
+  String get seek_gesture => 'Жест поиска';
+
+  @override
+  String get seek_gesture_description => 'Поиск горизонтальным свайпом';
+
+  @override
+  String get speed_up_on_long_press => 'Ускорение при долгом нажатии';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Ускорение воспроизведения при долгом нажатии';
+
+  @override
+  String get seek_on_double_tap => 'Поиск при двойном нажатии';
+
+  @override
+  String get seek_on_double_tap_description =>
+      'Поиск вперед/назад двойным нажатием';
+
+  @override
+  String get copied_to_clipboard => 'Скопировано в буфер обмена';
+
+  @override
+  String get about => 'О приложении';
+
+  @override
+  String get app_version => 'Версия приложения';
+
+  @override
+  String get support_on_github => 'Поддержать на GitHub';
+
+  @override
+  String get support_on_github_description => 'Внести вклад в проект на GitHub';
+
+  @override
+  String get select_channel => 'Выбрать Канал';
+
+  @override
+  String get episodes => 'Эпизоды';
+
+  @override
+  String get categories => 'Категории';
+
+  @override
+  String get seasons => 'Сезоны';
+
+  @override
+  String season_number_format(int number) {
+    return 'Сезон $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count эпизодов';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count каналов';
+  }
+
+  @override
+  String get video_info => 'Информация о Видео';
+
+  @override
+  String get video_info_not_found => 'Информация о видео не найдена';
+
+  @override
+  String get name => 'Название';
+
+  @override
+  String get content_type => 'Тип Контента';
+
+  @override
+  String get plot => 'Сюжет';
+
+  @override
+  String get duration_unknown => 'Неизвестно';
+
+  @override
+  String get url_copied_to_clipboard => 'URL скопирован в буфер обмена';
+
+  @override
+  String get stream_id => 'ID Потока';
+
+  @override
+  String get epg_channel_id => 'ID Канала EPG';
+
+  @override
+  String get category => 'Категория';
+
+  @override
+  String get add_to_favorites => 'Добавить в Избранное';
+
+  @override
+  String get no_tracks_available => 'Дорожки недоступны';
+
+  @override
+  String get live_stream_content_type => 'Прямой Эфир';
+
+  @override
+  String get movie_content_type => 'Фильм';
+
+  @override
+  String get series_content_type => 'Сериал';
+
+  @override
+  String get last_update => 'Последнее Обновление';
+
+  @override
+  String get minutes => 'мин';
+
+  @override
+  String get duration_label => 'Продолжительность';
 }

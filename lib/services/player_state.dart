@@ -18,6 +18,12 @@ abstract class PlayerState {
   static ContentItem? currentContent;
   // ---------------------------------------------
 
+  static List<ContentItem>? queue;
+  static int currentIndex = 0;
+  static bool showChannelList = false;
+  static bool showVideoInfo = false;
+  static bool showVideoSettings = false;
+
   static String title = '';
   static bool backgroundPlay = true;
   static SubtitleViewConfiguration subtitleConfiguration =

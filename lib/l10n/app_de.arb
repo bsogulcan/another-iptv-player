@@ -46,6 +46,7 @@
   "release_date": "Erscheinungsdatum",
   "genre": "Genre",
   "cast": "Besetzung",
+  "director": "Regisseur",
   "description": "Beschreibung",
   "video_track": "Video-Spur",
   "audio_track": "Audio-Spur",
@@ -192,6 +193,7 @@
   "see_all_favorites": "Alle Anzeigen",
   "added_to_favorites": "Zu Favoriten hinzugefügt",
   "removed_from_favorites": "Aus Favoriten entfernt",
+  "remove_from_favorites": "Aus Favoriten Entfernen",
   "select_all": "Alle auswählen",
   "deselect_all": "Auswahl aufheben",
   "hide_category": "Kategorien ausblenden",
@@ -211,5 +213,81 @@
   "dark": "Dunkel",
   "trailer": "Anhänger",
   "new_ep": "Neu",
-  "continue_watching_label": "Fortsetzen: S {season} Folge {episode}"
+  "continue_watching": "Weiter ansehen",
+  "@continue_watching": {
+    "description": "Beschriftung der Hauptaktion zum Fortsetzen der Wiedergabe"
+  },
+  "start_watching": "Wiedergabe starten",
+  "@start_watching": {
+    "description": "Beschriftung der Hauptaktion zum Starten der Wiedergabe"
+  },
+  "continue_watching_label": "Fortsetzen: S {season} Folge {episode}",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  },
+  "player_settings": "Player-Einstellungen",
+  "brightness_gesture": "Helligkeits-Geste",
+  "brightness_gesture_description": "Helligkeit durch vertikales Wischen auf der linken Seite steuern",
+  "volume_gesture": "Lautstärke-Geste",
+  "volume_gesture_description": "Lautstärke durch vertikales Wischen auf der rechten Seite steuern",
+  "seek_gesture": "Such-Geste",
+  "seek_gesture_description": "Durch horizontales Wischen suchen",
+  "speed_up_on_long_press": "Bei langem Drücken beschleunigen",
+  "speed_up_on_long_press_description": "Wiedergabe bei langem Drücken beschleunigen",
+  "seek_on_double_tap": "Bei Doppeltippen suchen",
+  "seek_on_double_tap_description": "Durch Doppeltippen vorwärts/rückwärts suchen",
+  "copied_to_clipboard": "In Zwischenablage kopiert",
+  "about": "Über",
+  "app_version": "App-Version",
+  "support_on_github": "Auf GitHub unterstützen",
+  "support_on_github_description": "Zum Projekt auf GitHub beitragen",
+  "select_channel": "Kanal Auswählen",
+  "episodes": "Episoden",
+  "categories": "Kategorien",
+  "seasons": "Staffeln",
+  "season_number_format": "Staffel {number}",
+  "@season_number_format": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "episode_count_format": "{count} Episoden",
+  "@episode_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channel_count_format": "{count} Kanäle",
+  "@channel_count_format": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "video_info": "Video-Informationen",
+  "video_info_not_found": "Video-Informationen nicht gefunden",
+  "name": "Name",
+  "content_type": "Inhaltstyp",
+  "plot": "Handlung",
+  "duration_unknown": "Unbekannt",
+  "url_copied_to_clipboard": "URL in Zwischenablage kopiert",
+  "stream_id": "Stream-ID",
+  "epg_channel_id": "EPG-Kanal-ID",
+  "category": "Kategorie",
+  "add_to_favorites": "Zu Favoriten Hinzufügen",
+  "no_tracks_available": "Keine Spuren verfügbar",
+  "live_stream_content_type": "Live-Stream",
+  "movie_content_type": "Film",
+  "series_content_type": "Serie",
+  "last_update": "Letzte Aktualisierung",
+  "minutes": "Min",
+  "duration_label": "Dauer"
 }

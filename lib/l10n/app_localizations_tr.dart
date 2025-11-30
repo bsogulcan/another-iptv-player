@@ -156,6 +156,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cast => 'Oyuncular';
 
   @override
+  String get director => 'Yönetmen';
+
+  @override
   String get description => 'Açıklama';
 
   @override
@@ -322,6 +325,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get removed_from_favorites => 'Favorilerden kaldırıldı';
+
+  @override
+  String get remove_from_favorites => 'Favorilerden Kaldır';
 
   @override
   String get select_playlist_type => 'Playlist Türü Seçin';
@@ -693,7 +699,146 @@ class AppLocalizationsTr extends AppLocalizations {
   String get new_ep => 'Yeni';
 
   @override
+  String get continue_watching => 'Devam Et';
+
+  @override
+  String get start_watching => 'İzlemeye Başla';
+
+  @override
   String continue_watching_label(String season, String episode) {
     return 'Devam Et: $season. Sezon $episode. Bölüm';
   }
+
+  @override
+  String get player_settings => 'Oynatıcı Ayarları';
+
+  @override
+  String get brightness_gesture => 'Parlaklık Hareketi';
+
+  @override
+  String get brightness_gesture_description =>
+      'Sol tarafta dikey kaydırarak parlaklığı kontrol et';
+
+  @override
+  String get volume_gesture => 'Ses Hareketi';
+
+  @override
+  String get volume_gesture_description =>
+      'Sağ tarafta dikey kaydırarak sesi kontrol et';
+
+  @override
+  String get seek_gesture => 'İleri/Sar Hareketi';
+
+  @override
+  String get seek_gesture_description => 'Yatay kaydırarak ileri/sar';
+
+  @override
+  String get speed_up_on_long_press => 'Uzun Basışta Hızlandır';
+
+  @override
+  String get speed_up_on_long_press_description =>
+      'Uzun basıldığında oynatmayı hızlandır';
+
+  @override
+  String get seek_on_double_tap => 'Çift Dokunuşta İleri/Sar';
+
+  @override
+  String get seek_on_double_tap_description => 'Çift dokunarak ileri/geri sar';
+
+  @override
+  String get copied_to_clipboard => 'Panoya kopyalandı';
+
+  @override
+  String get about => 'Hakkında';
+
+  @override
+  String get app_version => 'Uygulama Sürümü';
+
+  @override
+  String get support_on_github => 'GitHub\'da Destekle';
+
+  @override
+  String get support_on_github_description =>
+      'Projeye GitHub üzerinden katkıda bulunun';
+
+  @override
+  String get select_channel => 'Kanal Seç';
+
+  @override
+  String get episodes => 'Bölümler';
+
+  @override
+  String get categories => 'Kategoriler';
+
+  @override
+  String get seasons => 'Sezonlar';
+
+  @override
+  String season_number_format(int number) {
+    return 'Sezon $number';
+  }
+
+  @override
+  String episode_count_format(int count) {
+    return '$count bölüm';
+  }
+
+  @override
+  String channel_count_format(int count) {
+    return '$count kanal';
+  }
+
+  @override
+  String get video_info => 'Video Bilgileri';
+
+  @override
+  String get video_info_not_found => 'Video bilgisi bulunamadı';
+
+  @override
+  String get name => 'İsim';
+
+  @override
+  String get content_type => 'İçerik Tipi';
+
+  @override
+  String get plot => 'Konu';
+
+  @override
+  String get duration_unknown => 'Bilinmiyor';
+
+  @override
+  String get url_copied_to_clipboard => 'URL panoya kopyalandı';
+
+  @override
+  String get stream_id => 'Stream ID';
+
+  @override
+  String get epg_channel_id => 'EPG Kanal ID';
+
+  @override
+  String get category => 'Kategori';
+
+  @override
+  String get add_to_favorites => 'Favorilere Ekle';
+
+  @override
+  String get no_tracks_available => 'Parça bulunamadı';
+
+  @override
+  String get live_stream_content_type => 'Canlı Yayın';
+
+  @override
+  String get movie_content_type => 'Film';
+
+  @override
+  String get series_content_type => 'Dizi';
+
+  @override
+  String get last_update => 'Son Güncelleme';
+
+  @override
+  String get minutes => 'dk';
+
+  @override
+  String get duration_label => 'Süre';
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- added for Clipboard
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/player_state.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
@@ -11,10 +10,110 @@ class VideoSettingsWidget extends StatefulWidget {
 
   @override
   State<VideoSettingsWidget> createState() => _VideoSettingsWidgetState();
+
+  static void hideOverlay() {
+    _VideoSettingsWidgetState.hideOverlay();
+  }
 }
 
 class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
+  static OverlayEntry? _globalOverlayEntry;
+  static StreamSubscription? _globalToggleSubscription;
+  static BuildContext? _globalContext;
+
+  static void hideOverlay() {
+    _globalOverlayEntry?.remove();
+    _globalOverlayEntry = null;
+    PlayerState.showVideoSettings = false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _globalContext = context;
+
+    _globalToggleSubscription ??=
+        EventBus().on<bool>('toggle_video_settings').listen((bool show) {
+      if (show) {
+        if (_globalContext != null) {
+          _showSettings(_globalContext!);
+        }
+      } else {
+        hideOverlay();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _globalContext = context;
+    return IconButton(
+      icon: const Icon(Icons.settings, color: Colors.white),
+      onPressed: () {
+        if (_globalOverlayEntry == null) {
+          _showSettings(context);
+        } else {
+          hideOverlay();
+        }
+      },
+    );
+  }
+
+  void _showSettings(BuildContext context) {
+    if (_globalOverlayEntry != null) return;
+
+    final overlayContext = _globalContext ?? context;
+    OverlayState? overlay;
+    try {
+      overlay = Overlay.of(overlayContext, rootOverlay: true);
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_globalOverlayEntry == null) {
+          _showSettings(overlayContext);
+        }
+      });
+      return;
+    }
+
+    final screenWidth = MediaQuery.of(overlayContext).size.width;
+    final panelWidth = (screenWidth / 3).clamp(200.0, 400.0);
+
+    _globalOverlayEntry = OverlayEntry(
+      opaque: false,
+      maintainState: true,
+      builder: (context) => _VideoSettingsOverlay(
+        width: panelWidth,
+        onClose: hideOverlay,
+      ),
+    );
+
+    overlay.insert(_globalOverlayEntry!);
+    PlayerState.showVideoSettings = true;
+  }
+}
+
+class _VideoSettingsOverlay extends StatefulWidget {
+  final double width;
+  final VoidCallback onClose;
+
+  const _VideoSettingsOverlay({
+    required this.width,
+    required this.onClose,
+  });
+
+  @override
+  State<_VideoSettingsOverlay> createState() => _VideoSettingsOverlayState();
+}
+
+class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
   late StreamSubscription subscription;
+  late StreamSubscription _trackChangeSubscription;
+
   late List<VideoTrack> videoTracks;
   late List<AudioTrack> audioTracks;
   late List<SubtitleTrack> subtitleTracks;
@@ -26,14 +125,7 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
   @override
   void initState() {
     super.initState();
-
-    videoTracks = PlayerState.videos;
-    audioTracks = PlayerState.audios;
-    subtitleTracks = PlayerState.subtitles;
-
-    selectedVideoTrack = PlayerState.selectedVideo.title ?? 'Empty';
-    selectedAudioTrack = PlayerState.selectedAudio.language ?? 'Empty';
-    selectedSubtitleTrack = PlayerState.selectedSubtitle.language ?? 'Empty';
+    _loadTracks();
 
     subscription = EventBus().on<Tracks>('player_tracks').listen((Tracks data) {
       if (mounted) {
@@ -44,372 +136,373 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
         });
       }
     });
+
+    _trackChangeSubscription =
+        EventBus().on<dynamic>('player_track_changed').listen((_) {
+      if (mounted) {
+        setState(() {
+          selectedVideoTrack = PlayerState.selectedVideo.id;
+          selectedAudioTrack = PlayerState.selectedAudio.id;
+          selectedSubtitleTrack = PlayerState.selectedSubtitle.id;
+        });
+      }
+    });
+  }
+
+  void _loadTracks() {
+    videoTracks = PlayerState.videos;
+    audioTracks = PlayerState.audios;
+    subtitleTracks = PlayerState.subtitles;
+
+    selectedVideoTrack = PlayerState.selectedVideo.id;
+    selectedAudioTrack = PlayerState.selectedAudio.id;
+    selectedSubtitleTrack = PlayerState.selectedSubtitle.id;
   }
 
   @override
   void dispose() {
     subscription.cancel();
+    _trackChangeSubscription.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.settings, color: Colors.white),
-      onPressed: () => _showSettingsBottomSheet(context),
+    final backgroundColor = Colors.black.withOpacity(0.95);
+
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Material(
+          color: backgroundColor,
+          elevation: 8,
+          child: Container(
+            width: widget.width,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: _buildMainSettings(context),
+          ),
+        ),
+      ),
     );
   }
 
-  void _showSettingsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-        minHeight: MediaQuery.of(context).size.height * 0.3,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildMainSettings(BuildContext context) {
+    final cardColor = Colors.black.withOpacity(0.8);
+    const textColor = Colors.white;
+    final dividerColor = Colors.grey[800]!;
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            border: Border(
+              bottom: BorderSide(color: dividerColor, width: 1),
+            ),
+          ),
+          child: Row(
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+              Expanded(
+                child: Text(
+                  context.loc.settings,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
-                context.loc.settings,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              IconButton(
+                icon: Icon(Icons.close, color: textColor, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: widget.onClose,
               ),
-              SizedBox(height: 20),
-              _buildSettingsItem(
-                icon: Icons.video_settings,
-                title: context.loc.video_track,
-                subtitle: selectedVideoTrack,
-                onTap: () => _showVideoTrackSelection(context),
-              ),
-              _buildSettingsItem(
-                icon: Icons.audiotrack,
-                title: context.loc.audio_track,
-                subtitle: selectedAudioTrack,
-                onTap: () => _showAudioTrackSelection(context),
-              ),
-              _buildSettingsItem(
-                icon: Icons.subtitles,
-                title: context.loc.subtitle_track,
-                subtitle: selectedSubtitleTrack,
-                onTap: () => _showSubtitleTrackSelection(context),
-              ),
-
-              // Copy Stream URL action: compute URL at tap time so it's always fresh
-              ListTile(
-                leading: const Icon(Icons.link, color: Colors.blue),
-                title: const Text('Copy stream URL'),
-                onTap: () async {
-                  final url = PlayerState.currentContent?.url ?? '';
-
-                  if (url.isEmpty) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('No stream URL available'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                    return;
-                  }
-
-                  await Clipboard.setData(ClipboardData(text: url));
-
-                  if (!context.mounted) return;
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Stream URL copied to clipboard'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
-              // -----------------------------------
-
-              SizedBox(height: 20),
             ],
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTrackSectionGeneric<VideoTrack>(
+                  context,
+                  icon: Icons.video_settings,
+                  title: context.loc.video_track,
+                  tracks: videoTracks,
+                  labelBuilder: _formatVideoTrack,
+                  isSelected: (track) => track.id == selectedVideoTrack,
+                  onTrackSelected: (track) {
+                    EventBus().emit('video_track_changed', track);
+                    if (mounted) {
+                      setState(() {
+                        selectedVideoTrack = track.id;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildTrackSectionGeneric<AudioTrack>(
+                  context,
+                  icon: Icons.audiotrack,
+                  title: context.loc.audio_track,
+                  tracks: audioTracks,
+                  labelBuilder: _formatAudioTrack,
+                  isSelected: (track) => track.id == selectedAudioTrack,
+                  onTrackSelected: (track) {
+                    EventBus().emit('audio_track_changed', track);
+                    if (mounted) {
+                      setState(() {
+                        selectedAudioTrack = track.id;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildTrackSectionGeneric<SubtitleTrack>(
+                  context,
+                  icon: Icons.subtitles,
+                  title: context.loc.subtitle_track,
+                  tracks: subtitleTracks,
+                  labelBuilder: _formatSubtitleTrack,
+                  isSelected: (track) => track.id == selectedSubtitleTrack,
+                  onTrackSelected: (track) {
+                    EventBus().emit('subtitle_track_changed', track);
+                    if (mounted) {
+                      setState(() {
+                        selectedSubtitleTrack = track.id;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSettingsItem({
+  Widget _buildTrackSectionGeneric<T>(
+    BuildContext context, {
     required IconData icon,
     required String title,
-    required String subtitle,
+    required List<T> tracks,
+    required String Function(T) labelBuilder,
+    required Function(T) onTrackSelected,
+    required bool Function(T) isSelected,
+  }) {
+    const textColor = Colors.white;
+    const secondaryTextColor = Colors.grey;
+    final dividerColor = Colors.grey[800]!;
+    const primaryColor = Colors.blue;
+    final cardBackground = Colors.white.withOpacity(0.05);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: dividerColor,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: primaryColor),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+          if (tracks.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...tracks.map((track) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildTrackItem(
+                    context,
+                    title: labelBuilder(track),
+                    isSelected: isSelected(track),
+                    onTap: () => onTrackSelected(track),
+                  ),
+                )),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(left: 32, top: 8),
+              child: Text(
+                context.loc.no_tracks_available,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: secondaryTextColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackItem(
+    BuildContext context, {
+    required String title,
+    required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16),
+    const textColor = Colors.white;
+    final dividerColor = Colors.grey[800]!;
+    const primaryColor = Colors.blue;
+    final primaryContainer = Colors.blue.withOpacity(0.2);
+    final unselectedBackground = Colors.white.withOpacity(0.03);
+
+    return InkWell(
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? primaryContainer.withOpacity(0.3)
+              : unselectedBackground,
+          borderRadius: BorderRadius.circular(6),
+          border: isSelected
+              ? Border.all(
+                  color: primaryColor,
+                  width: 1.5,
+                )
+              : Border.all(
+                  color: dividerColor,
+                  width: 0.5,
+                ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: textColor,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: primaryColor,
+                size: 18,
+              ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showVideoTrackSelection(BuildContext context) {
-    Navigator.pop(context);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-        minHeight: MediaQuery.of(context).size.height * 0.3,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showSettingsBottomSheet(context);
-                    },
-                  ),
-                  Text(
-                    context.loc.quality,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: videoTracks
-                        .map(
-                          (track) => ListTile(
-                        title: Text(track.id),
-                        trailing: selectedVideoTrack == track.id
-                            ? Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          EventBus().emit('video_track_changed', track);
+  String _formatVideoTrack(VideoTrack track) {
+    if (track.id == 'auto') return 'Auto';
+    if (track.id == 'no') return 'Disabled';
 
-                          if (mounted) {
-                            setState(() {
-                              selectedVideoTrack = track.id;
-                            });
-                          }
-                          Navigator.pop(context);
-                        },
-                      ),
-                    )
-                        .toList(),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
+    final parts = <String>[];
+
+    if (track.title != null && track.title!.isNotEmpty) {
+      parts.add(track.title!);
+    }
+
+    if (track.w != null && track.h != null && track.w! > 0 && track.h! > 0) {
+      parts.add('${track.w}x${track.h}');
+    }
+
+    if (track.fps != null && track.fps! > 0) {
+      parts.add('${track.fps!.toStringAsFixed(2)} fps');
+    }
+
+    if (track.codec != null && track.codec!.isNotEmpty) {
+      parts.add(track.codec!);
+    }
+
+    if (track.bitrate != null && track.bitrate! > 0) {
+      parts.add('${(track.bitrate! / 1000).round()} kbps');
+    }
+
+    if (parts.isEmpty) return 'Track ${track.id}';
+    return parts.join(' • ');
   }
 
-  void _showAudioTrackSelection(BuildContext context) {
-    Navigator.pop(context);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-        minHeight: MediaQuery.of(context).size.height * 0.3,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showSettingsBottomSheet(context);
-                    },
-                  ),
-                  Text(
-                    context.loc.audio_track,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: audioTracks
-                        .map(
-                          (track) => ListTile(
-                        title: Text(track.language ?? 'NULL'),
-                        trailing:
-                        selectedAudioTrack == (track.language ?? 'NULL')
-                            ? Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          EventBus().emit('audio_track_changed', track);
+  String _formatAudioTrack(AudioTrack track) {
+    if (track.id == 'auto') return 'Auto';
+    if (track.id == 'no') return 'Disabled';
 
-                          if (mounted) {
-                            setState(() {
-                              selectedAudioTrack = track.language ?? 'NULL';
-                            });
-                          }
-                          Navigator.pop(context);
-                        },
-                      ),
-                    )
-                        .toList(),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
+    final parts = <String>[];
+
+    if (track.title != null && track.title!.isNotEmpty) {
+      parts.add(track.title!);
+    }
+
+    if (track.language != null && track.language!.isNotEmpty) {
+      parts.add(track.language!);
+    }
+
+    if (track.codec != null && track.codec!.isNotEmpty) {
+      parts.add(track.codec!);
+    }
+
+    if (track.channelscount != null && track.channelscount! > 0) {
+      parts.add('${track.channelscount}ch');
+    }
+
+    if (track.samplerate != null && track.samplerate! > 0) {
+      parts.add('${track.samplerate} Hz');
+    }
+
+    if (track.bitrate != null && track.bitrate! > 0) {
+      parts.add('${(track.bitrate! / 1000).round()} kbps');
+    }
+
+    if (parts.isEmpty) return 'Track ${track.id}';
+    return parts.join(' • ');
   }
 
-  void _showSubtitleTrackSelection(BuildContext context) {
-    Navigator.pop(context);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-        minHeight: MediaQuery.of(context).size.height * 0.3,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showSettingsBottomSheet(context);
-                    },
-                  ),
-                  Text(
-                    context.loc.subtitle_track,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: subtitleTracks
-                        .map(
-                          (track) => ListTile(
-                        title: Text(track.language ?? 'NULL'),
-                        trailing:
-                        selectedSubtitleTrack ==
-                            (track.language ?? 'NULL')
-                            ? Icon(Icons.check, color: Colors.blue)
-                            : null,
-                        onTap: () {
-                          EventBus().emit('subtitle_track_changed', track);
+  String _formatSubtitleTrack(SubtitleTrack track) {
+    if (track.id == 'auto') return 'Auto';
+    if (track.id == 'no') return 'Disabled';
 
-                          if (mounted) {
-                            setState(() {
-                              selectedSubtitleTrack =
-                                  track.language ?? 'NULL';
-                            });
-                          }
-                          Navigator.pop(context);
-                        },
-                      ),
-                    )
-                        .toList(),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
+    final parts = <String>[];
+
+    if (track.title != null && track.title!.isNotEmpty) {
+      parts.add(track.title!);
+    }
+
+    if (track.language != null && track.language!.isNotEmpty) {
+      parts.add(track.language!);
+    }
+
+    if (track.codec != null && track.codec!.isNotEmpty) {
+      parts.add(track.codec!);
+    }
+
+    if (parts.isEmpty) return 'Track ${track.id}';
+    return parts.join(' • ');
   }
 }
