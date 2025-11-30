@@ -286,5 +286,8 @@
   "no_tracks_available": "没有可用的轨道",
   "live_stream_content_type": "直播",
   "movie_content_type": "电影",
-  "series_content_type": "剧集"
+  "series_content_type": "剧集",
+  "last_update": "最后更新",
+  "minutes": "分钟",
+  "duration_label": "时长"
 }

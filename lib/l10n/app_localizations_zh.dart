@@ -812,11 +812,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get series_content_type => '剧集';
 
   @override
-  String get last_update => 'Last Update';
+  String get last_update => '最后更新';
 
   @override
-  String get minutes => 'min';
+  String get minutes => '分钟';
 
   @override
-  String get duration_label => 'Duration';
+  String get duration_label => '时长';
 }

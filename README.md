@@ -41,8 +41,9 @@ Official documentation: [https://www.another-iptv-player.com](https://www.anothe
 - [x] Localization (Multi-language Support)
 - [x] M3U & M3U8 Playlist Support
 - [x] Favorites
-- [ ] Improved UI/UX - TV Support
+- [x] Improved UI/UX 
 - [ ] EPG (Electronic Program Guide) Support
+- [ ] TV Support
 
 ## Acknowledgement
 
