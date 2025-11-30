@@ -1,4 +1,9 @@
-# [](https://github.com/bsogulcan/iptv-player/compare/v1.2.0...v) (2025-11-25)
+# [](https://github.com/bsogulcan/iptv-player/compare/v1.2.0...v) (2025-11-30)
+
+
+### Bug Fixes
+
+* series shows empty seasons and episodes counter problem ([#64](https://github.com/bsogulcan/iptv-player/issues/64)) ([1f1d735](https://github.com/bsogulcan/iptv-player/commit/1f1d7352f6f9de52b88e4e4e0093c1246c9ab6cd))
 
 
 
