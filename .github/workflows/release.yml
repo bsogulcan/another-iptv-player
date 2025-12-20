@@ -34,7 +34,7 @@ jobs:
             Download the appropriate version for your platform below.
             
             ### 🔧 Installation
-            - **Windows**: Extract zip and run `another_iptv_player.exe`
+            - **Windows**: Run the setup installer (`.exe`) for easy installation, or extract the zip file for portable use
             - **macOS**: Extract zip and run `another_iptv_player.app`
             - **Linux**: Extract zip and run `another_iptv_player`
             - **Android**: Install the APK file
@@ -65,15 +65,33 @@ jobs:
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
       - name: Build Windows
         run: flutter build windows
-      - name: Create Windows Archive
+      - name: Install NSIS
+        run: choco install nsis -y
+      - name: Create Windows Installer
+        shell: pwsh
+        run: |
+          cd windows
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          makensis installer.nsi
+          if (Test-Path "another-iptv-player-windows-setup.exe") {
+            Move-Item "another-iptv-player-windows-setup.exe" "..\another-iptv-player-windows-setup-${{ github.ref_name }}.exe"
+          } else {
+            Write-Error "Installer file not found!"
+          }
+      - name: Create Windows Installer ZIP
+        run: |
+          7z a another-iptv-player-windows-setup-${{ github.ref_name }}.zip another-iptv-player-windows-setup-${{ github.ref_name }}.exe
+      - name: Create Windows Archive (Portable)
         run: |
           cd build/windows/x64/runner/Release
           7z a ../../../../../another-iptv-player-windows-${{ github.ref_name }}.zip .
-      - name: Upload Windows Release Asset
+      - name: Upload Windows Release Assets
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: another-iptv-player-windows-${{ github.ref_name }}.zip
+          artifacts: |
+            another-iptv-player-windows-setup-${{ github.ref_name }}.zip
+            another-iptv-player-windows-${{ github.ref_name }}.zip
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
