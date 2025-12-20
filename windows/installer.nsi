@@ -74,16 +74,7 @@ Section "Another IPTV Player" SecMain
   ; Set output path to the installation directory
 
   SetOutPath "$INSTDIR"
-
-  ; 1) Önce Release kökünde exe var mı?
-  IfFileExists "..\build\windows\x64\runner\Release\${APP_EXE}" 0 +3
-    File /r /x "*.pdb" "..\build\windows\x64\runner\Release\*"
-    Goto +3
-  
-  ; 2) Yoksa Release altında oluşan klasörün içeriğini al (senin senaryo)
-  File /r /x "*.pdb" "..\build\windows\x64\runner\Release\another-iptv-player-windows-*\*"
-
-
+  File /r /x "*.pdb" "..\build\windows\x64\runner\Release\*"
 
   
   ; Store installation folder
