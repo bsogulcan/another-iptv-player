@@ -5,6 +5,8 @@
 ;--------------------------------
 ; Includes
 
+!define APP_EXE "iptv_player.exe"
+
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
 
@@ -70,11 +72,19 @@ Section "Another IPTV Player" SecMain
   SectionIn RO
   
   ; Set output path to the installation directory
+
   SetOutPath "$INSTDIR"
+
+  ; 1) Önce Release kökünde exe var mı?
+  IfFileExists "..\build\windows\x64\runner\Release\${APP_EXE}" 0 +3
+    File /r /x "*.pdb" "..\build\windows\x64\runner\Release\*"
+    Goto +3
   
-  ; Copy all files from the build directory
-  ; Note: In GitHub Actions, we're in windows/ directory, so we go up one level
-  File /r "..\build\windows\x64\runner\Release\*.*"
+  ; 2) Yoksa Release altında oluşan klasörün içeriğini al (senin senaryo)
+  File /r /x "*.pdb" "..\build\windows\x64\runner\Release\another-iptv-player-windows-*\*"
+
+
+
   
   ; Store installation folder
   WriteRegStr HKCU "Software\Another IPTV Player" "" $INSTDIR
@@ -86,11 +96,11 @@ Section "Another IPTV Player" SecMain
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
                    "DisplayName" "Another IPTV Player"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
-                   "UninstallString" "$INSTDIR\Uninstall.exe"
+  "UninstallString" '"$INSTDIR\Uninstall.exe"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
                    "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
-                   "DisplayIcon" "$INSTDIR\iptv_player.exe"
+                 "DisplayIcon" "$INSTDIR\${APP_EXE}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
                    "Publisher" "Another IPTV Player"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
@@ -106,14 +116,15 @@ Section "Start Menu Shortcuts" SecStartMenu
 
   ; Create shortcuts
   CreateDirectory "$SMPROGRAMS\Another IPTV Player"
-  CreateShortcut "$SMPROGRAMS\Another IPTV Player\Another IPTV Player.lnk" "$INSTDIR\iptv_player.exe"
+  CreateShortcut "$SMPROGRAMS\Another IPTV Player\Another IPTV Player.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
   CreateShortcut "$SMPROGRAMS\Another IPTV Player\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 
 SectionEnd
 
 Section "Desktop Shortcut" SecDesktop
 
-  CreateShortcut "$DESKTOP\Another IPTV Player.lnk" "$INSTDIR\iptv_player.exe"
+  CreateShortcut "$DESKTOP\Another IPTV Player.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\${APP_EXE}" 0
+
 
 SectionEnd
 
