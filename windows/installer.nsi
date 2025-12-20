@@ -74,7 +74,7 @@ Section "Another IPTV Player" SecMain
   
   ; Copy all files from the build directory
   ; Note: In GitHub Actions, we're in windows/ directory, so we go up one level
-  File /r "..\build\windows\x64\runner\Release\*.*"
+  File /r /x "*.pdb" /x "another-iptv-player-windows-*" "..\build\windows\x64\runner\Release\*"
   
   ; Store installation folder
   WriteRegStr HKCU "Software\Another IPTV Player" "" $INSTDIR
