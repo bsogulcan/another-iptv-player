@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:another_iptv_player/models/category.dart';
 import 'package:another_iptv_player/models/category_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
@@ -75,7 +76,7 @@ class PlaylistContentState {
         allLiveStreams.addAll(items);
       }
     } catch (e) {
-      print('Error loading live streams: $e');
+      debugPrint('Error loading live streams: $e');
     }
   }
 
@@ -107,7 +108,7 @@ class PlaylistContentState {
         allMovies.addAll(items);
       }
     } catch (e) {
-      print('Error loading movies: $e');
+      debugPrint('Error loading movies: $e');
     }
   }
 
@@ -138,7 +139,7 @@ class PlaylistContentState {
         allSeries.addAll(items);
       }
     } catch (e) {
-      print('Error loading series: $e');
+      debugPrint('Error loading series: $e');
     }
   }
 

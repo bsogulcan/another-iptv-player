@@ -1661,6 +1661,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Duration'**
   String get duration_label;
+
+  /// No description provided for @series_not_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No series found'**
+  String get series_not_found;
+
+  /// No description provided for @just_now.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get just_now;
+
+  /// No description provided for @minutes_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String minutes_ago(Object count);
+
+  /// No description provided for @hours_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String hours_ago(Object count);
+
+  /// No description provided for @days_ago.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String days_ago(Object count);
+
+  /// No description provided for @error_prefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String error_prefix(Object message);
+
+  /// No description provided for @url_required.
+  ///
+  /// In en, this message translates to:
+  /// **'URL is required'**
+  String get url_required;
+
+  /// No description provided for @username_is_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Username is required'**
+  String get username_is_required;
+
+  /// No description provided for @password_is_required.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get password_is_required;
+
+  /// No description provided for @playlist_name_min_length_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist name must be at least 2 characters'**
+  String get playlist_name_min_length_error;
+
+  /// No description provided for @playlist_name_already_exists_error.
+  ///
+  /// In en, this message translates to:
+  /// **'A playlist with this name already exists'**
+  String get playlist_name_already_exists_error;
+
+  /// No description provided for @valid_url_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid URL'**
+  String get valid_url_error;
+
+  /// No description provided for @favorites_list.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites List'**
+  String get favorites_list;
+
+  /// No description provided for @no_favorites_yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get no_favorites_yet;
+
+  /// No description provided for @no_favorites_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Content you add to favorites will appear here'**
+  String get no_favorites_message;
+
+  /// No description provided for @all_favorites.
+  ///
+  /// In en, this message translates to:
+  /// **'All Favorites'**
+  String get all_favorites;
+
+  /// No description provided for @favorite_live_streams.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Streams'**
+  String get favorite_live_streams;
+
+  /// No description provided for @favorite_movies.
+  ///
+  /// In en, this message translates to:
+  /// **'Movies'**
+  String get favorite_movies;
+
+  /// No description provided for @favorite_series.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get favorite_series;
 }
 
 class _AppLocalizationsDelegate

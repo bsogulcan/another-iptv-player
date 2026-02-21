@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/watch_history_controller.dart';
@@ -40,13 +41,13 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
   }
 
   void _refreshData() {
-    print('WatchHistoryScreen: _refreshData çağrıldı - Key: ${widget.screenKey}');
+    debugPrint('WatchHistoryScreen: _refreshData called - Key: ${widget.screenKey}');
     if (mounted) {
-      print('WatchHistoryScreen: Veriler yenileniyor...');
+      debugPrint('WatchHistoryScreen: Refreshing data...');
       _historyController.loadWatchHistory();
       _favoritesController.loadFavorites();
     } else {
-      print('WatchHistoryScreen: Widget mounted değil');
+      debugPrint('WatchHistoryScreen: Widget not mounted');
     }
   }
 

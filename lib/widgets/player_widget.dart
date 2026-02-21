@@ -8,6 +8,7 @@ import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +158,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     } catch (e) {
       // Silently handle database errors to prevent crashes
       // The next save attempt will retry
-      print('Error saving watch history: $e');
+      debugPrint('Error saving watch history: $e');
     }
   }
 
@@ -315,7 +316,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             // TODO: Implement watch history duration for vod and series
             await _player.open(Media(contentItem.url));
           } catch (e) {
-            print('Error opening media: $e');
+            debugPrint('Error opening media: $e');
           }
         }
         _wasDisconnected = false;
@@ -398,7 +399,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     });
 
     _player.stream.error.listen((error) async {
-      print('PLAYER ERROR -> $error');
+      debugPrint('PLAYER ERROR -> $error');
       if (error.contains('Failed to open')) {
         _errorHandler.handleError(
           error,
@@ -558,11 +559,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
       }
     }
 
-    String overlayTitle = 'Kanal Seç';
+    String overlayTitle = context.loc.select_channel;
     if (currentContent?.contentType == ContentType.vod) {
-      overlayTitle = 'Filmler';
+      overlayTitle = context.loc.movies;
     } else if (currentContent?.contentType == ContentType.series) {
-      overlayTitle = 'Bölümler';
+      overlayTitle = context.loc.episodes;
     }
 
     return Positioned.fill(
@@ -803,11 +804,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
   String _getContentTypeDisplayNameForItem(ContentType contentType) {
     switch (contentType) {
       case ContentType.liveStream:
-        return 'Canlı Yayın';
+        return context.loc.live_stream_content_type;
       case ContentType.vod:
-        return 'Film';
+        return context.loc.movie_content_type;
       case ContentType.series:
-        return 'Dizi';
+        return context.loc.series_content_type;
     }
   }
 
@@ -825,11 +826,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
   String _getContentTypeDisplayName() {
     switch (widget.contentItem.contentType) {
       case ContentType.liveStream:
-        return 'Canlı Yayın';
+        return context.loc.live_stream_content_type;
       case ContentType.vod:
-        return 'Film';
+        return context.loc.movie_content_type;
       case ContentType.series:
-        return 'Dizi';
+        return context.loc.series_content_type;
     }
   }
 

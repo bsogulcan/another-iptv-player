@@ -841,4 +841,72 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get duration_label => 'Süre';
+
+  @override
+  String get series_not_found => 'Dizi bulunamadı';
+
+  @override
+  String get just_now => 'Az önce';
+
+  @override
+  String minutes_ago(Object count) {
+    return '${count}dk önce';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return '${count}s önce';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return '${count}g önce';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return 'Hata: $message';
+  }
+
+  @override
+  String get url_required => 'URL gereklidir';
+
+  @override
+  String get username_is_required => 'Kullanıcı adı gereklidir';
+
+  @override
+  String get password_is_required => 'Şifre gereklidir';
+
+  @override
+  String get playlist_name_min_length_error =>
+      'Playlist adı en az 2 karakter olmalıdır';
+
+  @override
+  String get playlist_name_already_exists_error =>
+      'Bu isimde bir playlist zaten mevcut';
+
+  @override
+  String get valid_url_error => 'Geçerli bir URL giriniz';
+
+  @override
+  String get favorites_list => 'Favori Listesi';
+
+  @override
+  String get no_favorites_yet => 'Henüz favori yok';
+
+  @override
+  String get no_favorites_message =>
+      'Favorilere eklediğiniz içerikler burada görünecek';
+
+  @override
+  String get all_favorites => 'Tüm Favoriler';
+
+  @override
+  String get favorite_live_streams => 'Canlı Yayınlar';
+
+  @override
+  String get favorite_movies => 'Filmler';
+
+  @override
+  String get favorite_series => 'Diziler';
 }

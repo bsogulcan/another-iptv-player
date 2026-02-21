@@ -317,7 +317,7 @@ class M3uController extends ChangeNotifier {
       final content = await file.readAsString(encoding: utf8);
       return _parseM3u(playlistId, content);
     } catch (e) {
-      print('M3U file parse error: $e');
+      debugPrint('M3U file parse error: $e');
       throw Exception('M3U dosyası okunamadı: ${e.toString()}');
     }
   }
@@ -338,7 +338,7 @@ class M3uController extends ChangeNotifier {
       client.close();
       return _parseM3u(playlistId, content);
     } catch (e) {
-      print('M3U URL parse error: $e');
+      debugPrint('M3U URL parse error: $e');
       throw Exception('M3U URL\'si okunamadı: ${e.toString()}');
     }
   }

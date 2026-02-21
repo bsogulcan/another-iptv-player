@@ -844,4 +844,72 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get duration_label => 'Продолжительность';
+
+  @override
+  String get series_not_found => 'Сериалы не найдены';
+
+  @override
+  String get just_now => 'Только что';
+
+  @override
+  String minutes_ago(Object count) {
+    return '$count мин. назад';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return '$count ч. назад';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return '$count дн. назад';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return 'Ошибка: $message';
+  }
+
+  @override
+  String get url_required => 'Требуется URL';
+
+  @override
+  String get username_is_required => 'Требуется имя пользователя';
+
+  @override
+  String get password_is_required => 'Требуется пароль';
+
+  @override
+  String get playlist_name_min_length_error =>
+      'Название плейлиста должно содержать не менее 2 символов';
+
+  @override
+  String get playlist_name_already_exists_error =>
+      'Плейлист с таким названием уже существует';
+
+  @override
+  String get valid_url_error => 'Пожалуйста, введите действительный URL';
+
+  @override
+  String get favorites_list => 'Список избранного';
+
+  @override
+  String get no_favorites_yet => 'Пока нет избранного';
+
+  @override
+  String get no_favorites_message =>
+      'Контент, добавленный в избранное, появится здесь';
+
+  @override
+  String get all_favorites => 'Все избранные';
+
+  @override
+  String get favorite_live_streams => 'Прямые эфиры';
+
+  @override
+  String get favorite_movies => 'Фильмы';
+
+  @override
+  String get favorite_series => 'Сериалы';
 }

@@ -841,4 +841,71 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get duration_label => 'المدة';
+
+  @override
+  String get series_not_found => 'لم يتم العثور على مسلسلات';
+
+  @override
+  String get just_now => 'الآن';
+
+  @override
+  String minutes_ago(Object count) {
+    return 'منذ $count دقيقة';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return 'منذ $count ساعة';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return 'منذ $count يوم';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return 'خطأ: $message';
+  }
+
+  @override
+  String get url_required => 'الرابط مطلوب';
+
+  @override
+  String get username_is_required => 'اسم المستخدم مطلوب';
+
+  @override
+  String get password_is_required => 'كلمة المرور مطلوبة';
+
+  @override
+  String get playlist_name_min_length_error =>
+      'يجب أن يكون اسم قائمة التشغيل حرفين على الأقل';
+
+  @override
+  String get playlist_name_already_exists_error =>
+      'قائمة تشغيل بهذا الاسم موجودة بالفعل';
+
+  @override
+  String get valid_url_error => 'الرجاء إدخال رابط صالح';
+
+  @override
+  String get favorites_list => 'قائمة المفضلة';
+
+  @override
+  String get no_favorites_yet => 'لا توجد مفضلات بعد';
+
+  @override
+  String get no_favorites_message => 'المحتوى الذي تضيفه إلى المفضلة سيظهر هنا';
+
+  @override
+  String get all_favorites => 'جميع المفضلات';
+
+  @override
+  String get favorite_live_streams => 'البث المباشر';
+
+  @override
+  String get favorite_movies => 'الأفلام';
+
+  @override
+  String get favorite_series => 'المسلسلات';
 }

@@ -586,13 +586,13 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
 
       try {
         if (_isUrlSource) {
-          print('URL: ${_urlController.text.trim()}');
+          debugPrint('URL: ${_urlController.text.trim()}');
           final params = {'id': playlist!.id, 'url': _urlController.text};
 
           m3uItems = await compute(M3uParser.parseM3uUrl, params);
         } else {
-          print('File Path: $_selectedFilePath');
-          print('File Name: $_selectedFileName');
+          debugPrint('File Path: $_selectedFilePath');
+          debugPrint('File Name: $_selectedFileName');
           final params = {'id': playlist!.id, 'filePath': _selectedFilePath!};
 
           m3uItems = await compute(M3uParser.parseM3uFile, params);

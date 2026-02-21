@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
+import 'package:flutter/foundation.dart';
 import 'package:another_iptv_player/database/connection/connect.dart';
 
 QueryExecutor driftDatabase({
@@ -25,7 +26,7 @@ QueryExecutor driftDatabase({
         // Depending how central local persistence is to your app, you may want
         // to show a warning to the user if only unrealiable implemetentations
         // are available.
-        print(
+        debugPrint(
           'Using ${result.chosenImplementation} due to missing browser '
           'features: ${result.missingFeatures}',
         );

@@ -851,4 +851,72 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get duration_label => 'Durée';
+
+  @override
+  String get series_not_found => 'Aucune série trouvée';
+
+  @override
+  String get just_now => 'À l\'instant';
+
+  @override
+  String minutes_ago(Object count) {
+    return 'il y a $count min';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return 'il y a $count h';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return 'il y a $count j';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return 'Erreur : $message';
+  }
+
+  @override
+  String get url_required => 'L\'URL est requise';
+
+  @override
+  String get username_is_required => 'Le nom d\'utilisateur est requis';
+
+  @override
+  String get password_is_required => 'Le mot de passe est requis';
+
+  @override
+  String get playlist_name_min_length_error =>
+      'Le nom de la playlist doit comporter au moins 2 caractères';
+
+  @override
+  String get playlist_name_already_exists_error =>
+      'Une playlist avec ce nom existe déjà';
+
+  @override
+  String get valid_url_error => 'Veuillez entrer une URL valide';
+
+  @override
+  String get favorites_list => 'Liste des Favoris';
+
+  @override
+  String get no_favorites_yet => 'Pas encore de favoris';
+
+  @override
+  String get no_favorites_message =>
+      'Le contenu que vous ajoutez aux favoris apparaîtra ici';
+
+  @override
+  String get all_favorites => 'Tous les Favoris';
+
+  @override
+  String get favorite_live_streams => 'Diffusions en Direct';
+
+  @override
+  String get favorite_movies => 'Films';
+
+  @override
+  String get favorite_series => 'Séries';
 }

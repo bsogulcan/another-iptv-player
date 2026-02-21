@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 int safeInt(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
@@ -31,7 +33,7 @@ double? safeDouble(dynamic value) {
     try {
       return double.parse(trimmed);
     } catch (e) {
-      print('Double parsing error for value: "$value" - $e');
+      debugPrint('Double parsing error for value: "$value" - $e');
       return null;
     }
   }
@@ -39,7 +41,7 @@ double? safeDouble(dynamic value) {
   try {
     return double.parse(value.toString());
   } catch (e) {
-    print('Double parsing error for value: "$value" - $e');
+    debugPrint('Double parsing error for value: "$value" - $e');
     return null;
   }
 }
