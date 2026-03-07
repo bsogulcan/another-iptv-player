@@ -14,9 +14,9 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   get_it: ^7.2.0
-  media_kit: 1.2.6
-  media_kit_video: 2.0.1
-  media_kit_libs_video: 1.0.7
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
   provider: ^6.1.1
   drift: ^2.26.1
   sqlite3_flutter_libs: ^0.5.34
