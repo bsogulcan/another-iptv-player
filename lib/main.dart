@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:another_iptv_player/controllers/playlist_controller.dart';
 import 'package:another_iptv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import 'l10n/supported_languages.dart';
 import 'utils/app_themes.dart';
 
 Future<void> main() async {
+  HttpOverrides.global = _HttpTimeoutOverrides();
   await setupServiceLocator();
   runApp(
     MultiProvider(
@@ -49,5 +52,14 @@ class MyApp extends StatelessWidget {
       home: AppInitializerScreen(),
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class _HttpTimeoutOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    final client = super.createHttpClient(context);
+    client.connectionTimeout = const Duration(milliseconds: 750);
+    return client;
   }
 }
