@@ -842,4 +842,72 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get duration_label => 'अवधि';
+
+  @override
+  String get series_not_found => 'कोई सीरीज़ नहीं मिली';
+
+  @override
+  String get just_now => 'अभी';
+
+  @override
+  String minutes_ago(Object count) {
+    return '$count मिनट पहले';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return '$count घंटे पहले';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return '$count दिन पहले';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return 'त्रुटि: $message';
+  }
+
+  @override
+  String get url_required => 'URL आवश्यक है';
+
+  @override
+  String get username_is_required => 'उपयोगकर्ता नाम आवश्यक है';
+
+  @override
+  String get password_is_required => 'पासवर्ड आवश्यक है';
+
+  @override
+  String get playlist_name_min_length_error =>
+      'प्लेलिस्ट का नाम कम से कम 2 अक्षर का होना चाहिए';
+
+  @override
+  String get playlist_name_already_exists_error =>
+      'इस नाम की प्लेलिस्ट पहले से मौजूद है';
+
+  @override
+  String get valid_url_error => 'कृपया एक वैध URL दर्ज करें';
+
+  @override
+  String get favorites_list => 'पसंदीदा सूची';
+
+  @override
+  String get no_favorites_yet => 'अभी तक कोई पसंदीदा नहीं';
+
+  @override
+  String get no_favorites_message =>
+      'आपके द्वारा पसंदीदा में जोड़ी गई सामग्री यहां दिखाई देगी';
+
+  @override
+  String get all_favorites => 'सभी पसंदीदा';
+
+  @override
+  String get favorite_live_streams => 'लाइव स्ट्रीम';
+
+  @override
+  String get favorite_movies => 'फिल्में';
+
+  @override
+  String get favorite_series => 'सीरीज़';
 }

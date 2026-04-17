@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/models/content_type.dart';
@@ -50,7 +51,7 @@ class WatchHistoryController extends ChangeNotifier {
       _seriesHistory.isEmpty;
 
   Future<void> loadWatchHistory() async {
-    print('WatchHistoryController: loadWatchHistory başladı');
+    debugPrint('WatchHistoryController: loadWatchHistory started');
     _setLoading(true);
     _clearError();
 
@@ -63,14 +64,14 @@ class WatchHistoryController extends ChangeNotifier {
     notifyListeners();
 
     if (AppState.currentPlaylist == null) {
-      print('WatchHistoryController: Aktif playlist bulunamadı');
+      debugPrint('WatchHistoryController: No active playlist found');
       _setError('Aktif playlist bulunamadı');
       _setLoading(false);
       return;
     }
 
     final playlistId = AppState.currentPlaylist!.id;
-    print('WatchHistoryController: Playlist ID: $playlistId');
+    debugPrint('WatchHistoryController: Playlist ID: $playlistId');
 
     try {
       final futures = await Future.wait([

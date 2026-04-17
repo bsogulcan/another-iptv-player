@@ -30,7 +30,7 @@ class FavoritesController extends ChangeNotifier {
   int get seriesFavoriteCount => seriesFavorites.length;
 
   Future<void> loadFavorites() async {
-    print('FavoritesController: loadFavorites başladı');
+    debugPrint('FavoritesController: loadFavorites started');
     try {
       _setLoading(true);
       _setError(null);
@@ -39,10 +39,10 @@ class FavoritesController extends ChangeNotifier {
       notifyListeners();
       
       _favorites = await _repository.getAllFavorites();
-      print('FavoritesController: ${_favorites.length} favori yüklendi');
+      debugPrint('FavoritesController: ${_favorites.length} favorites loaded');
       notifyListeners();
     } catch (e) {
-      print('FavoritesController: Hata: $e');
+      debugPrint('FavoritesController: Error: $e');
       _setError('Favoriler yüklenirken hata oluştu: $e');
     } finally {
       _setLoading(false);
@@ -180,4 +180,4 @@ class FavoritesController extends ChangeNotifier {
     _error = error;
     notifyListeners();
   }
-} 
+}  

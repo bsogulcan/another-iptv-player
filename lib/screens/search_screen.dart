@@ -295,7 +295,7 @@ class SearchScreenState extends State<SearchScreen> {
       case ContentType.vod:
         return context.loc.movie_not_found;
       case ContentType.series:
-        return 'Dizi bulunamadı'; // Bu için localization key'ine ihtiyaç var
+        return context.loc.series_not_found;
     }
   }
 

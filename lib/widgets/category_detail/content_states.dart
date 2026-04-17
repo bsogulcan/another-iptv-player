@@ -24,9 +24,9 @@ class ErrorState extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
-          Text('Hata: $message', style: const TextStyle(color: Colors.red)),
+          Text('${context.loc.error_occurred}: $message', style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
+          ElevatedButton(onPressed: onRetry, child: Text(context.loc.try_again)),
         ],
       ),
     );

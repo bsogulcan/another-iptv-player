@@ -819,4 +819,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get duration_label => '时长';
+
+  @override
+  String get series_not_found => '未找到剧集';
+
+  @override
+  String get just_now => '刚刚';
+
+  @override
+  String minutes_ago(Object count) {
+    return '$count分钟前';
+  }
+
+  @override
+  String hours_ago(Object count) {
+    return '$count小时前';
+  }
+
+  @override
+  String days_ago(Object count) {
+    return '$count天前';
+  }
+
+  @override
+  String error_prefix(Object message) {
+    return '错误：$message';
+  }
+
+  @override
+  String get url_required => '需要URL';
+
+  @override
+  String get username_is_required => '需要用户名';
+
+  @override
+  String get password_is_required => '需要密码';
+
+  @override
+  String get playlist_name_min_length_error => '播放列表名称至少需要2个字符';
+
+  @override
+  String get playlist_name_already_exists_error => '已存在同名播放列表';
+
+  @override
+  String get valid_url_error => '请输入有效的URL';
+
+  @override
+  String get favorites_list => '收藏列表';
+
+  @override
+  String get no_favorites_yet => '还没有收藏';
+
+  @override
+  String get no_favorites_message => '您添加到收藏的内容将显示在这里';
+
+  @override
+  String get all_favorites => '所有收藏';
+
+  @override
+  String get favorite_live_streams => '直播';
+
+  @override
+  String get favorite_movies => '电影';
+
+  @override
+  String get favorite_series => '剧集';
 }

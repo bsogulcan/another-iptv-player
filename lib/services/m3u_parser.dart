@@ -1,5 +1,6 @@
 import 'dart:convert' show utf8;
 import 'dart:io' show File, HttpClient;
+import 'package:flutter/foundation.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:uuid/uuid.dart';
 import '../models/m3u_item.dart';
@@ -19,7 +20,7 @@ class M3uParser {
       final content = await file.readAsString(encoding: utf8);
       return parseM3u(playlistId, content);
     } catch (e) {
-      print('M3U file parse error: $e');
+      debugPrint('M3U file parse error: $e');
       throw Exception('M3U dosyası okunamadı: ${e.toString()}');
     }
   }
@@ -44,7 +45,7 @@ class M3uParser {
       client.close();
       return parseM3u(playlistId, content);
     } catch (e) {
-      print('M3U URL parse error: $e');
+      debugPrint('M3U URL parse error: $e');
       throw Exception('M3U URL\'si okunamadı: ${e.toString()}');
     }
   }

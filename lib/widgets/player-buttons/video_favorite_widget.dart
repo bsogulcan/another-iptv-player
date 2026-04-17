@@ -4,6 +4,7 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/player_state.dart';
 import 'package:flutter/material.dart';
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../models/content_type.dart';
 
 class VideoFavoriteWidget extends StatefulWidget {
@@ -90,7 +91,7 @@ class _VideoFavoriteWidgetState extends State<VideoFavoriteWidget> {
     }
 
     return IconButton(
-      tooltip: _isFavorite ? 'Favorilerden Kaldır' : 'Favorilere Ekle',
+      tooltip: _isFavorite ? context.loc.remove_from_favorites : context.loc.add_to_favorites,
       icon: Icon(
         _isFavorite ? Icons.favorite : Icons.favorite_border,
         color: _isFavorite ? Colors.red : Colors.white,
