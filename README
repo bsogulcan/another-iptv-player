@@ -1,0 +1,64 @@
+Another IPTV Player
+===================
+
+A free, open-source IPTV player for Xtream Codes and M3U/M3U8 playlists —
+live TV, movies, and series. No analytics, no telemetry.
+
+Not an IPTV provider: it hosts, sells, and distributes nothing.
+Bring your own compatible service. The app is being rewritten as native
+clients per platform; the original Flutter app is deprecated.
+
+
+Features
+--------
+
+* Sources       — Xtream Codes and M3U/M3U8 (URL or file); multiple playlists.
+* Content       — live TV, movies, series with rich detail views, search,
+                  recently added.
+* Playback      — mpv engine: HDR tone-mapping, PiP, background audio, offline
+                  downloads, continue watching, auto play next, gestures,
+                  aspect-ratio modes.
+* Tracks & subs — per-item video/audio/subtitle memory; subtitle styling,
+                  timing offset, external .srt.
+* Organization  — favorites, resumable history, parental controls, hidden
+                  categories, stats.
+* App           — 10+ languages, no ads, no tracking.
+
+
+Getting Started
+---------------
+
+1. Grab the latest build for your platform:
+   https://github.com/bsogulcan/another-iptv-player/releases
+2. Install and launch.
+3. Add your provider credentials (URL, username, password) or an M3U playlist.
+
+
+Links
+-----
+
+* Website and user guides: https://another-iptv-player.com
+* Engineering docs:        shared/docs
+* Contributing:            CONTRIBUTING.md
+
+
+Acknowledgements
+----------------
+
+Name inspired by Another Redis Desktop Manager
+(https://github.com/qishibo/AnotherRedisDesktopManager).
+
+Flutter playback via media_kit (https://github.com/media-kit/media-kit).
+
+Xtream Codes API behavior documented by JUL1EN094
+(https://github.com/AndreyPavlenko/Fermata/discussions/434).
+
+Thanks to ls-hidden and mode0192 for issues, PRs, and testing.
+
+
+License
+-------
+
+See LICENSE. Use only with a legal IPTV service you are authorized to access.
+
+Support development: https://www.buymeacoffee.com/bsogulcan
