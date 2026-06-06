@@ -69,8 +69,8 @@ const zh: Dictionary = {
 
   features: {
     label: "你需要的一切",
-    headingLine1: "高级功能，",
-    headingLine2: "毫无附加条件。",
+    headingLine1: "媲美付费 IPTV 播放器。",
+    headingLine2: "却是开源的价格。",
     intro:
       "为对标——并超越——付费播放器而生。无需订阅、无需账户、无遥测。带上你自己的提供商即可开始。",
     items: [

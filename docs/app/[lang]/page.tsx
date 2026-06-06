@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { isLocale, locales, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { localizedUrl, pageAlternates } from "@/lib/i18n/seo";
+import { buildOpenGraph, pageAlternates } from "@/lib/i18n/seo";
 import { homeGraph } from "@/lib/structuredData";
 import { JsonLd } from "@/components/JsonLd";
 import { Nav } from "@/components/Nav";
@@ -30,7 +30,11 @@ export async function generateMetadata({
     title: d.meta.home.title,
     description: d.meta.home.description,
     alternates: pageAlternates(locale, ""),
-    openGraph: { url: localizedUrl(locale, "") },
+    openGraph: buildOpenGraph(locale, {
+      path: "",
+      title: d.meta.home.title,
+      description: d.meta.home.description,
+    }),
   };
 }
 

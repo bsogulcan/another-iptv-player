@@ -49,6 +49,9 @@ export async function generateMetadata({
       type: "website",
       siteName: d.meta.siteName,
       locale: ogLocale[locale],
+      alternateLocale: locales
+        .filter((l) => l !== locale)
+        .map((l) => ogLocale[l]),
       title: d.meta.home.title,
       description: d.meta.home.description,
       images: [{ url: "/og.png", width: 1200, height: 630 }],

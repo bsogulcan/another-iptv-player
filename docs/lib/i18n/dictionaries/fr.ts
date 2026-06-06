@@ -69,8 +69,8 @@ const fr: Dictionary = {
 
   features: {
     label: "Tout ce qu'il vous faut",
-    headingLine1: "Des fonctions premium,",
-    headingLine2: "sans contrepartie.",
+    headingLine1: "Comme un lecteur IPTV premium.",
+    headingLine2: "Au prix de l'open source.",
     intro:
       "Conçu pour rivaliser avec les lecteurs payants — et les dépasser. Aucun abonnement, aucun compte, aucune télémétrie. Apportez votre fournisseur et c'est parti.",
     items: [

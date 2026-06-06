@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { isLocale, locales, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { localizedUrl, pageAlternates } from "@/lib/i18n/seo";
+import { buildOpenGraph, pageAlternates } from "@/lib/i18n/seo";
 import { breadcrumbSchema, faqSchema } from "@/lib/structuredData";
 import { JsonLd } from "@/components/JsonLd";
 import { Page } from "@/components/Page";
@@ -23,11 +23,11 @@ export async function generateMetadata({
     title: d.meta.faq.title,
     description: d.meta.faq.description,
     alternates: pageAlternates(locale, "/faq"),
-    openGraph: {
-      url: localizedUrl(locale, "/faq"),
+    openGraph: buildOpenGraph(locale, {
+      path: "/faq",
       title: d.meta.faq.title,
       description: d.meta.faq.description,
-    },
+    }),
   };
 }
 

@@ -67,8 +67,8 @@ const en = {
 
   features: {
     label: "Everything you need",
-    headingLine1: "Premium features,",
-    headingLine2: "zero strings attached.",
+    headingLine1: "Built like a premium IPTV player.",
+    headingLine2: "Priced like open source.",
     intro:
       "Built to match — and beat — the paid players. No subscription, no account, no telemetry. Bring your own provider and go.",
     items: [

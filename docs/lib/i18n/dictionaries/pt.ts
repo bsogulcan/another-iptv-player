@@ -69,8 +69,8 @@ const pt: Dictionary = {
 
   features: {
     label: "Tudo o que você precisa",
-    headingLine1: "Recursos premium,",
-    headingLine2: "sem pegadinhas.",
+    headingLine1: "Como um reprodutor IPTV premium.",
+    headingLine2: "Pelo preço do código aberto.",
     intro:
       "Feito para igualar — e superar — os players pagos. Sem assinatura, sem conta, sem telemetria. Traga seu próprio provedor e comece.",
     items: [

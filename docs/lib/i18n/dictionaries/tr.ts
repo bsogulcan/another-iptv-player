@@ -69,8 +69,8 @@ const tr: Dictionary = {
 
   features: {
     label: "İhtiyacın olan her şey",
-    headingLine1: "Premium özellikler,",
-    headingLine2: "hiçbir koşul yok.",
+    headingLine1: "Premium bir IPTV oynatıcı gibi.",
+    headingLine2: "Açık kaynak fiyatına.",
     intro:
       "Ücretli oynatıcılarla yarışmak — ve onları geçmek — için yapıldı. Abonelik yok, hesap yok, telemetri yok. Kendi sağlayıcını getir ve başla.",
     items: [
