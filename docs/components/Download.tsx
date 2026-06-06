@@ -20,7 +20,7 @@ function iconFor(name: string) {
 
 export function Download({ d }: { d: Dictionary }) {
   return (
-    <section id="download" className="relative py-24 sm:py-32">
+    <section id="download" className="relative overflow-hidden py-24 sm:py-32">
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-acid/[0.07] blur-[150px]" />
       <div className="relative mx-auto max-w-6xl px-5">
         <div className="overflow-hidden rounded-3xl border border-line bg-ink-2/50">
