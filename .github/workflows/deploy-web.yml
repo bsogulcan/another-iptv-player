@@ -1,4 +1,9 @@
-name: Deploy Website
+name: Web Build
+
+# The website is deployed by Vercel (the production domain points there).
+# This workflow no longer publishes to GitHub Pages — it only validates that
+# the static export still builds. It keeps the required "build" status check
+# green for docs/** changes.
 
 on:
   push:
@@ -6,17 +11,15 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/deploy-web.yml'
-
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 defaults:
   run:
@@ -36,28 +39,8 @@ jobs:
           cache: npm
           cache-dependency-path: docs/package-lock.json
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Install dependencies
         run: npm ci
 
       - name: Build (static export)
         run: npm run build
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs/out
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    runs-on: ubuntu-latest
-    name: Deploy
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
