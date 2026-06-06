@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as RPointerEvent,
+} from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { SCREENSHOTS, type Shot } from "@/lib/data";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
@@ -19,11 +25,21 @@ function GalleryShot({
   viewLabel: string;
 }) {
   const [wide, setWide] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // onLoad doesn't fire for images already cached/complete at mount — check here.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setWide(img.naturalWidth > img.naturalHeight);
+    }
+  }, []);
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-ink-3 transition-all duration-300 hover:-translate-y-1 hover:border-acid/40 ${
+      className={`group relative shrink-0 overflow-hidden rounded-2xl border border-line bg-ink-3 transition-all duration-300 hover:-translate-y-1 hover:border-acid/40 ${
         wide
           ? "h-[218px] w-[474px] sm:h-[250px] sm:w-[543px]"
           : "h-[400px] w-[184px] sm:h-[460px] sm:w-[212px]"
@@ -31,9 +47,11 @@ function GalleryShot({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={shot.src}
         alt={shot.alt}
         loading="lazy"
+        draggable={false}
         onLoad={(e) => {
           const img = e.currentTarget;
           setWide(img.naturalWidth > img.naturalHeight);
@@ -65,9 +83,12 @@ function Arrow({
     <button
       type="button"
       aria-label={dir === "prev" ? "Previous" : "Next"}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       disabled={disabled}
-      className={`grid h-11 w-11 place-items-center rounded-full border border-line bg-ink-2/80 text-mist backdrop-blur transition-all hover:border-acid hover:text-acid disabled:pointer-events-none disabled:opacity-30 ${className}`}
+      className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border border-line bg-ink-2/80 text-mist backdrop-blur transition-all hover:border-acid hover:text-acid ${className}`}
     >
       <svg
         viewBox="0 0 24 24"
@@ -115,8 +136,71 @@ export function Screenshots({ d }: { d: Dictionary }) {
     el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
   };
 
+  // Mouse drag-to-scroll with momentum (touch already scrolls natively).
+  const drag = useRef({
+    active: false,
+    startX: 0,
+    startScroll: 0,
+    moved: false,
+    lastX: 0,
+    vx: 0,
+  });
+  const raf = useRef<number | null>(null);
+
+  const cancelMomentum = useCallback(() => {
+    if (raf.current !== null) cancelAnimationFrame(raf.current);
+    raf.current = null;
+  }, []);
+
+  const onPointerDown = (e: RPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const el = trackRef.current;
+    if (!el) return;
+    cancelMomentum();
+    drag.current = {
+      active: true,
+      startX: e.clientX,
+      startScroll: el.scrollLeft,
+      moved: false,
+      lastX: e.clientX,
+      vx: 0,
+    };
+  };
+
+  const onPointerMove = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!drag.current.active) return;
+    const el = trackRef.current;
+    if (!el) return;
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 4) drag.current.moved = true;
+    drag.current.vx = e.clientX - drag.current.lastX;
+    drag.current.lastX = e.clientX;
+    el.scrollLeft = drag.current.startScroll - dx;
+  };
+
+  const endDrag = () => {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    const el = trackRef.current;
+    let v = drag.current.vx;
+    if (!el || Math.abs(v) < 1.5) return;
+    const tick = () => {
+      v *= 0.92;
+      el.scrollLeft -= v;
+      raf.current = Math.abs(v) > 0.4 ? requestAnimationFrame(tick) : null;
+    };
+    raf.current = requestAnimationFrame(tick);
+  };
+
+  useEffect(() => cancelMomentum, [cancelMomentum]);
+
   // lightbox navigation
   const close = useCallback(() => setActive(null), []);
+
+  const openAt = (i: number) => {
+    if (drag.current.moved) return; // a drag just ended — don't open the lightbox
+    setActive(i);
+  };
   const step = useCallback(
     (d: number) =>
       setActive((cur) =>
@@ -183,18 +267,6 @@ export function Screenshots({ d }: { d: Dictionary }) {
                   </button>
                 ))}
               </div>
-              <div className="hidden items-center gap-2 sm:flex">
-                <Arrow
-                  dir="prev"
-                  onClick={() => scrollByCards(-1)}
-                  disabled={!canPrev}
-                />
-                <Arrow
-                  dir="next"
-                  onClick={() => scrollByCards(1)}
-                  disabled={!canNext}
-                />
-              </div>
             </div>
           </Reveal>
         </div>
@@ -204,29 +276,47 @@ export function Screenshots({ d }: { d: Dictionary }) {
           <div
             ref={trackRef}
             onScroll={updateArrows}
-            className="no-scrollbar flex min-h-[400px] snap-x snap-mandatory items-center gap-4 overflow-x-auto scroll-smooth pb-2 sm:min-h-[460px]"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerLeave={endDrag}
+            className="no-scrollbar flex min-h-[400px] cursor-grab select-none items-center gap-4 overflow-x-auto pb-2 active:cursor-grabbing sm:min-h-[460px]"
           >
             {shots.map((shot, i) => (
               <GalleryShot
                 key={shot.src}
                 shot={shot}
-                onClick={() => setActive(i)}
+                onClick={() => openAt(i)}
                 viewLabel={d.screenshots.view}
               />
             ))}
-            {/* trailing spacer for snap padding */}
             <span className="shrink-0" aria-hidden style={{ width: 1 }} />
           </div>
 
-          {/* edge fades */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-ink to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-ink to-transparent" />
-        </div>
+          {/* edge fades — only when there's more to scroll */}
+          <div
+            className={`pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-ink to-transparent transition-opacity duration-200 ${
+              canPrev ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          <div
+            className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-ink to-transparent transition-opacity duration-200 ${
+              canNext ? "opacity-100" : "opacity-0"
+            }`}
+          />
 
-        {/* mobile arrows */}
-        <div className="mt-6 flex items-center justify-center gap-3 sm:hidden">
-          <Arrow dir="prev" onClick={() => scrollByCards(-1)} disabled={!canPrev} />
-          <Arrow dir="next" onClick={() => scrollByCards(1)} disabled={!canNext} />
+          <Arrow
+            dir="prev"
+            onClick={() => scrollByCards(-1)}
+            disabled={!canPrev}
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 disabled:pointer-events-none disabled:opacity-0"
+          />
+          <Arrow
+            dir="next"
+            onClick={() => scrollByCards(1)}
+            disabled={!canNext}
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 disabled:pointer-events-none disabled:opacity-0"
+          />
         </div>
       </div>
 
@@ -249,15 +339,8 @@ export function Screenshots({ d }: { d: Dictionary }) {
               ✕
             </button>
 
-            <div
-              className="flex w-full max-w-5xl flex-1 items-center justify-center gap-3 sm:gap-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Arrow
-                dir="prev"
-                onClick={() => step(-1)}
-                className="shrink-0"
-              />
+            <div className="flex w-full max-w-5xl flex-1 items-center justify-center gap-3 sm:gap-6">
+              <Arrow dir="prev" onClick={() => step(-1)} className="shrink-0" />
               <AnimatePresence mode="popLayout">
                 <motion.img
                   key={shots[active].src}

@@ -3,7 +3,13 @@
 import { motion } from "motion/react";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import { LINKS, PLATFORMS, RATINGS } from "@/lib/data";
-import { AppleIcon, ArrowUpRight, GithubIcon, PlayStoreIcon } from "./icons";
+import {
+  AppleIcon,
+  ArrowUpRight,
+  CoffeeIcon,
+  GithubIcon,
+  PlayStoreIcon,
+} from "./icons";
 
 const container = {
   hidden: {},
@@ -31,7 +37,7 @@ function Phone({
 }) {
   return (
     <motion.div
-      className={`absolute overflow-hidden rounded-[2rem] border border-line bg-ink-3 shadow-[0_24px_60px_-26px_var(--phone-shadow)] ${className}`}
+      className={`absolute overflow-hidden rounded-[2rem] border border-line bg-ink-3 ${className}`}
       initial={{ opacity: 0, y: 60, rotate: rotate * 1.6 }}
       animate={{ opacity: 1, y: 0, rotate }}
       transition={{ duration: 1.1, delay, ease: [0.16, 1, 0.3, 1] }}
@@ -133,6 +139,15 @@ export function Hero({ d }: { d: Dictionary }) {
               {h.ctaGithub}
               <ArrowUpRight className="h-4 w-4 text-fog transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
+            <a
+              href={LINKS.coffee}
+              target="_blank"
+              rel="noreferrer noopener external"
+              className="group inline-flex items-center gap-2 rounded-xl border border-line bg-ink-2/50 px-5 py-3 text-sm font-semibold text-snow backdrop-blur transition-colors hover:border-fog"
+            >
+              <CoffeeIcon className="h-4.5 w-4.5 text-acid" />
+              {d.openSource.coffee}
+            </a>
           </motion.div>
 
           <motion.div
@@ -189,7 +204,6 @@ export function Hero({ d }: { d: Dictionary }) {
             delay={0.4}
             className="left-1/2 top-0 h-[440px] aspect-[1320/2868] -translate-x-1/2 sm:h-[460px]"
           />
-          <div className="pointer-events-none absolute bottom-0 left-1/2 h-40 w-[120%] -translate-x-1/2 bg-gradient-to-t from-ink to-transparent" />
         </div>
       </div>
     </section>

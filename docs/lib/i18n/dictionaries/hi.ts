@@ -31,6 +31,7 @@ const hi: Dictionary = {
     how: "यह कैसे काम करता है",
     faq: "प्रश्न",
     support: "सहायता",
+    guide: "गाइड",
     getApp: "ऐप पाएँ",
     github: "GitHub रिपॉज़िटरी",
     theme: "रंग थीम बदलें",

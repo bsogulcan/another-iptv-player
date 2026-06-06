@@ -31,6 +31,7 @@ const ar: Dictionary = {
     how: "كيف يعمل",
     faq: "الأسئلة",
     support: "الدعم",
+    guide: "الدليل",
     getApp: "احصل على التطبيق",
     github: "مستودع GitHub",
     theme: "تبديل سمة الألوان",

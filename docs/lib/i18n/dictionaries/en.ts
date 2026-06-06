@@ -29,6 +29,7 @@ const en = {
     how: "How it works",
     faq: "FAQ",
     support: "Support",
+    guide: "Guide",
     getApp: "Get the app",
     github: "GitHub repository",
     theme: "Toggle color theme",

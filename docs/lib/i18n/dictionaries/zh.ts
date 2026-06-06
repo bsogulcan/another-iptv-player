@@ -31,6 +31,7 @@ const zh: Dictionary = {
     how: "工作原理",
     faq: "常见问题",
     support: "支持",
+    guide: "指南",
     getApp: "获取应用",
     github: "GitHub 仓库",
     theme: "切换配色主题",

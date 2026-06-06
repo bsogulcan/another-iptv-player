@@ -50,7 +50,14 @@ export default async function SupportPage({
           { name: d.nav.support, path: "/support" },
         ])}
       />
-      <Page d={d} lang={locale} eyebrow={sp.eyebrow} title={sp.title} intro={sp.intro}>
+      <Page
+        d={d}
+        lang={locale}
+        eyebrow={sp.eyebrow}
+        title={sp.title}
+        intro={sp.intro}
+        showCoffee
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           {sp.notes.map((n) => (
             <div

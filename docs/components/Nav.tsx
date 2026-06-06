@@ -18,6 +18,7 @@ export function Nav({ d, lang }: { d: Dictionary; lang: Locale }) {
     { label: d.nav.features, href: `${base}/#features` },
     { label: d.nav.screenshots, href: `${base}/#screenshots` },
     { label: d.nav.how, href: `${base}/#how` },
+    { label: d.nav.guide, href: `${base}/how-to` },
     { label: d.nav.faq, href: `${base}/faq` },
     { label: d.nav.support, href: `${base}/support` },
   ];

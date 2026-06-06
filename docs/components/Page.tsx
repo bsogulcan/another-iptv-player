@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { LINKS } from "@/lib/data";
 import { Nav } from "./Nav";
 import { Footer } from "./Footer";
+import { CoffeeIcon } from "./icons";
 import { SectionLabel } from "./Reveal";
 
 export function Page({
@@ -12,6 +14,8 @@ export function Page({
   title,
   intro,
   children,
+  contentClassName = "max-w-3xl",
+  showCoffee = false,
 }: {
   d: Dictionary;
   lang: Locale;
@@ -19,6 +23,8 @@ export function Page({
   title: string;
   intro?: string;
   children: ReactNode;
+  contentClassName?: string;
+  showCoffee?: boolean;
 }) {
   return (
     <>
@@ -42,7 +48,30 @@ export function Page({
         </section>
 
         <section className="relative pb-28">
-          <div className="relative mx-auto max-w-3xl px-5">{children}</div>
+          <div className={`relative mx-auto px-5 ${contentClassName}`}>
+            {children}
+            {showCoffee && (
+              <div className="mt-16 flex flex-col items-start gap-5 rounded-2xl border border-line bg-ink-2/40 p-8 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-semibold tracking-tight text-snow">
+                    {d.openSource.label}
+                  </h2>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-fog">
+                    {d.openSource.text}
+                  </p>
+                </div>
+                <a
+                  href={LINKS.coffee}
+                  target="_blank"
+                  rel="noreferrer noopener external"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-acid px-5 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5"
+                >
+                  <CoffeeIcon className="h-4 w-4" />
+                  {d.openSource.coffee}
+                </a>
+              </div>
+            )}
+          </div>
         </section>
       </main>
       <Footer d={d} lang={lang} />

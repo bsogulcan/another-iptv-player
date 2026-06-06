@@ -31,6 +31,7 @@ const ru: Dictionary = {
     how: "Как это работает",
     faq: "Вопросы",
     support: "Поддержка",
+    guide: "Руководство",
     getApp: "Скачать приложение",
     github: "Репозиторий GitHub",
     theme: "Переключить тему",

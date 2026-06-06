@@ -21,6 +21,7 @@ export function Footer({ d, lang }: { d: Dictionary; lang: Locale }) {
     {
       title: f.help,
       links: [
+        { label: d.nav.guide, href: `${base}/how-to` },
         { label: d.nav.faq, href: `${base}/faq` },
         { label: d.nav.support, href: `${base}/support` },
         { label: f.privacy, href: `${base}/privacy` },

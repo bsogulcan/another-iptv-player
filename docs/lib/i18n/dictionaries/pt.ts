@@ -31,6 +31,7 @@ const pt: Dictionary = {
     how: "Como funciona",
     faq: "FAQ",
     support: "Suporte",
+    guide: "Guia",
     getApp: "Baixar o app",
     github: "Repositório no GitHub",
     theme: "Alternar tema de cor",

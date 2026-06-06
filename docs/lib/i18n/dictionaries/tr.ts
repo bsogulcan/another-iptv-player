@@ -31,6 +31,7 @@ const tr: Dictionary = {
     how: "Nasıl çalışır",
     faq: "SSS",
     support: "Destek",
+    guide: "Rehber",
     getApp: "Uygulamayı al",
     github: "GitHub deposu",
     theme: "Renk temasını değiştir",

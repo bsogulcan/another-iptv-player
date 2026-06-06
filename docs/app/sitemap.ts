@@ -4,7 +4,7 @@ import { localizedUrl } from "@/lib/i18n/seo";
 
 export const dynamic = "force-static";
 
-const paths = ["", "/faq", "/support", "/privacy"];
+const paths = ["", "/how-to", "/faq", "/support", "/privacy"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

@@ -48,6 +48,25 @@ export function LinuxIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function CoffeeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      {...props}
+    >
+      <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Z" />
+      <path d="M17 10h2.25a2.25 2.25 0 0 1 0 4.5H17" />
+      <path d="M7.5 3.5v2M11 3.5v2M14.5 3.5v2" />
+    </svg>
+  );
+}
+
 export function ArrowUpRight(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

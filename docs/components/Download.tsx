@@ -1,8 +1,9 @@
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
-import { DOWNLOADS } from "@/lib/data";
+import { DOWNLOADS, LINKS } from "@/lib/data";
 import {
   AppleIcon,
   ArrowUpRight,
+  CoffeeIcon,
   LinuxIcon,
   PlayStoreIcon,
   WindowsIcon,
@@ -36,6 +37,18 @@ export function Download({ d }: { d: Dictionary }) {
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-5 text-fog">{d.download.intro}</p>
+              </Reveal>
+              <Reveal delay={0.15}>
+                <a
+                  href={LINKS.coffee}
+                  target="_blank"
+                  rel="noreferrer noopener external"
+                  className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-acid transition-colors hover:text-acid-soft"
+                >
+                  <CoffeeIcon className="h-4 w-4" />
+                  {d.openSource.coffee}
+                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </a>
               </Reveal>
             </div>
 

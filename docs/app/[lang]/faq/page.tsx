@@ -50,7 +50,14 @@ export default async function FaqPage({
           { name: d.nav.faq, path: "/faq" },
         ])}
       />
-      <Page d={d} lang={locale} eyebrow={fp.eyebrow} title={fp.title} intro={fp.intro}>
+      <Page
+        d={d}
+        lang={locale}
+        eyebrow={fp.eyebrow}
+        title={fp.title}
+        intro={fp.intro}
+        showCoffee
+      >
         <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-ink-2/40">
           {fp.items.map((item, i) => (
             <details key={i} className="group">
