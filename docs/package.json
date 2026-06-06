@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Landing page for Another IPTV Player",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
