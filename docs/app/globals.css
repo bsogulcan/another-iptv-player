@@ -92,6 +92,13 @@ body {
   color: var(--color-ink);
 }
 
+/* Tailwind v4 no longer sets cursor:pointer on buttons by default. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary {
+  cursor: pointer;
+}
+
 .font-display {
   font-family: var(--font-display);
 }
