@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
-import { LINKS, PLATFORMS } from "@/lib/data";
+import { LINKS, PLATFORMS, RATINGS } from "@/lib/data";
 import { AppleIcon, ArrowUpRight, GithubIcon, PlayStoreIcon } from "./icons";
 
 const container = {
@@ -133,6 +133,31 @@ export function Hero({ d }: { d: Dictionary }) {
               {h.ctaGithub}
               <ArrowUpRight className="h-4 w-4 text-fog transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
+          </motion.div>
+
+          <motion.div
+            variants={item}
+            className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-fog"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-acid" aria-hidden>
+                ★★★★★
+              </span>
+              <strong className="font-semibold text-snow">
+                {RATINGS.appStore.value.toFixed(1)}
+              </strong>
+              <span>App Store · {RATINGS.appStore.count}</span>
+            </span>
+            <span className="hidden h-3.5 w-px bg-line sm:block" />
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-acid" aria-hidden>
+                ★★★★★
+              </span>
+              <strong className="font-semibold text-snow">
+                {RATINGS.macStore.value.toFixed(1)}
+              </strong>
+              <span>macOS · {RATINGS.macStore.count}</span>
+            </span>
           </motion.div>
 
           <motion.div

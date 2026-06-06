@@ -10,6 +10,12 @@ export const LINKS = {
   email: "mailto:bsogulcan@gmail.com",
 };
 
+/** Real App Store / Mac App Store ratings (update as they change). */
+export const RATINGS = {
+  appStore: { value: 4.7, count: 36 },
+  macStore: { value: 4.8, count: 16 },
+};
+
 export const PLATFORMS = [
   "iOS",
   "Android",

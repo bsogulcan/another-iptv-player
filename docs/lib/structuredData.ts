@@ -1,4 +1,4 @@
-import { LINKS } from "./data";
+import { LINKS, RATINGS } from "./data";
 import { SITE_URL, type Locale } from "./i18n/config";
 import { localizedUrl } from "./i18n/seo";
 import type { Dictionary } from "./i18n/dictionaries/en";
@@ -30,6 +30,11 @@ export function websiteSchema(locale: Locale) {
 }
 
 export function softwareAppSchema(d: Dictionary) {
+  const count = RATINGS.appStore.count + RATINGS.macStore.count;
+  const value =
+    (RATINGS.appStore.value * RATINGS.appStore.count +
+      RATINGS.macStore.value * RATINGS.macStore.count) /
+    count;
   return {
     "@type": "SoftwareApplication",
     "@id": APP_ID,
@@ -69,6 +74,13 @@ export function softwareAppSchema(d: Dictionary) {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: value.toFixed(1),
+      ratingCount: String(count),
+      bestRating: "5",
+      worstRating: "1",
     },
     publisher: { "@id": ORG_ID },
   };

@@ -69,7 +69,7 @@ system install is required.
 ## Documentation
 
 - Engineering docs (architecture, API contracts): [`shared/docs`](shared/docs)
-- Project website and user guides: https://www.another-iptv-player.com
+- Project website and user guides: https://another-iptv-player.com
 
 ## Roadmap
 
