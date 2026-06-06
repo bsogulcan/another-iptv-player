@@ -1,0 +1,163 @@
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700,900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* token names map to theme-aware CSS variables (see blocks below) */
+  --color-ink: var(--c-bg);
+  --color-ink-2: var(--c-surface);
+  --color-ink-3: var(--c-surface-2);
+  --color-line: var(--c-border);
+  --color-fog: var(--c-muted);
+  --color-mist: var(--c-body);
+  --color-snow: var(--c-strong);
+  --color-acid: var(--c-accent);
+  --color-acid-soft: var(--c-accent-soft);
+
+  --font-display: "Clash Display", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- Theme palettes ---- */
+/* Light (default fallback when no JS / no preference) */
+:root {
+  --c-bg: #fbfbf9;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1f2ef;
+  --c-border: #e4e6e1;
+  --c-muted: #6a716b;
+  --c-body: #2b2f2c;
+  --c-strong: #0c0e0d;
+  --c-accent: #059669;
+  --c-accent-soft: #047857;
+  --c-grain: 0;
+  --phone-shadow: rgba(17, 24, 20, 0.14);
+  color-scheme: light;
+}
+
+/* Dark — applied for system-dark unless the user forced light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-bg: #08090a;
+    --c-surface: #0e1011;
+    --c-surface-2: #16191b;
+    --c-border: #23282b;
+    --c-muted: #98a0a4;
+    --c-body: #c7ced1;
+    --c-strong: #f3f6f5;
+    --c-accent: #10b981;
+    --c-accent-soft: #0ea372;
+    --c-grain: 1;
+    --phone-shadow: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+
+/* Dark — forced via toggle */
+:root[data-theme="dark"] {
+  --c-bg: #08090a;
+  --c-surface: #0e1011;
+  --c-surface-2: #16191b;
+  --c-border: #23282b;
+  --c-muted: #98a0a4;
+  --c-body: #c7ced1;
+  --c-strong: #f3f6f5;
+  --c-accent: #10b981;
+  --c-accent-soft: #0ea372;
+  --c-grain: 1;
+  --phone-shadow: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-mist);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-acid);
+  color: var(--color-ink);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Grain overlay */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: calc(0.045 * var(--c-grain, 1));
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Subtle dotted grid */
+.dot-grid {
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--c-strong) 7%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
+
+/* Acid glow utility */
+.acid-glow {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-accent) 25%, transparent),
+    0 18px 60px -12px color-mix(in srgb, var(--c-accent) 35%, transparent);
+}
+
+/* Hide scrollbar (horizontal galleries) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Marquee */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 99px;
+  border: 2px solid var(--color-ink);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #313638;
+}

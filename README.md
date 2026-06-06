@@ -1,138 +1,96 @@
 # Another IPTV Player
 
-<img align="right" width="110" src="https://raw.githubusercontent.com/bsogulcan/another-iptv-player/refs/heads/main/docs/public/logo.png">
-
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/bsogulcan/another-iptv-player?label=Latest%20Release)
-![GitHub](https://img.shields.io/github/license/bsogulcan/another-iptv-player?color=brightgreen&label=License)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-windows.yml/badge.svg)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-linux.yml/badge.svg)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-android.yml/badge.svg)
-![](https://github.com/bsogulcan/another-iptv-player/actions/workflows/build-web.yml/badge.svg)
+![License](https://img.shields.io/github/license/bsogulcan/another-iptv-player?color=brightgreen&label=License)
 
-**Free & Open Source IPTV Streaming Solution**
+A free and open-source IPTV player for Xtream Codes and M3U/M3U8 playlists, covering live
+TV, movies, and series. The clients collect **no analytics or telemetry**.
 
-Another IPTV Player is a lightweight, multi-platform, and feature-rich IPTV player.
-Our goal is to provide all the premium features of paid IPTV players for free and with full transparency.
+This repository is **not** an IPTV provider — it does not host, sell, or distribute any
+channels, streams, or subscriptions. A compatible IPTV service of your own is required.
 
-> **Native rewrite in progress.** The project is being rewritten as native apps per
-> platform. The original **Flutter** app is **deprecated** and kept under
-> [`apps/flutter`](apps/flutter) for reference. New development happens in the native apps below.
+The project is being rewritten as native applications per platform. The original Flutter
+app is retained but **deprecated** under [`apps/flutter`](apps/flutter); active development
+happens in the native apps.
 
-## Repository Structure
+## Repository layout
 
-This is a monorepo. Each platform/ecosystem is a self-contained app under `apps/`, with
+A monorepo: each platform is a self-contained application under `apps/`, with
 cross-platform engineering resources under `shared/`.
 
-| Path | What | Status |
-|------|------|--------|
-| [`apps/flutter`](apps/flutter) | Original cross-platform Flutter app | Deprecated |
-| [`apps/ios`](apps/ios) | Native iOS app (Swift/SwiftUI) | In progress |
-| [`apps/macos`](apps/macos) | Native macOS app (Swift/SwiftUI) | In progress |
-| [`apps/tvos`](apps/tvos) | Native tvOS / Apple TV app (Swift/SwiftUI) | Source recovered (Xcode project missing) |
-| [`apps/android`](apps/android) | Native Android (Kotlin) | In progress |
+| Path | Description | Status |
+|------|-------------|--------|
+| [`apps/ios`](apps/ios) | Native iOS app (Swift/SwiftUI, libmpv) | Active |
+| [`apps/macos`](apps/macos) | Native macOS app (Swift/SwiftUI, libmpv) | Active |
+| [`apps/tvos`](apps/tvos) | Native tvOS app (Swift/SwiftUI, libmpv) | Active |
+| [`apps/android`](apps/android) | Native Android app (Kotlin, libmpv) | Active |
 | [`apps/windows`](apps/windows) | Native Windows app | Planned |
-| [`shared/docs`](shared/docs) | Architecture and API contracts (Xtream / M3U / XMLTV) | - |
-| [`shared/fixtures`](shared/fixtures) | Shared test data (playlists, EPG, mock responses) | - |
-| [`shared/design`](shared/design) | Icons, branding, store assets | - |
-| [`docs`](docs) | Public website (Next.js landing page) | - |
+| [`apps/flutter`](apps/flutter) | Cross-platform Flutter app (Android, iOS, web, desktop) | Deprecated |
+| [`shared/docs`](shared/docs) | Architecture and API contracts (Xtream / M3U / XMLTV) | — |
+| [`shared/fixtures`](shared/fixtures) | Shared test data (playlists, EPG, mock responses) | — |
+| [`shared/design`](shared/design) | Icons, branding, store assets | — |
+| [`docs`](docs) | Project website (Next.js) | — |
 
-**No analytics:** this project does not collect any analytics or telemetry.
+## Building
+
+Each application is built with its own native toolchain:
+
+| App | Toolchain | Build |
+|-----|-----------|-------|
+| `apps/ios` | Xcode | open `another-iptv-player.xcworkspace` |
+| `apps/macos` | Xcode + XcodeGen | `xcodegen generate`, then open the project |
+| `apps/tvos` | Xcode + XcodeGen | `xcodegen generate`, then open the project |
+| `apps/android` | Gradle / Android Studio | `./gradlew assembleDebug` |
+| `apps/flutter` | Flutter | `flutter pub get && flutter run` |
+
+The Apple apps link libmpv from each app's `Vendor/` directory via build-phase scripts; no
+system install is required.
 
 ## Features
 
-- **Xtream Codes API Support** - Full compatibility with Xtream Codes API
-- **M3U & M3U8 Playlist Support** - Import and play from M3U/M3U8 playlists
-- **Live TV Streaming** - Watch live television channels
-- **Movies & Series** - Stream movies and TV series with full support
-- **Continue Watching** - Automatically resume where you left off
-- **Auto Play Next** - Seamless episode transitions
-- **Global Search** - Search across all content types
-- **Watch History** - Track your viewing history
-- **Favorites** - Save your favorite content for quick access
-- **Track Selection** - Choose video, audio, and subtitle tracks
-- **Track Selection Memory** - Remember your preferences
-- **Subtitle Customization** - Customize subtitle appearance
-- **Multi-language Support** - Available in 10+ languages
-- **Cross-platform** - Works on all major platforms
+- **Sources** — Xtream Codes API and M3U/M3U8 playlists (remote URL or local file);
+  multiple playlists with add/edit/switch.
+- **Content** — live TV, movies, and series with seasons/episodes; rich detail views
+  (plot, cast, genre, ratings, trailers); global search; recently added.
+- **Playback (mpv)** — HDR tone-mapping, Picture-in-Picture, background audio, offline
+  downloads, continue watching, auto play next, gesture controls, aspect-ratio modes.
+- **Tracks** — video/audio/subtitle selection with per-item memory.
+- **Subtitles** — customization (font, size, color, position), timing offset, external `.srt`.
+- **Organization** — favorites, watch history with resume, parental controls, hide
+  categories, subscription/content stats.
+- **App** — 10+ languages, no ads, no tracking.
 
-## Platforms
+## Getting started
 
-Available on:
-- **iOS** - iPhone and iPad
-- **Android** - Phones and tablets
-- **Web** - Web browsers
-- **Windows** - Desktop application
-- **macOS** - MacOS app
-- **Linux** - Desktop Linux distributions
-
-## Getting Started
-
-### Requirements
-
-- An IPTV provider that supports **Xtream Codes API** or **M3U/M3U8 playlists**
-- Your IPTV service credentials (server URL, username, password)
-
-> **Important Note:**  
-> We are **not** an IPTV provider and do **not** offer or sell any IPTV subscriptions or content.  
-> You need your own IPTV provider that supports the Xtream Codes API to use the app.  
-> No registration or payment is required to use this application.
-
-### Installation
-
-1. Download the latest release for your platform from the [Releases](https://github.com/bsogulcan/another-iptv-player/releases) page
-2. Install the application
-3. Launch the app and add your IPTV provider credentials
-4. Start streaming
+1. Download the latest build for your platform from [Releases](https://github.com/bsogulcan/another-iptv-player/releases).
+2. Install and launch the app.
+3. Add your IPTV provider credentials (server URL, username, password) or an M3U playlist.
 
 ## Documentation
 
-For detailed documentation, guides, and FAQs, visit our official website:
-
-**[https://www.another-iptv-player.com](https://www.another-iptv-player.com)**
+- Engineering docs (architecture, API contracts): [`shared/docs`](shared/docs)
+- Project website and user guides: https://www.another-iptv-player.com
 
 ## Roadmap
 
-### Completed
-
-- [x] Xtream Codes API Support
-- [x] Live TV Streaming
-- [x] Movies Streaming
-- [x] Series Streaming
-- [x] Watch History
-- [x] Global Search
-- [x] Video, Audio, and Subtitle Track Selection
-- [x] Track Selection Memory
-- [x] Subtitle Customization
-- [x] Localization (Multi-language Support)
-- [x] M3U & M3U8 Playlist Support
-- [x] Favorites
-- [x] Improved UI/UX
-
-### Planned
-
-- [ ] EPG (Electronic Program Guide) Support
-- [ ] TV Support
+- EPG (Electronic Program Guide) support
+- TV interface support
 
 ## Contributing
 
-We welcome contributions from the community! Whether it's bug reports, feature requests, or code contributions, your help is appreciated.
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-For guidelines and details, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+## Acknowledgements
 
-## Acknowledgement
+- Name inspired by [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager).
+- The Flutter app uses [media_kit](https://github.com/media-kit/media-kit) for playback.
+- Xtream Codes API behavior documented by [JUL1EN094](https://github.com/JUL1EN094)
+  ([discussion](https://github.com/AndreyPavlenko/Fermata/discussions/434)).
+- Thanks to [ls-hidden](https://github.com/ls-hidden) and [mode0192](https://github.com/mode0192)
+  for issues, pull requests, and testing.
 
-- The project name "Another IPTV Player" is inspired by [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager).
-- This project uses [media_kit](https://github.com/media-kit/media-kit) as the cross-platform video & audio player for Flutter & Dart.
-- Special thanks to [JUL1EN094](https://github.com/JUL1EN094) for documenting and sharing detailed information about Xtream Code API implementation. See the [discussion](https://github.com/AndreyPavlenko/Fermata/discussions/434) for more details.
-- Special thanks to [ls-hidden](https://github.com/ls-hidden) for contributing with issues and pull requests.
-- Special thanks to [mode0192](https://github.com/mode0192) for providing detailed issues, pull requests and a test account.
+## License
 
-## Support
+See [LICENSE](LICENSE). Use only with a legal IPTV service you are authorized to access.
 
-If you'd like to help ensure this project continues to improve, consider supporting its development. Your contribution makes a real difference!
-
-<a href="https://www.buymeacoffee.com/bsogulcan" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-
----
-
-**Disclaimer:** Another IPTV Player does not provide any IPTV content or subscriptions. Use your own legal IPTV service.
+Support development: [Buy Me a Coffee](https://www.buymeacoffee.com/bsogulcan).

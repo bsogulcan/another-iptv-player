@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Another IPTV Player</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="https://another-iptv-player.com/en/" />
+    <script>
+      (function () {
+        var supported = ["en", "tr", "de", "es", "fr", "pt", "ru", "ar", "hi", "zh"];
+        var def = "en";
+        function pick() {
+          try {
+            var langs =
+              navigator.languages && navigator.languages.length
+                ? navigator.languages
+                : [navigator.language || def];
+            for (var i = 0; i < langs.length; i++) {
+              var code = (langs[i] || "").toLowerCase().split("-")[0];
+              if (supported.indexOf(code) >= 0) return code;
+            }
+          } catch (e) {}
+          return def;
+        }
+        location.replace("/" + pick() + "/");
+      })();
+    </script>
+    <meta http-equiv="refresh" content="0; url=/en/" />
+  </head>
+  <body style="background:#08090a;color:#c7ced1;font-family:system-ui,sans-serif">
+    <p style="padding:2rem">
+      Redirecting… <a href="/en/" style="color:#10b981">Continue</a>
+    </p>
+  </body>
+</html>
