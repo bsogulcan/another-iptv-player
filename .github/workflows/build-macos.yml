@@ -1,16 +1,19 @@
-name: Build macOS
+name: Flutter · Build macOS
 
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-macos.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -33,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: build/macos/Build/Products/Release/
+          path: apps/flutter/build/macos/Build/Products/Release/

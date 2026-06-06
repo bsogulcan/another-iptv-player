@@ -1,0 +1,101 @@
+default_platform(:ios)
+
+platform :ios do
+  # Load App Store Connect API key once per run if env vars are set.
+  # Sets lane_context[:APP_STORE_CONNECT_API_KEY] which deliver/precheck pick up via explicit api_key: param.
+  before_all do
+    next unless ENV["APP_STORE_CONNECT_API_KEY_PATH"]
+    key_path = File.expand_path(ENV["APP_STORE_CONNECT_API_KEY_PATH"])
+    next unless File.exist?(key_path)
+
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_API_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_API_ISSUER_ID"),
+      key_filepath: key_path,
+      duration: 1200,
+      in_house: false
+    )
+
+    # Strip env vars so downstream actions (deliver/precheck) don't double-load
+    # them as `api_key_path` and conflict with the in-memory `api_key` hash.
+    ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+    ENV.delete("APP_STORE_CONNECT_API_KEY_ID")
+    ENV.delete("APP_STORE_CONNECT_API_ISSUER_ID")
+  end
+
+  desc "Capture App Store screenshots for iPhone 6.9\" and iPad 13\" via XCUITest"
+  lane :screenshots do
+    capture_ios_screenshots
+  end
+
+  desc "Upload App Store metadata (text + URLs only, no binary, no screenshots)"
+  lane :metadata do
+    deliver(
+      api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY],
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: true
+    )
+  end
+
+  desc "Upload App Store screenshots only (no binary, no metadata)"
+  lane :screenshots_upload do
+    deliver(
+      api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY],
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      skip_metadata: true,
+      force: true
+    )
+  end
+
+  desc "Validate metadata against Apple's App Store Review Guidelines (precheck)"
+  lane :precheck_metadata do
+    precheck(
+      api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY],
+      app_identifier: "dev.ogos.another-iptv-player",
+      default_rule_level: :warn,
+      # API Key + IAP check incompatible (fastlane limitation). App has no IAP, safe to disable.
+      include_in_app_purchases: false
+    )
+  end
+
+  desc "Local sanity check for metadata character limits (no network calls)"
+  lane :verify_metadata do
+    require "find"
+
+    limits = {
+      "name.txt"             => 30,
+      "subtitle.txt"         => 30,
+      "keywords.txt"         => 100,
+      "promotional_text.txt" => 170,
+      "description.txt"      => 4000,
+      "release_notes.txt"    => 4000
+    }
+
+    metadata_root = File.expand_path("metadata", __dir__)
+    failed = []
+
+    Find.find(metadata_root) do |path|
+      next unless File.file?(path)
+      basename = File.basename(path)
+      next unless limits.key?(basename)
+
+      content = File.read(path).strip
+      char_count = content.length
+      max = limits[basename]
+      if char_count > max
+        failed << "#{path}: #{char_count}/#{max} chars (over by #{char_count - max})"
+      else
+        UI.message("OK  #{path}  #{char_count}/#{max}")
+      end
+    end
+
+    if failed.any?
+      UI.user_error!("Metadata over limit:\n" + failed.join("\n"))
+    else
+      UI.success("All metadata fields within App Store limits.")
+    end
+  end
+end

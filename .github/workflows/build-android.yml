@@ -1,4 +1,4 @@
-name: Build Android
+name: Flutter · Build Android
 
 on:
   pull_request:
@@ -8,16 +8,22 @@ on:
       - opened
       - synchronize
       - reopened
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-android.yml'
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +55,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: apps/flutter/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload Android AAB
         uses: actions/upload-artifact@v4
         with:
           name: android-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+          path: apps/flutter/build/app/outputs/bundle/release/app-release.aab

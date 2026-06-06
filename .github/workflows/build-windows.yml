@@ -1,4 +1,4 @@
-name: Build Windows
+name: Flutter · Build Windows
 
 on:
   pull_request:
@@ -8,16 +8,22 @@ on:
       - opened
       - synchronize
       - reopened
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-windows.yml'
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-windows.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -40,4 +46,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: build/windows/x64/runner/Release/
+          path: apps/flutter/build/windows/x64/runner/Release/

@@ -1,4 +1,4 @@
-name: Build Web
+name: Flutter · Build Web
 
 on:
   pull_request:
@@ -8,16 +8,22 @@ on:
       - opened
       - synchronize
       - reopened
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-web.yml'
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-web.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -40,4 +46,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: build/web/
+          path: apps/flutter/build/web/

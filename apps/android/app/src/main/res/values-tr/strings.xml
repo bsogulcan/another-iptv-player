@@ -1,0 +1,227 @@
+<resources>
+    <string name="app_name">Another IPTV Player</string>
+
+    <!-- Common controls -->
+    <string name="common_back">Geri</string>
+    <string name="common_cancel">İptal</string>
+    <string name="common_save">Kaydet</string>
+    <string name="common_delete">Sil</string>
+    <string name="common_edit">Düzenle</string>
+    <string name="common_ok">Tamam</string>
+    <string name="common_search">Ara</string>
+    <string name="common_refresh">Yenile</string>
+    <string name="common_play">Oynat</string>
+    <string name="common_pause">Duraklat</string>
+    <string name="common_retry">Tekrar dene</string>
+    <string name="common_show">Göster</string>
+    <string name="common_hide">Gizle</string>
+    <string name="common_loading">Yükleniyor…</string>
+    <string name="common_unnamed">İsimsiz</string>
+
+    <!-- Screen titles -->
+    <string name="screen_playlists">Playlistler</string>
+    <string name="screen_live_tv">Canlı TV</string>
+    <string name="screen_movies">Filmler</string>
+    <string name="screen_series">Diziler</string>
+    <string name="screen_settings">Ayarlar</string>
+    <string name="screen_search">Arama</string>
+    <string name="screen_downloads">İndirmeler</string>
+    <string name="screen_watch_history">İzleme Geçmişi</string>
+    <string name="screen_m3u_channels">Canlı Kanallar</string>
+    <string name="screen_favorites">Favoriler</string>
+
+    <!-- Shelves -->
+    <string name="shelf_continue_watching">Devam et</string>
+    <string name="shelf_recently_added">Yeni eklenenler</string>
+
+    <!-- Empty states -->
+    <string name="empty_no_playlists">Henüz playlist yok</string>
+    <string name="empty_add_playlist">Playlist Ekle</string>
+    <string name="empty_no_downloads">Henüz bir indirme yok.</string>
+    <string name="empty_no_history">Henüz izleme yok.</string>
+    <string name="empty_search_idle">Aramak için yaz.</string>
+    <string name="empty_search_no_results">Sonuç bulunamadı.</string>
+    <string name="empty_no_categories">Henüz kategori yok.</string>
+    <string name="empty_categories_hidden">Tüm kategoriler gizli.</string>
+    <string name="empty_shelf_no_content">Bu kategoride içerik yok.</string>
+    <string name="empty_category_no_live">Bu kategoride kanal yok.</string>
+    <string name="empty_category_no_movies">Bu kategoride film yok.</string>
+    <string name="empty_category_no_series">Bu kategoride dizi yok.</string>
+    <string name="empty_category_search_no_live">Aramayla eşleşen kanal yok.</string>
+    <string name="empty_category_search_no_movies">Aramayla eşleşen film yok.</string>
+    <string name="empty_category_search_no_series">Aramayla eşleşen dizi yok.</string>
+    <string name="empty_favorites_live">Favori canlı kanal yok.</string>
+    <string name="empty_favorites_vod">Favori film yok.</string>
+    <string name="empty_favorites_series">Favori dizi yok.</string>
+
+    <!-- Settings -->
+    <string name="settings_card_player">Oynatıcı</string>
+    <string name="settings_card_library">Kitaplık</string>
+    <string name="settings_card_about">Hakkında</string>
+    <string name="settings_card_subscription">Aboneliğim</string>
+    <string name="settings_card_stats">İçerik İstatistikleri</string>
+    <string name="settings_card_content">İçerik</string>
+    <string name="settings_player_pip">Picture-in-Picture</string>
+    <string name="settings_player_pip_subtitle">Ana ekrana çıkıldığında küçük pencerede oynatmaya devam et.</string>
+    <string name="settings_player_bg">Arka planda oynat</string>
+    <string name="settings_player_bg_subtitle">Uygulama arka plana geçtiğinde sesi sürdür.</string>
+    <string name="settings_player_long_press">Basılı tutarak 2× hız</string>
+    <string name="settings_player_long_press_subtitle">Oynatıcı ekranında basılı tutunca geçici olarak 2× hızlandır.</string>
+    <string name="settings_library_downloads">İndirmeler</string>
+    <string name="settings_library_downloads_subtitle">İndirme kuyruğu ve tamamlanan içerik.</string>
+    <string name="settings_library_history">İzleme Geçmişi</string>
+    <string name="settings_library_history_subtitle">Son izlediğin içerikleri sürdür.</string>
+    <string name="settings_version">Sürüm</string>
+    <string name="settings_re_download">İçeriği yeniden indir</string>
+    <string name="settings_user">Kullanıcı</string>
+    <string name="settings_password">Şifre</string>
+    <string name="settings_loading_info">Bilgiler alınıyor…</string>
+    <string name="settings_active_connection">Aktif bağlantı</string>
+    <string name="settings_max_connection">Maks. bağlantı</string>
+    <string name="settings_unlimited">Sınırsız</string>
+    <string name="settings_unlimited_or_unknown">Sınırsız veya bilinmiyor</string>
+    <string name="settings_expired">Süresi doldu</string>
+    <string name="settings_expires_today">Bugün dolacak</string>
+    <string name="settings_days_left">%1$d gün</string>
+    <string name="settings_live_count">Canlı kanal</string>
+    <string name="settings_vod_count">Film</string>
+    <string name="settings_series_count">Dizi</string>
+    <string name="settings_adult_filter">Yetişkin içeriği filtrele</string>
+    <string name="settings_adult_filter_subtitle">Adult olarak işaretlenmiş kategori/kanal/filmleri gizler. Açılınca içerikler yeniden indirilir.</string>
+    <string name="settings_github_subtitle">Kaynak kod, sorun bildirme ve katkı.</string>
+    <string name="settings_github_label">GitHub deposu</string>
+    <string name="settings_card_playlist_info">Playlist Bilgileri</string>
+    <string name="settings_card_server">Sunucu</string>
+    <string name="settings_name">Ad</string>
+    <string name="settings_server">Sunucu</string>
+    <string name="settings_unknown_error">Bilinmeyen hata</string>
+    <string name="settings_subscription_unknown">Abonelik bilgisi yok.</string>
+    <string name="settings_subscription_status">Durum</string>
+
+    <!-- Player overlay -->
+    <string name="player_pip">Resim içinde resim</string>
+    <string name="player_subtitles">Altyazı ayarları</string>
+    <string name="player_tracks">Parçalar</string>
+    <string name="player_seek_back_10">10 saniye geri</string>
+    <string name="player_seek_fwd_10">10 saniye ileri</string>
+    <string name="player_next_episode">Sıradaki bölüm</string>
+    <string name="player_section_subtitles">Altyazı</string>
+    <string name="player_section_audio">Ses</string>
+    <string name="player_section_video">Video</string>
+    <string name="player_mpv_recent_logs">mpv (son %1$d satır):</string>
+    <string name="player_brightness">Parlaklık</string>
+    <string name="player_volume">Ses</string>
+    <string name="player_episode_default_format">Bölüm %1$s</string>
+
+    <!-- Subtitle sheet -->
+    <string name="subtitle_sheet_title">Altyazı Ayarları</string>
+    <string name="subtitle_font_size">Yazı boyutu</string>
+    <string name="subtitle_outline">Kenarlık</string>
+    <string name="subtitle_delay_seconds">Gecikme (sn)</string>
+    <string name="subtitle_italic">Eğik (italic)</string>
+    <string name="subtitle_background">Arka plan</string>
+
+    <!-- Playlist add / verify -->
+    <string name="add_xtream_verifying">Doğrulanıyor…</string>
+    <string name="add_xtream_save_failed">Kayıt başarısız.</string>
+    <string name="add_xtream_auth_failed">Xtream kimlik doğrulaması başarısız oldu.</string>
+    <string name="add_xtream_connection_failed">Bağlantı başarısız</string>
+    <string name="xtream_error_invalid_url">Geçersiz Xtream URL: %1$s</string>
+    <string name="xtream_error_network">Ağ hatası: %1$s</string>
+    <string name="xtream_error_decoding">Sunucu yanıtı çözümlenemedi: %1$s</string>
+    <string name="xtream_error_server">Sunucu hatası: %1$s</string>
+    <string name="add_m3u_importing">İçe aktarılıyor…</string>
+    <string name="add_m3u_reading_file">Dosya okunuyor…</string>
+    <string name="add_m3u_connecting">Bağlanılıyor…</string>
+    <string name="add_m3u_parsing">Liste ayrıştırılıyor…</string>
+    <string name="add_m3u_saving_with_count">Kanallar kaydediliyor… (%1$d)</string>
+    <string name="add_m3u_invalid_url">Geçersiz URL</string>
+    <string name="add_m3u_network_error">Ağ hatası: %1$s</string>
+    <string name="add_m3u_server_error">Sunucu hatası: HTTP %1$d</string>
+    <string name="add_m3u_file_read_failed">Dosya okunamadı</string>
+    <string name="add_m3u_empty">Liste boş.</string>
+    <string name="add_m3u_no_channels">Geçerli kanal bulunamadı.</string>
+
+    <!-- Category picker -->
+    <string name="picker_live_categories">Canlı kategorileri</string>
+    <string name="picker_vod_categories">Film kategorileri</string>
+    <string name="picker_series_categories">Dizi kategorileri</string>
+
+    <!-- Detail screens -->
+    <string name="detail_loading_movie">Film yükleniyor…</string>
+    <string name="detail_loading_series">Dizi yükleniyor…</string>
+    <string name="detail_loading_playlist">Playlist yükleniyor…</string>
+    <string name="detail_seasons_loading">Sezonlar yükleniyor…</string>
+    <string name="detail_seasons_failed">Sezonlar yüklenemedi.</string>
+    <string name="detail_no_seasons">Bu dizi için sezon bilgisi yok.</string>
+    <string name="detail_no_episodes">Bu sezon için bölüm bulunamadı.</string>
+    <string name="detail_watch">İzle</string>
+    <string name="detail_director">Yönetmen</string>
+    <string name="detail_trailer_failed">Fragman açılamadı.</string>
+    <string name="detail_episode_default">Bölüm</string>
+    <string name="detail_episode_count_format">%1$d bölüm</string>
+    <string name="detail_favorite_add">Favorilere ekle</string>
+    <string name="detail_favorite_remove">Favorilerden çıkar</string>
+
+    <!-- M3U dashboard -->
+    <string name="m3u_load_error_generic">Bir hata oluştu.</string>
+    <string name="m3u_other_group">Diğer</string>
+
+    <!-- Search content type filter chips -->
+    <string name="search_type_all">Tümü</string>
+    <string name="search_type_live">Canlı</string>
+    <string name="search_min_chars">En az 2 karakter girin.</string>
+    <string name="search_no_results_for">\"%1$s\" için sonuç bulunamadı.</string>
+    <string name="search_more_results">%1$d sonuç daha</string>
+
+    <!-- Downloads status -->
+    <string name="download_status_queued">Sıra</string>
+    <string name="download_status_downloading">İndiriliyor</string>
+    <string name="download_status_downloading_progress">İndiriliyor — %%%1$d</string>
+    <string name="download_status_downloading_pending">İndiriliyor…</string>
+    <string name="download_status_completed">Tamamlandı</string>
+    <string name="download_status_failed">Başarısız</string>
+    <string name="download_cancel">İptal et</string>
+    <string name="download_channel_name">İndirmeler</string>
+    <string name="download_channel_description">VOD ve bölüm indirmeleri için arka plan bildirimi</string>
+
+    <!-- Sync / content-store progress -->
+    <string name="sync_preparing">Hazırlanıyor…</string>
+    <string name="sync_list_preparing">Liste hazırlanıyor…</string>
+    <string name="sync_clearing">İçerik temizleniyor…</string>
+    <string name="sync_categories">Kategoriler alınıyor…</string>
+    <string name="sync_live">Canlı yayınlar alınıyor…</string>
+    <string name="sync_movies">Filmler alınıyor…</string>
+    <string name="sync_series">Diziler alınıyor…</string>
+    <string name="sync_persisting">Veritabanına kaydediliyor…</string>
+
+    <!-- Player resolve errors -->
+    <string name="resolve_playlist_not_found">Playlist bulunamadı.</string>
+    <string name="resolve_movie_not_found">Film bulunamadı.</string>
+    <string name="resolve_episode_not_found">Bölüm bulunamadı.</string>
+    <string name="resolve_channel_not_found">Kanal bulunamadı.</string>
+    <string name="resolve_player_init_failed">Oynatıcı başlatılamadı: %1$s</string>
+
+    <!-- External player -->
+    <string name="external_player_not_found">Video oynatabilen bir uygulama bulunamadı (VLC, MX Player vb.).</string>
+
+    <!-- Errors -->
+    <string name="error_server_unreachable">Sunucuya ulaşılamıyor.</string>
+    <string name="error_timeout">Bağlantı zaman aşımına uğradı.</string>
+    <string name="error_player_init">Oynatıcı başlatılamadı.</string>
+    <string name="error_generic">Bir şeyler ters gitti.</string>
+
+    <!-- Player track sheet -->
+    <string name="track_off">Kapalı</string>
+    <string name="track_index">Parça %1$d</string>
+
+    <!-- MPV log → user-facing classification -->
+    <string name="mpv_error_forbidden">Bu içeriğe erişim reddedildi.</string>
+    <string name="mpv_error_unauthorized">Bu içerik yetki gerektiriyor.</string>
+    <string name="mpv_error_not_found">İçerik bulunamadı.</string>
+    <string name="mpv_error_playback_init">Oynatma başlatılamadı.</string>
+    <string name="mpv_error_unsupported">Bu içerik bu cihazda oynatılamıyor.</string>
+    <string name="mpv_error_nothing_to_play">Oynatılabilir bir akış bulunamadı.</string>
+    <string name="mpv_error_av_init">Ses/görüntü çıkışı başlatılamadı.</string>
+    <string name="mpv_error_check_network">Oynatma başarısız. Ağ bağlantınızı kontrol edin.</string>
+</resources>

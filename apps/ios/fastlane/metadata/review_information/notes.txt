@@ -1,0 +1,21 @@
+How to Add a Playlist
+
+For Xtream Codes Playlists
+    Tap the + icon at the top right.
+    Select Playlist Type, then choose Xtream Codes.
+    Enter a name for your playlist.
+    Fill in the details:
+        API URL: https://xtream-codes-mock-server-525136978008.europe-west1.run.app
+        Username: test_user
+        Password: test_pass
+    Tap Submit to save.
+
+For M3U Playlists
+    Tap the + icon at the bottom right.
+    Select Playlist Type, then choose M3U Playlist.
+    Enter a unique name for your playlist.
+    Set Source Type to URL.
+    Use this M3U URL: https://xtream-codes-mock-server-525136978008.europe-west1.run.app/get.php?username=test_user&password=test_pass&type=m3u_plus&output=ts
+    Tap Create Playlist to save.
+
+Alternatively, you can download the M3U file from the same link and import it using the File source type.

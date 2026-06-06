@@ -1,0 +1,25 @@
+Another IPTV, iPhone ve iPad için M3U, M3U8 ve Xtream Codes playlist'leri ile çalışan hızlı ve modern bir IPTV oynatıcıdır.
+
+ÖZELLİKLER
+• Canlı TV, Film ve Dizi tek uygulamada
+• URL veya yerel dosyadan M3U / M3U8 playlist
+• Tam API destekli Xtream Codes
+• Picture in Picture ve arka plan ses
+• libass tabanlı altyazı özelleştirme — font, renk, kontur, zamanlama
+• Wi-Fi only seçenekli çevrimdışı indirme
+• Continue Watching, Favoriler ve tam İzleme Geçmişi
+• Uzun basışla 2x hızlı oynatma
+• Yetişkin içerik filtresi
+• 10 arayüz dili, iPhone + iPad evrensel
+
+MPV İLE GÜÇLENDİRİLDİ
+Dünyada power user'ların tercih ettiği mpv motoru üzerine kuruldu. Apple Silicon donanım ivmelendirmesiyle hemen her stream codec'i için akıcı oynatma.
+
+ÖNCE GİZLİLİK
+Playlist'lerin ve kimlik bilgilerin cihazında kalır. Hesap yok. İzleme yok. Reklam yok. Asla.
+
+KİMLER İÇİN
+Ücretli veya ücretsiz bir IPTV aboneliği, M3U playlist dosyası ya da Xtream Codes hesabı olan; şişkin değil, temiz ve reklamsız bir oynatıcı isteyen herkes için.
+
+YASAL UYARI
+Another IPTV hiçbir medya içeriği, kanal veya playlist içermez, barındırmaz ya da dağıtmaz. Kendi yasal yollardan elde edilmiş IPTV aboneliğini, M3U dosyanı veya Xtream Codes bilgilerini sen sağlamak zorundasın. Geliştirici, kullanıcı tarafından sağlanan playlist'ler üzerinden erişilen içerikten sorumlu değildir.

@@ -1,0 +1,252 @@
+// MARK: - Common
+"common.ok" = "ठीक है";
+"common.cancel" = "रद्द करें";
+"common.save" = "सहेजें";
+"common.delete" = "हटाएँ";
+"common.close" = "बंद करें";
+"common.error" = "त्रुटि";
+"common.yes" = "हाँ";
+"common.back" = "पीछे";
+"common.search" = "खोजें";
+"common.try_again" = "फिर कोशिश करें";
+"common.unknown_error" = "अज्ञात त्रुटि।";
+"common.days_format" = "%d दिन";
+"common.loading" = "लोड हो रहा है...";
+"common.confirm_delete_yes" = "हाँ, हटाएँ";
+"common.edit" = "संपादित करें";
+
+// MARK: - Playlist list
+"playlists.title" = "प्लेलिस्ट";
+"playlists.empty.title" = "कोई प्लेलिस्ट नहीं";
+"playlists.empty.message" = "लाइव टीवी, फिल्में और सीरीज देखने के लिए पहली IPTV प्लेलिस्ट जोड़ें।";
+"playlists.empty.add_button" = "नई प्लेलिस्ट जोड़ें";
+"playlists.local_file" = "स्थानीय फ़ाइल";
+"playlists.delete.title" = "प्लेलिस्ट हटाएँ";
+"playlists.delete.message" = "क्या आप वाकई यह प्लेलिस्ट और उसकी सामग्री हटाना चाहते हैं?";
+
+// MARK: - Playlist type picker
+"playlist_type.title" = "प्लेलिस्ट जोड़ें";
+"playlist_type.section" = "प्लेलिस्ट प्रकार";
+"playlist_type.xtream.title" = "Xtream Code";
+"playlist_type.xtream.subtitle" = "सर्वर URL, उपयोगकर्ता नाम और पासवर्ड।";
+"playlist_type.m3u.title" = "M3U / M3U8";
+"playlist_type.m3u.subtitle" = "रिमोट URL या स्थानीय .m3u / .m3u8 फ़ाइल।";
+
+// MARK: - Add playlist (Xtream)
+"add_playlist.xtream.title_new" = "प्लेलिस्ट जोड़ें";
+"add_playlist.xtream.title_edit" = "प्लेलिस्ट संपादित करें";
+"add_playlist.section.info" = "प्लेलिस्ट जानकारी";
+"add_playlist.section.credentials" = "क्रेडेंशियल";
+"add_playlist.section.content_settings" = "सामग्री सेटिंग्स";
+"add_playlist.name_placeholder" = "नाम (उदा. मेरा IPTV)";
+"add_playlist.server_url" = "सर्वर URL";
+"add_playlist.username" = "उपयोगकर्ता नाम";
+"add_playlist.password" = "पासवर्ड";
+"add_playlist.filter_adult" = "वयस्क सामग्री फ़िल्टर करें";
+"add_playlist.filter_adult.desc" = "XXX, 18+, वयस्क श्रेणी और is_adult को छिपाता है";
+"add_playlist.verifying" = "सत्यापन हो रहा है...";
+"add_playlist.auth_failed" = "प्रमाणीकरण विफल। अपनी जानकारी जाँचें।";
+"add_playlist.fetching_categories" = "श्रेणियाँ डाउनलोड हो रही हैं...";
+"add_playlist.fetching_live" = "लाइव चैनल डाउनलोड हो रहे हैं...";
+"add_playlist.fetching_movies" = "फ़िल्में डाउनलोड हो रही हैं...";
+"add_playlist.fetching_series" = "सीरीज़ डाउनलोड हो रही है...";
+"add_playlist.saving_db" = "डेटाबेस में सहेजा जा रहा है... कृपया प्रतीक्षा करें।";
+"add_playlist.download_save_error" = "डाउनलोड/सहेजने में त्रुटि: %@";
+
+// MARK: - Add playlist (M3U)
+"add_m3u.title_new" = "M3U जोड़ें";
+"add_m3u.title_edit" = "M3U संपादित करें";
+"add_m3u.name_placeholder" = "नाम (उदा. मेरा M3U)";
+"add_m3u.section.source" = "स्रोत";
+"add_m3u.section.source_footer" = "URL या स्थानीय फ़ाइल — एक ही काफी है।";
+"add_m3u.url_placeholder" = "M3U / M3U8 URL (http/https)";
+"add_m3u.pick_file" = "स्थानीय फ़ाइल चुनें";
+"add_m3u.pick_another_file" = "दूसरी फ़ाइल चुनें";
+"add_m3u.remove_file" = "फ़ाइल हटाएँ";
+"add_m3u.preparing" = "सामग्री तैयार की जा रही है...";
+"add_m3u.downloading" = "M3U डाउनलोड हो रहा है...";
+"add_m3u.parsing" = "चैनल पार्स हो रहे हैं...";
+"add_m3u.saving_db" = "सहेजा जा रहा है...";
+
+// MARK: - Dashboard
+"dashboard.live" = "लाइव टीवी";
+"dashboard.movies" = "फ़िल्में";
+"dashboard.series" = "सीरीज़";
+"dashboard.channels" = "चैनल";
+"dashboard.settings" = "सेटिंग्स";
+"dashboard.search" = "खोज";
+
+// MARK: - Live streams
+"live.search_placeholder" = "चैनल खोजें...";
+"live.empty.no_category" = "कोई श्रेणी नहीं मिली।";
+"live.empty.no_channel_in_category" = "इस श्रेणी में चैनल नहीं।";
+"live.empty.preparing" = "चैनल तैयार हो रहे हैं...";
+
+// MARK: - VOD / Series
+"vod.search_placeholder" = "फ़िल्म खोजें...";
+"vod.empty.preparing" = "फ़िल्में तैयार हो रही हैं...";
+"series.search_placeholder" = "सीरीज़ खोजें...";
+"series.empty.preparing" = "सीरीज़ तैयार हो रही है...";
+
+// MARK: - Common list states
+"list.no_result" = "कोई परिणाम नहीं।";
+"list.no_channel" = "कोई चैनल नहीं मिला।";
+"list.jump_to_category" = "श्रेणी पर जाएँ";
+"list.channel_list" = "चैनल सूची";
+
+// MARK: - Category picker
+"category_picker.title" = "श्रेणियाँ";
+"category_picker.search_placeholder" = "श्रेणी खोजें...";
+"category_picker.not_found.title" = "श्रेणी नहीं मिली";
+"category_picker.not_found.message" = "दूसरा शब्द आज़माएँ।";
+"category_picker.hide" = "छिपाएँ";
+"category_picker.unhide" = "दिखाएँ";
+"category_picker.hidden_section" = "छिपी श्रेणियाँ";
+
+// MARK: - M3U channels
+"m3u.search_placeholder" = "चैनल या समूह खोजें...";
+"m3u.loading" = "चैनल लोड हो रहे हैं...";
+"m3u.empty.no_channel" = "कोई चैनल नहीं मिला।";
+"m3u.ungrouped_label" = "अन्य";
+
+// MARK: - Continue watching
+"continue_watching.title" = "देखना जारी रखें";
+"recently_added.title" = "हाल ही में जोड़े गए";
+"history.title" = "देखने का इतिहास";
+"history.title.live" = "लाइव इतिहास";
+"history.title.vod" = "फ़िल्म इतिहास";
+"history.title.series" = "सीरीज़ इतिहास";
+"history.empty.title" = "कोई इतिहास नहीं";
+"history.empty.message" = "कुछ देखने पर यहाँ दिखेगा।";
+"history.search_placeholder" = "इतिहास में खोजें...";
+"history.clear.title" = "इतिहास साफ़ करें";
+"history.clear.label" = "इतिहास साफ़ करें";
+"history.clear.button_entry" = "देखने का इतिहास साफ़ करें";
+"history.clear.message.all" = "इस प्लेलिस्ट का सारा इतिहास (जारी रखने की स्थिति सहित) हटा दिया जाएगा। पक्का?";
+"history.clear.message.live" = "लाइव इतिहास हटा दिया जाएगा। पक्का?";
+"history.clear.message.vod" = "फ़िल्म इतिहास हटा दिया जाएगा। पक्का?";
+"history.clear.message.series" = "सीरीज़ इतिहास हटा दिया जाएगा। पक्का?";
+
+// MARK: - Favorites
+"favorites.title" = "पसंदीदा";
+"favorites.empty.title" = "अभी कोई पसंदीदा नहीं";
+"favorites.empty.message" = "किसी चैनल पर लंबा दबाकर पसंदीदा में जोड़ें।";
+"favorites.empty.no_result.title" = "कोई परिणाम नहीं";
+"favorites.search_placeholder" = "पसंदीदा में खोजें...";
+"favorites.add" = "पसंदीदा में जोड़ें";
+"favorites.remove" = "पसंदीदा से हटाएँ";
+
+// MARK: - Settings (common)
+"settings.back_to_list" = "प्लेलिस्ट पर वापस";
+"settings.refresh_all" = "सारी सामग्री फिर से डाउनलोड करें";
+"settings.player.title" = "प्लेयर सेटिंग्स";
+"settings.player.pip.title" = "पिक्चर इन पिक्चर";
+"settings.player.pip.desc" = "PiP मोड की अनुमति देता है";
+"settings.player.background.title" = "बैकग्राउंड में चालू रखें";
+"settings.player.background.desc" = "बंद हो तो ऐप बैकग्राउंड में जाने पर रुकता है";
+"settings.player.longpress.title" = "लंबा दबाने पर तेज़ करें";
+"settings.player.longpress.desc" = "स्क्रीन को लंबा दबाएँ 2x गति के लिए";
+"settings.playlist.info.title" = "प्लेलिस्ट जानकारी";
+"settings.playlist.name" = "नाम";
+"settings.playlist.type" = "प्रकार";
+"settings.playlist.server_url" = "सर्वर URL";
+"settings.playlist.username" = "उपयोगकर्ता नाम";
+"settings.playlist.password" = "पासवर्ड";
+"settings.playlist.subscription" = "शेष समय";
+"settings.playlist.active_connection" = "सक्रिय कनेक्शन";
+"settings.playlist.max_connection" = "अधिकतम कनेक्शन";
+"settings.playlist.unlimited" = "असीमित";
+"settings.playlist.unknown" = "अज्ञात";
+"settings.playlist.unlimited_or_unknown" = "असीमित / अज्ञात";
+"settings.playlist.expired" = "समाप्त";
+"settings.playlist.fetching_info" = "सब्सक्रिप्शन जानकारी लोड हो रही है...";
+"settings.playlist.info_error" = "जानकारी नहीं मिली: %@";
+
+"settings.stats.title" = "सामग्री आँकड़े";
+"settings.stats.live_count" = "लाइव चैनल";
+"settings.stats.movie_count" = "फ़िल्में";
+"settings.stats.series_count" = "सीरीज़";
+"settings.stats.channel_count" = "चैनल";
+"settings.stats.group_count" = "समूह";
+"settings.stats.history_count" = "इतिहास";
+"settings.stats.history_items_format" = "%d आइटम";
+
+"settings.server.title" = "सर्वर जानकारी";
+"settings.server.timezone" = "समय क्षेत्र";
+"settings.server.message" = "सर्वर संदेश";
+
+"settings.content_management.title" = "सामग्री प्रबंधन";
+"settings.filter_adult.title" = "वयस्क सामग्री फ़िल्टर करें";
+"settings.filter_adult.xtream_desc" = "बदलाव के बाद सामग्री फिर से डाउनलोड करें";
+"settings.filter_adult.m3u_desc" = "XXX, 18+, adult वाले चैनल/समूह छिपाए जाएँगे";
+
+"settings.about.title" = "इसके बारे में";
+"settings.about.version" = "संस्करण";
+"settings.about.github.title" = "GitHub पर समर्थन करें";
+"settings.about.github.desc" = "GitHub पर प्रोजेक्ट में योगदान दें";
+
+// MARK: - M3U settings
+"settings.m3u.type_label" = "M3U / M3U8";
+"settings.m3u.refresh_url" = "URL से फिर से डाउनलोड करें";
+"settings.m3u.refresh_file" = "फ़ाइल से फिर से लोड करें";
+"settings.m3u.source_url" = "स्रोत URL";
+"settings.m3u.source" = "स्रोत";
+"settings.m3u.epg_url" = "EPG URL (जानकारी)";
+"settings.m3u.parsing" = "पार्स हो रहा है...";
+"settings.m3u.saving" = "सहेजा जा रहा है...";
+"settings.m3u.reading_file" = "फ़ाइल पढ़ी जा रही है...";
+"settings.m3u.downloading" = "डाउनलोड हो रहा है...";
+
+// MARK: - Language
+"settings.language.title" = "ऐप भाषा";
+"settings.language.section" = "भाषा";
+"settings.language.system" = "सिस्टम भाषा";
+
+// MARK: - Stream types
+"stream.live" = "लाइव";
+"stream.vod" = "फ़िल्म";
+"stream.series" = "सीरीज़";
+"stream.m3u" = "M3U";
+
+// MARK: - Errors
+"loading.error.title" = "लोड त्रुटि";
+"parser.error.empty" = "M3U सामग्री खाली है।";
+"parser.error.no_channels" = "कोई चैनल नहीं मिला। क्या यह वैध M3U/M3U8 है?";
+
+"net.error.invalid_url" = "अमान्य URL: %@";
+"net.error.network" = "नेटवर्क त्रुटि: %@";
+"net.error.server" = "सर्वर त्रुटि (HTTP %d)";
+"net.error.file_read" = "फ़ाइल नहीं पढ़ सकी: %@";
+"net.error.encoding_unsupported" = "डिकोड नहीं हो सका (असमर्थित एन्कोडिंग)।";
+
+// MARK: - Misc
+"misc.channel_fallback_name" = "चैनल %d";
+"misc.refresh_error" = "रीफ़्रेश त्रुटि: %@";
+"misc.save_setting_error" = "सेटिंग सहेज नहीं सकी: %@";
+"misc.history_delete_error" = "इतिहास हटा नहीं सकी: %@";
+"misc.xtream.auth_error" = "उपयोगकर्ता नाम या पासवर्ड गलत है।";
+"misc.xtream.invalid_url" = "अमान्य या ग़लत URL: %@";
+"misc.xtream.decode_error" = "डेटा डिकोड त्रुटि: %@";
+
+// MARK: - Downloads
+"download.action" = "डाउनलोड";
+"download.downloading_format" = "%d%%";
+"download.completed" = "डाउनलोड किया";
+"download.retry" = "पुनः प्रयास";
+"download.cancel" = "रद्द करें";
+"download.delete" = "हटाएँ";
+"download.title" = "डाउनलोड";
+"download.search_placeholder" = "डाउनलोड में खोजें...";
+"download.empty.title" = "कोई डाउनलोड नहीं";
+"download.empty.message" = "फ़िल्म या एपिसोड विवरण स्क्रीन से डाउनलोड करें।";
+"download.status.downloading" = "डाउनलोड हो रहा है";
+"download.status.queued" = "कतार में";
+"download.status.failed" = "विफल";
+"download.play" = "चलाएँ";
+"download.size_format" = "%@ / %@";
+"download.settings" = "डाउनलोड";
+"download.wifi_only.title" = "केवल Wi-Fi पर डाउनलोड";
+"download.wifi_only.desc" = "डाउनलोड के लिए मोबाइल डेटा का उपयोग नहीं होगा.";
+"download.storage_used" = "स्टोरेज उपयोग";
+"download.delete_all" = "सभी डाउनलोड हटाएँ";
+"download.delete_all.message" = "सभी डाउनलोड किए गए आइटम हटाए जाएँगे. जारी रखें?";

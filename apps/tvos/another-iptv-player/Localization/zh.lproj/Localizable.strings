@@ -1,0 +1,252 @@
+// MARK: - Common
+"common.ok" = "确定";
+"common.cancel" = "取消";
+"common.save" = "保存";
+"common.delete" = "删除";
+"common.close" = "关闭";
+"common.error" = "错误";
+"common.yes" = "是";
+"common.back" = "返回";
+"common.search" = "搜索";
+"common.try_again" = "重试";
+"common.unknown_error" = "未知错误。";
+"common.days_format" = "%d 天";
+"common.loading" = "加载中...";
+"common.confirm_delete_yes" = "是,删除";
+"common.edit" = "编辑";
+
+// MARK: - Playlist list
+"playlists.title" = "播放列表";
+"playlists.empty.title" = "未找到播放列表";
+"playlists.empty.message" = "添加第一个 IPTV 播放列表,开始观看直播、电影和剧集。";
+"playlists.empty.add_button" = "添加新播放列表";
+"playlists.local_file" = "本地文件";
+"playlists.delete.title" = "删除播放列表";
+"playlists.delete.message" = "确定要删除此播放列表及其所有内容吗?";
+
+// MARK: - Playlist type picker
+"playlist_type.title" = "添加播放列表";
+"playlist_type.section" = "列表类型";
+"playlist_type.xtream.title" = "Xtream Code";
+"playlist_type.xtream.subtitle" = "使用服务器 URL、用户名和密码。";
+"playlist_type.m3u.title" = "M3U / M3U8";
+"playlist_type.m3u.subtitle" = "远程 URL 或本地 .m3u / .m3u8 文件。";
+
+// MARK: - Add playlist (Xtream)
+"add_playlist.xtream.title_new" = "添加播放列表";
+"add_playlist.xtream.title_edit" = "编辑播放列表";
+"add_playlist.section.info" = "列表信息";
+"add_playlist.section.credentials" = "凭据";
+"add_playlist.section.content_settings" = "内容设置";
+"add_playlist.name_placeholder" = "名称(例如:我的 IPTV)";
+"add_playlist.server_url" = "服务器 URL";
+"add_playlist.username" = "用户名";
+"add_playlist.password" = "密码";
+"add_playlist.filter_adult" = "过滤成人内容";
+"add_playlist.filter_adult.desc" = "隐藏 XXX、18+、成人分类和 is_adult 内容";
+"add_playlist.verifying" = "验证中...";
+"add_playlist.auth_failed" = "认证失败,请检查信息。";
+"add_playlist.fetching_categories" = "正在下载分类...";
+"add_playlist.fetching_live" = "正在下载直播...";
+"add_playlist.fetching_movies" = "正在下载电影...";
+"add_playlist.fetching_series" = "正在下载剧集...";
+"add_playlist.saving_db" = "保存中... 请稍候。";
+"add_playlist.download_save_error" = "下载/保存出错:%@";
+
+// MARK: - Add playlist (M3U)
+"add_m3u.title_new" = "添加 M3U";
+"add_m3u.title_edit" = "编辑 M3U";
+"add_m3u.name_placeholder" = "名称(例如:我的 M3U)";
+"add_m3u.section.source" = "来源";
+"add_m3u.section.source_footer" = "URL 或本地文件 — 一个即可。";
+"add_m3u.url_placeholder" = "M3U / M3U8 URL (http/https)";
+"add_m3u.pick_file" = "选择本地文件";
+"add_m3u.pick_another_file" = "选择其他文件";
+"add_m3u.remove_file" = "移除文件";
+"add_m3u.preparing" = "准备中...";
+"add_m3u.downloading" = "下载 M3U...";
+"add_m3u.parsing" = "正在解析频道...";
+"add_m3u.saving_db" = "保存中...";
+
+// MARK: - Dashboard
+"dashboard.live" = "直播";
+"dashboard.movies" = "电影";
+"dashboard.series" = "剧集";
+"dashboard.channels" = "频道";
+"dashboard.settings" = "设置";
+"dashboard.search" = "搜索";
+
+// MARK: - Live streams
+"live.search_placeholder" = "搜索频道...";
+"live.empty.no_category" = "未找到分类。";
+"live.empty.no_channel_in_category" = "此分类中无频道。";
+"live.empty.preparing" = "正在准备频道...";
+
+// MARK: - VOD / Series
+"vod.search_placeholder" = "搜索电影...";
+"vod.empty.preparing" = "正在准备电影...";
+"series.search_placeholder" = "搜索剧集...";
+"series.empty.preparing" = "正在准备剧集...";
+
+// MARK: - Common list states
+"list.no_result" = "无搜索结果。";
+"list.no_channel" = "未找到频道。";
+"list.jump_to_category" = "跳转到分类";
+"list.channel_list" = "频道列表";
+
+// MARK: - Category picker
+"category_picker.title" = "分类";
+"category_picker.search_placeholder" = "搜索分类...";
+"category_picker.not_found.title" = "未找到分类";
+"category_picker.not_found.message" = "试试其他词。";
+"category_picker.hide" = "隐藏";
+"category_picker.unhide" = "显示";
+"category_picker.hidden_section" = "隐藏的分类";
+
+// MARK: - M3U channels
+"m3u.search_placeholder" = "搜索频道或分组...";
+"m3u.loading" = "加载频道中...";
+"m3u.empty.no_channel" = "未找到频道。";
+"m3u.ungrouped_label" = "其他";
+
+// MARK: - Continue watching
+"continue_watching.title" = "继续观看";
+"history.title" = "观看历史";
+"history.title.live" = "直播历史";
+"history.title.vod" = "电影历史";
+"history.title.series" = "剧集历史";
+"history.empty.title" = "无历史";
+"history.empty.message" = "观看内容后会显示在这里。";
+"history.search_placeholder" = "搜索历史...";
+"history.clear.title" = "清空历史";
+"history.clear.label" = "清空历史";
+"history.clear.button_entry" = "清空观看历史";
+"history.clear.message.all" = "将删除此播放列表的所有历史(含续播位置)。确定?";
+"history.clear.message.live" = "将删除直播历史。确定?";
+"history.clear.message.vod" = "将删除电影历史(含续播位置)。确定?";
+"history.clear.message.series" = "将删除剧集历史(含续播位置)。确定?";
+
+// MARK: - Favorites
+"favorites.title" = "收藏";
+"favorites.empty.title" = "还没有收藏";
+"favorites.empty.message" = "长按频道即可加入收藏。";
+"favorites.empty.no_result.title" = "无结果";
+"favorites.search_placeholder" = "在收藏中搜索...";
+"favorites.add" = "加入收藏";
+"favorites.remove" = "取消收藏";
+
+// MARK: - Settings (common)
+"settings.back_to_list" = "返回播放列表";
+"settings.refresh_all" = "重新下载全部";
+"settings.player.title" = "播放器设置";
+"settings.player.pip.title" = "画中画";
+"settings.player.pip.desc" = "允许画中画模式";
+"settings.player.background.title" = "后台继续播放";
+"settings.player.background.desc" = "关闭时进入后台会暂停";
+"settings.player.longpress.title" = "长按加速";
+"settings.player.longpress.desc" = "长按屏幕 2x 播放";
+"settings.playlist.info.title" = "列表信息";
+"settings.playlist.name" = "名称";
+"settings.playlist.type" = "类型";
+"settings.playlist.server_url" = "服务器 URL";
+"settings.playlist.username" = "用户名";
+"settings.playlist.password" = "密码";
+"settings.playlist.subscription" = "剩余时间";
+"settings.playlist.active_connection" = "活动连接";
+"settings.playlist.max_connection" = "最大连接";
+"settings.playlist.unlimited" = "无限";
+"settings.playlist.unknown" = "未知";
+"settings.playlist.unlimited_or_unknown" = "无限 / 未知";
+"settings.playlist.expired" = "已过期";
+"settings.playlist.fetching_info" = "加载订阅信息...";
+"settings.playlist.info_error" = "无法获取:%@";
+
+"settings.stats.title" = "内容统计";
+"settings.stats.live_count" = "直播数";
+"settings.stats.movie_count" = "电影数";
+"settings.stats.series_count" = "剧集数";
+"settings.stats.channel_count" = "频道数";
+"settings.stats.group_count" = "分组数";
+"settings.stats.history_count" = "观看历史";
+"settings.stats.history_items_format" = "%d 项";
+
+"settings.server.title" = "服务器信息";
+"settings.server.timezone" = "时区";
+"settings.server.message" = "服务器消息";
+
+"settings.content_management.title" = "内容管理";
+"settings.filter_adult.title" = "过滤成人内容";
+"settings.filter_adult.xtream_desc" = "更改后需重新下载内容";
+"settings.filter_adult.m3u_desc" = "隐藏名称含 XXX、18+、adult 的频道/分组";
+
+"settings.about.title" = "关于";
+"settings.about.version" = "版本";
+"settings.about.github.title" = "在 GitHub 支持我们";
+"settings.about.github.desc" = "在 GitHub 为项目贡献";
+
+// MARK: - M3U settings
+"settings.m3u.type_label" = "M3U / M3U8";
+"settings.m3u.refresh_url" = "从 URL 重新下载";
+"settings.m3u.refresh_file" = "从文件重新加载";
+"settings.m3u.source_url" = "来源 URL";
+"settings.m3u.source" = "来源";
+"settings.m3u.epg_url" = "EPG URL(信息)";
+"settings.m3u.parsing" = "解析中...";
+"settings.m3u.saving" = "保存中...";
+"settings.m3u.reading_file" = "读取文件...";
+"settings.m3u.downloading" = "下载中...";
+
+// MARK: - Language
+"settings.language.title" = "应用语言";
+"settings.language.section" = "语言";
+"settings.language.system" = "系统语言";
+
+// MARK: - Stream types
+"stream.live" = "直播";
+"stream.vod" = "电影";
+"stream.series" = "剧集";
+"stream.m3u" = "M3U";
+
+// MARK: - Errors
+"loading.error.title" = "加载错误";
+"parser.error.empty" = "M3U 内容为空。";
+"parser.error.no_channels" = "未找到频道。是否为有效的 M3U/M3U8 文件?";
+
+"net.error.invalid_url" = "无效的 URL:%@";
+"net.error.network" = "网络错误:%@";
+"net.error.server" = "服务器错误 (HTTP %d)";
+"net.error.file_read" = "无法读取文件:%@";
+"net.error.encoding_unsupported" = "无法解码(不支持的编码)。";
+
+// MARK: - Misc
+"misc.channel_fallback_name" = "频道 %d";
+"misc.refresh_error" = "刷新出错:%@";
+"misc.save_setting_error" = "无法保存:%@";
+"misc.history_delete_error" = "无法删除:%@";
+"misc.xtream.auth_error" = "用户名或密码错误。";
+"misc.xtream.invalid_url" = "无效或格式错误的 URL:%@";
+"misc.xtream.decode_error" = "数据解码出错:%@";
+
+// MARK: - Downloads
+"download.action" = "下载";
+"download.downloading_format" = "%d%%";
+"download.completed" = "已下载";
+"download.retry" = "重试";
+"download.cancel" = "取消";
+"download.delete" = "删除";
+"download.title" = "下载";
+"download.empty.title" = "暂无下载";
+"download.empty.message" = "在详情页下载电影或剧集。";
+"download.status.downloading" = "下载中";
+"download.status.failed" = "失败";
+"download.play" = "播放";
+"download.size_format" = "%@ / %@";
+"download.settings" = "下载";
+"download.pause" = "暂停";
+"download.resume" = "继续";
+"download.status.paused" = "已暂停";
+"download.wifi_only.title" = "仅在 Wi-Fi 下下载";
+"download.wifi_only.desc" = "下载将不会使用蜂窝数据。";
+"download.storage_used" = "存储占用";
+"download.delete_all" = "删除全部下载";
+"download.delete_all.message" = "所有已下载内容将从设备中移除。继续吗？";

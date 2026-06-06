@@ -1,0 +1,125 @@
+name: another-iptv-player
+options:
+  bundleIdPrefix: dev.another-iptv-player
+  deploymentTarget:
+    tvOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: true
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TVOS_DEPLOYMENT_TARGET: "18.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_MODULE_VERIFIER: NO
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+    GCC_PREPROCESSOR_DEFINITIONS: $(inherited) GL_SILENCE_DEPRECATION=1
+    SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) GL_SILENCE_DEPRECATION
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    branch: master
+  GRDBQuery:
+    url: https://github.com/groue/GRDBQuery.git
+    from: 0.11.0
+  Nuke:
+    url: https://github.com/kean/Nuke.git
+    from: 13.0.1
+schemes:
+  another-iptv-player:
+    build:
+      targets:
+        another-iptv-player: all
+    run:
+      config: Debug
+targets:
+  another-iptv-player:
+    type: application
+    platform: tvOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: another-iptv-player
+        excludes:
+          - "scripts/**"
+    resources:
+      - path: another-iptv-player/Assets.xcassets
+        optional: true
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: $(PRODUCT_NAME)
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        CFBundleLocalizations:
+          - en
+          - tr
+          - ar
+          - de
+          - es
+          - fr
+          - hi
+          - pt
+          - ru
+          - zh
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.another-iptv-player.tv
+        PRODUCT_NAME: another-iptv-player
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
+        SWIFT_OBJC_BRIDGING_HEADER: another-iptv-player/another-iptv-player-Bridging-Header.h
+        HEADER_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/Vendor/libmpv/Headers
+        LIBRARY_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/Vendor/libmpv/LinkStaging/$(PLATFORM_NAME)
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/Frameworks"
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - -lmpv
+          - -lass
+          - -lavcodec
+          - -lavfilter
+          - -lavformat
+          - -lavutil
+          - -ldav1d
+          - -lfreetype
+          - -lfribidi
+          - -lharfbuzz
+          - -lmbedcrypto
+          - -lmbedtls
+          - -lmbedx509
+          - -lpng16
+          - -lswresample
+          - -lswscale
+          - -luchardet
+          - -lxml2
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+    dependencies:
+      - package: GRDB
+        product: GRDB
+      - package: GRDBQuery
+        product: GRDBQuery
+      - package: Nuke
+        product: Nuke
+      - package: Nuke
+        product: NukeUI
+    preBuildScripts:
+      - name: Prepare libmpv link paths
+        script: |
+          exec "${SRCROOT}/another-iptv-player/scripts/prepare_libmpv_link_paths.sh"
+        basedOnDependencyAnalysis: false
+    postBuildScripts:
+      - name: Embed libmpv dylibs
+        script: |
+          exec "${SRCROOT}/another-iptv-player/scripts/embed_libmpv_frameworks.sh"
+        basedOnDependencyAnalysis: false

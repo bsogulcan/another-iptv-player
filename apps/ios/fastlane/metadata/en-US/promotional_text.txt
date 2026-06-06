@@ -1,0 +1,1 @@
+Stream live TV, movies and series from your M3U or Xtream Codes playlist. Built on mpv, with PiP, offline downloads and full subtitle controls. No ads, no tracking.

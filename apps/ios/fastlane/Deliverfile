@@ -1,0 +1,39 @@
+app_identifier "dev.ogos.another-iptv-player"
+# username only needed when authenticating via Apple ID + app-specific password.
+# When APP_STORE_CONNECT_API_KEY is set in lane_context (see Fastfile before_all),
+# deliver uses the API key and ignores this field.
+username ENV["FASTLANE_USER"] if ENV["FASTLANE_USER"]
+
+# Where deliver should read metadata from
+metadata_path "./fastlane/metadata"
+screenshots_path "./fastlane/screenshots"
+
+# Safe defaults: only push text metadata. Binary + screenshots are opt-in via lanes.
+skip_binary_upload true
+skip_screenshots true
+skip_metadata false
+
+# Don't auto-submit for review — let a human click Submit in App Store Connect.
+submit_for_review false
+# When the reviewed version is approved, release it automatically to all users.
+automatic_release true
+
+# Languages we maintain (must match the metadata/<locale> folders).
+languages [
+  "en-US",
+  "tr",
+  "ar-SA",
+  "de-DE",
+  "es-ES",
+  "fr-FR",
+  "hi",
+  "pt-BR",
+  "ru",
+  "zh-Hans"
+]
+
+# Apple's precheck catches things like profanity, placeholder text,
+# and policy violations. We turn it on so it runs alongside `deliver`.
+run_precheck_before_submit true
+precheck_default_rule_level :warn
+precheck_include_in_app_purchases false

@@ -1,0 +1,24 @@
+{
+  "default": {
+    "keyword": {
+      "font": "./SFNS.ttf",
+      "color": "#FFFFFF",
+      "padding": 30
+    },
+    "title": {
+      "font": "./SFNS.ttf",
+      "color": "#FFFFFF"
+    },
+    "background": "./background.png",
+    "padding": 60,
+    "show_complete_frame": false,
+    "title_below_image": false
+  },
+  "data": [
+    {
+      "filter": "iPad",
+      "background": "./background-ipad.png",
+      "padding": 80
+    }
+  ]
+}

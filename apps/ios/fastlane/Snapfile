@@ -1,0 +1,32 @@
+# Devices required by App Store Connect.
+# 6.9" iPhone (Pro Max) and 13" iPad Pro cover the current submission requirements.
+devices([
+  "iPhone 17 Pro Max",
+  "iPad Pro 13-inch (M4)"
+])
+
+languages([
+  "en-US"
+])
+
+# Where to save the captured PNGs.
+output_directory("./fastlane/screenshots")
+
+# Clear stale screenshots before each run.
+clear_previous_screenshots(true)
+
+# Re-install the app on the simulator so launch arguments / state are deterministic.
+reinstall_app(true)
+
+scheme("another-iptv-player")
+workspace("./another-iptv-player.xcworkspace")
+app_identifier("dev.ogos.another-iptv-player")
+configuration("Debug")
+
+# Skip the auto-opened HTML summary; we'll just look at the PNGs.
+skip_open_summary(true)
+
+# Launch args picked up by the app (so we can branch behaviour during snapshots).
+launch_arguments(["-UITests 1"])
+
+stop_after_first_error(false)

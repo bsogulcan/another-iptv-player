@@ -1,16 +1,19 @@
-name: Build iOS
+name: Flutter · Build iOS
 
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-ios.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -39,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
-          path: build/ios/iphoneos/
+          path: apps/flutter/build/ios/iphoneos/

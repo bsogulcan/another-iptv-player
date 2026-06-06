@@ -1,4 +1,4 @@
-name: Build Linux
+name: Flutter · Build Linux
 
 on:
   pull_request:
@@ -8,16 +8,22 @@ on:
       - opened
       - synchronize
       - reopened
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-linux.yml'
   push:
     branches: [ main ]
-    paths-ignore:
-      - '.github/workflows/**'
-      - 'docs/**'
+    paths:
+      - 'apps/flutter/**'
+      - '.github/workflows/build-linux.yml'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
 
     steps:
       - uses: actions/checkout@v4
@@ -66,4 +72,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: build/linux/x64/release/bundle/
+          path: apps/flutter/build/linux/x64/release/bundle/

@@ -19,27 +19,27 @@ jobs:
           name: Another IPTV Player ${{ github.ref_name }}
           body: |
             ## 🎉 New Release: ${{ github.ref_name }}
-            
+
             ### 📺 Another IPTV Player
             A modern, cross-platform IPTV player application built with Flutter.
-            
+
             ### 📱 Supported Platforms
             - ✅ Windows (x64)
             - ✅ macOS (Universal)
             - ✅ Linux (x64)
             - ✅ Android (APK)
             - ✅ iOS (No Codesign)
-            
+
             ### 📥 Downloads
             Download the appropriate version for your platform below.
-            
+
             ### 🔧 Installation
             - **Windows**: Run the setup installer (`.exe`) for easy installation, or extract the zip file for portable use
             - **macOS**: Extract zip and run `another_iptv_player.app`
             - **Linux**: Extract zip and run `another_iptv_player`
             - **Android**: Install the APK file
             - **iOS**: Requires developer account for installation
-            
+
             ### 🔄 Auto-generated from CI/CD
             This release was automatically created with artifacts from our build pipeline.
           draft: false
@@ -53,6 +53,9 @@ jobs:
   build-windows:
     needs: create-release
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -76,7 +79,7 @@ jobs:
               throw "makensis not found at $makensis"
             }
             & $makensis installer.nsi
-        
+
             if (Test-Path "another-iptv-player-windows-setup.exe") {
               Move-Item "another-iptv-player-windows-setup.exe" "..\another-iptv-player-windows-setup-${{ github.ref_name }}.exe"
             } else {
@@ -94,14 +97,17 @@ jobs:
         with:
           tag: ${{ github.ref_name }}
           artifacts: |
-            another-iptv-player-windows-setup-${{ github.ref_name }}.zip
-            another-iptv-player-windows-${{ github.ref_name }}.zip
+            apps/flutter/another-iptv-player-windows-setup-${{ github.ref_name }}.zip
+            apps/flutter/another-iptv-player-windows-${{ github.ref_name }}.zip
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
 #  build-macos:
 #    needs: create-release
 #    runs-on: macos-latest
+#    defaults:
+#      run:
+#        working-directory: apps/flutter
 #    steps:
 #      - uses: actions/checkout@v4
 #      - uses: subosito/flutter-action@v2
@@ -122,13 +128,16 @@ jobs:
 #        uses: ncipollo/release-action@v1
 #        with:
 #          tag: ${{ github.ref_name }}
-#          artifacts: another-iptv-player-macos-${{ github.ref_name }}.zip
+#          artifacts: apps/flutter/another-iptv-player-macos-${{ github.ref_name }}.zip
 #          allowUpdates: true
 #          token: ${{ secrets.GITHUB_TOKEN }}
 
   build-linux:
     needs: create-release
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
     steps:
       - uses: actions/checkout@v4
       - name: Install Linux dependencies
@@ -157,13 +166,16 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: another-iptv-player-linux-${{ github.ref_name }}.zip
+          artifacts: apps/flutter/another-iptv-player-linux-${{ github.ref_name }}.zip
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
   build-android:
     needs: create-release
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
     steps:
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -187,7 +199,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: another-iptv-player-android-${{ github.ref_name }}.apk
+          artifacts: apps/flutter/another-iptv-player-android-${{ github.ref_name }}.apk
           allowUpdates: true
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
@@ -196,6 +208,9 @@ jobs:
   build-ios:
     needs: create-release
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: apps/flutter
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -220,6 +235,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          artifacts: another-iptv-player-ios-${{ github.ref_name }}.zip
+          artifacts: apps/flutter/another-iptv-player-ios-${{ github.ref_name }}.zip
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}

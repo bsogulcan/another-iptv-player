@@ -1,0 +1,252 @@
+// MARK: - Common
+"common.ok" = "OK";
+"common.cancel" = "Cancelar";
+"common.save" = "Guardar";
+"common.delete" = "Eliminar";
+"common.close" = "Cerrar";
+"common.error" = "Error";
+"common.yes" = "Sí";
+"common.back" = "Atrás";
+"common.search" = "Buscar";
+"common.try_again" = "Reintentar";
+"common.unknown_error" = "Error desconocido.";
+"common.days_format" = "%d días";
+"common.loading" = "Cargando...";
+"common.confirm_delete_yes" = "Sí, eliminar";
+"common.edit" = "Editar";
+
+// MARK: - Playlist list
+"playlists.title" = "Listas de reproducción";
+"playlists.empty.title" = "No hay listas";
+"playlists.empty.message" = "Añade tu primera lista IPTV para ver TV en vivo, películas y series.";
+"playlists.empty.add_button" = "Añadir nueva lista";
+"playlists.local_file" = "Archivo local";
+"playlists.delete.title" = "Eliminar lista";
+"playlists.delete.message" = "¿Seguro que quieres eliminar esta lista y todo su contenido?";
+
+// MARK: - Playlist type picker
+"playlist_type.title" = "Añadir lista";
+"playlist_type.section" = "Tipo de lista";
+"playlist_type.xtream.title" = "Xtream Code";
+"playlist_type.xtream.subtitle" = "Usa URL del servidor, usuario y contraseña.";
+"playlist_type.m3u.title" = "M3U / M3U8";
+"playlist_type.m3u.subtitle" = "URL remota o archivo local .m3u / .m3u8.";
+
+// MARK: - Add playlist (Xtream)
+"add_playlist.xtream.title_new" = "Añadir lista";
+"add_playlist.xtream.title_edit" = "Editar lista";
+"add_playlist.section.info" = "Información de la lista";
+"add_playlist.section.credentials" = "Credenciales";
+"add_playlist.section.content_settings" = "Ajustes de contenido";
+"add_playlist.name_placeholder" = "Nombre (ej. Mi IPTV)";
+"add_playlist.server_url" = "URL del servidor";
+"add_playlist.username" = "Usuario";
+"add_playlist.password" = "Contraseña";
+"add_playlist.filter_adult" = "Filtrar contenido adulto";
+"add_playlist.filter_adult.desc" = "Oculta XXX, 18+, categorías para adultos e is_adult";
+"add_playlist.verifying" = "Verificando...";
+"add_playlist.auth_failed" = "Autenticación fallida. Revisa los datos.";
+"add_playlist.fetching_categories" = "Descargando categorías...";
+"add_playlist.fetching_live" = "Descargando canales en vivo...";
+"add_playlist.fetching_movies" = "Descargando películas...";
+"add_playlist.fetching_series" = "Descargando series...";
+"add_playlist.saving_db" = "Guardando en la base de datos... Espera.";
+"add_playlist.download_save_error" = "Error al descargar o guardar: %@";
+
+// MARK: - Add playlist (M3U)
+"add_m3u.title_new" = "Añadir M3U";
+"add_m3u.title_edit" = "Editar M3U";
+"add_m3u.name_placeholder" = "Nombre de la lista (ej. Mi M3U)";
+"add_m3u.section.source" = "Fuente";
+"add_m3u.section.source_footer" = "URL o archivo local — uno es suficiente.";
+"add_m3u.url_placeholder" = "URL M3U / M3U8 (http/https)";
+"add_m3u.pick_file" = "Seleccionar archivo local";
+"add_m3u.pick_another_file" = "Seleccionar otro archivo";
+"add_m3u.remove_file" = "Quitar archivo";
+"add_m3u.preparing" = "Preparando contenido...";
+"add_m3u.downloading" = "Descargando M3U...";
+"add_m3u.parsing" = "Analizando canales...";
+"add_m3u.saving_db" = "Guardando...";
+
+// MARK: - Dashboard
+"dashboard.live" = "TV en vivo";
+"dashboard.movies" = "Películas";
+"dashboard.series" = "Series";
+"dashboard.channels" = "Canales";
+"dashboard.settings" = "Ajustes";
+"dashboard.search" = "Buscar";
+
+// MARK: - Live streams
+"live.search_placeholder" = "Buscar canal...";
+"live.empty.no_category" = "No hay categorías.";
+"live.empty.no_channel_in_category" = "No hay canales en esta categoría.";
+"live.empty.preparing" = "Preparando canales...";
+
+// MARK: - VOD / Series
+"vod.search_placeholder" = "Buscar película...";
+"vod.empty.preparing" = "Preparando películas...";
+"series.search_placeholder" = "Buscar serie...";
+"series.empty.preparing" = "Preparando series...";
+
+// MARK: - Common list states
+"list.no_result" = "Sin resultados.";
+"list.no_channel" = "No se encontraron canales.";
+"list.jump_to_category" = "Ir a categoría";
+"list.channel_list" = "Lista de canales";
+
+// MARK: - Category picker
+"category_picker.title" = "Categorías";
+"category_picker.search_placeholder" = "Buscar categoría...";
+"category_picker.not_found.title" = "Sin categorías";
+"category_picker.not_found.message" = "Prueba con otro término.";
+"category_picker.hide" = "Ocultar";
+"category_picker.unhide" = "Mostrar";
+"category_picker.hidden_section" = "Categorías ocultas";
+
+// MARK: - M3U channels
+"m3u.search_placeholder" = "Buscar canal o grupo...";
+"m3u.loading" = "Cargando canales...";
+"m3u.empty.no_channel" = "No se encontraron canales.";
+"m3u.ungrouped_label" = "Otros";
+
+// MARK: - Continue watching
+"continue_watching.title" = "Continuar viendo";
+"recently_added.title" = "Añadido recientemente";
+"history.title" = "Historial";
+"history.title.live" = "Historial en vivo";
+"history.title.vod" = "Historial de películas";
+"history.title.series" = "Historial de series";
+"history.empty.title" = "Sin historial";
+"history.empty.message" = "Aparecerá aquí cuando veas algo.";
+"history.search_placeholder" = "Buscar en historial...";
+"history.clear.title" = "Borrar historial";
+"history.clear.label" = "Borrar historial";
+"history.clear.button_entry" = "Borrar historial de reproducción";
+"history.clear.message.all" = "Se borrará todo el historial de esta lista (incluidas posiciones). ¿Seguro?";
+"history.clear.message.live" = "Se borrará el historial en vivo. ¿Seguro?";
+"history.clear.message.vod" = "Se borrará el historial de películas (posiciones incluidas). ¿Seguro?";
+"history.clear.message.series" = "Se borrará el historial de series (posiciones incluidas). ¿Seguro?";
+
+// MARK: - Favorites
+"favorites.title" = "Favoritos";
+"favorites.empty.title" = "Aún no hay favoritos";
+"favorites.empty.message" = "Mantén pulsado un canal para añadirlo a favoritos.";
+"favorites.empty.no_result.title" = "Sin resultados";
+"favorites.search_placeholder" = "Buscar en favoritos...";
+"favorites.add" = "Añadir a favoritos";
+"favorites.remove" = "Quitar de favoritos";
+
+// MARK: - Settings (common)
+"settings.back_to_list" = "Volver a listas";
+"settings.refresh_all" = "Volver a descargar todo";
+"settings.player.title" = "Ajustes del reproductor";
+"settings.player.pip.title" = "Imagen en imagen";
+"settings.player.pip.desc" = "Permite el modo PiP";
+"settings.player.background.title" = "Seguir en segundo plano";
+"settings.player.background.desc" = "Si está desactivado, se pausa al ir al fondo";
+"settings.player.longpress.title" = "Acelerar al mantener pulsado";
+"settings.player.longpress.desc" = "Mantén pulsada la pantalla para 2x";
+"settings.playlist.info.title" = "Info de la lista";
+"settings.playlist.name" = "Nombre";
+"settings.playlist.type" = "Tipo";
+"settings.playlist.server_url" = "URL del servidor";
+"settings.playlist.username" = "Usuario";
+"settings.playlist.password" = "Contraseña";
+"settings.playlist.subscription" = "Tiempo restante";
+"settings.playlist.active_connection" = "Conexión activa";
+"settings.playlist.max_connection" = "Conexión máxima";
+"settings.playlist.unlimited" = "Ilimitado";
+"settings.playlist.unknown" = "Desconocido";
+"settings.playlist.unlimited_or_unknown" = "Ilimitado / Desconocido";
+"settings.playlist.expired" = "Expirado";
+"settings.playlist.fetching_info" = "Cargando datos de suscripción...";
+"settings.playlist.info_error" = "No se pudo obtener: %@";
+
+"settings.stats.title" = "Estadísticas de contenido";
+"settings.stats.live_count" = "Canales en vivo";
+"settings.stats.movie_count" = "Películas";
+"settings.stats.series_count" = "Series";
+"settings.stats.channel_count" = "Canales";
+"settings.stats.group_count" = "Grupos";
+"settings.stats.history_count" = "Historial";
+"settings.stats.history_items_format" = "%d elementos";
+
+"settings.server.title" = "Información del servidor";
+"settings.server.timezone" = "Zona horaria";
+"settings.server.message" = "Mensaje del servidor";
+
+"settings.content_management.title" = "Gestión de contenido";
+"settings.filter_adult.title" = "Filtrar contenido adulto";
+"settings.filter_adult.xtream_desc" = "Tras cambiar, hay que volver a descargar contenidos";
+"settings.filter_adult.m3u_desc" = "Oculta canales/grupos con XXX, 18+, adult en el nombre";
+
+"settings.about.title" = "Acerca de";
+"settings.about.version" = "Versión";
+"settings.about.github.title" = "Apoyar en GitHub";
+"settings.about.github.desc" = "Contribuye al proyecto en GitHub";
+
+// MARK: - M3U settings
+"settings.m3u.type_label" = "M3U / M3U8";
+"settings.m3u.refresh_url" = "Volver a descargar desde URL";
+"settings.m3u.refresh_file" = "Volver a cargar desde archivo";
+"settings.m3u.source_url" = "URL de origen";
+"settings.m3u.source" = "Origen";
+"settings.m3u.epg_url" = "EPG URL (info)";
+"settings.m3u.parsing" = "Analizando...";
+"settings.m3u.saving" = "Guardando...";
+"settings.m3u.reading_file" = "Leyendo archivo...";
+"settings.m3u.downloading" = "Descargando...";
+
+// MARK: - Language
+"settings.language.title" = "Idioma de la app";
+"settings.language.section" = "Idioma";
+"settings.language.system" = "Idioma del sistema";
+
+// MARK: - Stream types
+"stream.live" = "EN VIVO";
+"stream.vod" = "Película";
+"stream.series" = "Serie";
+"stream.m3u" = "M3U";
+
+// MARK: - Errors
+"loading.error.title" = "Error de carga";
+"parser.error.empty" = "El contenido M3U está vacío.";
+"parser.error.no_channels" = "No se encontraron canales. ¿Es un archivo M3U/M3U8 válido?";
+
+"net.error.invalid_url" = "URL no válida: %@";
+"net.error.network" = "Error de red: %@";
+"net.error.server" = "Error del servidor (HTTP %d)";
+"net.error.file_read" = "No se pudo leer el archivo: %@";
+"net.error.encoding_unsupported" = "No se pudo decodificar (codificación no soportada).";
+
+// MARK: - Misc
+"misc.channel_fallback_name" = "Canal %d";
+"misc.refresh_error" = "Error al actualizar: %@";
+"misc.save_setting_error" = "No se pudo guardar: %@";
+"misc.history_delete_error" = "No se pudo borrar: %@";
+"misc.xtream.auth_error" = "Usuario o contraseña incorrectos.";
+"misc.xtream.invalid_url" = "URL no válida o mal formada: %@";
+"misc.xtream.decode_error" = "Error al decodificar los datos: %@";
+
+// MARK: - Downloads
+"download.action" = "Descargar";
+"download.downloading_format" = "%d%%";
+"download.completed" = "Descargado";
+"download.retry" = "Reintentar";
+"download.cancel" = "Cancelar";
+"download.delete" = "Eliminar";
+"download.title" = "Descargas";
+"download.search_placeholder" = "Buscar en descargas...";
+"download.empty.title" = "Sin descargas";
+"download.empty.message" = "Descarga películas o episodios desde la pantalla de detalles.";
+"download.status.downloading" = "Descargando";
+"download.status.queued" = "En cola";
+"download.status.failed" = "Error";
+"download.play" = "Reproducir";
+"download.size_format" = "%@ / %@";
+"download.settings" = "Descargas";
+"download.wifi_only.title" = "Descargar solo con Wi-Fi";
+"download.wifi_only.desc" = "No se usarán datos móviles para descargar.";
+"download.storage_used" = "Almacenamiento usado";
+"download.delete_all" = "Eliminar todas las descargas";
+"download.delete_all.message" = "Se eliminará todo el contenido descargado. ¿Continuar?";
