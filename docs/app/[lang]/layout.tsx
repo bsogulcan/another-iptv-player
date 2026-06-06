@@ -89,6 +89,12 @@ export default async function LangLayout({
   return (
     <html lang={htmlLang[locale]} dir={dir(locale)} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link
+          rel="preconnect"
+          href="https://cdn.fontshare.com"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
       <body className="grain antialiased">
