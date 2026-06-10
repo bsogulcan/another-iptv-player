@@ -250,3 +250,9 @@
 "download.storage_used" = "Almacenamiento usado";
 "download.delete_all" = "Eliminar todas las descargas";
 "download.delete_all.message" = "Se eliminará todo el contenido descargado. ¿Continuar?";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "Subtítulos importados";
+"player.subtitle_import.button" = "Importar archivo de subtítulos";
+"player.subtitle_import.footer" = "Los subtítulos importados se guardan para este título y se cargan automáticamente la próxima vez que lo reproduzcas.";
+"player.subtitle_import.failed" = "No se pudo importar el archivo de subtítulos.";

@@ -250,3 +250,9 @@
 "download.storage_used" = "存储占用";
 "download.delete_all" = "删除全部下载";
 "download.delete_all.message" = "所有已下载内容将从设备中移除。继续吗？";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "已导入的字幕";
+"player.subtitle_import.button" = "导入字幕文件";
+"player.subtitle_import.footer" = "导入的字幕会为该内容保存，下次播放时自动加载。";
+"player.subtitle_import.failed" = "无法导入字幕文件。";

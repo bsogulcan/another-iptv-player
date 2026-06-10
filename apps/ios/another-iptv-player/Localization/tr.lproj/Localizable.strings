@@ -250,6 +250,10 @@
 "player.tracks.audio" = "Ses";
 "player.tracks.subtitle" = "Altyazı";
 "player.subtitle_off" = "Kapalı";
+"player.subtitle_import.section" = "İçe Aktarılan Altyazılar";
+"player.subtitle_import.button" = "Altyazı Dosyası İçe Aktar";
+"player.subtitle_import.footer" = "İçe aktarılan altyazılar bu içerik için saklanır ve bir sonraki oynatmada otomatik yüklenir.";
+"player.subtitle_import.failed" = "Altyazı dosyası içe aktarılamadı.";
 "player.buffering" = "Tampon";
 "player.ended" = "Bitti";
 

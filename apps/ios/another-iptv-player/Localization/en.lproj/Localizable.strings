@@ -250,6 +250,10 @@
 "player.tracks.audio" = "Audio";
 "player.tracks.subtitle" = "Subtitle";
 "player.subtitle_off" = "Off";
+"player.subtitle_import.section" = "Imported Subtitles";
+"player.subtitle_import.button" = "Import Subtitle File";
+"player.subtitle_import.footer" = "Imported subtitles are saved for this title and load automatically the next time you play it.";
+"player.subtitle_import.failed" = "The subtitle file could not be imported.";
 "player.buffering" = "Buffering";
 "player.ended" = "Ended";
 

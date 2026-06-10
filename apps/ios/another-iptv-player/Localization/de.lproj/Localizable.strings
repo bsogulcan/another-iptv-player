@@ -250,3 +250,9 @@
 "download.storage_used" = "Speicher belegt";
 "download.delete_all" = "Alle Downloads löschen";
 "download.delete_all.message" = "Alle geladenen Inhalte werden vom Gerät entfernt. Fortfahren?";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "Importierte Untertitel";
+"player.subtitle_import.button" = "Untertiteldatei importieren";
+"player.subtitle_import.footer" = "Importierte Untertitel werden für diesen Titel gespeichert und beim nächsten Abspielen automatisch geladen.";
+"player.subtitle_import.failed" = "Die Untertiteldatei konnte nicht importiert werden.";

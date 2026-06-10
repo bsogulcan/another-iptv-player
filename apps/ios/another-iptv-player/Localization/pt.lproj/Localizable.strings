@@ -250,3 +250,9 @@
 "download.storage_used" = "Armazenamento";
 "download.delete_all" = "Excluir todos os downloads";
 "download.delete_all.message" = "Todo o conteúdo baixado será removido. Continuar?";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "Legendas importadas";
+"player.subtitle_import.button" = "Importar arquivo de legenda";
+"player.subtitle_import.footer" = "As legendas importadas são salvas para este título e carregadas automaticamente na próxima reprodução.";
+"player.subtitle_import.failed" = "Não foi possível importar o arquivo de legenda.";

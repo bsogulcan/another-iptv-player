@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct PlaybackTrackSettingsSheet: View {
     @ObservedObject var player: VideoPlayerController
@@ -8,6 +9,11 @@ struct PlaybackTrackSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var didCopyURL = false
     @State private var copyResetTask: Task<Void, Never>?
+    @State private var showSubtitleImporter = false
+    @State private var showSubtitleImportError = false
+
+    private static let subtitleContentTypes: [UTType] =
+        ["srt", "ass", "ssa", "vtt", "sub", "smi"].compactMap { UTType(filenameExtension: $0) }
 
     var body: some View {
         NavigationStack {
@@ -33,6 +39,9 @@ struct PlaybackTrackSettingsSheet: View {
                     emptyLabel: L("player.tracks.empty.subtitle"),
                     select: { player.selectSubtitleTrack(id: $0) }
                 )
+                if !player.isLiveStream {
+                    importedSubtitlesSection
+                }
                 Section(L("player.dev_section")) {
                     Toggle(L("player.show_debug_overlay"), isOn: $showDebugOverlay)
                 }
@@ -66,6 +75,45 @@ struct PlaybackTrackSettingsSheet: View {
         }
         .onAppear { player.updateTracks() }
         .onDisappear { copyResetTask?.cancel() }
+        .fileImporter(
+            isPresented: $showSubtitleImporter,
+            allowedContentTypes: Self.subtitleContentTypes,
+            allowsMultipleSelection: false
+        ) { result in
+            guard case .success(let urls) = result, let picked = urls.first else { return }
+            do {
+                try player.importSubtitleFile(at: picked)
+            } catch {
+                showSubtitleImportError = true
+            }
+        }
+        .alert(L("player.subtitle_import.failed"), isPresented: $showSubtitleImportError) {
+            Button(L("common.close"), role: .cancel) {}
+        }
+    }
+
+    /// Imported files are stored for this content and loaded automatically on future playbacks.
+    private var importedSubtitlesSection: some View {
+        Section {
+            ForEach(player.importedSubtitleFiles, id: \.self) { file in
+                Label(file.lastPathComponent, systemImage: "doc.text")
+                    .foregroundStyle(.primary)
+            }
+            .onDelete { offsets in
+                for index in offsets {
+                    player.deleteImportedSubtitle(player.importedSubtitleFiles[index])
+                }
+            }
+            Button {
+                showSubtitleImporter = true
+            } label: {
+                Label(L("player.subtitle_import.button"), systemImage: "plus")
+            }
+        } header: {
+            Text(L("player.subtitle_import.section"))
+        } footer: {
+            Text(L("player.subtitle_import.footer"))
+        }
     }
 
     private func copyStreamURL() {

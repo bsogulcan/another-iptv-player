@@ -250,3 +250,9 @@
 "download.storage_used" = "الاستخدام";
 "download.delete_all" = "حذف جميع التنزيلات";
 "download.delete_all.message" = "سيتم إزالة كل المحتوى المحمل من الجهاز. هل تريد المتابعة؟";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "الترجمات المستوردة";
+"player.subtitle_import.button" = "استيراد ملف ترجمة";
+"player.subtitle_import.footer" = "تُحفظ الترجمات المستوردة لهذا العنوان وتُحمَّل تلقائيًا عند التشغيل التالي.";
+"player.subtitle_import.failed" = "تعذّر استيراد ملف الترجمة.";

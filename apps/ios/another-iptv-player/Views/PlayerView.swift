@@ -596,6 +596,11 @@ private struct PlayerViewImpl: View {
         subtitleManager.reset()
 
         log.info("Load playback: \(self.playbackIdentity, privacy: .public)")
+        player.setImportedSubtitleContext(
+            contentKey: ImportedSubtitleStore.contentKey(
+                playlistId: playlistId, type: type, streamId: streamId
+            )
+        )
         let initialStartSeconds: TimeInterval? = shouldStartFromResume ? Double(resumeTimeMs ?? 0) / 1000.0 : nil
         if let initialStartSeconds {
             log.info("Starting playback with mpv start option: \(initialStartSeconds, privacy: .public)s")

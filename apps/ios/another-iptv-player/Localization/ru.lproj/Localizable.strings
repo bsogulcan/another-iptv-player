@@ -250,3 +250,9 @@
 "download.storage_used" = "Занято";
 "download.delete_all" = "Удалить все загрузки";
 "download.delete_all.message" = "Все загруженные файлы будут удалены. Продолжить?";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "Импортированные субтитры";
+"player.subtitle_import.button" = "Импортировать файл субтитров";
+"player.subtitle_import.footer" = "Импортированные субтитры сохраняются для этого видео и автоматически загружаются при следующем воспроизведении.";
+"player.subtitle_import.failed" = "Не удалось импортировать файл субтитров.";

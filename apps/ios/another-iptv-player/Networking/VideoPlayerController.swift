@@ -11,12 +11,15 @@ struct TrackMenuOption: Identifiable, Hashable {
   let title: String
   let detail: String?
   let langCode: String?
+  /// mpv `track-list/N/external`: external file track added via `sub-add`.
+  let isExternal: Bool
 
-  init(id: Int, title: String, detail: String? = nil, langCode: String? = nil) {
+  init(id: Int, title: String, detail: String? = nil, langCode: String? = nil, isExternal: Bool = false) {
     self.id = id
     self.title = title
     self.detail = detail
     self.langCode = langCode
+    self.isExternal = isExternal
   }
 }
 
@@ -156,6 +159,11 @@ final class VideoPlayerController: ObservableObject {
   /// `play` sonrası ilk `isPlaybackEstablished` olayında kayıtlı parça tercihleri uygulanır.
   private var pendingPreferredTrackSelection = false
 
+  /// Imported external subtitles (`ImportedSubtitleStore`): the content key comes from
+  /// PlayerView; once playback is established the stored files are re-added to mpv.
+  @Published private(set) var importedSubtitleFiles: [URL] = []
+  private var importedSubtitleContentKey: String?
+
   init() {
     screenBrightness = UIScreen.main.brightness
     wireEngine()
@@ -205,7 +213,9 @@ final class VideoPlayerController: ObservableObject {
         self.syncFromEngine()
         if established, self.pendingPreferredTrackSelection {
           self.pendingPreferredTrackSelection = false
-          self.applyPreferredTracksFromSavedPreferences()
+          // If an imported subtitle is selected, the global subtitle preference must not override it.
+          let importedSelected = self.restoreImportedSubtitles()
+          self.updateTracks(applyPreferences: true, skipSubtitleSelection: importedSelected)
         }
       }
       .store(in: &cancellables)
@@ -430,7 +440,7 @@ final class VideoPlayerController: ObservableObject {
     setAspectMode(next)
   }
 
-  func updateTracks(applyPreferences: Bool = false) {
+  func updateTracks(applyPreferences: Bool = false, skipSubtitleSelection: Bool = false) {
     mpvEngine.reloadTrackList { [weak self] video, audio, subs, vid, aid, sid in
       guard let self else { return }
       self.videoTracks = video
@@ -449,15 +459,13 @@ final class VideoPlayerController: ObservableObject {
         self.mpvEngine.selectAudioTrack(id: pick)
         self.currentAudioTrackId = pick
       }
-      if let pick = PlaybackTrackPreferences.pickSubtitle(from: subs, prefs: prefs) {
+      if !skipSubtitleSelection,
+         let pick = PlaybackTrackPreferences.pickSubtitle(from: subs, prefs: prefs)
+      {
         self.mpvEngine.selectSubtitleTrack(id: pick)
         self.currentSubtitleTrackId = pick
       }
     }
-  }
-
-  private func applyPreferredTracksFromSavedPreferences() {
-    updateTracks(applyPreferences: true)
   }
 
   func selectVideoTrack(id: Int) {
@@ -481,6 +489,65 @@ final class VideoPlayerController: ObservableObject {
     currentSubtitleTrackId = id
     if let opt = subtitleTracks.first(where: { $0.id == id }) {
       PlaybackTrackPreferences.saveSubtitle(from: opt)
+      if let key = importedSubtitleContentKey {
+        // Remember external track selection per content; picking embedded / off resets it.
+        let importedName = opt.isExternal && importedFileNames.contains(opt.title) ? opt.title : nil
+        ImportedSubtitleStore.setSelectedFileName(importedName, for: key)
+      }
+    }
+  }
+
+  // MARK: - Imported subtitles (issue #98)
+
+  private var importedFileNames: Set<String> {
+    Set(importedSubtitleFiles.map(\.lastPathComponent))
+  }
+
+  /// Identity of the playing content; set by PlayerView before every `play` call.
+  func setImportedSubtitleContext(contentKey: String) {
+    importedSubtitleContentKey = contentKey
+    importedSubtitleFiles = ImportedSubtitleStore.subtitleFiles(for: contentKey)
+  }
+
+  /// Adds the stored files to mpv; returns whether the saved selection was applied.
+  private func restoreImportedSubtitles() -> Bool {
+    guard let key = importedSubtitleContentKey else { return false }
+    let files = ImportedSubtitleStore.subtitleFiles(for: key)
+    importedSubtitleFiles = files
+    guard !files.isEmpty else { return false }
+    let selectedName = ImportedSubtitleStore.selectedFileName(for: key)
+    var didSelect = false
+    for file in files {
+      let name = file.lastPathComponent
+      let select = name == selectedName
+      didSelect = didSelect || select
+      mpvEngine.addExternalSubtitle(filePath: file.path, title: name, select: select)
+    }
+    return didSelect
+  }
+
+  func importSubtitleFile(at pickedURL: URL) throws {
+    guard let key = importedSubtitleContentKey else { return }
+    let saved = try ImportedSubtitleStore.importFile(at: pickedURL, for: key)
+    let name = saved.lastPathComponent
+    // If a track with the same name was added before, drop the old one (file was overwritten).
+    if let existing = subtitleTracks.first(where: { $0.isExternal && $0.title == name }) {
+      mpvEngine.removeExternalSubtitle(id: existing.id)
+    }
+    ImportedSubtitleStore.setSelectedFileName(name, for: key)
+    importedSubtitleFiles = ImportedSubtitleStore.subtitleFiles(for: key)
+    mpvEngine.addExternalSubtitle(filePath: saved.path, title: name, select: true)
+    updateTracks()
+  }
+
+  func deleteImportedSubtitle(_ url: URL) {
+    guard let key = importedSubtitleContentKey else { return }
+    let name = url.lastPathComponent
+    ImportedSubtitleStore.removeFile(url, for: key)
+    importedSubtitleFiles = ImportedSubtitleStore.subtitleFiles(for: key)
+    if let existing = subtitleTracks.first(where: { $0.isExternal && $0.title == name }) {
+      mpvEngine.removeExternalSubtitle(id: existing.id)
+      updateTracks()
     }
   }
 

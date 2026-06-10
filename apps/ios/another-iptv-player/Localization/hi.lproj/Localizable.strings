@@ -250,3 +250,9 @@
 "download.storage_used" = "स्टोरेज उपयोग";
 "download.delete_all" = "सभी डाउनलोड हटाएँ";
 "download.delete_all.message" = "सभी डाउनलोड किए गए आइटम हटाए जाएँगे. जारी रखें?";
+
+// MARK: - Player subtitle import
+"player.subtitle_import.section" = "आयात किए गए सबटाइटल";
+"player.subtitle_import.button" = "सबटाइटल फ़ाइल आयात करें";
+"player.subtitle_import.footer" = "आयात किए गए सबटाइटल इस शीर्षक के लिए सहेजे जाते हैं और अगली बार चलाने पर अपने आप लोड हो जाते हैं।";
+"player.subtitle_import.failed" = "सबटाइटल फ़ाइल आयात नहीं की जा सकी।";

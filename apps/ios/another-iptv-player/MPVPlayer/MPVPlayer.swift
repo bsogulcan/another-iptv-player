@@ -975,6 +975,7 @@ extension MPVPlayer {
     let isDefault = MPVHelpers.getFlagProperty(handle, name: "\(prefix)/default") ?? false
     let isForced = MPVHelpers.getFlagProperty(handle, name: "\(prefix)/forced") ?? false
     let isImage = MPVHelpers.getFlagProperty(handle, name: "\(prefix)/image") ?? false
+    let isExternal = MPVHelpers.getFlagProperty(handle, name: "\(prefix)/external") ?? false
     let demuxW = MPVHelpers.getInt64Property(handle, name: "\(prefix)/demux-w") ?? 0
     let demuxH = MPVHelpers.getInt64Property(handle, name: "\(prefix)/demux-h") ?? 0
     let demuxFps = MPVHelpers.getDoubleProperty(handle, name: "\(prefix)/demux-fps") ?? 0
@@ -1012,7 +1013,9 @@ extension MPVPlayer {
 
     let detail = parts.isEmpty ? nil : parts.joined(separator: " · ")
     let langCode = langTrim.isEmpty ? nil : langTrim
-    return TrackMenuOption(id: trackId, title: mainTitle, detail: detail, langCode: langCode)
+    return TrackMenuOption(
+      id: trackId, title: mainTitle, detail: detail, langCode: langCode, isExternal: isExternal
+    )
   }
 
   func selectVideoTrack(id: Int) {
@@ -1034,6 +1037,36 @@ extension MPVPlayer {
       guard let self, let handle = self.mpv, !self.isDisposed else { return }
       let v = id < 0 ? "no" : "\(id)"
       MPVHelpers.setPropertyStringIfSupported(handle, name: "sid", value: v)
+    }
+  }
+
+  /// Adds an external subtitle file to the track list; with `select` it becomes active immediately.
+  func addExternalSubtitle(filePath: String, title: String, select: Bool) {
+    mpvQueue.async { [weak self] in
+      guard let self, let handle = self.mpv, !self.isDisposed else { return }
+      let args: [String] = ["sub-add", filePath, select ? "select" : "auto", title]
+      var cArgs = args.map { strdup($0) }
+      defer { cArgs.forEach { free($0) } }
+      var argv: [UnsafePointer<CChar>?] = cArgs.map { UnsafePointer($0) }
+      argv.append(nil)
+      let st = mpv_command(handle, &argv)
+      if st < 0 {
+        Log.error("MPVPlayer", "sub-add: \(String(cString: mpv_error_string(st))) (\(filePath))")
+      }
+    }
+  }
+
+  /// Only external tracks (added via sub-add) can be removed; mpv returns an error otherwise.
+  func removeExternalSubtitle(id: Int) {
+    mpvQueue.async { [weak self] in
+      guard let self, let handle = self.mpv, !self.isDisposed else { return }
+      let cmd = "sub-remove \(id)"
+      cmd.withCString { cstr in
+        let st = mpv_command_string(handle, cstr)
+        if st < 0 {
+          Log.error("MPVPlayer", "sub-remove: \(String(cString: mpv_error_string(st)))")
+        }
+      }
     }
   }
 
