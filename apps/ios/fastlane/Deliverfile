@@ -21,6 +21,7 @@ automatic_release true
 # Languages we maintain (must match the metadata/<locale> folders).
 languages [
   "en-US",
+  "en-GB",
   "tr",
   "ar-SA",
   "de-DE",

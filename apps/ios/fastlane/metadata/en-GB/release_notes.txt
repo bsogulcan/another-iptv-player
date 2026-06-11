@@ -1,0 +1,3 @@
+• Import external subtitle files (SRT, ASS, VTT and more) for movies and series
+• M3U links from Xtream providers now connect through the Xtream API automatically — fixes "Server error" when the provider blocks M3U downloads
+• More translated texts across the app

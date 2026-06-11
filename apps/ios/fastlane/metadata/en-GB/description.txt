@@ -1,0 +1,25 @@
+Another IPTV is a fast, modern player for M3U, M3U8 and Xtream Codes playlists — built for iPhone and iPad.
+
+WHAT YOU GET
+• Live TV, Movies and Series in one tidy app
+• M3U / M3U8 playlists from URL or local file
+• Xtream Codes with full API integration
+• Picture in Picture and background audio
+• Subtitle customization powered by libass — fonts, colors, outlines, timing
+• Offline downloads with a Wi-Fi only switch
+• Continue Watching, Favorites and full Watch History
+• Long-press to play at 2x speed
+• Adult content filter
+• 10 interface languages, universal iPhone + iPad
+
+POWERED BY MPV
+Built on the mpv player engine — the same battle-tested core trusted by power users worldwide. Smooth playback for almost every stream codec, with hardware acceleration on Apple Silicon.
+
+PRIVACY FIRST
+Your playlists and credentials stay on your device. No accounts. No tracking. No ads. Ever.
+
+WHO IS THIS FOR
+Anyone with a paid or free IPTV subscription, M3U playlist file, or Xtream Codes account who wants a clean, ad-free player without the bloat.
+
+DISCLAIMER
+Another IPTV does not include, host, or distribute any media content, channels, or playlists. You must supply your own legally obtained IPTV subscription, M3U file, or Xtream Codes credentials. The developer is not responsible for the content accessed through user-supplied playlists.
