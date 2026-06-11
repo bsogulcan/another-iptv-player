@@ -1,1 +1,3 @@
-Melhorias de estabilidade e pequenas correções de bugs internos.
+• Importe arquivos de legenda externos (SRT, ASS, VTT e mais) para filmes e séries
+• Links M3U de provedores Xtream agora se conectam automaticamente pela API Xtream — corrige o "Erro do servidor" quando o provedor bloqueia downloads de M3U
+• Mais textos traduzidos em todo o aplicativo

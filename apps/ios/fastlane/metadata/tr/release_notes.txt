@@ -1,1 +1,3 @@
-Stabilite iyileştirmeleri ve arka planda küçük hata düzeltmeleri.
+• Film ve diziler için harici altyazı dosyası ekleme (SRT, ASS, VTT ve daha fazlası)
+• Xtream sağlayıcılarının M3U linkleri artık otomatik olarak Xtream API üzerinden bağlanıyor — sağlayıcı M3U indirmeyi engellediğinde alınan "Sunucu hatası" düzeltildi
+• Uygulama genelinde daha fazla çevrilmiş metin

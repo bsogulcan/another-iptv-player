@@ -1,1 +1,3 @@
-Stabilitätsverbesserungen und kleinere Fehlerbehebungen im Hintergrund.
+• Externe Untertiteldateien (SRT, ASS, VTT und mehr) für Filme und Serien importieren
+• M3U-Links von Xtream-Anbietern verbinden sich jetzt automatisch über die Xtream-API — behebt den „Serverfehler", wenn der Anbieter M3U-Downloads blockiert
+• Mehr übersetzte Texte in der gesamten App
