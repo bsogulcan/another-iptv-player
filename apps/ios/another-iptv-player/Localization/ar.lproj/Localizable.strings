@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "تحميل M3U...";
 "add_m3u.parsing" = "تحليل القنوات...";
 "add_m3u.saving_db" = "حفظ...";
+"add_m3u.xtream_detected" = "تم اكتشاف حساب Xtream، جارٍ الاتصال...";
 
 // MARK: - Dashboard
 "dashboard.live" = "البث المباشر";

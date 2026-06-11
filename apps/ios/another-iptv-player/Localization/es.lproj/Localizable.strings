@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "Descargando M3U...";
 "add_m3u.parsing" = "Analizando canales...";
 "add_m3u.saving_db" = "Guardando...";
+"add_m3u.xtream_detected" = "Cuenta Xtream detectada, conectando...";
 
 // MARK: - Dashboard
 "dashboard.live" = "TV en vivo";

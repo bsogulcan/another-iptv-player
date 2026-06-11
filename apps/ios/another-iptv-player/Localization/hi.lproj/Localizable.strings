@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "M3U डाउनलोड हो रहा है...";
 "add_m3u.parsing" = "चैनल पार्स हो रहे हैं...";
 "add_m3u.saving_db" = "सहेजा जा रहा है...";
+"add_m3u.xtream_detected" = "Xtream खाता मिला, कनेक्ट हो रहा है...";
 
 // MARK: - Dashboard
 "dashboard.live" = "लाइव टीवी";

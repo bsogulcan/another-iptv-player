@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "Загрузка M3U...";
 "add_m3u.parsing" = "Анализ каналов...";
 "add_m3u.saving_db" = "Сохранение...";
+"add_m3u.xtream_detected" = "Обнаружена учетная запись Xtream, подключение...";
 
 // MARK: - Dashboard
 "dashboard.live" = "ТВ";

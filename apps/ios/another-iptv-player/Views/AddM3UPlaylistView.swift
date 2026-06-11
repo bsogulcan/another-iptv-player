@@ -163,6 +163,53 @@ struct AddM3UPlaylistView: View {
         }
     }
 
+    // MARK: - Xtream auto-detection
+
+    /// Tries to add the detected Xtream credentials as an Xtream playlist.
+    /// Returns `true` when the save flow was handled here (success or a surfaced sync
+    /// error); `false` when the panel doesn't answer the Xtream API and the caller
+    /// should fall back to downloading the link as plain M3U.
+    private func addAsXtream(credentials: XtreamLinkDetector.Credentials, name: String) async -> Bool {
+        await MainActor.run { progressMessage = L("add_m3u.xtream_detected") }
+
+        let playlist = Playlist(
+            name: name,
+            serverURL: credentials.serverURL,
+            username: credentials.username,
+            password: credentials.password,
+            type: .xtream
+        )
+        let client = XtreamAPIClient(playlist: playlist)
+
+        do {
+            _ = try await client.verify()
+        } catch {
+            // get.php link without a working player_api — treat as a regular M3U link.
+            return false
+        }
+
+        do {
+            try await XtreamImporter.syncAndSave(playlist: playlist, client: client) { message in
+                self.progressMessage = message
+            }
+            await MainActor.run {
+                self.isLoading = false
+                self.progressMessage = nil
+                self.dismiss()
+            }
+        } catch {
+            // Account verified but sync failed: surface the error instead of falling
+            // back, since get.php is likely blocked on such panels anyway.
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.showError = true
+                self.isLoading = false
+                self.progressMessage = nil
+            }
+        }
+        return true
+    }
+
     // MARK: - Save
 
     private func savePlaylist() async {
@@ -172,6 +219,16 @@ struct AddM3UPlaylistView: View {
 
         let trimmedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Xtream-style get.php links get connected through the Xtream API when possible:
+        // many panels block get.php downloads, and the API unlocks VOD/series/EPG anyway.
+        // Only for new playlists — converting an existing M3U playlist would orphan its
+        // favorites and watch history. Falls back to the plain M3U flow below.
+        if editingPlaylist == nil, !hasLocalFile,
+           let credentials = XtreamLinkDetector.detect(urlString: trimmedURL),
+           await addAsXtream(credentials: credentials, name: trimmedName) {
+            return
+        }
 
         let newPlaylist = Playlist(
             id: editingPlaylist?.id ?? UUID(),

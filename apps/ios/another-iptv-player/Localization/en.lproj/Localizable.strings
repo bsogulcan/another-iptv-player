@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "Downloading M3U...";
 "add_m3u.parsing" = "Parsing channels...";
 "add_m3u.saving_db" = "Saving to database...";
+"add_m3u.xtream_detected" = "Xtream account detected, connecting...";
 
 // MARK: - Dashboard tabs
 "dashboard.live" = "Live TV";

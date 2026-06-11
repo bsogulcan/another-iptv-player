@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "下载 M3U...";
 "add_m3u.parsing" = "正在解析频道...";
 "add_m3u.saving_db" = "保存中...";
+"add_m3u.xtream_detected" = "检测到 Xtream 账户，正在连接...";
 
 // MARK: - Dashboard
 "dashboard.live" = "直播";

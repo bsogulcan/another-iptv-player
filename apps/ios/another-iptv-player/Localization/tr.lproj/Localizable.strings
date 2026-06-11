@@ -67,6 +67,7 @@
 "add_m3u.downloading" = "M3U indiriliyor...";
 "add_m3u.parsing" = "Kanallar ayrıştırılıyor...";
 "add_m3u.saving_db" = "Veritabanına kaydediliyor...";
+"add_m3u.xtream_detected" = "Xtream hesabı algılandı, bağlanılıyor...";
 
 // MARK: - Dashboard tabs
 "dashboard.live" = "Canlı TV";

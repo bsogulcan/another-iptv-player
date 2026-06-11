@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AAAA000000000000000000B0 /* UserFlowsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000000B1 /* UserFlowsUITests.swift */; };
-		AAAA000000000000000000B2 /* ScreensUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000000B3 /* ScreensUITests.swift */; };
 		24EB734DA8595E52FB4D0C30 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C041D5956145665A6D10DB07 /* SnapshotHelper.swift */; };
 		4CF48B4E49AEEF9C3A211371 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96C857BC46C22DA2924A2D1A /* Foundation.framework */; };
 		72E479B30AE56ACF2EC8BAE0 /* ScreenshotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A9625D1159BAB57C3180D91 /* ScreenshotsUITests.swift */; };
+		AAAA000000000000000000B0 /* UserFlowsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000000B1 /* UserFlowsUITests.swift */; };
+		AAAA000000000000000000B2 /* ScreensUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAAA000000000000000000B3 /* ScreensUITests.swift */; };
 		D76253C02F85052600E30229 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E8A1F0022F85000100AAA001 /* GRDB */; };
 		D76253C12F85052600E30229 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = E8A1F0022F85000100AAA002 /* GRDBQuery */; };
 		D76253C22F85052600E30229 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = E8A1F0022F85000100AAA003 /* Nuke */; };
@@ -39,9 +39,9 @@
 		177334D0A25775E3B29E3C9E /* another-iptv-playerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "another-iptv-playerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		96C857BC46C22DA2924A2D1A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		9A9625D1159BAB57C3180D91 /* ScreenshotsUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreenshotsUITests.swift; sourceTree = "<group>"; };
+		AAAA000000000000000000A1 /* another-iptv-playerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "another-iptv-playerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAAA000000000000000000B1 /* UserFlowsUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UserFlowsUITests.swift; sourceTree = "<group>"; };
 		AAAA000000000000000000B3 /* ScreensUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreensUITests.swift; sourceTree = "<group>"; };
-		AAAA000000000000000000A1 /* another-iptv-playerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "another-iptv-playerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C041D5956145665A6D10DB07 /* SnapshotHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SnapshotHelper.swift; sourceTree = "<group>"; };
 		D713CDA92F82DC8A00C6BEFF /* another-iptv-player.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "another-iptv-player.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D749AE832FBFDAA600312016 /* Avformat.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Avformat.xcframework; path = Vendor/libmpv/Frameworks/Avformat.xcframework; sourceTree = "<group>"; };

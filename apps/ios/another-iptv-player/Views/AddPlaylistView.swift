@@ -179,92 +179,10 @@ struct AddPlaylistView: View {
     }
     
     private func syncAndSave(newPlaylist: Playlist, client: XtreamAPIClient) async {
-        print("--- ADD PLAYLIST: SYNC STARTED (SQLITE) ---")
-        let totalStartTime = Date()
-        
         do {
-            let catStart = Date()
-            await MainActor.run { self.progressMessage = L("add_playlist.fetching_categories") }
-            let liveCats = try await client.getLiveCategories()
-            let vodCats = try await client.getVODCategories()
-            let seriesCats = try await client.getSeriesCategories()
-            print("NETWORK: Categories fetched in \(Date().timeIntervalSince(catStart)) seconds")
-            
-            let liveStart = Date()
-            await MainActor.run { self.progressMessage = L("add_playlist.fetching_live") }
-            let liveStreams = try await client.getLiveStreams()
-            print("NETWORK: Live Streams fetched in \(Date().timeIntervalSince(liveStart)) seconds | Count: \(liveStreams.count)")
-            
-            let vodStart = Date()
-            await MainActor.run { self.progressMessage = L("add_playlist.fetching_movies") }
-            let vods = try await client.getVODStreams()
-            print("NETWORK: VODs fetched in \(Date().timeIntervalSince(vodStart)) seconds | Count: \(vods.count)")
-            
-            let seriesStart = Date()
-            await MainActor.run { self.progressMessage = L("add_playlist.fetching_series") }
-            let series = try await client.getSeries()
-            print("NETWORK: Series fetched in \(Date().timeIntervalSince(seriesStart)) seconds | Count: \(series.count)")
-            
-            // 1. Önce Playlist'i kaydet (Böylece diğer işlemlerde hata olsa bile playlist listede görünür)
-            try await AppDatabase.shared.write { db in
-                try newPlaylist.save(db)
+            try await XtreamImporter.syncAndSave(playlist: newPlaylist, client: client) { message in
+                self.progressMessage = message
             }
-            print("DATABASE: Playlist saved successfully")
-
-            await MainActor.run { self.progressMessage = L("add_playlist.saving_db") }
-            let insertStart = Date()
-
-            // Yetişkin içerik filtresi
-            let filterAdult = newPlaylist.filterAdultContent
-            let adultLiveCatIds   = filterAdult ? AdultContentFilter.adultCategoryIds(from: liveCats)   : []
-            let adultVodCatIds    = filterAdult ? AdultContentFilter.adultCategoryIds(from: vodCats)    : []
-            let adultSeriesCatIds = filterAdult ? AdultContentFilter.adultCategoryIds(from: seriesCats) : []
-
-            // 2. İçerikleri Kaydet (Upsert kullanarak çakışmaları önle)
-            try await AppDatabase.shared.write { db in
-                // Categories
-                for (index, cat) in liveCats.enumerated() {
-                    if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                    let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "live", sortIndex: index, playlistId: newPlaylist.id)
-                    try dbCat.save(db)
-                }
-                for (index, cat) in vodCats.enumerated() {
-                    if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                    let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "vod", sortIndex: index, playlistId: newPlaylist.id)
-                    try dbCat.save(db)
-                }
-                for (index, cat) in seriesCats.enumerated() {
-                    if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                    let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "series", sortIndex: index, playlistId: newPlaylist.id)
-                    try dbCat.save(db)
-                }
-
-                // Live Streams
-                for (index, stream) in liveStreams.enumerated() {
-                    if filterAdult, AdultContentFilter.isAdultLiveStream(stream, adultCategoryIds: adultLiveCatIds) { continue }
-                    let dbStream = DBLiveStream(streamId: stream.id, name: stream.name ?? L("content.unnamed"), streamIcon: stream.streamIcon, epgChannelId: stream.epgChannelId, categoryId: stream.categoryId, sortIndex: index, playlistId: newPlaylist.id)
-                    try dbStream.save(db)
-                }
-
-                // VODs
-                for (index, stream) in vods.enumerated() {
-                    if filterAdult, AdultContentFilter.isAdultVODStream(stream, adultCategoryIds: adultVodCatIds) { continue }
-                    var dbVOD = DBVODStream(streamId: stream.id, name: stream.name ?? L("content.unnamed"), streamIcon: stream.streamIcon, categoryId: stream.categoryId, rating: stream.rating, containerExtension: stream.containerExtension, sortIndex: index, playlistId: newPlaylist.id)
-                    dbVOD.added = stream.added
-                    try dbVOD.save(db)
-                }
-
-                // Series
-                for (index, s) in series.enumerated() {
-                    if filterAdult, let cid = s.categoryId, adultSeriesCatIds.contains(cid) { continue }
-                    var dbSeries = DBSeries(seriesId: s.id, name: s.name ?? L("content.unnamed"), cover: s.cover, plot: s.plot, genre: s.genre, rating: s.rating, categoryId: s.categoryId, sortIndex: index, playlistId: newPlaylist.id)
-                    dbSeries.lastModified = s.lastModified
-                    try dbSeries.save(db)
-                }
-            }
-            
-            print("DATABASE: Total Insertion completed in \(Date().timeIntervalSince(insertStart)) seconds")
-            print("--- TOTAL SYNC TIME: \(Date().timeIntervalSince(totalStartTime)) seconds ---")
 
             await MainActor.run {
                 self.isLoading = false
