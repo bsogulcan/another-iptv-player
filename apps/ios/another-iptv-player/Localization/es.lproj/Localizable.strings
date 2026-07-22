@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Si está desactivado, se pausa al ir al fondo";
 "settings.player.longpress.title" = "Acelerar al mantener pulsado";
 "settings.player.longpress.desc" = "Mantén pulsada la pantalla para 2x";
+"settings.player.autonext.title" = "Reproducir siguiente episodio automáticamente";
+"settings.player.autonext.desc" = "Al terminar un episodio, el siguiente empieza automáticamente";
+"player.autonext.countdown" = "Siguiente episodio en %d";
 "settings.playlist.info.title" = "Info de la lista";
 "settings.playlist.name" = "Nombre";
 "settings.playlist.type" = "Tipo";

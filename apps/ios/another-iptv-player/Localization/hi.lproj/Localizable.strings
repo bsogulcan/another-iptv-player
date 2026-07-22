@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "बंद हो तो ऐप बैकग्राउंड में जाने पर रुकता है";
 "settings.player.longpress.title" = "लंबा दबाने पर तेज़ करें";
 "settings.player.longpress.desc" = "स्क्रीन को लंबा दबाएँ 2x गति के लिए";
+"settings.player.autonext.title" = "अगला एपिसोड अपने आप चलाएँ";
+"settings.player.autonext.desc" = "एपिसोड समाप्त होने पर अगला अपने आप शुरू होता है";
+"player.autonext.countdown" = "अगला एपिसोड %d में";
 "settings.playlist.info.title" = "प्लेलिस्ट जानकारी";
 "settings.playlist.name" = "नाम";
 "settings.playlist.type" = "प्रकार";

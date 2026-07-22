@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "إن كان مغلقاً، يتوقف عند تصغير التطبيق";
 "settings.player.longpress.title" = "تسريع عند الضغط المطوّل";
 "settings.player.longpress.desc" = "اضغط مطولاً للتشغيل بسرعة 2x";
+"settings.player.autonext.title" = "تشغيل الحلقة التالية تلقائيًا";
+"settings.player.autonext.desc" = "عند انتهاء الحلقة، تبدأ الحلقة التالية تلقائيًا";
+"player.autonext.countdown" = "الحلقة التالية خلال %d";
 "settings.playlist.info.title" = "معلومات القائمة";
 "settings.playlist.name" = "الاسم";
 "settings.playlist.type" = "النوع";

@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Wenn aus, pausiert die Wiedergabe im Hintergrund";
 "settings.player.longpress.title" = "Beschleunigen bei langem Drücken";
 "settings.player.longpress.desc" = "Bildschirm lang drücken für 2x Geschwindigkeit";
+"settings.player.autonext.title" = "Nächste Folge automatisch abspielen";
+"settings.player.autonext.desc" = "Wenn eine Folge endet, startet die nächste automatisch";
+"player.autonext.countdown" = "Nächste Folge in %d";
 "settings.playlist.info.title" = "Playlist-Info";
 "settings.playlist.name" = "Name";
 "settings.playlist.type" = "Typ";

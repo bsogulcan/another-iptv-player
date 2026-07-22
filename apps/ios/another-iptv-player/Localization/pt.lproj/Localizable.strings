@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Se desativado, pausa em segundo plano";
 "settings.player.longpress.title" = "Acelerar ao pressionar";
 "settings.player.longpress.desc" = "Segure a tela para velocidade 2x";
+"settings.player.autonext.title" = "Reproduzir próximo episódio automaticamente";
+"settings.player.autonext.desc" = "Quando um episódio termina, o próximo começa automaticamente";
+"player.autonext.countdown" = "Próximo episódio em %d";
 "settings.playlist.info.title" = "Info da lista";
 "settings.playlist.name" = "Nome";
 "settings.playlist.type" = "Tipo";

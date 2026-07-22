@@ -1,0 +1,4 @@
+#EXTM3U
+#EXTINF:-1,Channel
+#EXT-X-KODI-PROP:inputstream.adaptive.stream_headers=User-Agent=AltUA
+http://example.com/1

@@ -1,0 +1,4 @@
+#EXTM3U
+#EXTINF:-1,Channel
+#KODIPROP:inputstream.adaptive.stream_headers=User-Agent=KodiUA/2.0&Referer=foo
+http://example.com/1

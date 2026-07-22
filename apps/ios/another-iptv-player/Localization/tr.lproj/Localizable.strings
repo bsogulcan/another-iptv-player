@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Kapalıysa uygulama arka plana geçince duraklatılır";
 "settings.player.longpress.title" = "Basılı Tutunca Hızlandır";
 "settings.player.longpress.desc" = "Ekrana uzun basarak 2x hız ile oynatma";
+"settings.player.autonext.title" = "Sonraki Bölümü Otomatik Oynat";
+"settings.player.autonext.desc" = "Bölüm bitince sonraki bölüm otomatik başlar";
+"player.autonext.countdown" = "Sonraki bölüm: %d";
 "settings.playlist.info.title" = "Playlist Bilgileri";
 "settings.playlist.name" = "İsim";
 "settings.playlist.type" = "Tür";

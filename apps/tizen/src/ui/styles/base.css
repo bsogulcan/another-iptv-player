@@ -1,0 +1,63 @@
+/* Chromium 56 target: flexbox only — no CSS grid, no flex gap (use margins). */
+
+/* Design tokens — tvOS-inspired: layered graphite depth instead of pitch
+   black; focus is communicated by scale+shadow on media and by light-fill
+   inversion on text controls (never by a colored border alone). */
+:root {
+  --bg-top: #262b35;
+  --bg-bottom: #14171d;
+  --surface: #262c38;
+  --surface-high: #303748;
+  --overlay: rgba(16, 18, 24, 0.72);
+  --text: #f5f6f8;
+  --text-dim: #a8afbc;
+  --text-faint: #79808f;
+  --focus-fill: #f2f3f6;
+  --focus-text: #14161c;
+  --accent: #3f8cff;
+  --live: #d92c20;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --safe-x: 90px;
+  --safe-y: 56px;
+  /* Compact on purpose: shelf/grid containers clip overflow, and a large
+     offset+blur both clips into hard edges and darkens the title below. */
+  --shadow-focus: 0 10px 22px rgba(0, 0, 0, 0.42);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #14171d;
+  color: var(--text);
+  font-family: "SamsungOne", -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: linear-gradient(
+    180deg,
+    var(--bg-top) 0%,
+    #1c2028 52%,
+    var(--bg-bottom) 100%
+  );
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* TV UI: focus drives scrolling; native scrollbars are never shown. */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}

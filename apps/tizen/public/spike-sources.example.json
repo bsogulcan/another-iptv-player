@@ -1,0 +1,26 @@
+{
+  "_comment": "Copy to spike-sources.json (gitignored) and fill with real Xtream URLs for the Phase 1 TV spike. NEVER commit real credentials.",
+  "sources": [
+    {
+      "name": "Live raw TS (Xtream)",
+      "url": "http://SERVER:PORT/USERNAME/PASSWORD/STREAM_ID",
+      "isLive": true
+    },
+    {
+      "name": "Live HLS (Xtream)",
+      "url": "http://SERVER:PORT/USERNAME/PASSWORD/STREAM_ID.m3u8",
+      "isLive": true
+    },
+    {
+      "name": "VOD mp4 (Xtream)",
+      "url": "http://SERVER:PORT/movie/USERNAME/PASSWORD/STREAM_ID.mp4",
+      "isLive": false
+    },
+    {
+      "name": "Custom UA test",
+      "url": "http://SERVER:PORT/USERNAME/PASSWORD/STREAM_ID",
+      "isLive": true,
+      "userAgent": "AnotherIPTVPlayer/0.1 Tizen"
+    }
+  ]
+}

@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Если выкл., пауза при сворачивании";
 "settings.player.longpress.title" = "Ускорение при удержании";
 "settings.player.longpress.desc" = "Удерживайте экран для 2x";
+"settings.player.autonext.title" = "Автовоспроизведение следующей серии";
+"settings.player.autonext.desc" = "Когда серия заканчивается, следующая начинается автоматически";
+"player.autonext.countdown" = "Следующая серия через %d";
 "settings.playlist.info.title" = "Инфо плейлиста";
 "settings.playlist.name" = "Имя";
 "settings.playlist.type" = "Тип";

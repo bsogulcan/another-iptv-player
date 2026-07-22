@@ -1,0 +1,34 @@
+[
+  {
+    "num": 1,
+    "name": "Harbor Lights",
+    "series_id": 501,
+    "cover": "http://example-panel.tv/covers/harbor-lights.jpg",
+    "plot": "A small coastal town keeps its secrets.",
+    "cast": "A. Actor, B. Actress",
+    "director": "C. Director",
+    "genre": "Drama",
+    "releaseDate": "2021-09-14",
+    "last_modified": "1710000000",
+    "rating": "8",
+    "rating_5based": 4,
+    "backdrop_path": ["http://example-panel.tv/backdrops/harbor-lights.jpg"],
+    "youtube_trailer": "dQw4w9WgXcQ",
+    "episode_run_time": "45",
+    "category_id": "21"
+  },
+  {
+    "num": 2,
+    "name": "Midnight Bazaar",
+    "series_id": "502",
+    "cover": "http://example-panel.tv/covers/midnight-bazaar.jpg",
+    "plot": "",
+    "cast": "",
+    "director": "",
+    "genre": "Mystery",
+    "releaseDate": "2019-02-01",
+    "last_modified": 1712000000,
+    "rating": 7,
+    "category_id": 21
+  }
+]

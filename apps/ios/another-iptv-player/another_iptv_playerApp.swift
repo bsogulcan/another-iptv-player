@@ -35,7 +35,8 @@ struct another_iptv_playerApp: App {
         UserDefaults.standard.register(defaults: [
             "player.pipEnabled": true,
             "player.continuePlayingInBackground": true,
-            "player.speedUpOnLongPress": true
+            "player.speedUpOnLongPress": true,
+            "player.autoPlayNextEpisode": true
         ])
     }
 

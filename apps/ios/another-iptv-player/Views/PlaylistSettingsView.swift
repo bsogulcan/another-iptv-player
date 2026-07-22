@@ -25,6 +25,7 @@ struct PlaylistSettingsView: View {
     @AppStorage("player.pipEnabled") private var pipEnabled = true
     @AppStorage("player.continuePlayingInBackground") private var continuePlayingInBackground = true
     @AppStorage("player.speedUpOnLongPress") private var speedUpOnLongPress = true
+    @AppStorage("player.autoPlayNextEpisode") private var autoPlayNextEpisode = true
     @AppStorage("download.wifi_only") private var downloadWifiOnly = false
 
     @State private var downloadUsedBytes: Int64 = 0
@@ -135,6 +136,15 @@ struct PlaylistSettingsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("settings.player.longpress.title"))
                         Text(L("settings.player.longpress.desc"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Toggle(isOn: $autoPlayNextEpisode) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("settings.player.autonext.title"))
+                        Text(L("settings.player.autonext.desc"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -1,0 +1,8 @@
+[
+  { "category_id": "1", "category_name": "News", "parent_id": 0 },
+  "corrupt-element",
+  { "category_id": "2", "category_name": "Sports", "parent_id": 0 },
+  42,
+  null,
+  { "category_id": 3, "category_name": "Movies", "parent_id": "0" }
+]

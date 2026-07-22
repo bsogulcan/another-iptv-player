@@ -256,6 +256,40 @@ struct XtreamSeriesInfoResponse: Codable {
     let episodes: [String: [XtreamEpisode]]?
 }
 
+extension XtreamSeriesInfoResponse {
+    /// Episodes regrouped by numeric season, since panels key the dictionary
+    /// inconsistently ("1", "01", " 1" all mean season 1).
+    var episodesBySeasonNumber: [Int: [XtreamEpisode]] {
+        var grouped: [Int: [XtreamEpisode]] = [:]
+        for (key, eps) in episodes ?? [:] {
+            guard let number = Int(key.trimmingCharacters(in: .whitespaces)) else { continue }
+            grouped[number, default: []].append(contentsOf: eps)
+        }
+        return grouped
+    }
+
+    /// Every season worth persisting: the ones the panel declares, plus one for
+    /// each episode bucket the `seasons` array fails to cover. The two are
+    /// routinely out of sync (a panel may list season 1 while keying its
+    /// episodes under "2"), and an uncovered bucket would otherwise be dropped.
+    var resolvedSeasons: [(number: Int, metadata: XtreamSeason?)] {
+        var order: [Int] = []
+        var metadata: [Int: XtreamSeason] = [:]
+
+        for season in seasons ?? [] {
+            guard let number = season.seasonNumber else { continue }
+            if metadata[number] == nil { order.append(number) }
+            metadata[number] = season
+        }
+
+        for number in episodesBySeasonNumber.keys.sorted() where metadata[number] == nil {
+            order.append(number)
+        }
+
+        return order.map { ($0, metadata[$0]) }
+    }
+}
+
 struct XtreamSeriesDetails: Codable {
     let name: String?
     let cover: String?

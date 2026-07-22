@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "关闭时进入后台会暂停";
 "settings.player.longpress.title" = "长按加速";
 "settings.player.longpress.desc" = "长按屏幕 2x 播放";
+"settings.player.autonext.title" = "自动播放下一集";
+"settings.player.autonext.desc" = "本集结束后自动播放下一集";
+"player.autonext.countdown" = "%d 秒后播放下一集";
 "settings.playlist.info.title" = "列表信息";
 "settings.playlist.name" = "名称";
 "settings.playlist.type" = "类型";

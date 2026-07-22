@@ -1,0 +1,3 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="ch.1" tvg-name="One" tvg-logo="http://l.com/1.png" tvg-country="TR" group-title="News",Channel One
+http://example.com/1

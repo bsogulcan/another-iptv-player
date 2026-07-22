@@ -1,0 +1,29 @@
+[
+  {
+    "num": 1,
+    "name": "The Long Voyage (2024)",
+    "stream_type": "movie",
+    "stream_id": 9001,
+    "stream_icon": "http://example-panel.tv/covers/long-voyage.jpg",
+    "rating": 7.5,
+    "rating_5based": 3.8,
+    "added": "1700000000",
+    "category_id": "12",
+    "container_extension": "mkv",
+    "custom_sid": "",
+    "direct_source": "",
+    "is_adult": "0"
+  },
+  {
+    "num": 2,
+    "name": "Quiet Harbor",
+    "stream_type": "movie",
+    "stream_id": "9002",
+    "stream_icon": "http://example-panel.tv/covers/quiet-harbor.jpg",
+    "rating": "8",
+    "added": 1701000000,
+    "category_id": 12,
+    "container_extension": "mp4",
+    "is_adult": 0
+  }
+]

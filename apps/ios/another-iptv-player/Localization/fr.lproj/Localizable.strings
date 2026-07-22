@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "Sinon la lecture se met en pause en arrière-plan";
 "settings.player.longpress.title" = "Accélérer en appui long";
 "settings.player.longpress.desc" = "Appui long pour jouer à 2x";
+"settings.player.autonext.title" = "Lecture auto de l’épisode suivant";
+"settings.player.autonext.desc" = "À la fin d’un épisode, le suivant démarre automatiquement";
+"player.autonext.countdown" = "Épisode suivant dans %d";
 "settings.playlist.info.title" = "Info de la liste";
 "settings.playlist.name" = "Nom";
 "settings.playlist.type" = "Type";

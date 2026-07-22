@@ -973,60 +973,40 @@ struct SeriesDetailView: View {
             let info = try await client.getSeriesInfo(seriesId: series.seriesId)
             
             try await AppDatabase.shared.write { db in
-                // Sunucudan sezolar gelmediyse ama bölümler varsa, bölümlerden sanal sezonlar oluştur
-                let apiSeasons = info.seasons ?? []
-                let episodesDict = info.episodes ?? [:]
-                
-                var processedSeasons: [XtreamSeason] = apiSeasons
-                
-                if processedSeasons.isEmpty && !episodesDict.isEmpty {
-                    // Bölüm anahtarlarından (sezon no) sanal sezonlar üret
-                    for key in episodesDict.keys.sorted(by: { Int($0) ?? 0 < Int($1) ?? 0 }) {
-                        if let seasonNum = Int(key) {
-                            if let virtualSeason = try? JSONDecoder().decode(XtreamSeason.self, from: """
-                            {"season_number": \(seasonNum), "name": "Sezon \(seasonNum)"}
-                            """.data(using: .utf8)!) {
-                                processedSeasons.append(virtualSeason)
-                            }
-                        }
-                    }
-                }
+                let episodesBySeason = info.episodesBySeasonNumber
 
-                for apiSeason in processedSeasons {
-                    let seasonNum = apiSeason.seasonNumber ?? 0
+                for (seasonNum, apiSeason) in info.resolvedSeasons {
                     let seasonId = "\(series.seriesId)_\(seasonNum)"
-                    
+                    let eps = episodesBySeason[seasonNum] ?? []
+
                     let dbSeason = DBSeason(
                         id: seasonId,
                         seasonNumber: seasonNum,
-                        name: apiSeason.name ?? "Sezon \(seasonNum)",
-                        overview: apiSeason.overview,
-                        cover: apiSeason.cover,
-                        airDate: apiSeason.airDate,
-                        episodeCount: apiSeason.episodeCount,
-                        voteAverage: apiSeason.voteAverage,
+                        name: apiSeason?.name,
+                        overview: apiSeason?.overview,
+                        cover: apiSeason?.cover,
+                        airDate: apiSeason?.airDate,
+                        episodeCount: eps.isEmpty ? apiSeason?.episodeCount : eps.count,
+                        voteAverage: apiSeason?.voteAverage,
                         seriesId: series.seriesId,
                         playlistId: playlist.id
                     )
                     try dbSeason.save(db)
-                    
-                    // Bu sezona ait bölümleri işle
-                    if let eps = episodesDict[String(seasonNum)] {
-                        for ep in eps {
-                            let dbEp = DBEpisode(
-                                id: ep.id ?? UUID().uuidString,
-                                episodeId: ep.id,
-                                episodeNum: ep.episodeNum,
-                                title: ep.title,
-                                containerExtension: ep.containerExtension,
-                                info: ep.info?.plot,
-                                cover: ep.info?.movieImage ?? ep.info?.cover,
-                                duration: ep.info?.duration,
-                                rating: ep.info?.rating,
-                                seasonId: seasonId
-                            )
-                            try dbEp.save(db)
-                        }
+
+                    for ep in eps {
+                        let dbEp = DBEpisode(
+                            id: ep.id ?? UUID().uuidString,
+                            episodeId: ep.id,
+                            episodeNum: ep.episodeNum,
+                            title: ep.title,
+                            containerExtension: ep.containerExtension,
+                            info: ep.info?.plot,
+                            cover: ep.info?.movieImage ?? ep.info?.cover,
+                            duration: ep.info?.duration,
+                            rating: ep.info?.rating,
+                            seasonId: seasonId
+                        )
+                        try dbEp.save(db)
                     }
                 }
                 

@@ -147,6 +147,9 @@
 "settings.player.background.desc" = "When off, playback pauses when the app goes to background";
 "settings.player.longpress.title" = "Speed Up on Long Press";
 "settings.player.longpress.desc" = "Long press the screen to play at 2x speed";
+"settings.player.autonext.title" = "Auto-Play Next Episode";
+"settings.player.autonext.desc" = "When an episode ends, the next one starts automatically";
+"player.autonext.countdown" = "Next episode in %d";
 "settings.playlist.info.title" = "Playlist Information";
 "settings.playlist.name" = "Name";
 "settings.playlist.type" = "Type";

@@ -1,0 +1,33 @@
+{
+  "info": {
+    "kinopoisk_url": "https://www.kinopoisk.ru/film/12345/",
+    "tmdb_id": "603692",
+    "name": "The Long Voyage (2024)",
+    "o_name": "The Long Voyage",
+    "cover_big": "http://example-panel.tv/covers/long-voyage-big.jpg",
+    "movie_image": "http://example-panel.tv/covers/long-voyage.jpg",
+    "releasedate": "2024-03-08",
+    "youtube_trailer": "dQw4w9WgXcQ",
+    "director": "C. Director",
+    "actors": "A. Actor, B. Actress",
+    "cast": "A. Actor, B. Actress",
+    "genre": "Action, Thriller",
+    "plot": "A retired sailor takes one last job across the Pacific.",
+    "rating": 7.1,
+    "backdrop_path": [
+      "http://example-panel.tv/backdrops/long-voyage-1.jpg",
+      "http://example-panel.tv/backdrops/long-voyage-2.jpg"
+    ],
+    "duration_secs": "10140",
+    "duration": "02:49:00"
+  },
+  "movie_data": {
+    "stream_id": 9001,
+    "name": "The Long Voyage (2024)",
+    "added": "1700000000",
+    "category_id": "12",
+    "container_extension": "mkv",
+    "custom_sid": "",
+    "direct_source": ""
+  }
+}

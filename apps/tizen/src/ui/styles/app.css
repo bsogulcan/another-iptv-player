@@ -1,0 +1,2332 @@
+/* No padding here: screens pad themselves and the player must reach the
+   physical screen edges (a padded shell shows as a frame around the video). */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  position: relative;
+}
+
+/* Mounted-but-hidden navigation layers (display toggled inline). */
+.screen-layer {
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.app-header h1 {
+  font-size: 40px;
+  font-weight: 600;
+}
+
+.app-nav {
+  display: flex;
+  margin-left: 48px;
+}
+
+.nav-button {
+  padding: 10px 24px;
+  margin-right: 16px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #9aa0ac;
+}
+
+.nav-button.active {
+  color: #ffffff;
+  background: #262b36;
+}
+
+.nav-button.focused {
+  border-color: #4c8dff;
+  color: #ffffff;
+}
+
+.toolchain-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  padding: 48px 64px;
+}
+
+.env-badge {
+  margin-left: 24px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #2a2d36;
+  font-size: 22px;
+  color: #9aa0ac;
+}
+
+.demo-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.demo-row {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 32px;
+}
+
+.demo-card {
+  width: 220px;
+  height: 130px;
+  margin-right: 32px;
+  border-radius: 12px;
+  background: #1c1f27;
+  border: 4px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  font-weight: 600;
+  color: #6f7684;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.demo-card.focused {
+  border-color: #4c8dff;
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.key-log {
+  position: absolute;
+  right: 64px;
+  top: 140px;
+  width: 420px;
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(28, 31, 39, 0.92);
+}
+
+.key-log h2 {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.key-log-hint {
+  font-size: 22px;
+  color: #6f7684;
+}
+
+.key-log-row {
+  display: flex;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.key-log-code {
+  width: 90px;
+  color: #4c8dff;
+}
+
+.key-log-name {
+  flex: 1;
+}
+
+.key-log-time {
+  color: #6f7684;
+}
+
+.exit-toast {
+  position: absolute;
+  bottom: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 16px 32px;
+  border-radius: 10px;
+  background: #2a2d36;
+  font-size: 26px;
+}
+
+/* Screens (phase 3) */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 40px 64px;
+}
+
+.screen-title {
+  font-size: 42px;
+  font-weight: 600;
+  margin-bottom: 28px;
+}
+
+.screen-hint {
+  font-size: 26px;
+  color: #9aa0ac;
+  margin: 24px 0;
+}
+
+.screen-footnote {
+  font-size: 20px;
+  color: #6f7684;
+  margin-top: 24px;
+}
+
+.boot-screen {
+  width: 100%;
+  height: 100%;
+  background: #0e0f13;
+}
+
+/* Playlist list */
+
+.playlist-list {
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+}
+
+.playlist-row {
+  display: flex;
+  align-items: center;
+  padding: 20px 28px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 28px;
+}
+
+.playlist-row.focused {
+  border-color: #4c8dff;
+  background: #262b36;
+}
+
+.playlist-name {
+  flex: 1;
+}
+
+.playlist-kind {
+  font-size: 20px;
+  color: #9aa0ac;
+  background: #2a2d36;
+  border-radius: 6px;
+  padding: 4px 12px;
+}
+
+.playlist-actions {
+  display: flex;
+  flex-direction: row;
+  margin-top: 28px;
+}
+
+/* Forms */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+}
+
+.type-switch {
+  display: flex;
+  margin-bottom: 28px;
+}
+
+.type-option {
+  padding: 12px 28px;
+  margin-right: 16px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #9aa0ac;
+}
+
+.type-option.active {
+  color: #fff;
+  background: #262b36;
+}
+
+.type-option.focused {
+  border-color: #4c8dff;
+  color: #fff;
+}
+
+.text-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: #1c1f27;
+  padding: 12px 20px;
+}
+
+.text-field.focused {
+  border-color: #4c8dff;
+}
+
+.text-field-label {
+  font-size: 20px;
+  color: #9aa0ac;
+  margin-bottom: 6px;
+}
+
+.text-field input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f2f3f5;
+  font-size: 26px;
+  font-family: inherit;
+}
+
+.toggle-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: #1c1f27;
+  font-size: 24px;
+}
+
+.toggle-field.focused {
+  border-color: #4c8dff;
+}
+
+.toggle-pill {
+  font-size: 18px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #2a2d36;
+  color: #9aa0ac;
+}
+
+.toggle-pill.on {
+  background: #2c5c34;
+  color: #9be59a;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  margin-right: 16px;
+  margin-bottom: 12px;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #d5d8de;
+}
+
+.button.primary {
+  background: #24406e;
+  color: #fff;
+}
+
+.button.focused {
+  border-color: #4c8dff;
+}
+
+.form-error {
+  margin-top: 16px;
+  font-size: 22px;
+  color: #e06c75;
+  max-width: 900px;
+}
+
+/* Modal */
+
+.modal-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.modal-panel {
+  min-width: 560px;
+  max-width: 1640px;
+  background: #171a21;
+  border-radius: 16px;
+  padding: 40px;
+}
+
+.modal-panel h2 {
+  font-size: 30px;
+  margin-bottom: 16px;
+}
+
+.modal-panel p {
+  font-size: 24px;
+  color: #c3c7cf;
+  margin-bottom: 12px;
+}
+
+.modal-target {
+  font-weight: 600;
+  color: #fff;
+}
+
+.modal-actions {
+  display: flex;
+  margin-top: 24px;
+}
+
+.progress-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 6px solid #2a2d36;
+  border-top-color: #4c8dff;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dashboard */
+
+.dashboard-screen {
+  padding: 32px 0 0 0;
+  overflow: hidden;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  padding: 0 64px;
+  margin-bottom: 20px;
+}
+
+.dashboard-playlist-name {
+  font-size: 26px;
+  color: #9aa0ac;
+  margin-right: 40px;
+  max-width: 320px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tab-bar {
+  display: flex;
+}
+
+.tab-button {
+  padding: 10px 26px;
+  margin-right: 14px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: transparent;
+  font-size: 26px;
+  color: #9aa0ac;
+}
+
+.tab-button.active {
+  color: #fff;
+  background: #1c1f27;
+}
+
+.tab-button.focused {
+  border-color: #4c8dff;
+  color: #fff;
+}
+
+.rows-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Full-bleed shelves: rows span the whole screen; the inset lives inside
+   each scroller's padding so scrolled cards run to the true screen edge. */
+/* No will-change here: rows are enormous surfaces and a persistent
+   compositor layer per row starves the TV GPU (perceived jank). */
+.rows-content {
+  transition: transform 0.2s ease-out;
+  padding-left: 0;
+}
+
+.shelf {
+  height: 100%;
+}
+
+.shelf-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.shelf-title.focusable {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 16px;
+  margin-left: -16px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+}
+
+.shelf-title.focusable.focused {
+  border-color: #4c8dff;
+  background: #1c1f27;
+}
+
+.shelf-title-chevron {
+  margin-left: 10px;
+  color: #6f7684;
+  font-weight: 400;
+}
+
+/* Padding + negative margin: gives the 1.05-scaled focused card room inside
+   the overflow-hidden box so its border isn't clipped at the edges. */
+.shelf-scroller {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  width: 100%;
+  padding: 14px 14px 14px 12px;
+  margin: -14px -14px -14px -12px;
+}
+
+/* Cards */
+
+/* No will-change here: it's a static rule, so every mounted card (~270 on
+   the dashboard, more in deep grids) would hold a persistent compositor
+   layer — far past a TV GPU's layer budget. Only the single focused card
+   gets promoted (see .card.focused in the design pass below). */
+.card {
+  flex-shrink: 0;
+  margin-right: 24px;
+  border-radius: 12px;
+  border: 4px solid transparent;
+  padding: 6px;
+  transition: transform 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+.card.focused {
+  border-color: #4c8dff;
+  transform: scale(1.05);
+}
+
+.card-poster {
+  width: 200px;
+}
+
+.card-landscape {
+  width: 280px;
+}
+
+.card-image-wrap {
+  position: relative;
+}
+
+.poster-image {
+  background: linear-gradient(160deg, #262b38 0%, #171a23 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-poster {
+  width: 100%;
+  height: 280px;
+}
+
+/* Channel logos are transparent PNGs in odd ratios: contain them on a padded
+   plate instead of cropping (cover butchers logos). */
+.image-landscape {
+  width: 100%;
+  height: 170px;
+}
+
+.image-landscape img {
+  object-fit: contain;
+  padding: 18px;
+  box-sizing: border-box;
+}
+
+.poster-fallback {
+  font-size: 44px;
+  font-weight: 700;
+  color: #434a5c;
+  letter-spacing: 2px;
+}
+
+/* iOS RatingLabel: translucent dark pill, white star + white number. */
+.card-rating {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(20, 22, 28, 0.68);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card-favorite {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: #ff6b81;
+  font-size: 24px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.card-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.card-progress-fill {
+  height: 100%;
+  background: #4c8dff;
+}
+
+.card-title {
+  margin-top: 10px;
+  font-size: 21px;
+  color: #e8eaee;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-subtitle {
+  font-size: 18px;
+  color: #8a909c;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.text-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 160px;
+  height: 170px;
+  margin-right: 24px;
+  border-radius: 12px;
+  border: 4px solid transparent;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #9aa0ac;
+  align-self: flex-start;
+}
+
+.text-card.focused {
+  border-color: #4c8dff;
+  color: #fff;
+}
+
+/* Category grid */
+
+.grid-screen {
+  overflow: hidden;
+}
+
+.grid-count {
+  color: #6f7684;
+  font-weight: 400;
+}
+
+.grid-scroller {
+  position: relative; /* children's offsetTop → container (centerInContainer) */
+  flex: 1;
+  overflow-y: auto;
+}
+
+.grid-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.grid-wrap .card {
+  margin-bottom: 24px;
+}
+
+/* Detail screens */
+
+.detail-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Cinematic hero backdrop: blurred artwork + scrim behind the content. */
+.detail-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Blur at 1/10 resolution and let the GPU inflate it: blur(3px) over a
+   192×108 raster reads the same as blur(32px) over 1080p (heavy blur at
+   0.32 opacity) for ~1% of the filter cost — the full-res 32px Gaussian was
+   a visible hitch on every detail open. Centered with 15% overshoot so the
+   blur's faded edges stay outside the container crop. */
+.detail-backdrop img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10%;
+  height: 10%;
+  object-fit: cover;
+  filter: blur(3px);
+  transform: translate(-50%, -50%) scale(11.5);
+  opacity: 0.32;
+}
+
+.detail-backdrop-scrim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 23, 29, 0.45) 0%,
+    rgba(20, 23, 29, 0.82) 62%,
+    var(--bg-bottom) 100%
+  );
+}
+
+/* Real backdrop art (movie get_vod_info) renders sharp with a corner scrim;
+   the blurred variant above is the portrait-poster fallback. */
+.detail-backdrop.sharp img {
+  position: static;
+  width: 100%;
+  height: 100%;
+  filter: none;
+  transform: none;
+  opacity: 0.88;
+}
+
+.detail-backdrop.sharp .detail-backdrop-scrim {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(20, 23, 29, 0.94) 0%,
+      rgba(20, 23, 29, 0.72) 34%,
+      rgba(20, 23, 29, 0.28) 64%,
+      rgba(20, 23, 29, 0.05) 100%
+    ),
+    linear-gradient(
+      0deg,
+      var(--bg-bottom) 0%,
+      rgba(20, 23, 29, 0.35) 40%,
+      rgba(20, 23, 29, 0) 70%
+    );
+}
+
+.detail-body,
+.detail-screen .season-bar,
+.detail-screen .episode-list,
+.detail-screen .screen-hint,
+.detail-screen .form-error {
+  position: relative;
+  z-index: 1;
+}
+
+/* Movie: full-bleed cinematic hero — the artwork carries the screen and the
+   type block sits in the scrim's darkest corner (bottom-left). */
+.movie-detail {
+  justify-content: flex-end;
+  padding-bottom: 84px;
+}
+
+.detail-body {
+  max-width: 1060px;
+}
+
+.detail-title {
+  font-size: 60px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.08;
+  margin-bottom: 16px;
+}
+
+.series-detail .detail-title {
+  font-size: 46px;
+  margin-bottom: 10px;
+}
+
+.detail-meta-line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 22px;
+}
+
+.series-detail .detail-meta-line {
+  margin-bottom: 14px;
+}
+
+.detail-fav {
+  margin-left: 20px;
+  font-size: 28px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.26);
+}
+
+.detail-fav.active {
+  color: #ff6b81;
+}
+
+.detail-plot {
+  font-size: 25px;
+  line-height: 1.5;
+  color: #c3c7cf;
+  max-width: 980px;
+}
+
+.detail-credit {
+  margin-top: 12px;
+  font-size: 22px;
+  color: var(--text-faint);
+  max-width: 980px;
+}
+
+.detail-key-hint {
+  margin-top: 20px;
+  font-size: 20px;
+  color: var(--text-faint);
+}
+
+/* Chromium 56-safe multi-line clamp (old flexbox, prefixed). */
+.clamp-1,
+.clamp-2,
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.clamp-1 {
+  -webkit-line-clamp: 1;
+}
+
+.clamp-2 {
+  -webkit-line-clamp: 2;
+}
+
+.clamp-3 {
+  -webkit-line-clamp: 3;
+}
+
+/* Player */
+
+.player-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.player-surface {
+  width: 100%;
+  height: 100%;
+}
+
+/* OSD scrim as two bands instead of one full-screen gradient: the middle of
+   the old gradient was fully transparent anyway, but the whole 1920×1080
+   layer still had to be alpha-blended over the AVPlay video plane on every
+   composited frame. Empty center tiles let the compositor skip that region.
+   z-index: 0 makes the overlay a stacking context so the z:-1 bands paint
+   under the chrome but never under the sibling video surface. */
+.player-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 64px;
+  z-index: 0;
+}
+
+.player-overlay::before,
+.player-overlay::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.player-overlay::before {
+  top: 0;
+  height: 30%;
+  background: linear-gradient(rgba(0, 0, 0, 0.65), transparent);
+}
+
+.player-overlay::after {
+  bottom: 0;
+  height: 35%;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+}
+
+.player-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.player-title-row h2 {
+  font-size: 40px;
+  letter-spacing: -0.4px;
+  margin-right: 20px;
+}
+
+.player-title-spacer {
+  flex: 1;
+}
+
+.player-chrome-button {
+  flex-shrink: 0;
+  padding: 12px 26px;
+  border-radius: 999px;
+  background: rgba(24, 27, 34, 0.72);
+  color: var(--text-dim);
+  font-size: 24px;
+}
+
+.player-chrome-button.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+/* Invisible spatial-navigation home for the player (bottom center). */
+.player-focus-anchor {
+  position: absolute;
+  left: 50%;
+  bottom: 140px;
+  width: 2px;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player-title-row span {
+  font-size: 24px;
+  color: #c3c7cf;
+  margin-right: 20px;
+}
+
+.live-badge {
+  background: #b3261e;
+  color: #fff !important;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 20px !important;
+}
+
+.player-bottom {
+  display: flex;
+  align-items: center;
+}
+
+.player-state {
+  font-size: 30px;
+  margin-right: 24px;
+  min-width: 120px;
+}
+
+.player-time {
+  font-size: 24px;
+  color: #e8eaee;
+  margin: 0 16px;
+}
+
+.player-timeline {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.player-timeline-fill {
+  height: 100%;
+  background: #4c8dff;
+}
+
+.player-error {
+  font-size: 26px;
+  color: #e06c75;
+}
+
+.player-bottom-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-hints {
+  margin-top: 14px;
+  font-size: 20px;
+  color: #8a909c;
+}
+
+.queue-position {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 20px !important;
+}
+
+.subtitle-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  max-width: 1500px;
+  padding: 8px 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  font-size: 34px;
+  text-align: center;
+  white-space: pre-line;
+  z-index: 10;
+}
+
+.autonext-overlay {
+  position: absolute;
+  right: 64px;
+  bottom: 64px;
+  background: rgba(15, 17, 22, 0.95);
+  border-radius: 14px;
+  padding: 28px 36px;
+  z-index: 20;
+}
+
+.autonext-overlay p {
+  font-size: 28px;
+}
+
+.autonext-target {
+  color: #9aa0ac;
+  margin-top: 8px;
+  font-size: 22px !important;
+}
+
+/* Track settings panel */
+
+.track-panel {
+  display: flex;
+  flex-direction: row;
+  max-width: 1560px;
+}
+
+.track-column {
+  margin-right: 48px;
+  min-width: 260px;
+  max-width: 460px;
+  max-height: 680px;
+  overflow-y: auto;
+}
+
+.track-column:last-child {
+  margin-right: 0;
+}
+
+.track-button {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.track-column h3 {
+  font-size: 26px;
+  margin-bottom: 16px;
+  color: #9aa0ac;
+}
+
+.track-button {
+  padding: 12px 20px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 22px;
+  color: #d5d8de;
+}
+
+.track-button.selected {
+  background: #24406e;
+  color: #fff;
+}
+
+.track-button.focused {
+  border-color: #4c8dff;
+}
+
+/* Live channel side panel */
+
+.channel-panel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 520px;
+  background: rgba(14, 15, 19, 0.94);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  z-index: 25;
+}
+
+.channel-panel h3 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.channel-panel-list {
+  position: relative;
+  flex: 1;
+  overflow: hidden; /* windowed track scrolls via translateY, not scrollTop */
+}
+
+.channel-panel-track {
+  transition: transform 0.24s ease-out;
+  will-change: transform;
+}
+
+.channel-row {
+  /* Fixed height: the windowed panel computes spacer/centering math from
+     ROW_STRIDE = 60 + 8 margin (LiveChannelPanel) — keep them in sync. */
+  height: 60px;
+  line-height: 32px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  font-size: 24px;
+  color: #d5d8de;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.channel-row.active {
+  background: #24406e;
+  color: #fff;
+}
+
+.channel-row.focused {
+  border-color: #4c8dff;
+}
+
+/* Series detail */
+
+.season-bar {
+  display: flex;
+  flex-direction: row;
+  margin: 28px 0 20px 0;
+  overflow-x: auto;
+}
+
+.season-button {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  margin-right: 14px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #9aa0ac;
+}
+
+.season-button.active {
+  color: #fff;
+  background: #262b36;
+}
+
+.season-button.focused {
+  border-color: #4c8dff;
+  color: #fff;
+}
+
+.episode-list {
+  flex: 1;
+  overflow-y: auto;
+  max-width: 1300px;
+}
+
+.episode-row {
+  display: flex;
+  align-items: center;
+  padding: 16px 22px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #171a21;
+  font-size: 24px;
+}
+
+.episode-row.focused {
+  border-color: #4c8dff;
+  background: #222634;
+}
+
+.episode-num {
+  min-width: 180px;
+  color: #9aa0ac;
+}
+
+.episode-title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.episode-progress {
+  width: 140px;
+  height: 6px;
+  margin-left: 20px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.episode-progress-fill {
+  display: block;
+  height: 100%;
+  background: #4c8dff;
+}
+
+.detail-actions {
+  display: flex;
+  margin-top: 28px;
+}
+
+/* Search tab */
+
+/* No horizontal padding: search results reuse the full-bleed shelves. */
+.search-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.search-input-row {
+  max-width: 900px;
+  margin: 0 var(--safe-x) 20px var(--safe-x);
+}
+
+.search-tab .screen-hint {
+  margin-left: var(--safe-x);
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Settings tab */
+
+.settings-tab {
+  flex: 1;
+  padding: 0 64px 40px 64px;
+  overflow-y: auto;
+  max-width: 1400px;
+}
+
+.settings-section {
+  margin-bottom: 36px;
+}
+
+.settings-section h3 {
+  font-size: 26px;
+  color: #9aa0ac;
+  margin-bottom: 16px;
+}
+
+.settings-info p {
+  font-size: 23px;
+  color: #c3c7cf;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   tvOS-inspired theme pass — overrides everything above.
+   Focus language: media cards scale with a deep shadow (no ring);
+   text controls invert to a light fill with dark text.
+   ============================================================ */
+
+.screen {
+  padding: var(--safe-y) var(--safe-x);
+}
+
+/* The dashboard manages its own insets: the header/titles carry the safe-x
+   and shelves bleed to the physical screen edges. Without this override the
+   generic .screen padding above re-clips the shelves 90px in on both sides. */
+.screen.dashboard-screen {
+  padding: 32px 0 0 0;
+}
+
+.screen-title {
+  font-size: 46px;
+  letter-spacing: -0.5px;
+}
+
+.screen-hint,
+.screen-footnote {
+  color: var(--text-dim);
+}
+
+/* --- Tab bar: quiet text, focused pill inverts to light --- */
+
+.dashboard-header {
+  padding: 0 var(--safe-x);
+  margin-bottom: 26px;
+}
+
+.dashboard-playlist-name {
+  color: var(--text-faint);
+}
+
+.tab-button {
+  font-size: 27px;
+  font-weight: 500;
+  color: var(--text-dim);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 999px;
+}
+
+.tab-button.active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tab-button.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+/* NOTE: no padding on .rows-content — the safe-x inset lives on each shelf
+   title's margin and the scroller's first child. Container padding here
+   stacks a second 90px band AND clips scrolled cards at the padding edge. */
+
+/* --- Cards: bigger, lockup-style, scale+shadow focus --- */
+
+.card {
+  border: none;
+  padding: 0;
+  margin-right: 30px;
+  border-radius: var(--radius);
+  /* transform only: transitioning box-shadow repaints a 320×480 blur per
+     frame — the focus shadow fades via the composited ::after instead. */
+  transition: transform 0.16s ease-out;
+}
+
+/* Poster width computed for 5 full cards per shelf row: safe-x 90 +
+   5×320 + margins ≈ 1920 (a sliver of the 6th bleeds in from the right). */
+.card-poster {
+  width: 320px;
+}
+
+.card-landscape {
+  width: 320px;
+}
+
+.image-poster {
+  height: 480px;
+}
+
+.image-landscape {
+  height: 180px;
+}
+
+.poster-image {
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, var(--surface-high) 0%, var(--surface) 100%);
+}
+
+.card.focused {
+  border-color: transparent;
+  transform: scale(1.09);
+  z-index: 2;
+  position: relative;
+  will-change: transform;
+}
+
+/* Shadow hugs the artwork, not the whole lockup (title stays flat) — as a
+   prerendered ::after whose opacity fades (compositor-only, repaint-free). */
+.poster-image {
+  position: relative;
+}
+
+.poster-image::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-focus);
+  opacity: 0;
+  transition: opacity 0.16s ease-out;
+  pointer-events: none;
+}
+
+.card.focused .poster-image::after {
+  opacity: 1;
+}
+
+.card-title {
+  margin-top: 14px;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.card.focused .card-title,
+.card.focused .card-subtitle {
+  color: var(--text);
+}
+
+.card-subtitle {
+  font-size: 19px;
+  color: var(--text-faint);
+}
+
+.card-progress {
+  height: 7px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.card-progress-fill {
+  background: #ffffff;
+}
+
+.text-card {
+  border: none;
+  background: var(--surface);
+  color: var(--text-dim);
+  height: 180px;
+  border-radius: var(--radius);
+}
+
+.text-card.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+/* --- Shelf titles --- */
+
+.shelf-title {
+  font-size: 30px;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-left: var(--safe-x);
+}
+
+.shelf-title.focusable {
+  border: none;
+  padding: 6px 20px;
+  margin-left: calc(var(--safe-x) - 20px);
+  border-radius: 999px;
+}
+
+.shelf-title.focusable.focused {
+  border-color: transparent;
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.shelf-title.focusable.focused .shelf-title-chevron {
+  color: var(--focus-text);
+}
+
+/* Edge-bleed carousel: the scroller is full-width with NO horizontal
+   padding (Chrome clips scrolled content at the start-padding edge, which
+   re-creates the dead band). The inset lives on the first card's margin —
+   margins scroll away with the content — and an ::after spacer provides the
+   end inset. Vertical padding gives focus scale + shadow headroom. */
+.shelf-scroller {
+  padding: 34px 0;
+  margin: -34px 0;
+}
+
+/* The transform-scrolled inner track (Shelf.tsx): cards live here so the
+   slide is a GPU transition instead of an instant scrollLeft jump. */
+.shelf-track {
+  display: flex;
+  flex-direction: row;
+  position: relative; /* children's offsetLeft becomes track-local */
+  transition: transform 0.26s ease-out;
+  /* no will-change: a 250-card track is a huge layer; promote only while
+     the transition actually runs */
+}
+
+.shelf-track > :first-child {
+  margin-left: var(--safe-x);
+}
+
+.shelf-track::after {
+  content: "";
+  flex: 0 0 calc(var(--safe-x) - 30px);
+}
+
+/* Same clearance inside the category grid (vertical scroller clips too):
+   320px cards grow ~14px per side at focus scale 1.09, so the horizontal
+   padding must exceed that or edge columns clip the ring/shadow. */
+.grid-wrap {
+  padding: 26px 20px 40px 20px;
+}
+
+/* --- Buttons / rows / form controls: light-fill focus inversion --- */
+
+.button,
+.toggle-field,
+.type-option,
+.season-button,
+.track-button,
+.channel-row,
+.episode-row,
+.playlist-row {
+  border: none;
+  background: var(--surface);
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.button.primary {
+  background: var(--surface-high);
+  color: var(--text);
+}
+
+.button.focused,
+.toggle-field.focused,
+.type-option.focused,
+.season-button.focused,
+.track-button.focused,
+.channel-row.focused,
+.episode-row.focused,
+.playlist-row.focused {
+  border-color: transparent;
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.episode-row.focused .episode-num,
+.episode-row.focused .episode-title,
+.playlist-row.focused .playlist-name,
+.channel-row.focused {
+  color: var(--focus-text);
+}
+
+.playlist-row.focused .playlist-kind {
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--focus-text);
+}
+
+.toggle-field.focused .toggle-pill {
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--focus-text);
+}
+
+.toggle-field.focused .toggle-pill.on {
+  background: #2c7a38;
+  color: #ffffff;
+}
+
+.season-button.active,
+.type-option.active {
+  background: var(--surface-high);
+  color: var(--text);
+}
+
+.season-button.focused,
+.type-option.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.track-button.selected {
+  background: var(--surface-high);
+  color: var(--text);
+}
+
+.track-button.selected.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.channel-row.active {
+  background: var(--surface-high);
+  color: var(--text);
+}
+
+.channel-row.active.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.text-field {
+  background: var(--surface);
+  border: 3px solid transparent;
+}
+
+.text-field.focused {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: var(--surface-high);
+}
+
+/* --- Surfaces --- */
+
+.modal-panel,
+.key-log,
+.spike-status {
+  background: #20242e;
+}
+
+.settings-info p {
+  color: var(--text-dim);
+}
+
+.detail-plot {
+  color: var(--text-dim);
+}
+
+.detail-genre,
+.detail-rating {
+  color: var(--text-faint);
+}
+
+/* --- Rows sized for the bigger cards --- */
+
+.row-placeholder {
+  /* heights come inline from rowHeight() */
+}
+
+/* --- Player: white progress, deeper scrim --- */
+
+.player-overlay {
+  padding: var(--safe-y) var(--safe-x);
+}
+
+.player-overlay::before {
+  height: 26%;
+  background: linear-gradient(rgba(10, 12, 16, 0.72), transparent);
+}
+
+.player-overlay::after {
+  height: 38%;
+  background: linear-gradient(transparent, rgba(10, 12, 16, 0.86));
+}
+
+.player-timeline {
+  height: 9px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.player-timeline-fill {
+  background: #ffffff;
+}
+
+.live-badge {
+  background: var(--live);
+}
+
+.autonext-overlay,
+.channel-panel {
+  background: var(--overlay);
+}
+
+/* Player spike (phase 1) */
+
+.spike-shell {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  position: relative;
+  padding: 48px 64px;
+}
+
+.spike-video {
+  width: 1120px;
+  height: 630px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.spike-panel {
+  flex: 1;
+  margin-left: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.spike-panel h2 {
+  font-size: 30px;
+  margin-bottom: 12px;
+}
+
+.spike-hint {
+  font-size: 20px;
+  color: #c9a13b;
+  margin-bottom: 16px;
+}
+
+.spike-sources {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+.spike-source {
+  padding: 14px 20px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background: #1c1f27;
+  font-size: 24px;
+  color: #d5d8de;
+}
+
+.spike-source.focused {
+  border-color: #4c8dff;
+  color: #ffffff;
+  background: #262b36;
+}
+
+.spike-status {
+  font-size: 22px;
+  line-height: 1.7;
+  color: #9aa0ac;
+  background: rgba(28, 31, 39, 0.92);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.spike-error {
+  color: #e06c75;
+}
+
+.spike-active {
+  color: #7bc275;
+}
+
+.spike-help {
+  font-size: 20px;
+  color: #6f7684;
+}
+
+/* --- Series detail: rich episode rows (thumb + plot + progress) --- */
+
+.series-detail .detail-body {
+  margin-bottom: 4px;
+}
+
+.detail-screen .season-bar {
+  margin: 22px 0 18px 0;
+}
+
+.episode-list {
+  max-width: 1520px;
+}
+
+.episode-row.rich {
+  align-items: center;
+  padding: 14px 26px 14px 14px;
+  margin-bottom: 12px;
+  border-radius: var(--radius);
+}
+
+.episode-thumb {
+  position: relative;
+  width: 200px;
+  height: 112px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface-high);
+}
+
+.episode-thumb .poster-image {
+  width: 100%;
+  height: 100%;
+}
+
+.episode-thumb .poster-fallback {
+  font-size: 24px;
+}
+
+.episode-thumb-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.episode-thumb-progress-fill {
+  display: block;
+  height: 100%;
+  background: #ffffff;
+}
+
+.episode-body {
+  flex: 1;
+  min-width: 0;
+  margin-left: 24px;
+}
+
+.episode-heading {
+  font-size: 25px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.episode-plot {
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.episode-duration {
+  margin-left: 24px;
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--text-faint);
+}
+
+.episode-row.focused .episode-heading,
+.episode-row.focused .episode-duration {
+  color: var(--focus-text);
+}
+
+.episode-row.focused .episode-plot {
+  color: rgba(20, 22, 28, 0.62);
+}
+
+/* --- Per-tab search pill (first row of each content tab) --- */
+
+/* Mounted-but-hidden tab layers (display toggled inline, see TabLayer). */
+.tab-layer {
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tab-search-row {
+  display: flex;
+  padding: 0 var(--safe-x);
+  margin-bottom: 16px;
+}
+
+.search-pill {
+  display: flex;
+  align-items: center;
+  width: 420px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: var(--surface);
+  transition: background 0.12s ease-out;
+}
+
+.search-pill-icon {
+  font-size: 26px;
+  margin-right: 12px;
+  color: var(--text-faint);
+}
+
+.search-pill input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 24px;
+  color: var(--text);
+}
+
+.search-pill input::-webkit-input-placeholder {
+  color: var(--text-faint);
+}
+
+.search-pill.focused {
+  background: var(--focus-fill);
+}
+
+.search-pill.focused .search-pill-icon,
+.search-pill.focused input {
+  color: var(--focus-text);
+}
+
+.search-pill.focused input::-webkit-input-placeholder {
+  color: rgba(20, 22, 28, 0.5);
+}
+
+/* --- Favorite affordances --- */
+
+.chrome-fav-heart.active {
+  color: #ff6b81;
+}
+
+.series-detail .detail-actions {
+  margin-top: 20px;
+}
+
+/* --- Player: redesigned control deck --- */
+
+.player-title-block h2 {
+  font-size: 42px;
+  letter-spacing: -0.5px;
+}
+
+.player-subtitle {
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 23px;
+  color: var(--text-dim);
+}
+
+.player-subtitle > span {
+  margin-right: 16px;
+}
+
+.player-bottom-stack {
+  align-items: center;
+}
+
+.player-seek {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1680px;
+  padding: 12px 0;
+}
+
+.player-seek .player-time {
+  min-width: 110px;
+  margin: 0 8px;
+  font-size: 22px;
+  color: var(--text-dim);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Height snaps without a transition: animating height relayouts the whole
+   seek row per frame, over the video plane. */
+.seek-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.seek-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.seek-thumb {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.12s ease-out;
+}
+
+.player-seek.focused .seek-track {
+  height: 12px;
+}
+
+.player-seek.focused .seek-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.player-seek.focused .player-time {
+  color: var(--text);
+}
+
+.player-controls-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1680px;
+  margin-top: 6px;
+  min-height: 96px;
+}
+
+.player-play-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: rgba(24, 27, 34, 0.72);
+  color: #ffffff;
+  font-size: 30px;
+  transition: background 0.12s ease-out, color 0.12s ease-out;
+}
+
+.player-play-button.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.player-side-buttons {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+}
+
+.player-side-buttons .player-chrome-button {
+  margin-left: 14px;
+}
+
+.play-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  animation: spin 0.9s linear infinite;
+}
+
+.player-play-button.focused .play-spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: var(--focus-text);
+}
+
+.player-hints {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.autonext-hint {
+  margin-top: 14px;
+  font-size: 20px;
+  color: var(--text-faint);
+}
+
+/* --- Player: icon-only side buttons --- */
+
+.player-side-buttons .player-chrome-button {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #ffffff;
+}
+
+.player-side-buttons .player-chrome-button.focused {
+  color: var(--focus-text);
+}
+
+/* --- Series detail: dock the thumb flush to the row edge, layerize blur --- */
+
+.episode-row.rich {
+  padding: 0 26px 0 0;
+  overflow: hidden;
+}
+
+.episode-thumb {
+  width: 206px;
+  height: 116px;
+  border-radius: 0;
+}
+
+/* Static blurred artwork on its own compositor layer: without this every
+   scrolled frame re-filters a 1080p blur on the TV GPU (janky episode nav). */
+.detail-backdrop img {
+  will-change: transform;
+}
+
+/* Subtitles lift above the control deck while the overlay is visible so the
+   seek bar / play button never cover the text. translateY, not bottom:
+   animating a layout property repaints over the video plane every frame. */
+.subtitle-overlay {
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+
+.subtitle-overlay.raised {
+  transform: translateX(-50%) translateY(-210px);
+}
+
+/* --- Track panel: two-line rows (iOS parity: title + codec caption) --- */
+
+.track-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.track-button-detail {
+  margin-top: 4px;
+  font-size: 18px;
+  color: var(--text-faint);
+}
+
+.track-button.focused .track-button-detail {
+  color: var(--focus-text);
+  opacity: 0.65;
+}
+
+/* --- Category grid: 5 posters per row (320px cards inside safe-x) ---
+   Row math: usable 1920 − 2×90 (screen) − 2×20 (grid-wrap) = 1700;
+   5 × (320 + 18 margin) = 1690 ✓ with slack against sub-pixel wrap. */
+
+.grid-wrap .card {
+  margin-right: 18px;
+  margin-bottom: 26px;
+}
+
+/* --- Motion pass: soft image reveals + screen transitions --- */
+
+.poster-image img {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.poster-image img.loaded {
+  opacity: 1;
+}
+
+/* Animate from 0 to the element's own resting opacity (blur .32 / sharp .88). */
+@keyframes img-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.detail-backdrop img {
+  animation: img-fade-in 0.45s ease-out;
+}
+
+/* No screen-layer fade: animating a full-1080p layer's opacity on every
+   push/pop round-trip is the single heaviest repaint on the TV GPU — the
+   image fades already soften screen changes. */
+
+/* --- Category picker (Yellow key / pill next to search) --- */
+
+.category-pill {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 20px;
+  padding: 10px 28px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 24px;
+  color: var(--text-dim);
+  transition: background 0.12s ease-out;
+}
+
+/* Color-key affordance: Yellow opens the picker. */
+.category-pill-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e5c453;
+  margin-right: 12px;
+}
+
+.category-pill.focused {
+  background: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+[dir="rtl"] .category-pill {
+  margin-left: 0;
+  margin-right: 20px;
+}
+
+[dir="rtl"] .category-pill-dot {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+.category-picker-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 30;
+}
+
+.category-picker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 640px;
+  background: rgba(20, 22, 28, 0.96);
+  padding: 48px 40px 48px var(--safe-x);
+  display: flex;
+  flex-direction: column;
+}
+
+[dir="rtl"] .category-picker {
+  left: auto;
+  right: 0;
+  padding: 48px var(--safe-x) 48px 40px;
+}
+
+.category-picker h3 {
+  font-size: 30px;
+  margin-bottom: 24px;
+}
+
+/* Transform-scrolled (see CategoryPickerPanel): scrollTop has no smooth
+   scrolling on Chromium 56, a transitioned translateY glides on the TV GPU. */
+.category-picker-list {
+  flex: 1;
+  overflow: hidden;
+}
+
+.category-picker-track {
+  transition: transform 0.24s ease-out;
+  will-change: transform;
+}
+
+.category-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px; /* ROW_STRIDE (72) minus the 8px margin */
+  padding: 0 18px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  border: 3px solid transparent;
+  font-size: 24px;
+  color: var(--text-dim);
+}
+
+.category-picker-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.category-picker-count {
+  flex-shrink: 0;
+  margin-left: 16px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 20px;
+  color: var(--text-faint);
+}
+
+[dir="rtl"] .category-picker-count {
+  margin-left: 0;
+  margin-right: 16px;
+}
+
+.category-picker-row.active {
+  background: var(--surface-high);
+  color: var(--text);
+}
+
+.category-picker-row.focused {
+  background: var(--focus-fill);
+  border-color: var(--focus-fill);
+  color: var(--focus-text);
+}
+
+.category-picker-row.focused .category-picker-count {
+  background: rgba(20, 22, 28, 0.14);
+  color: rgba(20, 22, 28, 0.62);
+}

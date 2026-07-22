@@ -445,7 +445,7 @@ struct DetailSeasonTabBar: View {
                                 selectedId = season.id
                             }
                         } label: {
-                            Text(season.name ?? "Sezon \(season.seasonNumber)")
+                            Text(season.name ?? L("series.season_format", season.seasonNumber))
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.85))
                                 .padding(.horizontal, 14)

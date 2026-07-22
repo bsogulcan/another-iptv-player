@@ -1,0 +1,5 @@
+[
+  { "category_id": "1", "category_name": "News", "parent_id": 0 },
+  { "category_id": 2, "category_name": "Sports", "parent_id": "0" },
+  { "category_id": "7", "category_name": "Kids | TR", "parent_id": 1 }
+]

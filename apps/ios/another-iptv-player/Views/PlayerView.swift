@@ -155,6 +155,7 @@ private struct PlayerViewImpl: View {
     @AppStorage("player.pipEnabled") private var pipEnabled = true
     @AppStorage("player.continuePlayingInBackground") private var continuePlayingInBackground = true
     @AppStorage("player.speedUpOnLongPress") private var speedUpOnLongPress = true
+    @AppStorage("player.autoPlayNextEpisode") private var autoPlayNextEpisode = true
 
     @State private var isScrubbing = false
     @State private var scrubValue: Double = 0
@@ -167,6 +168,13 @@ private struct PlayerViewImpl: View {
     @State private var bitrateSamples: [(time: Date, bps: Double)] = []
     @State private var aspectToastText: String?
     @State private var aspectToastToken: UInt64 = 0
+
+    /// Dizi bölümü bitince sonraki bölüme otomatik geçiş geri sayımı. Token, iptal sonrası
+    /// gecikmiş tick'lerin sayacı yeniden canlandırmasını engeller; `handled` bayrağı kullanıcı
+    /// iptal ettiğinde aynı `.ended` durumu için sayacın tekrar başlamasını önler.
+    @State private var autoAdvanceSecondsRemaining: Int?
+    @State private var autoAdvanceToken: UInt64 = 0
+    @State private var autoAdvanceHandledForCurrentEnd = false
 
     /// Tam ekran kapak: kenardan geri (pop) ve aşağı çekerek kapatma.
     private enum InteractiveDismissAxis {
@@ -476,6 +484,7 @@ private struct PlayerViewImpl: View {
             }
         }
         .onChange(of: playbackIdentity) { _, _ in
+            cancelAutoAdvanceCountdown(resetEndHandling: true)
             applyPlaybackTransitionIfNeeded()
         }
         .onChange(of: videoAspectModeRaw) { _, _ in
@@ -538,8 +547,64 @@ private struct PlayerViewImpl: View {
         .onChange(of: player.videoBitrate) { _, newValue in
             appendBitrateSample(newValue)
         }
+        .onChange(of: player.state) { _, newState in
+            if newState == .ended {
+                startAutoAdvanceCountdownIfEligible()
+            } else {
+                cancelAutoAdvanceCountdown(resetEndHandling: true)
+            }
+        }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Otomatik geçiş yalnız dizilerde ve gerçekten gidilecek bir sonraki bölüm varken.
+    private var isAutoAdvanceEligible: Bool {
+        autoPlayNextEpisode && type == "series" && !isLiveStream
+            && canGoToNextEpisode && onNextEpisode != nil
+    }
+
+    private func startAutoAdvanceCountdownIfEligible() {
+        guard isAutoAdvanceEligible, !autoAdvanceHandledForCurrentEnd,
+              autoAdvanceSecondsRemaining == nil else { return }
+        autoAdvanceHandledForCurrentEnd = true
+        autoAdvanceToken &+= 1
+        let token = autoAdvanceToken
+        withAnimation(.easeOut(duration: 0.25)) {
+            autoAdvanceSecondsRemaining = 5
+        }
+        scheduleAutoAdvanceTick(token: token)
+    }
+
+    private func scheduleAutoAdvanceTick(token: UInt64) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            guard token == autoAdvanceToken,
+                  let remaining = autoAdvanceSecondsRemaining else { return }
+            if remaining <= 1 {
+                triggerAutoAdvance()
+            } else {
+                autoAdvanceSecondsRemaining = remaining - 1
+                scheduleAutoAdvanceTick(token: token)
+            }
+        }
+    }
+
+    private func triggerAutoAdvance() {
+        autoAdvanceToken &+= 1
+        withAnimation(.easeOut(duration: 0.2)) {
+            autoAdvanceSecondsRemaining = nil
+        }
+        onNextEpisode?()
+    }
+
+    private func cancelAutoAdvanceCountdown(resetEndHandling: Bool = false) {
+        autoAdvanceToken &+= 1
+        if autoAdvanceSecondsRemaining != nil {
+            withAnimation(.easeOut(duration: 0.2)) {
+                autoAdvanceSecondsRemaining = nil
+            }
+        }
+        if resetEndHandling { autoAdvanceHandledForCurrentEnd = false }
     }
 
     private func applySeriesEpisodeRemoteCommands() {
@@ -1037,6 +1102,43 @@ private struct PlayerViewImpl: View {
                     )
                     .zIndex(40)
                     .allowsHitTesting(false)
+                }
+
+                if let seconds = autoAdvanceSecondsRemaining {
+                    HStack(spacing: 10) {
+                        Button {
+                            cancelAutoAdvanceCountdown()
+                        } label: {
+                            Text(L("common.cancel"))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(.ultraThinMaterial, in: Capsule())
+                                .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 0.5))
+                        }
+
+                        Button {
+                            triggerAutoAdvance()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "play.fill")
+                                    .font(.footnote.weight(.bold))
+                                Text(L("player.autonext.countdown", seconds))
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(.white, in: Capsule())
+                        }
+                    }
+                    .shadow(color: .black.opacity(0.28), radius: 12, y: 4)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 16 + outerSafeAreaInsets.trailing)
+                    .padding(.bottom, (showControls ? 92 : 16) + outerSafeAreaInsets.bottom)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .zIndex(41)
                 }
 
                 // Not: PiP placeholder UI kaldırıldı — sistem `AVPictureInPictureController`

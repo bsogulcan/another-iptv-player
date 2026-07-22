@@ -1,0 +1,6 @@
+{
+  "seasons": [{ "season_number": 1, "name": "First" }],
+  "episodes": {
+    "1": [{ "id": "a", "episode_num": 1 }]
+  }
+}

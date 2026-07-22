@@ -1,0 +1,25 @@
+{
+  "user_info": {
+    "username": "family_tv",
+    "password": "s3cret",
+    "message": "Welcome",
+    "auth": 1,
+    "status": "Active",
+    "exp_date": "1779878400",
+    "is_trial": "0",
+    "active_cons": "1",
+    "created_at": "1600000000",
+    "max_connections": "2",
+    "allowed_output_formats": ["m3u8", "ts"]
+  },
+  "server_info": {
+    "url": "example-panel.tv",
+    "port": 8080,
+    "https_port": "8443",
+    "server_protocol": "http",
+    "rtmp_port": "25462",
+    "timezone": "Europe/Istanbul",
+    "time_now": "2026-07-19 12:00:00",
+    "timestamp_now": 1784457600
+  }
+}
