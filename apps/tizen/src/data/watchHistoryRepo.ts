@@ -1,5 +1,7 @@
 import { AppDB } from "./db";
 import { HistoryKind, WatchHistoryRecord } from "./records";
+import { enqueueProgressChange, enqueueProgressDelete } from "../sync/outbox";
+import { schedulePush } from "../sync/syncEngine";
 
 export function historyId(
   playlistId: string,
@@ -25,6 +27,27 @@ export async function saveProgress(
     durationMs: entry.type === "live" ? 0 : entry.durationMs,
   };
   await db.put("watchHistory", record);
+
+  const playlist = await db.get("playlists", entry.playlistId);
+  if (playlist) {
+    await enqueueProgressChange(
+      db,
+      playlist,
+      record.type,
+      record.streamId,
+      record.lastWatchedAt,
+      {
+        positionSeconds: record.lastTimeMs / 1000,
+        durationSeconds: record.durationMs / 1000,
+        title: record.title,
+        secondaryTitle: record.secondaryTitle,
+        imageURL: record.imageURL,
+        containerExtension: record.containerExtension,
+        seriesId: record.seriesId,
+      },
+    );
+    schedulePush(db);
+  }
 }
 
 export function getHistoryEntry(
@@ -59,14 +82,24 @@ export async function clearHistory(
   db: AppDB,
   playlistId: string,
 ): Promise<void> {
+  const cleared: Pick<WatchHistoryRecord, "type" | "streamId">[] = [];
   const tx = db.transaction("watchHistory", "readwrite");
   const range = IDBKeyRange.bound([playlistId], [playlistId, []]);
   let cursor = await tx.store.index("byPlaylistRecency").openCursor(range);
   while (cursor) {
+    cleared.push({ type: cursor.value.type, streamId: cursor.value.streamId });
     await cursor.delete();
     cursor = await cursor.continue();
   }
   await tx.done;
+
+  const playlist = await db.get("playlists", playlistId);
+  if (playlist && cleared.length > 0) {
+    for (const entry of cleared) {
+      await enqueueProgressDelete(db, playlist, entry.type, entry.streamId);
+    }
+    schedulePush(db);
+  }
 }
 
 /** Resume position for a vod/series item, or undefined if below threshold. */

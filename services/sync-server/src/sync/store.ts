@@ -28,23 +28,32 @@ const getExisting = db.prepare<[number, string, string], SyncItemRow>(`
   FROM sync_items WHERE user_id = ? AND kind = ? AND item_key = ?
 `);
 
+const maxSeq = db
+  .prepare<[number], number | null>(`SELECT MAX(seq) FROM sync_items WHERE user_id = ?`)
+  .pluck();
+
 const upsert = db.prepare(`
-  INSERT INTO sync_items (user_id, kind, item_key, payload, updated_at, deleted)
-  VALUES (@userId, @kind, @itemKey, @payload, @updatedAt, @deleted)
+  INSERT INTO sync_items (user_id, kind, item_key, payload, updated_at, deleted, seq)
+  VALUES (@userId, @kind, @itemKey, @payload, @updatedAt, @deleted, @seq)
   ON CONFLICT(user_id, kind, item_key) DO UPDATE SET
     payload = excluded.payload,
     updated_at = excluded.updated_at,
-    deleted = excluded.deleted
-  WHERE excluded.updated_at >= sync_items.updated_at
+    deleted = excluded.deleted,
+    seq = excluded.seq
 `);
 
 // Last-write-wins per item, keyed by the client-supplied `updatedAt`
 // timestamp (when the user actually made the change). If the server already
 // has a newer version, the incoming write is dropped and reported back as
 // "stale" so the caller knows to pull instead of assuming it applied.
+//
+// Every applied write (insert or update) gets a fresh, strictly increasing
+// `seq` so delta pulls (`seq > cursor`) always see it — see the schema
+// comment in db/index.ts for why this can't just be the row's rowid.
 export function applyPush(userId: number, items: SyncItemInput[]): PushResult[] {
   const results: PushResult[] = [];
   const txn = db.transaction((batch: SyncItemInput[]) => {
+    let nextSeq = (maxSeq.get(userId) ?? 0) + 1;
     for (const item of batch) {
       const existing = getExisting.get(userId, item.kind, item.key);
       if (existing && existing.updated_at > item.updatedAt) {
@@ -58,6 +67,7 @@ export function applyPush(userId: number, items: SyncItemInput[]): PushResult[] 
         payload: JSON.stringify(item.payload ?? {}),
         updatedAt: item.updatedAt,
         deleted: item.deleted ? 1 : 0,
+        seq: nextSeq++,
       });
       results.push({ key: item.key, kind: item.kind, status: "applied" });
     }

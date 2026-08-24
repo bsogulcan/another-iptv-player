@@ -27,6 +27,7 @@ import { PlayerSpikeScreen } from "./ui/screens/PlayerSpikeScreen";
 import { registerBackInterceptor } from "./navigation/backHandler";
 import { useLanguageVersion } from "./i18n/react";
 import { t } from "./i18n";
+import { bootSync } from "./sync/syncEngine";
 import "./ui/styles/app.css";
 
 function renderScreen(screen: ScreenDescriptor) {
@@ -83,9 +84,9 @@ export function App() {
   // Cold start: auto-open the last used playlist (iOS attemptAutoLoad).
   useEffect(() => {
     void (async () => {
+      const db = await getDb();
       const lastId = settings.lastPlaylistId;
       if (lastId) {
-        const db = await getDb();
         const playlist = await getPlaylist(db, lastId);
         if (playlist) {
           // Seed the playlist list below the dashboard so Back pops to a
@@ -93,6 +94,7 @@ export function App() {
           reset({ name: "playlists" }, { name: "dashboard", playlist });
         }
       }
+      bootSync(db);
       setBooted(true);
     })();
   }, [reset]);

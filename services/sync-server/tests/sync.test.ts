@@ -118,3 +118,52 @@ test("revoked device token stops working", async () => {
   });
   assert.equal(afterRevoke.status, 401);
 });
+
+test("a second update to an already-synced item is still visible to a delta pull", async () => {
+  await fetch(`${baseUrl}/api/auth/register`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ username: "bob", password: "correcthorsebattery" }),
+  });
+  const tokenRes = await fetch(`${baseUrl}/api/auth/token`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ username: "bob", password: "correcthorsebattery", deviceName: "d1" }),
+  });
+  const { token } = (await json(tokenRes)) as { token: string };
+
+  // First write, then pull to establish a cursor past it (as a second
+  // device would after its initial sync).
+  await fetch(`${baseUrl}/api/sync/push`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      items: [{ kind: "progress", key: "src:vod:1", payload: { positionSeconds: 10 }, updatedAt: 1000, deleted: false }],
+    }),
+  });
+  const firstPull = await fetch(`${baseUrl}/api/sync/pull?since=0`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const { cursor } = (await json(firstPull)) as { cursor: number };
+
+  // Update the SAME key again (e.g. more playback progress). Naively
+  // reusing the row's own rowid as the ordering column would leave this
+  // update invisible to anyone who already pulled past `cursor`.
+  await fetch(`${baseUrl}/api/sync/push`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      items: [{ kind: "progress", key: "src:vod:1", payload: { positionSeconds: 500 }, updatedAt: 2000, deleted: false }],
+    }),
+  });
+
+  const deltaPull = await fetch(`${baseUrl}/api/sync/pull?since=${cursor}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const deltaBody = (await json(deltaPull)) as {
+    items: { key: string; payload: { positionSeconds: number } }[];
+  };
+  assert.equal(deltaBody.items.length, 1);
+  assert.equal(deltaBody.items[0].key, "src:vod:1");
+  assert.equal(deltaBody.items[0].payload.positionSeconds, 500);
+});

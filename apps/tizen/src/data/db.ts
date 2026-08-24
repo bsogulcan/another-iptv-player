@@ -11,9 +11,10 @@ import {
   VodStreamRecord,
   WatchHistoryRecord,
 } from "./records";
+import { OutboxRecord } from "../sync/types";
 
 export const DB_NAME = "aiptv";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 /** Disk tier of the image cache (posters/backdrops); pruned LRU. */
 export interface ImageCacheRecord {
@@ -77,6 +78,10 @@ export interface AppDBSchema extends DBSchema {
     key: string;
     value: ImageCacheRecord;
     indexes: { byLastUsed: number };
+  };
+  syncOutbox: {
+    key: number;
+    value: OutboxRecord;
   };
 }
 
@@ -144,6 +149,12 @@ export function getDb(): Promise<AppDB> {
             keyPath: "url",
           });
           imageCache.createIndex("byLastUsed", "lastUsedAt");
+        }
+        if (oldVersion < 3) {
+          db.createObjectStore("syncOutbox", {
+            keyPath: "seq",
+            autoIncrement: true,
+          });
         }
       },
     });

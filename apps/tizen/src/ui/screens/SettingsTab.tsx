@@ -27,6 +27,7 @@ import {
 } from "../../i18n";
 import { Button, ToggleField } from "../components/TextField";
 import { Modal } from "../components/Modal";
+import { SyncSettings } from "../components/SyncSettings";
 
 const LANGUAGE_NAMES: { [K in Language]: string } = {
   ar: "العربية",
@@ -272,6 +273,8 @@ export function SettingsTab({
             />
           )}
         </section>
+
+        <SyncSettings />
 
         <section className="settings-section">
           <h3>{t("settings.playlist.info.title")}</h3>

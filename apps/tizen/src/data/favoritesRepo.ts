@@ -1,5 +1,7 @@
 import { AppDB, playlistKeyRange } from "./db";
 import { FavoriteKind, FavoriteRecord } from "./records";
+import { enqueueFavoriteChange } from "../sync/outbox";
+import { schedulePush } from "../sync/syncEngine";
 
 export function favoriteId(
   playlistId: string,
@@ -44,16 +46,24 @@ export async function toggleFavorite(
 ): Promise<boolean> {
   const id = favoriteId(playlistId, kind, itemId);
   const existing = await db.get("favorites", id);
+  const nowFavorited = !existing;
   if (existing) {
     await db.delete("favorites", id);
-    return false;
+  } else {
+    await db.put("favorites", {
+      id,
+      playlistId,
+      kind,
+      itemId,
+      addedAt: Date.now(),
+    });
   }
-  await db.put("favorites", {
-    id,
-    playlistId,
-    kind,
-    itemId,
-    addedAt: Date.now(),
-  });
-  return true;
+
+  const playlist = await db.get("playlists", playlistId);
+  if (playlist) {
+    await enqueueFavoriteChange(db, playlist, kind, itemId, nowFavorited);
+    schedulePush(db);
+  }
+
+  return nowFavorited;
 }

@@ -31,14 +31,23 @@ const MIGRATIONS: string[] = [
   -- Generic sync store: every syncable "thing" (favorite, watch progress,
   -- hidden category, ...) is one row identified by (user_id, kind, item_key).
   -- New kinds of client data can be added without server-side migrations.
+  --
+  -- "id" is the row's stable identity (the UPSERT conflict target); "seq" is
+  -- a separate, per-user monotonic counter re-assigned on every insert AND
+  -- update, which is what delta pulls order by. Reusing an AUTOINCREMENT
+  -- rowid as both identity and change-order would break delta sync: SQLite's
+  -- "INSERT ... ON CONFLICT DO UPDATE" keeps the existing row's rowid, so an
+  -- item edited a second time would never bump past a cursor a client had
+  -- already pulled to.
   CREATE TABLE IF NOT EXISTS sync_items (
-    seq         INTEGER PRIMARY KEY AUTOINCREMENT,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     kind        TEXT NOT NULL,
     item_key    TEXT NOT NULL,
     payload     TEXT NOT NULL DEFAULT '{}',
     updated_at  INTEGER NOT NULL,
     deleted     INTEGER NOT NULL DEFAULT 0,
+    seq         INTEGER NOT NULL,
     UNIQUE(user_id, kind, item_key)
   );
   CREATE INDEX IF NOT EXISTS idx_sync_items_user_seq ON sync_items(user_id, seq);
