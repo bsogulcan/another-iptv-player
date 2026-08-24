@@ -1,0 +1,7 @@
+node_modules
+dist
+data
+*.sqlite3*
+.env
+.env.local
+npm-debug.log*

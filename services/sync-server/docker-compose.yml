@@ -1,0 +1,19 @@
+services:
+  sync-server:
+    build: .
+    # Or, once published: image: ghcr.io/bsogulcan/another-iptv-player-sync-server:latest
+    container_name: another-iptv-player-sync
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: 8787
+      DATA_DIR: /data
+      TOKEN_PEPPER: ${TOKEN_PEPPER:?set TOKEN_PEPPER, e.g. via .env or `openssl rand -hex 32`}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    volumes:
+      - sync-data:/data
+
+volumes:
+  sync-data:
