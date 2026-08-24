@@ -31,6 +31,7 @@ import dev.android.anotheriptvplayer.model.Playlist
         M3uChannelEntity::class,
         M3uFavoriteEntity::class,
         DownloadedItemEntity::class,
+        SyncOutboxEntity::class,
     ],
     version = 1,
     exportSchema = true,
@@ -49,6 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun m3uChannelDao(): M3uChannelDao
     abstract fun m3uFavoriteDao(): M3uFavoriteDao
     abstract fun downloadedItemDao(): DownloadedItemDao
+    abstract fun syncOutboxDao(): SyncOutboxDao
 
     companion object {
         private const val DB_NAME = "another-iptv.db"

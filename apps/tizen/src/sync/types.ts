@@ -23,7 +23,9 @@ export interface ProgressPayload {
   secondaryTitle?: string;
   imageURL?: string;
   containerExtension?: string;
-  seriesId?: number;
+  // String on the wire (not number) so every platform's native id type
+  // round-trips losslessly — Android's series id is a string.
+  seriesId?: string;
 }
 
 export interface SyncPullItem {

@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
  * counter changes so consumers see updates as soon as the user toggles a
  * category. This mirrors the iOS `@Published var version` pattern.
  */
-class HiddenCategoryStore(context: Context) {
+class HiddenCategoryStore(context: Context, private val syncEngine: SyncEngine? = null) {
 
     private val prefs = context.applicationContext.getSharedPreferences(
         "hidden_categories",
@@ -48,6 +48,20 @@ class HiddenCategoryStore(context: Context) {
         type: String,
         categoryId: String,
     ) {
+        if (!applyLocal(hide, playlistId, type, categoryId)) return
+        syncEngine?.enqueueHiddenCategoryChangeAsync(playlistId, type, categoryId, hide)
+    }
+
+    /**
+     * Applies a change pulled from the sync server. Must go straight to
+     * storage without calling back into [setHidden] — that would re-enqueue
+     * the very change we just received, pushing it right back out.
+     */
+    fun applyFromSync(hide: Boolean, playlistId: String, type: String, categoryId: String) {
+        applyLocal(hide, playlistId, type, categoryId)
+    }
+
+    private fun applyLocal(hide: Boolean, playlistId: String, type: String, categoryId: String): Boolean {
         val key = key(playlistId, type)
         // `getStringSet` returns a defensive copy that's safe to read but
         // not safe to pass back to `putStringSet`; SharedPreferences caches
@@ -55,9 +69,10 @@ class HiddenCategoryStore(context: Context) {
         // construct a new HashSet for the write.
         val current = HashSet(prefs.getStringSet(key, emptySet()).orEmpty())
         val changed = if (hide) current.add(categoryId) else current.remove(categoryId)
-        if (!changed) return
+        if (!changed) return false
         prefs.edit().putStringSet(key, current).apply()
         _revision.value = _revision.value + 1L
+        return true
     }
 
     fun toggle(playlistId: String, type: String, categoryId: String) {

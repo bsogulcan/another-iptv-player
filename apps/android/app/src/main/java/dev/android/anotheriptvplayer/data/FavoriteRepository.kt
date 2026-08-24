@@ -15,7 +15,10 @@ import kotlinx.coroutines.flow.first
  * [Type] is the iOS-compatible string discriminator (`"live"`, `"vod"`,
  * `"series"`) used across the favorites JOIN queries.
  */
-class FavoriteRepository(private val dao: FavoriteDao) {
+class FavoriteRepository(
+    private val dao: FavoriteDao,
+    private val syncEngine: SyncEngine? = null,
+) {
 
     object Type {
         const val LIVE = "live"
@@ -46,6 +49,7 @@ class FavoriteRepository(private val dao: FavoriteDao) {
         } else {
             dao.delete(streamId, playlistId, type)
         }
+        syncEngine?.enqueueFavoriteChange(playlistId, type, streamId.toString(), favorite)
     }
 
     /** Reads the current state once and flips it. iOS `toggleFavorite` parity. */

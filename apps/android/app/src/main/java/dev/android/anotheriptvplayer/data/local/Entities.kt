@@ -289,6 +289,28 @@ data class M3uFavoriteEntity(
     val createdAt: Long = System.currentTimeMillis(),
 )
 
+/**
+ * Local outbox for the self-hosted sync service (see `services/sync-server`
+ * in the repo root). Every favorite / watch-progress / hidden-category
+ * change is queued here first and flushed to the server by `SyncEngine`;
+ * rows are removed once the push confirms them delivered. Not linked to
+ * `playlist` via a foreign key — a queued item must survive playlist
+ * deletion so a tombstone for it can still reach the server.
+ */
+@Entity(tableName = "syncOutbox")
+data class SyncOutboxEntity(
+    @androidx.room.PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    /** `favorite`, `progress`, or `hidden_category`. */
+    val kind: String,
+    /** `<sourceKey>:<contentType>:<contentId>` — see `SourceKey.kt`. */
+    val key: String,
+    /** JSON-encoded payload, opaque to everything except the kind's own reader. */
+    val payload: String,
+    val updatedAt: Long,
+    val deleted: Boolean,
+)
+
 @Entity(
     tableName = "downloadedItem",
     foreignKeys = [

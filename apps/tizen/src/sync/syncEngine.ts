@@ -99,7 +99,7 @@ async function applyPulledItem(db: AppDB, item: SyncPullItem): Promise<void> {
       secondaryTitle: payload.secondaryTitle,
       imageURL: payload.imageURL,
       containerExtension: payload.containerExtension,
-      seriesId: payload.seriesId,
+      seriesId: payload.seriesId !== undefined ? Number(payload.seriesId) : undefined,
     });
   }
 }

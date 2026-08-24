@@ -43,7 +43,7 @@ export async function saveProgress(
         secondaryTitle: record.secondaryTitle,
         imageURL: record.imageURL,
         containerExtension: record.containerExtension,
-        seriesId: record.seriesId,
+        seriesId: record.seriesId !== undefined ? String(record.seriesId) : undefined,
       },
     );
     schedulePush(db);

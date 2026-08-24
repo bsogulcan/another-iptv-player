@@ -20,7 +20,10 @@ import kotlinx.coroutines.launch
  * card / row UIs can render the star icon without doing a per-row query.
  * Backed by [M3uFavoriteDao.observeFavoriteIds].
  */
-class M3uFavoriteStore(private val database: AppDatabase) {
+class M3uFavoriteStore(
+    private val database: AppDatabase,
+    private val syncEngine: SyncEngine? = null,
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var observationJob: Job? = null
@@ -47,15 +50,17 @@ class M3uFavoriteStore(private val database: AppDatabase) {
     fun isFavorite(channelId: String): Boolean = channelId in _favoriteIds.value
 
     suspend fun toggle(channel: M3uChannelEntity) {
-        if (channel.id in _favoriteIds.value) {
-            database.m3uFavoriteDao().delete(channel.id, channel.playlistId)
-        } else {
+        val nowFavorited = channel.id !in _favoriteIds.value
+        if (nowFavorited) {
             database.m3uFavoriteDao().insert(
                 M3uFavoriteEntity(
                     channelId = channel.id,
                     playlistId = channel.playlistId,
                 ),
             )
+        } else {
+            database.m3uFavoriteDao().delete(channel.id, channel.playlistId)
         }
+        syncEngine?.enqueueFavoriteChange(channel.playlistId, "m3u", channel.id, nowFavorited)
     }
 }

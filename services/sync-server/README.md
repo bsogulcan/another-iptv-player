@@ -120,31 +120,59 @@ bootstrap with `since=0`.
 Client integration contract
 ----------------------------
 
-This repo does not yet wire any client app up to this service — see the
-kinds below as the intended contract for whoever integrates a given
-platform next.
+The Tizen client (`apps/tizen/src/sync/`) and Android client
+(`apps/android/.../data/Sync*.kt`, `networking/Sync*.kt`) integrate this
+today; the Apple platforms (iOS/macOS/tvOS) are following the same contract
+next.
 
-* **`sourceKey`** — clients should scope items to a specific playlist/source
-  by prefixing the `key` with a stable, non-secret identifier for that
-  source (e.g. a SHA-256 of `type:host:username`, *not* the raw
-  credentials — this server should never see playlist passwords). This
-  keeps favorites/progress from colliding across a user's different
-  playlists and avoids leaking credentials to the sync server.
+* **`sourceKey`** — clients scope items to a specific playlist/source by
+  prefixing the `key` with a stable, non-secret identifier for that source:
+  a SHA-256 hex digest of `"<type>:<serverUrl>:<username>"` (Xtream) or
+  `"m3u:<serverUrl>"` (never the raw password — this server should never see
+  playlist credentials). This keeps favorites/progress from colliding across
+  a user's different playlists, and lets a second device recognize "the same
+  playlist" even though its locally-generated playlist id differs.
 
 * **`favorite`** — `key = "<sourceKey>:<contentType>:<contentId>"`,
   `payload = {}`. Existence (`deleted: false`) means favorited;
-  `deleted: true` removes it.
+  `deleted: true` removes it. `contentType` is whatever the client's local
+  favorite-kind discriminator is (e.g. `live` / `vod` / `series` / `m3u`).
 
-* **`progress`** — `key = "<sourceKey>:<contentType>:<contentId>[:<episodeId>]"`,
-  `payload = { "positionSeconds": number, "durationSeconds": number }`.
+* **`progress`** — `key = "<sourceKey>:<contentType>:<contentId>"` (content
+  id is already per-episode for series, so no separate episode component is
+  needed), payload:
+  ```json
+  {
+    "positionSeconds": 0,
+    "durationSeconds": 0,
+    "title": "optional",
+    "secondaryTitle": "optional",
+    "imageURL": "optional",
+    "containerExtension": "optional",
+    "seriesId": "optional, always a string on the wire"
+  }
+  ```
+  The display-metadata fields are advisory and optional: a client applying a
+  pulled item that already has local catalog data for it can ignore them,
+  but a device that has never played that item (a fresh install, or a
+  playlist added after the fact) needs them to render a useful "Continue
+  Watching" entry without a catalog join. `seriesId` is always sent as a
+  string so it round-trips losslessly regardless of whether a given
+  platform's native id for it is numeric or a string.
 
 * **`hidden_category`** — `key = "<sourceKey>:<categoryType>:<categoryId>"`,
-  `payload = {}`.
+  `payload = {}`. Not every platform has this feature locally; skip the kind
+  entirely on ones that don't rather than sending empty payloads for it.
 
-Suggested client sync loop: on relevant local changes, buffer them and
-`POST /api/sync/push` (debounced or on app background); on app start / resume,
-`GET /api/sync/pull?since=<lastCursor>` and apply items to local storage,
-then persist the returned `cursor` for next time.
+Client sync loop (see `apps/tizen/src/sync/syncEngine.ts` for a concrete
+implementation): on relevant local changes, queue them to a local outbox and
+flush with `POST /api/sync/push` shortly after (debounced, so rapid edits
+coalesce into one request) or on app background; on app start/resume and on
+a configurable interval, `POST` the outbox then `GET
+/api/sync/pull?since=<lastCursor>` and apply returned items to local
+storage, persisting the returned `cursor` for next time. Run push before
+pull in that combined cycle — it means a pull never clobbers a local edit
+that just hasn't reached the server yet.
 
 
 Configuration

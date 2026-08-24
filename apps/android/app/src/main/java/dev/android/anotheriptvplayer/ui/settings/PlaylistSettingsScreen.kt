@@ -2,7 +2,9 @@ package dev.android.anotheriptvplayer.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,9 +37,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,20 +57,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.android.anotheriptvplayer.AnotherIptvPlayerApp
 import dev.android.anotheriptvplayer.R
 import dev.android.anotheriptvplayer.data.PlaylistContentStore
+import dev.android.anotheriptvplayer.data.SyncEngine
 import dev.android.anotheriptvplayer.model.Playlist
+import dev.android.anotheriptvplayer.networking.SyncApiException
+import dev.android.anotheriptvplayer.networking.SyncDeviceInfo
 import dev.android.anotheriptvplayer.networking.XtreamApiClient
 import dev.android.anotheriptvplayer.networking.XtreamAuthResponse
 import dev.android.anotheriptvplayer.ui.LocalPlaylistContentStore
 import dev.android.anotheriptvplayer.ui.LocalPlaylistRepository
+import dev.android.anotheriptvplayer.ui.LocalSyncEngine
 import kotlinx.coroutines.launch
+import java.text.DateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.Date
 
 /**
  * Settings tab body — Kotlin port of iOS `PlaylistSettingsView`, scoped to
@@ -347,6 +364,8 @@ fun PlaylistSettingsBody(
                 )
             }
 
+            SyncCard()
+
             // Player preferences — PiP, background playback, 2× long-press.
             // iOS registers these as defaults at app init; we mirror them
             // here with one source-of-truth `PlayerPreferences`.
@@ -557,6 +576,270 @@ private fun CenteredHint(text: String, color: androidx.compose.ui.graphics.Color
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
     )
+}
+
+/**
+ * Self-hosted sync (favorites / watch progress / hidden categories across
+ * devices) — see `services/sync-server` in the repo root. Fully optional:
+ * everything else in this screen (and the app) works the same whether or
+ * not the user ever opens this card.
+ */
+@Composable
+private fun SyncCard() {
+    val context = LocalContext.current
+    val app = remember { context.applicationContext as AnotherIptvPlayerApp }
+    val syncEngine = LocalSyncEngine.current
+    val config = app.syncConfig
+    val scope = rememberCoroutineScope()
+    val status by syncEngine.status.collectAsState()
+
+    var connected by remember { mutableStateOf(config.isConfigured) }
+    var serverUrl by remember { mutableStateOf(config.serverUrl.orEmpty()) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var deviceName by remember { mutableStateOf(Build.MODEL ?: "Android") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var formError by remember { mutableStateOf<String?>(null) }
+
+    var pending by remember { mutableStateOf(0) }
+    var autoSync by remember { mutableStateOf(config.autoSyncEnabled) }
+    var interval by remember { mutableStateOf(config.intervalMinutes) }
+    var devices by remember { mutableStateOf<List<SyncDeviceInfo>>(emptyList()) }
+    var devicesReload by remember { mutableStateOf(0) }
+
+    LaunchedEffect(connected, status) {
+        if (!connected) return@LaunchedEffect
+        pending = syncEngine.outboxSize()
+    }
+    LaunchedEffect(connected, devicesReload) {
+        if (!connected) return@LaunchedEffect
+        devices = runCatching { syncEngine.listDevices() }.getOrDefault(devices)
+    }
+
+    fun submit(alsoRegister: Boolean) {
+        if (serverUrl.isBlank() || username.isBlank() || password.isBlank()) {
+            formError = context.getString(R.string.settings_sync_missing_fields)
+            return
+        }
+        formError = null
+        busy = true
+        val url = serverUrl.trim()
+        val user = username.trim()
+        val pass = password
+        val name = deviceName.trim().ifBlank { "Android" }
+        scope.launch {
+            try {
+                if (alsoRegister) syncEngine.register(url, user, pass)
+                syncEngine.signIn(url, user, pass, name)
+                password = ""
+                connected = true
+            } catch (e: SyncApiException) {
+                formError = e.message
+            } catch (e: Throwable) {
+                formError = e.message ?: context.getString(R.string.settings_unknown_error)
+            } finally {
+                busy = false
+            }
+        }
+    }
+
+    SettingsCard(title = stringResource(R.string.settings_card_sync)) {
+        if (!connected) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_sync_intro),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = serverUrl,
+                    onValueChange = { serverUrl = it },
+                    label = { Text(stringResource(R.string.settings_sync_server_url)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                )
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text(stringResource(R.string.settings_sync_username)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.settings_sync_password)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (passwordVisible) stringResource(R.string.common_hide) else stringResource(R.string.common_show),
+                            )
+                        }
+                    },
+                )
+                OutlinedTextField(
+                    value = deviceName,
+                    onValueChange = { deviceName = it },
+                    label = { Text(stringResource(R.string.settings_sync_device_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { submit(false) }, enabled = !busy) {
+                        Text(stringResource(R.string.settings_sync_sign_in))
+                    }
+                    OutlinedButton(onClick = { submit(true) }, enabled = !busy) {
+                        Text(stringResource(R.string.settings_sync_create_account))
+                    }
+                }
+                formError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        } else {
+            InfoRow(label = stringResource(R.string.settings_sync_server_url), value = config.serverUrl.orEmpty())
+            Divider()
+            InfoRow(label = stringResource(R.string.settings_sync_account), value = config.accountUsername.orEmpty())
+            Divider()
+            val statusText = when (status) {
+                SyncEngine.Status.SYNCING -> stringResource(R.string.settings_sync_status_syncing)
+                SyncEngine.Status.ERROR -> stringResource(
+                    R.string.settings_sync_status_error,
+                    config.lastSyncError.orEmpty(),
+                )
+                SyncEngine.Status.IDLE -> {
+                    val lastSyncedAt = config.lastSyncedAt
+                    if (lastSyncedAt != null) {
+                        stringResource(
+                            R.string.settings_sync_status_last_synced,
+                            DateFormat.getDateTimeInstance().format(Date(lastSyncedAt)),
+                        )
+                    } else {
+                        stringResource(R.string.settings_sync_status_never)
+                    }
+                }
+            }
+            InfoRow(label = stringResource(R.string.settings_sync_status), value = statusText)
+            if (pending > 0) {
+                CenteredHint(stringResource(R.string.settings_sync_pending_items, pending))
+            }
+            Divider()
+            SwitchRow(
+                title = stringResource(R.string.settings_sync_auto_sync),
+                subtitle = stringResource(R.string.settings_sync_auto_sync_subtitle),
+                checked = autoSync,
+                onChange = { value ->
+                    autoSync = value
+                    config.autoSyncEnabled = value
+                    syncEngine.startPeriodicSync()
+                },
+            )
+            Divider()
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.settings_sync_interval_title), style = MaterialTheme.typography.bodyMedium)
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    listOf(0, 15, 30, 60).forEach { minutes ->
+                        val label = if (minutes == 0) {
+                            stringResource(R.string.settings_sync_interval_manual)
+                        } else {
+                            stringResource(R.string.settings_sync_interval_minutes, minutes)
+                        }
+                        val onClick = {
+                            interval = minutes
+                            config.intervalMinutes = minutes
+                            syncEngine.startPeriodicSync()
+                        }
+                        if (interval == minutes) {
+                            Button(onClick = onClick) { Text(label) }
+                        } else {
+                            OutlinedButton(onClick = onClick) { Text(label) }
+                        }
+                    }
+                }
+            }
+            if (devices.isNotEmpty()) {
+                Divider()
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.settings_sync_devices_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    devices.forEach { device ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            val suffix = if (device.current) " (${stringResource(R.string.settings_sync_this_device)})" else ""
+                            Text(
+                                text = "${device.deviceName}$suffix",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (!device.current) {
+                                TextButton(onClick = {
+                                    scope.launch {
+                                        runCatching { syncEngine.revokeDevice(device.id) }
+                                        devicesReload += 1
+                                    }
+                                }) {
+                                    Text(stringResource(R.string.settings_sync_remove))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Divider()
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    onClick = { syncEngine.runSync() },
+                    enabled = status != SyncEngine.Status.SYNCING,
+                ) {
+                    Text(
+                        if (status == SyncEngine.Status.SYNCING) {
+                            stringResource(R.string.settings_sync_status_syncing)
+                        } else {
+                            stringResource(R.string.settings_sync_now)
+                        },
+                    )
+                }
+                OutlinedButton(onClick = {
+                    scope.launch {
+                        syncEngine.signOut()
+                        connected = false
+                        devices = emptyList()
+                    }
+                }) {
+                    Text(stringResource(R.string.settings_sync_sign_out))
+                }
+            }
+        }
+    }
 }
 
 @Composable

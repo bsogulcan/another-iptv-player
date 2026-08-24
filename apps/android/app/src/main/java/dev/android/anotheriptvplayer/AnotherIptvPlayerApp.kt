@@ -14,9 +14,13 @@ import dev.android.anotheriptvplayer.data.PlaylistContentStore
 import dev.android.anotheriptvplayer.data.PlaylistRepository
 import dev.android.anotheriptvplayer.data.RatingManager
 import dev.android.anotheriptvplayer.data.SeriesRepository
+import dev.android.anotheriptvplayer.data.SyncConfig
+import dev.android.anotheriptvplayer.data.SyncEngine
 import dev.android.anotheriptvplayer.data.VodRepository
+import dev.android.anotheriptvplayer.data.WatchHistoryRepository
 import dev.android.anotheriptvplayer.data.local.AppDatabase
 import dev.android.anotheriptvplayer.data.local.LiveStreamEntity
+import dev.android.anotheriptvplayer.networking.SyncApiClient
 
 /**
  * App-wide singleton holder.
@@ -38,8 +42,22 @@ class AnotherIptvPlayerApp : Application() {
      */
     val appDatabaseForDownloads: AppDatabase get() = database
 
+    /** Self-hosted sync settings (server URL, device token, schedule). */
+    val syncConfig: SyncConfig by lazy { SyncConfig(this) }
+
+    private val syncApiClient: SyncApiClient by lazy { SyncApiClient(syncConfig) }
+
+    /**
+     * Drives the opt-in self-hosted sync feature — see `services/sync-server`
+     * in the repo root. Every repository below hands it local changes to
+     * queue; it's a no-op until the user configures a server in Settings.
+     */
+    val syncEngine: SyncEngine by lazy {
+        SyncEngine(database, playlistRepository, syncConfig, syncApiClient)
+    }
+
     val playlistRepository: PlaylistRepository by lazy {
-        PlaylistRepository(database.playlistDao())
+        PlaylistRepository(database.playlistDao(), syncConfig)
     }
 
     /**
@@ -63,12 +81,17 @@ class AnotherIptvPlayerApp : Application() {
 
     /** Star toggle + favorites list grids. */
     val favoriteRepository: FavoriteRepository by lazy {
-        FavoriteRepository(database.favoriteDao())
+        FavoriteRepository(database.favoriteDao(), syncEngine)
+    }
+
+    /** Watch-progress writes — reads still go through `AppDatabase.watchHistoryDao()` directly. */
+    val watchHistoryRepository: WatchHistoryRepository by lazy {
+        WatchHistoryRepository(database.watchHistoryDao(), syncEngine)
     }
 
     /** Tracks which catalog categories the user has hidden per playlist. */
     val hiddenCategoryStore: HiddenCategoryStore by lazy {
-        HiddenCategoryStore(this)
+        HiddenCategoryStore(this, syncEngine).also { syncEngine.attachHiddenCategoryStore(it) }
     }
 
     /**
@@ -85,7 +108,7 @@ class AnotherIptvPlayerApp : Application() {
     val m3uContentStore: M3uContentStore by lazy { M3uContentStore(database) }
 
     /** Reactive M3U favourites set, driven by Room observations. */
-    val m3uFavoriteStore: M3uFavoriteStore by lazy { M3uFavoriteStore(database) }
+    val m3uFavoriteStore: M3uFavoriteStore by lazy { M3uFavoriteStore(database, syncEngine) }
 
     /** "Replace whole playlist" import path used by the AddM3UPlaylistScreen. */
     val m3uImporter: M3uImporter by lazy { M3uImporter(database) }

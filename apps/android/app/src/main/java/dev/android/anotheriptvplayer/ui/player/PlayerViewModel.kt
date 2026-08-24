@@ -171,7 +171,7 @@ class PlayerViewModel(
             seriesId = meta.seriesId,
             containerExtension = null,
         )
-        runCatching { app.appDatabaseForDownloads.watchHistoryDao().upsert(row) }
+        runCatching { app.watchHistoryRepository.upsert(row) }
     }
 
     @Volatile private var lastHistoryWriteMs: Long = 0L

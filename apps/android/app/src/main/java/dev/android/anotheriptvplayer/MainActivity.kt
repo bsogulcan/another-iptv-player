@@ -22,6 +22,7 @@ import dev.android.anotheriptvplayer.ui.LocalPlayerPreferences
 import dev.android.anotheriptvplayer.ui.LocalPlaylistContentStore
 import dev.android.anotheriptvplayer.ui.LocalPlaylistRepository
 import dev.android.anotheriptvplayer.ui.LocalSeriesRepository
+import dev.android.anotheriptvplayer.ui.LocalSyncEngine
 import dev.android.anotheriptvplayer.ui.LocalVodRepository
 import dev.android.anotheriptvplayer.ui.theme.AnotherIptvPlayerTheme
 
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = application as AnotherIptvPlayerApp
+        app.syncEngine.bootSync()
         setContent {
             AnotherIptvPlayerTheme {
                 // Push brightness-override changes onto the window. Setting
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
                     LocalLastPlaylistStore provides app.lastPlaylistStore,
                     LocalPlayerActivityState provides playerState,
                     LocalPlayerPreferences provides app.playerPreferences,
+                    LocalSyncEngine provides app.syncEngine,
                 ) {
                     Surface(modifier = Modifier.fillMaxSize()) {
                         AppNavigation()

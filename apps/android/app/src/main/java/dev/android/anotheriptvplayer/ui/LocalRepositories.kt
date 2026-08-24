@@ -8,6 +8,7 @@ import dev.android.anotheriptvplayer.data.PlayerPreferences
 import dev.android.anotheriptvplayer.data.PlaylistContentStore
 import dev.android.anotheriptvplayer.data.PlaylistRepository
 import dev.android.anotheriptvplayer.data.SeriesRepository
+import dev.android.anotheriptvplayer.data.SyncEngine
 import dev.android.anotheriptvplayer.data.VodRepository
 
 /**
@@ -58,4 +59,9 @@ val LocalLastPlaylistStore = staticCompositionLocalOf<LastPlaylistStore> {
 /** Player UX preferences (PiP, background play, long-press 2× speed). */
 val LocalPlayerPreferences = staticCompositionLocalOf<PlayerPreferences> {
     error("PlayerPreferences not provided — wrap the UI in CompositionLocalProvider.")
+}
+
+/** Self-hosted sync (favorites/progress/hidden categories across devices). */
+val LocalSyncEngine = staticCompositionLocalOf<SyncEngine> {
+    error("SyncEngine not provided — wrap the UI in CompositionLocalProvider.")
 }

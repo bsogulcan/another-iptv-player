@@ -70,6 +70,7 @@ fun WatchHistoryScreen(
     val context = LocalContext.current
     val app = context.applicationContext as AnotherIptvPlayerApp
     val dao = app.appDatabaseForDownloads.watchHistoryDao()
+    val repository = app.watchHistoryRepository
     val scope = rememberCoroutineScope()
     val rows by dao.observeRecent(playlistId, limit = 200).collectAsState(initial = emptyList())
 
@@ -112,7 +113,7 @@ fun WatchHistoryScreen(
                             "live" -> row.streamId.toIntOrNull()?.let(onPlayLive)
                         }
                     },
-                    onDelete = { scope.launch { dao.deleteById(row.id) } },
+                    onDelete = { scope.launch { repository.delete(row) } },
                 )
             }
         }
