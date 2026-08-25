@@ -713,6 +713,9 @@ private struct LiveFavoriteHost<Content: View>: View {
                             .insert(db)
                     }
                 }
+                SyncEngine.shared.enqueueFavoriteChange(
+                    playlistId: playlistId, contentType: "live", itemId: String(streamId), favorited: !currentlyFavorite
+                )
             } catch {
                 print("Failed to toggle live favorite: \(error)")
             }

@@ -40,6 +40,9 @@ struct another_iptv_playerApp: App {
             "player.continuePlayingInBackground": true,
             "player.speedUpOnLongPress": true
         ])
+        Task { @MainActor in
+            SyncEngine.shared.bootSync()
+        }
     }
 
     var body: some Scene {

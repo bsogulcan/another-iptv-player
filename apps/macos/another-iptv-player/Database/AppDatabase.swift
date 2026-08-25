@@ -317,6 +317,31 @@ struct AppDatabase {
             )
         }
 
+        // Local outbox for the self-hosted sync service (see
+        // `services/sync-server` in the repo root). Every favorite /
+        // watch-progress / hidden-category change is queued here first and
+        // flushed by SyncEngine; rows are removed once a push confirms them
+        // delivered. Not linked to `playlist` via a foreign key — a queued
+        // item must survive playlist deletion so a tombstone for it can
+        // still reach the server.
+        migrator.registerMigration("addSyncOutboxTable") { db in
+            try db.create(table: "syncOutbox") { t in
+                t.column("id", .text).primaryKey()
+                t.column("kind", .text).notNull() // favorite, progress, hidden_category
+                t.column("key", .text).notNull() // "<sourceKey>:<contentType>:<contentId>"
+                t.column("payload", .text).notNull().defaults(to: "{}")
+                t.column("updatedAt", .integer).notNull() // ms epoch
+                t.column("deleted", .boolean).notNull().defaults(to: false)
+                t.column("createdAt", .datetime).notNull().defaults(to: Date())
+            }
+            try db.create(
+                index: "idx_syncOutbox_createdAt",
+                on: "syncOutbox",
+                columns: ["createdAt"],
+                ifNotExists: true
+            )
+        }
+
         return migrator
     }
 }

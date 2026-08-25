@@ -374,6 +374,7 @@ struct PlayerView: View {
                 try await AppDatabase.shared.write { db in
                     try history.save(db)
                 }
+                SyncEngine.shared.enqueueProgressChange(history)
             } catch {
                 NSLog("Failed to save watch history: %@", String(describing: error))
             }

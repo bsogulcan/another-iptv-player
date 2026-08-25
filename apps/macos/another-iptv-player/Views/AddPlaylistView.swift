@@ -262,6 +262,12 @@ struct AddPlaylistView: View {
             await MainActor.run {
                 self.isLoading = false
                 self.progressMessage = nil
+                // A newly added playlist might match one another device
+                // already pushed favorites/progress for before this device
+                // ever synced; replay from the start to pick those up.
+                if editingPlaylist == nil {
+                    SyncEngine.shared.resetCursor()
+                }
                 self.dismiss()
             }
         } catch {

@@ -110,6 +110,20 @@ struct WatchHistoryListView: View {
         let pid = playlist.id
         let type = typeFilter
         do {
+            // Capture which rows are about to be deleted so their removal can
+            // be tombstoned for the sync server — a raw bulk DELETE alone
+            // wouldn't leave anything to build sync keys from afterwards.
+            let cleared: [(type: String, streamId: String)] = try await appDatabase.read { db in
+                let rows: [DBWatchHistory]
+                if let type {
+                    rows = try DBWatchHistory
+                        .filter(Column("playlistId") == pid && Column("type") == type)
+                        .fetchAll(db)
+                } else {
+                    rows = try DBWatchHistory.filter(Column("playlistId") == pid).fetchAll(db)
+                }
+                return rows.map { (type: $0.type, streamId: $0.streamId) }
+            }
             try await appDatabase.write { db in
                 if let type {
                     try db.execute(
@@ -122,6 +136,9 @@ struct WatchHistoryListView: View {
                         arguments: [pid]
                     )
                 }
+            }
+            for entry in cleared {
+                SyncEngine.shared.enqueueProgressDelete(playlistId: pid, type: entry.type, streamId: entry.streamId)
             }
         } catch {
             print("WatchHistory clear error: \(error)")

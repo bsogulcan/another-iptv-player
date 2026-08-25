@@ -41,7 +41,7 @@ final class M3UFavoriteStore: ObservableObject {
     /// Kanalı toggle'la. Callback'siz — ValueObservation yeniden yayacak.
     func toggle(channel: DBM3UChannel) async {
         do {
-            try await AppDatabase.shared.write { db in
+            let nowFavorited = try await AppDatabase.shared.write { db -> Bool in
                 let exists = try Bool.fetchOne(
                     db,
                     sql: "SELECT 1 FROM m3uFavorite WHERE channelId = ? AND playlistId = ? LIMIT 1",
@@ -53,14 +53,19 @@ final class M3UFavoriteStore: ObservableObject {
                         sql: "DELETE FROM m3uFavorite WHERE channelId = ? AND playlistId = ?",
                         arguments: [channel.id, channel.playlistId]
                     )
+                    return false
                 } else {
                     let fav = DBM3UFavorite(
                         channelId: channel.id,
                         playlistId: channel.playlistId
                     )
                     try fav.save(db)
+                    return true
                 }
             }
+            SyncEngine.shared.enqueueFavoriteChange(
+                playlistId: channel.playlistId, contentType: "m3u", itemId: channel.id, favorited: nowFavorited
+            )
         } catch {
             print("M3UFavoriteStore toggle error: \(error)")
         }
