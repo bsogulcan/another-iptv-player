@@ -208,6 +208,7 @@ struct AddM3UPlaylistView: View {
             await MainActor.run {
                 self.isLoading = false
                 self.progressMessage = nil
+                SyncEngine.shared.resetCursor()
                 self.dismiss()
             }
         } catch {
@@ -304,6 +305,9 @@ struct AddM3UPlaylistView: View {
             await MainActor.run {
                 self.isLoading = false
                 self.progressMessage = nil
+                if editingPlaylist == nil {
+                    SyncEngine.shared.resetCursor()
+                }
                 self.dismiss()
             }
         } catch {

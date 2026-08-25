@@ -25,6 +25,19 @@ final class HiddenCategoryStore: ObservableObject {
     }
 
     func setHidden(_ hide: Bool, playlistId: UUID, type: String, categoryId: String) {
+        guard applyLocal(hide, playlistId: playlistId, type: type, categoryId: categoryId) else { return }
+        SyncEngine.shared.enqueueHiddenCategoryChange(playlistId: playlistId, categoryType: type, categoryId: categoryId, hidden: hide)
+    }
+
+    /// Applies a change pulled from the sync server. Must go straight to
+    /// storage without calling back into `setHidden` — that would
+    /// re-enqueue the very change we just received, pushing it right back out.
+    func applyFromSync(_ hide: Bool, playlistId: UUID, type: String, categoryId: String) {
+        _ = applyLocal(hide, playlistId: playlistId, type: type, categoryId: categoryId)
+    }
+
+    @discardableResult
+    private func applyLocal(_ hide: Bool, playlistId: UUID, type: String, categoryId: String) -> Bool {
         var current = hiddenIds(playlistId: playlistId, type: type)
         let changed: Bool
         if hide {
@@ -32,9 +45,10 @@ final class HiddenCategoryStore: ObservableObject {
         } else {
             changed = current.remove(categoryId) != nil
         }
-        guard changed else { return }
+        guard changed else { return false }
         UserDefaults.standard.set(Array(current), forKey: Self.storageKey(playlistId: playlistId, type: type))
         version &+= 1
+        return true
     }
 
     func toggle(playlistId: UUID, type: String, categoryId: String) {

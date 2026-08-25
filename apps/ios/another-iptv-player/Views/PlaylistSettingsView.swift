@@ -127,6 +127,8 @@ struct PlaylistSettingsView: View {
 
             LanguagePickerSection()
 
+            SyncSettingsSection()
+
             // — Player Settings —
             Section(header: Text(L("settings.player.title"))) {
                 Toggle(isOn: $pipEnabled) {

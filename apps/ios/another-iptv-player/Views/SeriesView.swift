@@ -1234,9 +1234,10 @@ struct SeriesDetailView: View {
     }
 
     private func toggleFavorite() async {
+        let wasFavorite = isFavorite
         do {
             try await AppDatabase.shared.write { db in
-                if isFavorite {
+                if wasFavorite {
                     try DBFavorite
                         .filter(Column("streamId") == series.seriesId && Column("playlistId") == playlist.id && Column("type") == "series")
                         .deleteAll(db)
@@ -1245,6 +1246,9 @@ struct SeriesDetailView: View {
                     try fav.insert(db)
                 }
             }
+            SyncEngine.shared.enqueueFavoriteChange(
+                playlistId: playlist.id, contentType: "series", itemId: String(series.seriesId), favorited: !wasFavorite
+            )
         } catch {
             print("Failed to toggle favorite: \(error)")
         }

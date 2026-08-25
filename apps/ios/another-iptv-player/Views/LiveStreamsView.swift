@@ -945,6 +945,9 @@ struct LivePlayerShell: View {
                             .deleteAll(db)
                     }
                 }
+                SyncEngine.shared.enqueueFavoriteChange(
+                    playlistId: playlist.id, contentType: "live", itemId: String(streamId), favorited: nextValue
+                )
             } catch {
                 if session.stream.streamId == streamId { isFavorite.toggle() }
             }

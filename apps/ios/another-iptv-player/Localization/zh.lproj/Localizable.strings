@@ -140,6 +140,35 @@
 // MARK: - Settings (common)
 "settings.back_to_list" = "返回播放列表";
 "settings.refresh_all" = "重新下载全部";
+// MARK: - Settings (sync)
+"settings.sync.title" = "跨设备同步";
+"settings.sync.intro" = "连接到您自托管的同步服务器，以便在设备之间同步收藏和观看进度。";
+"settings.sync.server_url" = "服务器 URL";
+"settings.sync.username" = "用户名";
+"settings.sync.password" = "密码";
+"settings.sync.device_name" = "设备名称";
+"settings.sync.sign_in" = "登录";
+"settings.sync.create_account" = "创建账户";
+"settings.sync.missing_fields" = "请输入服务器 URL、用户名和密码。";
+"settings.sync.account" = "账户";
+"settings.sync.status" = "状态";
+"settings.sync.status_syncing" = "同步中…";
+"settings.sync.status_error" = "错误：%@";
+"settings.sync.status_last_synced" = "上次同步：%@";
+"settings.sync.status_never" = "尚未同步";
+"settings.sync.pending_items" = "%d 项更改等待同步";
+"settings.sync.auto_sync" = "自动同步";
+"settings.sync.auto_sync_subtitle" = "更改会在发生后不久推送，并按以下计划拉取。";
+"settings.sync.interval_title" = "同步频率";
+"settings.sync.interval_manual" = "仅手动";
+"settings.sync.interval_minutes_format" = "每 %d 分钟";
+"settings.sync.this_device" = "此设备";
+"settings.sync.remove" = "移除";
+"settings.sync.sync_now" = "立即同步";
+"settings.sync.sign_out" = "退出登录";
+"sync.error.invalid_url" = "同步服务器 URL 无效。";
+"sync.error.server_status" = "同步服务器返回 HTTP %d。";
+
 "settings.player.title" = "播放器设置";
 "settings.player.pip.title" = "画中画";
 "settings.player.pip.desc" = "允许画中画模式";

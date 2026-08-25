@@ -140,6 +140,35 @@
 // MARK: - Settings (common)
 "settings.back_to_list" = "Playlist Listesine Dön";
 "settings.refresh_all" = "Tüm İçerikleri Yeniden İndir";
+// MARK: - Settings (sync)
+"settings.sync.title" = "Senkronizasyon";
+"settings.sync.intro" = "Favorileri ve izleme ilerlemesini cihazlar arasında senkronize tutmak için kendi barındırdığınız senkronizasyon sunucusuna bağlanın.";
+"settings.sync.server_url" = "Sunucu URL";
+"settings.sync.username" = "Kullanıcı Adı";
+"settings.sync.password" = "Şifre";
+"settings.sync.device_name" = "Cihaz Adı";
+"settings.sync.sign_in" = "Giriş Yap";
+"settings.sync.create_account" = "Hesap Oluştur";
+"settings.sync.missing_fields" = "Sunucu URL, kullanıcı adı ve şifre girin.";
+"settings.sync.account" = "Hesap";
+"settings.sync.status" = "Durum";
+"settings.sync.status_syncing" = "Senkronize ediliyor…";
+"settings.sync.status_error" = "Hata: %@";
+"settings.sync.status_last_synced" = "Son senkronizasyon: %@";
+"settings.sync.status_never" = "Henüz senkronize edilmedi";
+"settings.sync.pending_items" = "%d değişiklik senkronizasyon bekliyor";
+"settings.sync.auto_sync" = "Otomatik Senkronize Et";
+"settings.sync.auto_sync_subtitle" = "Değişiklikleri hemen sonra gönder, aşağıdaki programa göre al.";
+"settings.sync.interval_title" = "Senkronizasyon Sıklığı";
+"settings.sync.interval_manual" = "Yalnızca Manuel";
+"settings.sync.interval_minutes_format" = "Her %d dk";
+"settings.sync.this_device" = "bu cihaz";
+"settings.sync.remove" = "Kaldır";
+"settings.sync.sync_now" = "Şimdi Senkronize Et";
+"settings.sync.sign_out" = "Çıkış Yap";
+"sync.error.invalid_url" = "Geçersiz senkronizasyon sunucusu URL'si.";
+"sync.error.server_status" = "Senkronizasyon sunucusu HTTP %d döndürdü.";
+
 "settings.player.title" = "Player Ayarları";
 "settings.player.pip.title" = "Picture in Picture";
 "settings.player.pip.desc" = "Oynatıcıyı PiP modunda küçültmeye izin verir";

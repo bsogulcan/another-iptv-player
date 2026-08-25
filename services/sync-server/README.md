@@ -120,10 +120,11 @@ bootstrap with `since=0`.
 Client integration contract
 ----------------------------
 
-The Tizen client (`apps/tizen/src/sync/`) and Android client
-(`apps/android/.../data/Sync*.kt`, `networking/Sync*.kt`) integrate this
-today; the Apple platforms (iOS/macOS/tvOS) are following the same contract
-next.
+The Tizen client (`apps/tizen/src/sync/`), Android client
+(`apps/android/.../data/Sync*.kt`, `networking/Sync*.kt`), and iOS client
+(`apps/ios/another-iptv-player/Models/SyncEngine.swift`,
+`Networking/SyncAPIClient.swift`) integrate this today; macOS and tvOS are
+following the same contract next.
 
 * **`sourceKey`** — clients scope items to a specific playlist/source by
   prefixing the `key` with a stable, non-secret identifier for that source:

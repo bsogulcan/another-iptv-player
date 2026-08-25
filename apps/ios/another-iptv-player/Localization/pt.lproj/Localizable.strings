@@ -140,6 +140,35 @@
 // MARK: - Settings (common)
 "settings.back_to_list" = "Voltar às listas";
 "settings.refresh_all" = "Baixar todo o conteúdo de novo";
+// MARK: - Settings (sync)
+"settings.sync.title" = "Sincronização";
+"settings.sync.intro" = "Conecte-se ao seu servidor de sincronização auto-hospedado para manter favoritos e progresso de reprodução sincronizados entre dispositivos.";
+"settings.sync.server_url" = "URL do servidor";
+"settings.sync.username" = "Usuário";
+"settings.sync.password" = "Senha";
+"settings.sync.device_name" = "Nome do dispositivo";
+"settings.sync.sign_in" = "Entrar";
+"settings.sync.create_account" = "Criar conta";
+"settings.sync.missing_fields" = "Informe a URL do servidor, usuário e senha.";
+"settings.sync.account" = "Conta";
+"settings.sync.status" = "Status";
+"settings.sync.status_syncing" = "Sincronizando…";
+"settings.sync.status_error" = "Erro: %@";
+"settings.sync.status_last_synced" = "Última sincronização: %@";
+"settings.sync.status_never" = "Nunca sincronizado";
+"settings.sync.pending_items" = "%d alteração(ões) aguardando sincronização";
+"settings.sync.auto_sync" = "Sincronizar automaticamente";
+"settings.sync.auto_sync_subtitle" = "Envia as alterações logo depois e baixa conforme a frequência abaixo.";
+"settings.sync.interval_title" = "Frequência de sincronização";
+"settings.sync.interval_manual" = "Somente manual";
+"settings.sync.interval_minutes_format" = "A cada %d min";
+"settings.sync.this_device" = "este dispositivo";
+"settings.sync.remove" = "Remover";
+"settings.sync.sync_now" = "Sincronizar agora";
+"settings.sync.sign_out" = "Sair";
+"sync.error.invalid_url" = "URL do servidor de sincronização inválida.";
+"sync.error.server_status" = "O servidor de sincronização retornou HTTP %d.";
+
 "settings.player.title" = "Ajustes do player";
 "settings.player.pip.title" = "Picture in Picture";
 "settings.player.pip.desc" = "Permite o modo PiP";

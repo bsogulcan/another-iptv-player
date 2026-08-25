@@ -1914,6 +1914,7 @@ private struct PlayerViewImpl: View {
                 try await AppDatabase.shared.write { db in
                     try history.save(db)
                 }
+                SyncEngine.shared.enqueueProgressChange(history)
             } catch {
                 log.error("Failed to save watch history: \(error)")
             }
