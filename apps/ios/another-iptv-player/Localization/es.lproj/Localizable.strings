@@ -168,6 +168,16 @@
 "settings.sync.sign_out" = "Cerrar sesión";
 "sync.error.invalid_url" = "URL del servidor de sincronización no válida.";
 "sync.error.server_status" = "El servidor de sincronización devolvió HTTP %d.";
+"settings.sync.backend_title" = "Backend de sincronización";
+"settings.sync.backend_none" = "Desactivado";
+"settings.sync.backend_server" = "Servidor propio";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Sincroniza favoritos y progreso de reproducción mediante tu cuenta de iCloud, sin necesidad de servidor.";
+"settings.sync.icloud_enable" = "Activar sincronización con iCloud";
+"settings.sync.icloud_disable" = "Desactivar sincronización con iCloud";
+"sync.error.icloud_no_account" = "No hay ninguna cuenta de iCloud iniciada. Inicia sesión en Ajustes > [tu nombre] en este dispositivo.";
+"sync.error.icloud_restricted" = "El acceso a iCloud está restringido en este dispositivo.";
+"sync.error.icloud_unavailable" = "iCloud no está disponible ahora mismo. Comprueba tu conexión y tu cuenta de iCloud.";
 
 "settings.player.title" = "Ajustes del reproductor";
 "settings.player.pip.title" = "Imagen en imagen";

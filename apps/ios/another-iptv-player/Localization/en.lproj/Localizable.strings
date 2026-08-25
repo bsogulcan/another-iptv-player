@@ -169,6 +169,16 @@
 "settings.sync.sign_out" = "Sign Out";
 "sync.error.invalid_url" = "Invalid sync server URL.";
 "sync.error.server_status" = "Sync server returned HTTP %d.";
+"settings.sync.backend_title" = "Sync Backend";
+"settings.sync.backend_none" = "Off";
+"settings.sync.backend_server" = "Self-Hosted Server";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Sync favorites and watch progress via your iCloud account — no server required.";
+"settings.sync.icloud_enable" = "Enable iCloud Sync";
+"settings.sync.icloud_disable" = "Turn Off iCloud Sync";
+"sync.error.icloud_no_account" = "No iCloud account signed in. Sign in under Settings > [your name] on this device.";
+"sync.error.icloud_restricted" = "iCloud access is restricted on this device.";
+"sync.error.icloud_unavailable" = "iCloud isn't available right now. Check your network connection and iCloud account.";
 
 "settings.player.title" = "Player Settings";
 "settings.player.pip.title" = "Picture in Picture";

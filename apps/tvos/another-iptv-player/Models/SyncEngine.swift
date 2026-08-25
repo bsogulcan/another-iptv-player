@@ -1,11 +1,18 @@
 import Foundation
 import Combine
 import GRDB
+import CloudKit
 
 enum SyncStatus: Equatable {
     case idle
     case syncing
     case error(String)
+}
+
+enum SyncBackend: String {
+    case none
+    case server
+    case icloud
 }
 
 /// Drives the self-hosted sync feature: queues local watch-progress changes
@@ -25,6 +32,7 @@ final class SyncEngine: ObservableObject {
     @Published private(set) var status: SyncStatus = .idle
 
     private let api = SyncAPIClient()
+    private let cloud = CloudKitSyncTransport()
     private var syncTask: Task<Void, Never>?
     private var pushDebounceTask: Task<Void, Never>?
     private var periodicTask: Task<Void, Never>?
@@ -45,6 +53,34 @@ final class SyncEngine: ObservableObject {
         static let cursor = "sync.cursor"
         static let lastSyncedAt = "sync.lastSyncedAt"
         static let lastSyncError = "sync.lastSyncError"
+        static let syncBackend = "sync.backend"
+        static let cloudSyncEnabled = "sync.cloudSyncEnabled"
+        static let cloudChangeToken = "sync.cloudChangeToken"
+    }
+
+    /// Which backend is actively syncing right now. The two backends never
+    /// run at once — each keeps its own config/cursor untouched while
+    /// inactive, so switching back and forth doesn't require re-authenticating.
+    var syncBackend: SyncBackend {
+        get {
+            if let raw = defaults.string(forKey: Keys.syncBackend), let backend = SyncBackend(rawValue: raw) {
+                return backend
+            }
+            // Sync was configured before the backend picker existed — keep those users on the server backend.
+            if serverURL != nil, deviceToken != nil { return .server }
+            return .none
+        }
+        set { defaults.set(newValue.rawValue, forKey: Keys.syncBackend) }
+    }
+
+    var cloudSyncEnabled: Bool {
+        get { (defaults.object(forKey: Keys.cloudSyncEnabled) as? Bool) ?? false }
+        set { defaults.set(newValue, forKey: Keys.cloudSyncEnabled) }
+    }
+
+    var cloudChangeToken: Data? {
+        get { defaults.data(forKey: Keys.cloudChangeToken) }
+        set { defaults.set(newValue, forKey: Keys.cloudChangeToken) }
     }
 
     var serverURL: String? {
@@ -97,12 +133,23 @@ final class SyncEngine: ObservableObject {
         set { defaults.set(newValue, forKey: Keys.lastSyncError) }
     }
 
-    var isConfigured: Bool { serverURL != nil && deviceToken != nil }
+    var isConfigured: Bool {
+        switch syncBackend {
+        case .none: return false
+        case .server: return serverURL != nil && deviceToken != nil
+        case .icloud: return cloudSyncEnabled
+        }
+    }
 
     /// A newly added playlist might match one another device already pushed
     /// favorites/progress for before this device ever synced; those pushes
-    /// are behind the current cursor, so replay from the start to pick them up.
-    func resetCursor() { cursor = 0 }
+    /// are behind the current cursor, so replay from the start to pick them
+    /// up. Resets both backends' cursors — harmless for whichever one isn't
+    /// active, and keeps it ready for a full replay if the user switches to it later.
+    func resetCursor() {
+        cursor = 0
+        cloudChangeToken = nil
+    }
 
     func clearAccount() {
         deviceToken = nil
@@ -193,6 +240,7 @@ final class SyncEngine: ObservableObject {
         self.deviceId = response.deviceId
         self.accountUsername = username
         self.cursor = 0
+        self.syncBackend = .server
         startPeriodicSync()
         runSync()
     }
@@ -203,6 +251,35 @@ final class SyncEngine: ObservableObject {
             _ = try? await api.revokeDevice(serverURL: serverURL, token: deviceToken, deviceId: deviceId)
         }
         clearAccount()
+        if syncBackend == .server { syncBackend = .none }
+        stopPeriodicSync()
+    }
+
+    // MARK: - iCloud
+
+    func iCloudAccountStatus() async -> CKAccountStatus {
+        await cloud.accountStatus()
+    }
+
+    /// Switches the active backend to iCloud, provided this device actually
+    /// has a usable iCloud account signed in.
+    func enableCloudSync() async throws {
+        let status = await cloud.accountStatus()
+        guard status == .available else {
+            throw SyncCloudError.accountUnavailable(status)
+        }
+        cloudSyncEnabled = true
+        syncBackend = .icloud
+        startPeriodicSync()
+        runSync()
+    }
+
+    func disableCloudSync() {
+        cloudSyncEnabled = false
+        cloudChangeToken = nil
+        lastSyncedAt = nil
+        lastSyncError = nil
+        if syncBackend == .icloud { syncBackend = .none }
         stopPeriodicSync()
     }
 
@@ -312,6 +389,14 @@ final class SyncEngine: ObservableObject {
     // MARK: - Push
 
     private func flushOutbox() async throws {
+        switch syncBackend {
+        case .none: return
+        case .server: try await flushOutboxServer()
+        case .icloud: try await flushOutboxCloud()
+        }
+    }
+
+    private func flushOutboxServer() async throws {
         guard let serverURL, let deviceToken else { return }
         while true {
             let batch = try await AppDatabase.shared.read { db in
@@ -335,9 +420,37 @@ final class SyncEngine: ObservableObject {
         }
     }
 
+    private func flushOutboxCloud() async throws {
+        while true {
+            let batch = try await AppDatabase.shared.read { db in
+                try DBSyncOutboxItem.order(Column("createdAt")).limit(200).fetchAll(db)
+            }
+            if batch.isEmpty { return }
+
+            let wireItems: [SyncWireItem] = batch.map { row in
+                let payload = (try? JSONDecoder().decode(SyncPayload.self, from: Data(row.payload.utf8))) ?? .empty
+                return SyncWireItem(kind: row.kind, key: row.key, payload: payload, updatedAt: row.updatedAt, deleted: row.deleted)
+            }
+            try await cloud.push(items: wireItems)
+
+            let ids = batch.map { $0.id }
+            try await AppDatabase.shared.write { db in
+                try DBSyncOutboxItem.deleteAll(db, keys: ids)
+            }
+        }
+    }
+
     // MARK: - Pull
 
     private func pullAndApply() async throws {
+        switch syncBackend {
+        case .none: return
+        case .server: try await pullAndApplyServer()
+        case .icloud: try await pullAndApplyCloud()
+        }
+    }
+
+    private func pullAndApplyServer() async throws {
         guard let serverURL, let deviceToken else { return }
         while true {
             let result = try await api.pull(since: cursor, serverURL: serverURL, token: deviceToken)
@@ -352,6 +465,24 @@ final class SyncEngine: ObservableObject {
                 }
             }
             cursor = result.cursor
+            if !result.hasMore { return }
+        }
+    }
+
+    private func pullAndApplyCloud() async throws {
+        while true {
+            let result = try await cloud.pull(sinceToken: cloudChangeToken)
+            if !result.items.isEmpty {
+                let playlists = try await AppDatabase.shared.read { db in try Playlist.fetchAll(db) }
+                var bySourceKey: [String: Playlist] = [:]
+                for playlist in playlists {
+                    bySourceKey[playlistSourceKey(playlist)] = playlist
+                }
+                for item in result.items {
+                    try await applyPulledItem(item, playlistsBySourceKey: bySourceKey)
+                }
+            }
+            cloudChangeToken = result.changeTokenData
             if !result.hasMore { return }
         }
     }

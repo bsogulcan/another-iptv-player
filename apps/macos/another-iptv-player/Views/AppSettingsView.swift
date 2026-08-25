@@ -96,6 +96,7 @@ private struct PlaybackSettingsTab: View {
 private struct SyncSettingsTab: View {
     @ObservedObject private var syncEngine = SyncEngine.shared
 
+    @State private var selectedBackend: SyncBackend
     @State private var connected: Bool
     @State private var serverURL: String
     @State private var username = ""
@@ -110,7 +111,8 @@ private struct SyncSettingsTab: View {
     @State private var devices: [SyncDeviceInfo] = []
 
     init() {
-        _connected = State(initialValue: SyncEngine.shared.isConfigured)
+        _selectedBackend = State(initialValue: SyncEngine.shared.syncBackend)
+        _connected = State(initialValue: SyncEngine.shared.serverURL != nil && SyncEngine.shared.deviceToken != nil)
         _serverURL = State(initialValue: SyncEngine.shared.serverURL ?? "")
         _autoSync = State(initialValue: SyncEngine.shared.autoSyncEnabled)
         _interval = State(initialValue: SyncEngine.shared.intervalMinutes)
@@ -118,6 +120,49 @@ private struct SyncSettingsTab: View {
 
     var body: some View {
         Form {
+            Section("Sync Backend") {
+                Picker("Sync via", selection: $selectedBackend) {
+                    Text("Off").tag(SyncBackend.none)
+                    Text("Self-Hosted Server").tag(SyncBackend.server)
+                    Text("iCloud").tag(SyncBackend.icloud)
+                }
+                .onChange(of: selectedBackend) { _, newValue in
+                    formError = nil
+                    switch newValue {
+                    case .none:
+                        syncEngine.syncBackend = .none
+                        syncEngine.stopPeriodicSync()
+                    case .server:
+                        if connected {
+                            syncEngine.syncBackend = .server
+                            syncEngine.startPeriodicSync()
+                            syncEngine.runSync()
+                        }
+                    case .icloud:
+                        if syncEngine.cloudSyncEnabled {
+                            syncEngine.syncBackend = .icloud
+                            syncEngine.startPeriodicSync()
+                            syncEngine.runSync()
+                        }
+                    }
+                }
+            }
+
+            backendSections
+        }
+        .formStyle(.grouped)
+        .task { await refreshPending() }
+        .onChange(of: syncEngine.status) { _, _ in
+            Task { await refreshPending() }
+        }
+    }
+
+    @ViewBuilder
+    private var backendSections: some View {
+        switch selectedBackend {
+        case .none:
+            EmptyView()
+        case .server:
             if !connected {
                 Section("Sync Across Devices") {
                     Text("Connect to your self-hosted sync server to keep favorites and watch progress in sync across devices.")
@@ -202,15 +247,76 @@ private struct SyncSettingsTab: View {
                             await syncEngine.signOut()
                             connected = false
                             devices = []
+                            selectedBackend = .none
                         }
                     }
                 }
             }
+        case .icloud:
+            if !syncEngine.cloudSyncEnabled {
+                Section("Sync Across Devices") {
+                    Text("Sync favorites and watch progress via your iCloud account — no server required.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Button("Enable iCloud Sync") {
+                        Task { await enableCloud() }
+                    }
+                    .disabled(busy)
+                    if busy { ProgressView() }
+                    if let formError {
+                        Text(formError).font(.caption).foregroundStyle(.red)
+                    }
+                }
+            } else {
+                Section("Sync Across Devices") {
+                    LabeledContent("Status") {
+                        Text(statusText).foregroundStyle(.secondary)
+                    }
+                    if pending > 0 {
+                        Text("\(pending) change(s) waiting to sync")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Toggle("Sync Automatically", isOn: $autoSync)
+                        .onChange(of: autoSync) { _, newValue in
+                            syncEngine.autoSyncEnabled = newValue
+                            syncEngine.startPeriodicSync()
+                        }
+                    Picker("Sync Frequency", selection: $interval) {
+                        Text("Manual Only").tag(0)
+                        Text("Every 15 min").tag(15)
+                        Text("Every 30 min").tag(30)
+                        Text("Every 60 min").tag(60)
+                    }
+                    .onChange(of: interval) { _, newValue in
+                        syncEngine.intervalMinutes = newValue
+                        syncEngine.startPeriodicSync()
+                    }
+                }
+
+                Section {
+                    HStack {
+                        Button("Sync Now") { syncEngine.runSync() }
+                            .disabled(syncEngine.status == .syncing)
+                        if syncEngine.status == .syncing { ProgressView() }
+                    }
+                    Button("Turn Off iCloud Sync", role: .destructive) {
+                        syncEngine.disableCloudSync()
+                        selectedBackend = .none
+                    }
+                }
+            }
         }
-        .formStyle(.grouped)
-        .task { await refreshPending() }
-        .onChange(of: syncEngine.status) { _, _ in
-            Task { await refreshPending() }
+    }
+
+    private func enableCloud() async {
+        formError = nil
+        busy = true
+        defer { busy = false }
+        do {
+            try await syncEngine.enableCloudSync()
+        } catch {
+            formError = error.localizedDescription
         }
     }
 
@@ -251,6 +357,7 @@ private struct SyncSettingsTab: View {
             )
             password = ""
             connected = true
+            selectedBackend = .server
             await loadDevices()
         } catch {
             formError = error.localizedDescription
@@ -258,7 +365,7 @@ private struct SyncSettingsTab: View {
     }
 
     private func refreshPending() async {
-        guard connected else { return }
+        guard syncEngine.isConfigured else { return }
         pending = await syncEngine.outboxCount()
     }
 

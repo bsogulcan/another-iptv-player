@@ -168,6 +168,16 @@
 "settings.sync.sign_out" = "تسجيل الخروج";
 "sync.error.invalid_url" = "رابط خادم المزامنة غير صالح.";
 "sync.error.server_status" = "أعاد خادم المزامنة الرمز HTTP %d.";
+"settings.sync.backend_title" = "خلفية المزامنة";
+"settings.sync.backend_none" = "إيقاف";
+"settings.sync.backend_server" = "خادم ذاتي الاستضافة";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "زامن المفضلة وتقدم المشاهدة عبر حساب iCloud الخاص بك — دون الحاجة إلى خادم.";
+"settings.sync.icloud_enable" = "تفعيل مزامنة iCloud";
+"settings.sync.icloud_disable" = "إيقاف مزامنة iCloud";
+"sync.error.icloud_no_account" = "لا يوجد حساب iCloud مسجّل الدخول. سجّل الدخول من الإعدادات > [اسمك] على هذا الجهاز.";
+"sync.error.icloud_restricted" = "الوصول إلى iCloud مقيّد على هذا الجهاز.";
+"sync.error.icloud_unavailable" = "iCloud غير متاح الآن. تحقق من اتصال الشبكة وحساب iCloud.";
 
 "settings.player.title" = "إعدادات المشغل";
 "settings.player.pip.title" = "صورة داخل صورة";

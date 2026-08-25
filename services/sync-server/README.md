@@ -128,6 +128,28 @@ favorites/hidden-category UI yet, so it only pushes/pulls `progress`; its
 `SyncEngine` still applies `favorite` items it pulls (the DB tables exist)
 so it stays forward-compatible once that UI lands.
 
+### Alternate backend: iCloud (Apple platforms only)
+
+iOS, macOS, and tvOS also let a user pick **iCloud** instead of this
+server in Settings (`SyncBackend.icloud` in `Models/SyncEngine.swift`) —
+useful if they don't want to run/expose a server at all. It stores the
+exact same generic items (`kind`/`key`/`payload`/`updatedAt`/`deleted`) as
+CKRecords in the user's private CloudKit database
+(`Networking/CloudKitSyncTransport.swift`), so `applyPulledItem()` and
+every kind's payload shape are shared verbatim with the server backend —
+only the transport differs. The two backends are mutually exclusive per
+device (`SyncEngine.syncBackend`); switching between them doesn't require
+re-entering credentials, since each keeps its own stored config/cursor
+while inactive.
+
+This needs an "iCloud" capability with the CloudKit service added in
+Xcode for each of the iOS/macOS/tvOS targets, all pointed at the **same**
+container identifier (`iCloud.dev.another-iptv-player.sync` in the code —
+rename it if you like, but it must match across all three targets, since
+each platform's *default* container otherwise differs per bundle ID and
+their devices would never see each other's data). See the CloudKitSyncTransport.swift
+header comment on each platform for details.
+
 * **`sourceKey`** — clients scope items to a specific playlist/source by
   prefixing the `key` with a stable, non-secret identifier for that source:
   a SHA-256 hex digest of `"<type>:<serverUrl>:<username>"` (Xtream) or

@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "Se déconnecter";
 "sync.error.invalid_url" = "URL du serveur de synchronisation invalide.";
 "sync.error.server_status" = "Le serveur de synchronisation a renvoyé HTTP %d.";
+"settings.sync.backend_title" = "Backend de synchronisation";
+"settings.sync.backend_none" = "Désactivé";
+"settings.sync.backend_server" = "Serveur auto-hébergé";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Synchronise les favoris et la progression de lecture via ton compte iCloud, sans serveur.";
+"settings.sync.icloud_enable" = "Activer la synchronisation iCloud";
+"settings.sync.icloud_disable" = "Désactiver la synchronisation iCloud";
+"sync.error.icloud_no_account" = "Aucun compte iCloud connecté. Connecte-toi dans Réglages > [ton nom] sur cet appareil.";
+"sync.error.icloud_restricted" = "L'accès à iCloud est restreint sur cet appareil.";
+"sync.error.icloud_unavailable" = "iCloud n'est pas disponible pour le moment. Vérifie ta connexion et ton compte iCloud.";
 
 "net.error.invalid_url" = "URL invalide : %@";
 "net.error.network" = "Erreur réseau : %@";

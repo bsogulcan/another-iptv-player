@@ -13,5 +13,18 @@
 	     kapatmak custom .framework'lerin yüklenmesine izin verir. -->
 	<key>com.apple.security.cs.disable-library-validation</key>
 	<true/>
+	<!-- iCloud sync backend (Models/CloudKitSyncTransport.swift) — an alternate
+	     to the self-hosted server, mutually exclusive with it. The SAME
+	     container identifier must be used on the iOS and tvOS targets too,
+	     or each platform's devices end up in unrelated containers and never
+	     see each other's data. -->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.dev.another-iptv-player.sync</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
 </dict>
 </plist>

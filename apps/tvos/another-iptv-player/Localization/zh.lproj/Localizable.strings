@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "退出登录";
 "sync.error.invalid_url" = "同步服务器 URL 无效。";
 "sync.error.server_status" = "同步服务器返回 HTTP %d。";
+"settings.sync.backend_title" = "同步方式";
+"settings.sync.backend_none" = "关闭";
+"settings.sync.backend_server" = "自托管服务器";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "通过您的 iCloud 账户同步收藏和观看进度，无需服务器。";
+"settings.sync.icloud_enable" = "启用 iCloud 同步";
+"settings.sync.icloud_disable" = "关闭 iCloud 同步";
+"sync.error.icloud_no_account" = "未登录 iCloud 账户。请在此设备的“设置”>“[您的姓名]”中登录。";
+"sync.error.icloud_restricted" = "此设备上的 iCloud 访问受限。";
+"sync.error.icloud_unavailable" = "iCloud 当前不可用。请检查网络连接和 iCloud 账户。";
 
 "net.error.invalid_url" = "无效的 URL:%@";
 "net.error.network" = "网络错误:%@";

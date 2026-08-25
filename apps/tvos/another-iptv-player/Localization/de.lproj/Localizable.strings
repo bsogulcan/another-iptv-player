@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "Abmelden";
 "sync.error.invalid_url" = "Ungültige Sync-Server-URL.";
 "sync.error.server_status" = "Sync-Server antwortete mit HTTP %d.";
+"settings.sync.backend_title" = "Sync-Backend";
+"settings.sync.backend_none" = "Aus";
+"settings.sync.backend_server" = "Eigener Server";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Synchronisiert Favoriten und Wiedergabefortschritt über deinen iCloud-Account – kein eigener Server nötig.";
+"settings.sync.icloud_enable" = "iCloud-Sync aktivieren";
+"settings.sync.icloud_disable" = "iCloud-Sync deaktivieren";
+"sync.error.icloud_no_account" = "Kein iCloud-Account angemeldet. Melde dich unter Einstellungen > [dein Name] auf diesem Gerät an.";
+"sync.error.icloud_restricted" = "Der iCloud-Zugriff ist auf diesem Gerät eingeschränkt.";
+"sync.error.icloud_unavailable" = "iCloud ist momentan nicht verfügbar. Prüfe deine Internetverbindung und deinen iCloud-Account.";
 
 "net.error.invalid_url" = "Ungültige URL: %@";
 "net.error.network" = "Netzwerkfehler: %@";

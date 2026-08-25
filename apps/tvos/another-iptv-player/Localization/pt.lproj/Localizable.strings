@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "Sair";
 "sync.error.invalid_url" = "URL do servidor de sincronização inválida.";
 "sync.error.server_status" = "O servidor de sincronização retornou HTTP %d.";
+"settings.sync.backend_title" = "Backend de sincronização";
+"settings.sync.backend_none" = "Desativado";
+"settings.sync.backend_server" = "Servidor próprio";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Sincronize favoritos e progresso de reprodução pela sua conta do iCloud, sem precisar de servidor.";
+"settings.sync.icloud_enable" = "Ativar sincronização do iCloud";
+"settings.sync.icloud_disable" = "Desativar sincronização do iCloud";
+"sync.error.icloud_no_account" = "Nenhuma conta do iCloud conectada. Entre em Ajustes > [seu nome] neste dispositivo.";
+"sync.error.icloud_restricted" = "O acesso ao iCloud está restrito neste dispositivo.";
+"sync.error.icloud_unavailable" = "O iCloud não está disponível agora. Verifique sua conexão e sua conta do iCloud.";
 
 "net.error.invalid_url" = "URL inválida: %@";
 "net.error.network" = "Erro de rede: %@";

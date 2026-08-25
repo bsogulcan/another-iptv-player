@@ -242,6 +242,16 @@
 "settings.sync.sign_out" = "Çıkış Yap";
 "sync.error.invalid_url" = "Geçersiz senkronizasyon sunucusu URL'si.";
 "sync.error.server_status" = "Senkronizasyon sunucusu HTTP %d döndürdü.";
+"settings.sync.backend_title" = "Senkronizasyon Arka Ucu";
+"settings.sync.backend_none" = "Kapalı";
+"settings.sync.backend_server" = "Kendi Barındırdığınız Sunucu";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Favorileri ve izleme ilerlemesini iCloud hesabınız üzerinden senkronize eder — sunucuya gerek yok.";
+"settings.sync.icloud_enable" = "iCloud Senkronizasyonunu Etkinleştir";
+"settings.sync.icloud_disable" = "iCloud Senkronizasyonunu Kapat";
+"sync.error.icloud_no_account" = "Oturum açılmış bir iCloud hesabı yok. Bu cihazda Ayarlar > [adınız] bölümünden oturum açın.";
+"sync.error.icloud_restricted" = "Bu cihazda iCloud erişimi kısıtlanmış.";
+"sync.error.icloud_unavailable" = "iCloud şu anda kullanılamıyor. Ağ bağlantınızı ve iCloud hesabınızı kontrol edin.";
 
 // MARK: - Network errors
 "net.error.invalid_url" = "Geçersiz URL: %@";

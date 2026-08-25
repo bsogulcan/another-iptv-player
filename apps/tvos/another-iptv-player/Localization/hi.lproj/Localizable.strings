@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "साइन आउट करें";
 "sync.error.invalid_url" = "अमान्य सिंक सर्वर URL।";
 "sync.error.server_status" = "सिंक सर्वर ने HTTP %d लौटाया।";
+"settings.sync.backend_title" = "सिंक बैकएंड";
+"settings.sync.backend_none" = "बंद";
+"settings.sync.backend_server" = "सेल्फ़-होस्टेड सर्वर";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "अपने iCloud खाते के ज़रिए पसंदीदा और देखने की प्रगति सिंक करें — किसी सर्वर की ज़रूरत नहीं।";
+"settings.sync.icloud_enable" = "iCloud सिंक चालू करें";
+"settings.sync.icloud_disable" = "iCloud सिंक बंद करें";
+"sync.error.icloud_no_account" = "कोई iCloud खाता साइन इन नहीं है। इस डिवाइस पर सेटिंग्स > [आपका नाम] में साइन इन करें।";
+"sync.error.icloud_restricted" = "इस डिवाइस पर iCloud एक्सेस प्रतिबंधित है।";
+"sync.error.icloud_unavailable" = "iCloud अभी उपलब्ध नहीं है। अपना नेटवर्क कनेक्शन और iCloud खाता जांचें।";
 
 "net.error.invalid_url" = "अमान्य URL: %@";
 "net.error.network" = "नेटवर्क त्रुटि: %@";

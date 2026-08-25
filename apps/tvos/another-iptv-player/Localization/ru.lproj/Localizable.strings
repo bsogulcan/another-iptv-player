@@ -240,6 +240,16 @@
 "settings.sync.sign_out" = "Выйти";
 "sync.error.invalid_url" = "Неверный URL сервера синхронизации.";
 "sync.error.server_status" = "Сервер синхронизации вернул HTTP %d.";
+"settings.sync.backend_title" = "Способ синхронизации";
+"settings.sync.backend_none" = "Выключено";
+"settings.sync.backend_server" = "Свой сервер";
+"settings.sync.backend_icloud" = "iCloud";
+"settings.sync.icloud_intro" = "Синхронизирует избранное и прогресс просмотра через ваш аккаунт iCloud — сервер не нужен.";
+"settings.sync.icloud_enable" = "Включить синхронизацию iCloud";
+"settings.sync.icloud_disable" = "Выключить синхронизацию iCloud";
+"sync.error.icloud_no_account" = "Аккаунт iCloud не выполнил вход. Войдите в Настройки > [ваше имя] на этом устройстве.";
+"sync.error.icloud_restricted" = "Доступ к iCloud на этом устройстве ограничен.";
+"sync.error.icloud_unavailable" = "iCloud сейчас недоступен. Проверьте подключение к сети и аккаунт iCloud.";
 
 "net.error.invalid_url" = "Неверный URL: %@";
 "net.error.network" = "Сетевая ошибка: %@";
