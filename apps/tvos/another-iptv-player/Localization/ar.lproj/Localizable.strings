@@ -212,6 +212,35 @@
 "parser.error.empty" = "محتوى M3U فارغ.";
 "parser.error.no_channels" = "لا توجد قنوات. هل الملف صالح؟";
 
+// MARK: - Sync
+"settings.sync.title" = "المزامنة بين الأجهزة";
+"settings.sync.intro" = "اتصل بخادم المزامنة الخاص بك لإبقاء المفضلة وتقدم المشاهدة متزامنَين بين الأجهزة.";
+"settings.sync.server_url" = "رابط السيرفر";
+"settings.sync.username" = "اسم المستخدم";
+"settings.sync.password" = "كلمة المرور";
+"settings.sync.device_name" = "اسم الجهاز";
+"settings.sync.sign_in" = "تسجيل الدخول";
+"settings.sync.create_account" = "إنشاء حساب";
+"settings.sync.missing_fields" = "أدخل رابط السيرفر واسم المستخدم وكلمة المرور.";
+"settings.sync.account" = "الحساب";
+"settings.sync.status" = "الحالة";
+"settings.sync.status_syncing" = "جارٍ المزامنة…";
+"settings.sync.status_error" = "خطأ: %@";
+"settings.sync.status_last_synced" = "آخر مزامنة: %@";
+"settings.sync.status_never" = "لم تتم المزامنة بعد";
+"settings.sync.pending_items" = "%d تغيير(ات) بانتظار المزامنة";
+"settings.sync.auto_sync" = "المزامنة تلقائيًا";
+"settings.sync.auto_sync_subtitle" = "يتم إرسال التغييرات بعد وقت قصير من حدوثها، والسحب حسب الجدول أدناه.";
+"settings.sync.interval_title" = "تكرار المزامنة";
+"settings.sync.interval_manual" = "يدوي فقط";
+"settings.sync.interval_minutes_format" = "كل %d دقيقة";
+"settings.sync.this_device" = "هذا الجهاز";
+"settings.sync.remove" = "إزالة";
+"settings.sync.sync_now" = "مزامنة الآن";
+"settings.sync.sign_out" = "تسجيل الخروج";
+"sync.error.invalid_url" = "رابط خادم المزامنة غير صالح.";
+"sync.error.server_status" = "أعاد خادم المزامنة الرمز HTTP %d.";
+
 "net.error.invalid_url" = "رابط غير صالح: %@";
 "net.error.network" = "خطأ في الشبكة: %@";
 "net.error.server" = "خطأ من السيرفر (HTTP %d)";

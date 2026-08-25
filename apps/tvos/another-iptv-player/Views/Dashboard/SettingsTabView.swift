@@ -36,6 +36,8 @@ struct SettingsTabView: View {
                 }
             }
 
+            SyncSettingsSection()
+
             Section {
                 Toggle(isOn: $filterAdultContent) {
                     VStack(alignment: .leading, spacing: 4) {

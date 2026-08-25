@@ -212,6 +212,35 @@
 "parser.error.empty" = "Контент M3U пуст.";
 "parser.error.no_channels" = "Каналы не найдены. Это валидный M3U/M3U8?";
 
+// MARK: - Sync
+"settings.sync.title" = "Синхронизация";
+"settings.sync.intro" = "Подключитесь к своему серверу синхронизации, чтобы избранное и прогресс просмотра синхронизировались между устройствами.";
+"settings.sync.server_url" = "URL сервера";
+"settings.sync.username" = "Пользователь";
+"settings.sync.password" = "Пароль";
+"settings.sync.device_name" = "Имя устройства";
+"settings.sync.sign_in" = "Войти";
+"settings.sync.create_account" = "Создать аккаунт";
+"settings.sync.missing_fields" = "Введите URL сервера, имя пользователя и пароль.";
+"settings.sync.account" = "Аккаунт";
+"settings.sync.status" = "Статус";
+"settings.sync.status_syncing" = "Синхронизация…";
+"settings.sync.status_error" = "Ошибка: %@";
+"settings.sync.status_last_synced" = "Последняя синхронизация: %@";
+"settings.sync.status_never" = "Ещё не синхронизировано";
+"settings.sync.pending_items" = "%d изменени(й) ожидают синхронизации";
+"settings.sync.auto_sync" = "Синхронизировать автоматически";
+"settings.sync.auto_sync_subtitle" = "Изменения отправляются вскоре после внесения и загружаются по расписанию ниже.";
+"settings.sync.interval_title" = "Частота синхронизации";
+"settings.sync.interval_manual" = "Только вручную";
+"settings.sync.interval_minutes_format" = "Каждые %d мин";
+"settings.sync.this_device" = "это устройство";
+"settings.sync.remove" = "Удалить";
+"settings.sync.sync_now" = "Синхронизировать сейчас";
+"settings.sync.sign_out" = "Выйти";
+"sync.error.invalid_url" = "Неверный URL сервера синхронизации.";
+"sync.error.server_status" = "Сервер синхронизации вернул HTTP %d.";
+
 "net.error.invalid_url" = "Неверный URL: %@";
 "net.error.network" = "Сетевая ошибка: %@";
 "net.error.server" = "Ошибка сервера (HTTP %d)";

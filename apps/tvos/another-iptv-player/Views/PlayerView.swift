@@ -260,6 +260,7 @@ struct PlayerView: View {
         Task {
             do {
                 try await AppDatabase.shared.write { db in try history.save(db) }
+                SyncEngine.shared.enqueueProgressChange(history)
             } catch {
                 print("[WatchHistory] save failed: \(error)")
             }

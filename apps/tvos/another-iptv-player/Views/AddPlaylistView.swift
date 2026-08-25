@@ -182,6 +182,12 @@ struct AddPlaylistView: View {
                 }
             }
 
+            // A newly added playlist might match one another device already
+            // pushed progress for before this device ever synced; replay
+            // from the start to pick those up.
+            if editingPlaylist == nil {
+                SyncEngine.shared.resetCursor()
+            }
             onFinished()
         } catch {
             present(error: L("add_playlist.download_save_error", error.localizedDescription))

@@ -212,6 +212,35 @@
 "parser.error.empty" = "M3U-Inhalt ist leer.";
 "parser.error.no_channels" = "Kein Kanal gefunden. Ist das eine gültige M3U/M3U8-Datei?";
 
+// MARK: - Sync
+"settings.sync.title" = "Synchronisierung";
+"settings.sync.intro" = "Verbinde dich mit deinem selbst gehosteten Sync-Server, um Favoriten und Wiedergabefortschritt geräteübergreifend zu synchronisieren.";
+"settings.sync.server_url" = "Server-URL";
+"settings.sync.username" = "Benutzername";
+"settings.sync.password" = "Passwort";
+"settings.sync.device_name" = "Gerätename";
+"settings.sync.sign_in" = "Anmelden";
+"settings.sync.create_account" = "Konto erstellen";
+"settings.sync.missing_fields" = "Bitte Server-URL, Benutzername und Passwort eingeben.";
+"settings.sync.account" = "Konto";
+"settings.sync.status" = "Status";
+"settings.sync.status_syncing" = "Wird synchronisiert…";
+"settings.sync.status_error" = "Fehler: %@";
+"settings.sync.status_last_synced" = "Zuletzt synchronisiert: %@";
+"settings.sync.status_never" = "Noch nie synchronisiert";
+"settings.sync.pending_items" = "%d Änderung(en) warten auf Synchronisierung";
+"settings.sync.auto_sync" = "Automatisch synchronisieren";
+"settings.sync.auto_sync_subtitle" = "Änderungen werden kurz danach gesendet und nach dem unten stehenden Zeitplan abgerufen.";
+"settings.sync.interval_title" = "Synchronisierungsintervall";
+"settings.sync.interval_manual" = "Nur manuell";
+"settings.sync.interval_minutes_format" = "Alle %d Min.";
+"settings.sync.this_device" = "dieses Gerät";
+"settings.sync.remove" = "Entfernen";
+"settings.sync.sync_now" = "Jetzt synchronisieren";
+"settings.sync.sign_out" = "Abmelden";
+"sync.error.invalid_url" = "Ungültige Sync-Server-URL.";
+"sync.error.server_status" = "Sync-Server antwortete mit HTTP %d.";
+
 "net.error.invalid_url" = "Ungültige URL: %@";
 "net.error.network" = "Netzwerkfehler: %@";
 "net.error.server" = "Serverfehler (HTTP %d)";

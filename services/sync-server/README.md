@@ -121,10 +121,12 @@ Client integration contract
 ----------------------------
 
 The Tizen client (`apps/tizen/src/sync/`), Android client
-(`apps/android/.../data/Sync*.kt`, `networking/Sync*.kt`), iOS client, and
-macOS client (`apps/ios/` and `apps/macos/another-iptv-player/Models/SyncEngine.swift`,
-`Networking/SyncAPIClient.swift`) integrate this today; tvOS is following
-the same contract next.
+(`apps/android/.../data/Sync*.kt`, `networking/Sync*.kt`), iOS, macOS, and
+tvOS clients (`apps/ios/`, `apps/macos/`, `apps/tvos/another-iptv-player/Models/SyncEngine.swift`,
+`Networking/SyncAPIClient.swift`) all integrate this today. tvOS has no
+favorites/hidden-category UI yet, so it only pushes/pulls `progress`; its
+`SyncEngine` still applies `favorite` items it pulls (the DB tables exist)
+so it stays forward-compatible once that UI lands.
 
 * **`sourceKey`** — clients scope items to a specific playlist/source by
   prefixing the `key` with a stable, non-secret identifier for that source:

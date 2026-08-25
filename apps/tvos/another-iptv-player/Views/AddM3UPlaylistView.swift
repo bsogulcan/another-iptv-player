@@ -156,6 +156,9 @@ struct AddM3UPlaylistView: View {
                 clearServerURL: false
             )
 
+            if editingPlaylist == nil {
+                SyncEngine.shared.resetCursor()
+            }
             onFinished()
         } catch {
             errorMessage = error.localizedDescription

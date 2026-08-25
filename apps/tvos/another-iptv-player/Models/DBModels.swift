@@ -137,6 +137,23 @@ struct DBM3UChannel: Identifiable, Codable, FetchableRecord, PersistableRecord, 
     static let databaseTableName = "m3uChannel"
 }
 
+// MARK: - Sync Outbox
+
+/// Queued change waiting to be pushed to the self-hosted sync server (see
+/// `Models/SyncEngine.swift`). `payload` is a JSON-encoded `SyncPayload`
+/// string; `key` is `"<sourceKey>:<contentType>:<contentId>"`.
+struct DBSyncOutboxItem: Codable, FetchableRecord, PersistableRecord, Identifiable {
+    var id: String = UUID().uuidString
+    var kind: String
+    var key: String
+    var payload: String
+    var updatedAt: Int64
+    var deleted: Bool
+    var createdAt: Date = Date()
+
+    static let databaseTableName = "syncOutbox"
+}
+
 struct DBFavorite: Codable, FetchableRecord, PersistableRecord, Equatable {
     var streamId: Int
     var playlistId: UUID
