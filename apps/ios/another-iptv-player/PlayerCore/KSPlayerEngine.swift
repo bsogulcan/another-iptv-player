@@ -69,6 +69,8 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   var isExternalPlaybackActive: Bool { layer?.player.isExternalPlaybackActive ?? false }
 
   private(set) var layer: KSPlayerLayer?
+  /// Options of the current load; they record which tracks FFmpeg cannot decode.
+  private var guardedOptions: GuardedKSOptions?
   private let subtitleModel = SubtitleModel()
   /// Reported subtitle track id → info. Ids are stable per load (insertion order).
   private var subtitleInfosById: [Int: any SubtitleInfo] = [:]
@@ -107,11 +109,13 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       KSOptions.firstPlayerType = KSAVPlayer.self
       KSOptions.secondPlayerType = KSMEPlayer.self
     }
+    AVAssetTrackDataRateGuard.install()
     let options = Self.makeOptions(
       liveLowLatency: liveLowLatency,
       startSeconds: startSeconds,
       userAgent: userAgent
     )
+    guardedOptions = options
     // Layer her yüklemede sıfırdan kurulur. `layer.set(url:)` yolu KULLANILMAZ:
     // KSPlayerLayer.url.didSet, herhangi bir kablosuz rota aktifken bizim motor
     // seçimimizi ezip KSAVPlayer'ı zorluyor (mkv/ts'te uzun başarısızlık + fallback
@@ -183,8 +187,8 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     liveLowLatency: Bool,
     startSeconds: TimeInterval?,
     userAgent: String?
-  ) -> KSOptions {
-    let options = KSOptions()
+  ) -> GuardedKSOptions {
+    let options = GuardedKSOptions()
     if let userAgent, !userAgent.isEmpty {
       options.userAgent = userAgent
       // `KSOptions.userAgent` only sets the FFmpeg header (`formatContextOptions`). The
@@ -325,8 +329,8 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     }
     attachEmbeddedSubtitleSourceIfNeeded()
 
-    let videoTracks = player.tracks(mediaType: .video)
-    let audioTracks = player.tracks(mediaType: .audio)
+    let videoTracks = selectableTracks(.video, of: player)
+    let audioTracks = selectableTracks(.audio, of: player)
 
     let video = videoTracks.map { Self.menuOption(for: $0) }
     let audio = audioTracks.map { Self.menuOption(for: $0) }
@@ -381,16 +385,29 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     )
   }
 
+  /// Tracks FFmpeg has no working decoder for are left out: enabling one makes
+  /// KSPlayer keep a dead decoder that crashes on the next seek. Only the FFmpeg
+  /// engine is filtered — AVPlayer track ids live in a different namespace.
+  private func selectableTracks(
+    _ mediaType: AVFoundation.AVMediaType, of player: MediaPlayerProtocol
+  ) -> [MediaPlayerTrack] {
+    let tracks = player.tracks(mediaType: mediaType)
+    guard player is KSMEPlayer, let undecodable = guardedOptions?.undecodableTrackIDs,
+          !undecodable.isEmpty
+    else { return tracks }
+    return tracks.filter { !undecodable.contains($0.trackID) }
+  }
+
   func selectVideoTrack(id: Int) {
     guard let player = layer?.player,
-          let track = player.tracks(mediaType: .video).first(where: { Int($0.trackID) == id })
+          let track = selectableTracks(.video, of: player).first(where: { Int($0.trackID) == id })
     else { return }
     player.select(track: track)
   }
 
   func selectAudioTrack(id: Int) {
     guard let player = layer?.player,
-          let track = player.tracks(mediaType: .audio).first(where: { Int($0.trackID) == id })
+          let track = selectableTracks(.audio, of: player).first(where: { Int($0.trackID) == id })
     else { return }
     player.select(track: track)
     applyAudioDelayToSelectedTrack()
