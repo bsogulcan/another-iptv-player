@@ -1,5 +1,5 @@
 {
-  "originHash" : "7c39c33198e20c2a414e8bd03e7a85ed5c3f387f92f06ceb5b4f06dd3dbc010d",
+  "originHash" : "1d373647c458a50dd9ca34ea2b3cb2140b75775601503185fd9eed73d82a0732",
   "pins" : [
     {
       "identity" : "ffmpegkit",
@@ -33,7 +33,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kingslay/KSPlayer.git",
       "state" : {
-        "revision" : "3d38b7c3148135b319439d4ff60bb426e6414225"
+        "revision" : "92c18fae716f63a080541c4bcc77247ade181426"
       }
     },
     {
