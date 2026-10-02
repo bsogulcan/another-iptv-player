@@ -2,7 +2,8 @@ import Foundation
 
 /// `get_short_epg` / `get_simple_data_table` response: `{ "epg_listings": [ … ] }`.
 /// Per-element decode is failure-tolerant so one malformed row can't drop the batch.
-struct XtreamEPGListingsResponse: Decodable {
+/// `nonisolated`: decoded in `XtreamAPIClient`'s detached pass, like the catalog models.
+nonisolated struct XtreamEPGListingsResponse: Decodable, Sendable {
     let epgListings: [XtreamEPGListing]
 
     enum CodingKeys: String, CodingKey {
@@ -16,7 +17,7 @@ struct XtreamEPGListingsResponse: Decodable {
     }
 }
 
-struct XtreamEPGListing: Decodable {
+nonisolated struct XtreamEPGListing: Decodable, Sendable {
     let id: String?
     let title: String?           // usually base64
     let description: String?     // usually base64

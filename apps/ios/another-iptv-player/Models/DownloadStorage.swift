@@ -4,6 +4,8 @@ import Foundation
 /// Application Support/Downloads altında tutulur — Caches gibi iOS tarafından silinmez,
 /// iCloud backup dışına alınır (medya dosyaları büyük).
 /// Pure FileManager namespace — used from URLSession delegate/background contexts.
+/// Deleting media and asking for the free space are slow enough to be felt; those
+/// three functions assert that they are not called on the main thread.
 nonisolated enum DownloadStorage {
     /// Downloads kök dizini. Uygulama güncellemelerinde korunur.
     static func rootDirectory() throws -> URL {
@@ -56,6 +58,7 @@ nonisolated enum DownloadStorage {
 
     /// Playlist silinince tüm dosyalarını diskten siler.
     static func removePlaylistDirectory(playlistId: UUID) {
+        assert(!Thread.isMainThread, "deleting downloads blocks the calling thread")
         guard let root = try? rootDirectory() else { return }
         let dir = root.appendingPathComponent(playlistId.uuidString, isDirectory: true)
         try? FileManager.default.removeItem(at: dir)
@@ -63,6 +66,7 @@ nonisolated enum DownloadStorage {
 
     /// Tek bir dosyayı siler.
     static func removeFile(relativePath: String) {
+        assert(!Thread.isMainThread, "deleting downloads blocks the calling thread")
         guard let url = try? absoluteURL(forRelativePath: relativePath) else { return }
         try? FileManager.default.removeItem(at: url)
     }
@@ -70,6 +74,7 @@ nonisolated enum DownloadStorage {
     /// Önemli kullanım için kullanılabilir disk kapasitesi (iOS gerekirse purgeable
     /// alanı da hesaba katar); okunamazsa nil.
     static func availableCapacityBytes() -> Int64? {
+        assert(!Thread.isMainThread, "the purgeable-space query blocks the calling thread")
         guard let root = try? rootDirectory(),
               let values = try? root.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
         else { return nil }

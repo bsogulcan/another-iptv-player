@@ -16,7 +16,7 @@ enum EPGError: LocalizedError {
         case .noSource: return L("epg.error.no_source")
         case .invalidURL(let url): return L("epg.error.invalid_url", url)
         case .network(let err): return L("epg.error.network", err.localizedDescription)
-        case .server(let code): return L("epg.error.server", code)
+        case .server(let code): return L(plainDigits: "epg.error.server", code)
         case .tooLarge: return L("epg.error.too_large")
         case .decompression: return L("epg.error.decompress")
         case .parse(let detail): return L("epg.error.parse", detail)

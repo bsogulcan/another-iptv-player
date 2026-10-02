@@ -11,10 +11,16 @@ struct EPGProgrammeDetailSheet: View {
     let channelIcon: URL?
     /// Xtream live stream for this channel — enables live play + catch-up. nil for M3U.
     let liveStream: DBLiveStream?
+    /// Starts the channel when there is no Xtream stream to start here: the
+    /// presenter's own way of playing an M3U channel. Catch-up stays Xtream-only.
+    var onPlayChannel: (() -> Void)? = nil
 
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
     @StateObject private var catchup = CatchupPlaybackController()
     @Environment(\.dismiss) private var dismiss
+    /// Not read: the store swaps it once a minute, which runs the body again so
+    /// the live badge, the progress and the offered actions follow the clock.
+    @Environment(\.epgSnapshot) private var epgSnapshot
 
     private var now: Date { Date() }
     private var isCurrent: Bool { programme.isCurrent(at: now) }
@@ -53,14 +59,18 @@ struct EPGProgrammeDetailSheet: View {
                         }
                     }
 
-                    if let desc = programme.desc, !desc.isEmpty {
-                        Text(desc).font(.body).foregroundColor(.primary.opacity(0.9))
+                    // The actions come before the description: at the medium detent a
+                    // long synopsis would push them below the fold.
+                    if canPlayChannel || catchupPlayable {
+                        playButtons
                     }
-
-                    playButtons
 
                     if let error = catchup.errorMessage {
                         Text(error).font(.footnote).foregroundColor(.red)
+                    }
+
+                    if let desc = programme.desc, !desc.isEmpty {
+                        Text(desc).font(.body).foregroundColor(.primary.opacity(0.9))
                     }
                 }
                 .padding()
@@ -68,20 +78,26 @@ struct EPGProgrammeDetailSheet: View {
             .navigationTitle(L("epg.programme_detail.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button(L("common.close")) { dismiss() }
                 }
             }
         }
     }
 
+    private var canPlayChannel: Bool { liveStream != nil || onPlayChannel != nil }
+
     @ViewBuilder
     private var playButtons: some View {
         VStack(spacing: 10) {
-            if liveStream != nil {
+            if canPlayChannel {
                 Button {
                     dismiss()
-                    playLiveChannel()
+                    if liveStream != nil {
+                        playLiveChannel()
+                    } else {
+                        onPlayChannel?()
+                    }
                 } label: {
                     Label(L("epg.detail.play_channel"), systemImage: "play.fill")
                         .frame(maxWidth: .infinity)
@@ -93,8 +109,9 @@ struct EPGProgrammeDetailSheet: View {
                 Button {
                     let programmeBridge = CatchupProgramme(title: programme.title, description: programme.desc,
                                                            startUTC: programme.start, stopUTC: programme.stop)
+                    guard let overlay = playerOverlay.injected else { return }
                     Task {
-                        await catchup.play(playlist: playlist, stream: stream, programme: programmeBridge, overlay: playerOverlay)
+                        await catchup.play(playlist: playlist, stream: stream, programme: programmeBridge, overlay: overlay)
                         // Only close once playback actually resolved; keep the sheet open to show the error otherwise.
                         if catchup.errorMessage == nil {
                             dismiss()
@@ -116,15 +133,15 @@ struct EPGProgrammeDetailSheet: View {
     }
 
     private var timeLine: String {
-        let minutes = max(1, Int(programme.duration / 60))
-        return "\(EPGTimeFormat.range(programme.start, programme.stop)) · \(L("epg.detail.minutes_format", minutes))"
+        "\(EPGTimeFormat.range(programme.start, programme.stop)) · \(EPGTimeFormat.duration(programme.duration))"
     }
 
     private func playLiveChannel() {
         guard let stream = liveStream else { return }
-        // Full live catalog so prev/next channel and the side panel stay enabled.
-        let live = LiveChannelCategorySection.xtreamLiveQueue()
-        playerOverlay.present(playlistId: playlist.id) {
+        // The live catalog as the Live tab lists it, so prev/next channel and the
+        // side panel stay enabled.
+        let live = EPGGuidePlayback.xtreamLiveQueue(playlistId: playlist.id, including: stream)
+        playerOverlay.injected?.present(playlistId: playlist.id) {
             LivePlayerShell(playlist: playlist, queue: live.queue, sections: live.sections,
                             initialStream: stream, initialHistory: nil, subtitle: channelName)
         }

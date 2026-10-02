@@ -343,6 +343,112 @@ struct M3UParserTests {
         #expect(sync == async)
     }
 
+    // MARK: - Unparseable URLs
+
+    /// A space after the port: no URL can be made of the line, so the entry could
+    /// never play. It is left out instead of becoming a channel that does nothing.
+    @Test
+    func entryWithAnUnparseableURLIsLeftOut() throws {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1,Good
+        http://h.com/1.ts
+        #EXTINF:-1,Bad
+        http://h.com:8080 /2.ts
+        #EXTINF:-1,Good2
+        http://h.com/3.ts
+        """
+        let result = try M3UParser.parse(m3u)
+        #expect(result.channels.map(\.name) == ["Good", "Good2"])
+        #expect(result.channels.map(\.url) == ["http://h.com/1.ts", "http://h.com/3.ts"])
+        #expect(result.channels.allSatisfy { M3UParser.sanitizedURL(from: $0.url) != nil })
+    }
+
+    @Test(arguments: ["http://host:abc/x.ts", "http://[::1/x.ts", "http://h.com:8080 /x.ts"])
+    func unparseableURLShapesAreLeftOut(url: String) throws {
+        let m3u = "#EXTM3U\n#EXTINF:-1,Bad\n\(url)\n#EXTINF:-1,Good\nhttp://h.com/1.ts\n"
+        let result = try M3UParser.parse(m3u)
+        #expect(result.channels.map(\.name) == ["Good"])
+    }
+
+    /// The skipped line does not use the entry up: a valid URL on the next line
+    /// still belongs to it, with everything the EXTINF carried.
+    @Test
+    func entryStaysPendingAfterAnUnparseableLine() throws {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1 tvg-id="ch.1" group-title="News",Channel
+        http://h.com:8080 /broken.ts
+        http://h.com/good.ts
+        #EXTINF:-1,Next
+        http://h.com/next.ts
+        """
+        let result = try M3UParser.parse(m3u)
+        #expect(result.channels.map(\.name) == ["Channel", "Next"])
+        let first = try #require(result.channels.first)
+        #expect(first.url == "http://h.com/good.ts")
+        #expect(first.tvgId == "ch.1")
+        #expect(first.groupTitle == "News")
+    }
+
+    /// A URL glued to its EXTINF that cannot be parsed counts as no URL: the entry
+    /// waits for a URL line like any other.
+    @Test
+    func gluedUnparseableURLWaitsForAURLLine() throws {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1,Channelhttp://host:abc/x.ts
+        http://h.com/good.ts
+        #EXTINF:-1,Lonelyhttp://host:abc/y.ts
+        #EXTINF:-1,Last
+        http://h.com/last.ts
+        """
+        let result = try M3UParser.parse(m3u)
+        #expect(result.channels.map(\.name) == ["Channel", "Last"])
+        #expect(result.channels.map(\.url) == ["http://h.com/good.ts", "http://h.com/last.ts"])
+    }
+
+    @Test
+    func playlistWithOnlyUnparseableURLsHasNoChannels() {
+        #expect(throws: M3UParserError.noChannelsFound) {
+            _ = try M3UParser.parse("#EXTM3U\n#EXTINF:-1,Bad\nhttp://host:abc/x.ts\n")
+        }
+    }
+
+    /// Only lines that cannot be parsed at all go. A URL that merely needs
+    /// encoding is kept, exactly as written.
+    @Test
+    func urlsThatOnlyNeedEncodingAreKept() throws {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1,Spaces
+        http://a.com/a b|c.ts
+        #EXTINF:-1,Multicast
+        udp://@239.0.0.1:1234
+        """
+        let result = try M3UParser.parse(m3u)
+        #expect(result.channels.map(\.url) == ["http://a.com/a b|c.ts", "udp://@239.0.0.1:1234"])
+    }
+
+    @Test
+    func diagnosticsCountUnparseableURIs() throws {
+        let m3u = """
+        #EXTM3U
+        #EXTINF:-1,Bad
+        http://host:abc/x.ts
+        #EXTINF:-1,Gluedhttp://host:abc/y.ts
+        #EXTINF:-1,Good
+        http://h.com/1.ts
+        """
+        let (playlist, diag) = try M3UParser.parseWithDiagnostics(m3u)
+        #expect(playlist.channels.count == 1)
+        #expect(diag.unparseableURIs == 2)
+        #expect(diag.channelCount == 1)
+        // Both entries were still pending when the next EXTINF arrived.
+        #expect(diag.lostPendingChannels == 2)
+        #expect(diag.orphanURIs == 0)
+    }
+
     // MARK: - sanitizedURL
 
     @Test

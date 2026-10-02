@@ -65,10 +65,9 @@ final class ScreensUITests: XCTestCase {
         let pickerButton = app.buttons["Jump to category"]
         XCTAssertTrue(pickerButton.waitForExistence(timeout: 8), "'Jump to category' button should exist")
         pickerButton.tap()
-        // The sheet header echoes the same string in CategoryPickerSheet.
+        // The picker is a sheet with its own navigation bar.
         XCTAssertTrue(
-            app.staticTexts["Jump to category"].waitForExistence(timeout: 4) ||
-            app.otherElements["Jump to category"].waitForExistence(timeout: 2),
+            app.navigationBars["Categories"].waitForExistence(timeout: 4),
             "Category picker sheet should present"
         )
     }
@@ -126,11 +125,16 @@ final class ScreensUITests: XCTestCase {
             app.descendants(matching: .any).matching(pred("Player Settings")).firstMatch.exists,
             "Settings should expose a Player Settings section"
         )
-        // 'Playlist Information' lives below the fold — scroll to surface it.
-        app.swipeUp()
-        app.swipeUp()
+        // 'Playlist Information' lives below the fold — scroll until it surfaces; the
+        // form's length depends on which sections the playlist has.
+        let info = app.descendants(matching: .any).matching(pred("Playlist Information")).firstMatch
+        var swipes = 0
+        while !(info.exists && info.isHittable) && swipes < 8 {
+            app.swipeUp()
+            swipes += 1
+        }
         XCTAssertTrue(
-            app.descendants(matching: .any).matching(pred("Playlist Information")).firstMatch.waitForExistence(timeout: 4),
+            info.waitForExistence(timeout: 4),
             "Settings should expose a Playlist Information section (after scroll)"
         )
     }
@@ -170,19 +174,18 @@ final class ScreensUITests: XCTestCase {
 
     // MARK: - Add Playlist flow
 
-    func test_playlistList_addButton_opensTypeSelectionSheet() {
+    func test_playlistList_addButton_opensTypeMenu() {
         navigateToPlaylistList()
         // Toolbar "plus" — locate by symbol identifier.
         let plus = app.navigationBars.buttons["plus"].firstMatch
         XCTAssertTrue(plus.waitForExistence(timeout: 6))
         plus.tap()
 
-        // Type selection sheet header.
-        XCTAssertTrue(
-            app.navigationBars["Add Playlist"].waitForExistence(timeout: 4) ||
-            staticText("Playlist Type").waitForExistence(timeout: 4),
-            "Type selection sheet should present"
-        )
+        // The + button is a menu that offers both kinds of playlist directly.
+        let xtream = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Xtream Code")).firstMatch
+        let m3u = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "M3U")).firstMatch
+        XCTAssertTrue(xtream.waitForExistence(timeout: 4), "Add menu should offer Xtream Code")
+        XCTAssertTrue(m3u.exists, "Add menu should offer M3U")
     }
 
     func test_playlistTypeSelection_xtream_opensXtreamForm() {

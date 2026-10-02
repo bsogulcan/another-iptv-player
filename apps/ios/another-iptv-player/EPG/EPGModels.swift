@@ -142,5 +142,8 @@ struct EPGSnapshot: Equatable {
         return byChannelKey[key]
     }
 
+    /// Placeholder `EPGStore` publishes for a playlist that is expected to have a
+    /// guide before any index has been built: channel cards reserve their now/next
+    /// line against it. Version 0 is never given to a built index.
     static let empty = EPGSnapshot(version: 0, byChannelKey: [:])
 }

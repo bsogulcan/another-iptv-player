@@ -25,8 +25,16 @@ struct AddM3UPlaylistView: View {
 
     @State private var isLoading = false
     @State private var progressMessage: String?
-    @State private var errorMessage: String?
-    @State private var showError = false
+    /// True while the step on screen is a download, the only one whose length
+    /// depends on the connection.
+    @State private var isOnNetwork = false
+    /// The running save or file read, kept so that Cancel can stop it.
+    @State private var workTask: Task<Void, Never>?
+    /// True once an Xtream import writes to the database (see `AddPlaylistView`).
+    @State private var isCommitting = false
+    @State private var failure: PlaylistFormFailure?
+    @State private var showsFailure = false
+    @State private var didSetInitialFocus = false
 
     init(editingPlaylist: Playlist? = nil) {
         self.editingPlaylist = editingPlaylist
@@ -36,14 +44,23 @@ struct AddM3UPlaylistView: View {
 
     private var hasLocalFile: Bool { localContent != nil }
 
+    private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var trimmedURL: String { url.trimmingCharacters(in: .whitespacesAndNewlines) }
+
     private var canSave: Bool {
-        guard !name.trimmingCharacters(in: .whitespaces).isEmpty, !isLoading else { return false }
+        guard !trimmedName.isEmpty, !isLoading else { return false }
         if hasLocalFile { return true }
-        let trimmedURL = url.trimmingCharacters(in: .whitespaces)
         // Düzenlemede kaynak değişmediyse yalnız ad güncellenir; yerel dosyadan
         // eklenmiş playlist'lerde serverURL boştur, boş URL kaydı engellememeli.
         if let editing = editingPlaylist, trimmedURL == editing.serverURL { return true }
         return !trimmedURL.isEmpty
+    }
+
+    /// Compared trimmed, as saved: a stray space is not input worth a warning.
+    private var hasUnsavedInput: Bool {
+        hasLocalFile
+            || trimmedName != (editingPlaylist?.name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            || trimmedURL != (editingPlaylist?.serverURL ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
@@ -56,15 +73,18 @@ struct AddM3UPlaylistView: View {
                         .focused($focusedField, equals: .name)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .url }
+                        .onAppear(perform: focusFirstFieldOnce)
                 }
 
                 Section(header: Text(L("add_m3u.section.source")), footer: Text(L("add_m3u.section.source_footer"))) {
                     TextField(L("add_m3u.url_placeholder"), text: $url)
                         .keyboardType(.URL)
+                        .textContentType(.URL)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .focused($focusedField, equals: .url)
-                        .submitLabel(.done)
+                        .submitLabel(.go)
+                        .onSubmit(startSave)
                         .disabled(hasLocalFile)
                         .foregroundColor(hasLocalFile ? .secondary : .primary)
 
@@ -98,19 +118,10 @@ struct AddM3UPlaylistView: View {
                     }
                 }
             }
+            // On the form only: the toolbar below keeps a working Cancel.
+            .disabled(isLoading)
             .navigationTitle(editingPlaylist == nil ? L("add_m3u.title_new") : L("add_m3u.title_edit"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("common.cancel")) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L("common.save")) {
-                        Task { await savePlaylist() }
-                    }
-                    .disabled(!canSave)
-                }
-            }
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: Self.allowedFileTypes,
@@ -118,29 +129,59 @@ struct AddM3UPlaylistView: View {
             ) { result in
                 handleFileImport(result)
             }
-            .overlay {
-                if isLoading {
-                    VStack(spacing: 16) {
-                        ProgressView().scaleEffect(1.5)
-                        Text(progressMessage ?? L("common.loading"))
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(24)
-                    .background(Color(.systemBackground).opacity(0.9))
-                    .cornerRadius(12)
-                    .shadow(radius: 20)
-                }
-            }
-            .alert(L("common.error"), isPresented: $showError, actions: {
-                Button(L("common.ok"), role: .cancel) { }
-            }, message: {
-                Text(errorMessage ?? L("common.unknown_error"))
-            })
+            .modifier(PlaylistFormChrome(
+                isSaving: isLoading,
+                canAbortSave: !isCommitting,
+                canSave: canSave,
+                hasUnsavedInput: hasUnsavedInput,
+                status: progressMessage,
+                showsDurationHint: isOnNetwork,
+                failure: failure,
+                showsFailure: $showsFailure,
+                save: startSave,
+                close: close,
+                failureDismissed: returnFocus(after:)
+            ))
         }
-        // Uzun import sırasında yanlışlıkla aşağı kaydırma sheet'i kapatıp Task'ı
-        // görünmez şekilde arka planda bırakıyordu.
-        .interactiveDismissDisabled(isLoading)
+    }
+
+    // MARK: - Form
+
+    /// A new form opens with the keyboard on its first field. Once only: the row
+    /// appears again every time it scrolls back into view.
+    private func focusFirstFieldOnce() {
+        guard !didSetInitialFocus else { return }
+        didSetInitialFocus = true
+        if editingPlaylist == nil { focusedField = .name }
+    }
+
+    private func returnFocus(after failure: PlaylistFormFailure) {
+        // The link is the only input that can be at fault here, and it is not
+        // editable while a file stands in for it.
+        guard failure.field == .address, !hasLocalFile else { return }
+        // The alert is still on its way out when its button action runs, and a focus
+        // request made right then can get lost.
+        Task { focusedField = .url }
+    }
+
+    private func startSave() {
+        guard canSave else { return }
+        // The keyboard would cover the status line.
+        focusedField = nil
+        workTask = Task { await savePlaylist() }
+    }
+
+    private func close() {
+        workTask?.cancel()
+        dismiss()
+    }
+
+    private func report(_ error: Error) {
+        // A cancelled request arrives as a wrapped URLError, so ask the task rather
+        // than the error. The form is gone by then; there is nobody to tell.
+        guard !Task.isCancelled else { return }
+        failure = PlaylistFormFailure.describing(error)
+        showsFailure = true
     }
 
     // MARK: - File Picker
@@ -154,24 +195,31 @@ struct AddM3UPlaylistView: View {
 
     private func handleFileImport(_ result: Result<[URL], Error>) {
         switch result {
-        case .failure(let err):
-            errorMessage = err.localizedDescription
-            showError = true
+        case .failure(let error):
+            failure = PlaylistFormFailure(title: L("loading.error.title"), message: NetworkErrorText.describe(error), field: nil)
+            showsFailure = true
         case .success(let urls):
-            guard let url = urls.first else { return }
+            guard let fileURL = urls.first else { return }
             isLoading = true
+            isOnNetwork = false
             progressMessage = L("common.loading")
-            Task {
-                do {
-                    let content = try await M3UService().readLocalAsync(url: url)
-                    localContent = content
-                    localFileName = url.lastPathComponent
-                } catch {
-                    errorMessage = error.localizedDescription
-                    showError = true
+            workTask = Task {
+                defer {
+                    isLoading = false
+                    progressMessage = nil
                 }
-                isLoading = false
-                progressMessage = nil
+                do {
+                    let content = try await M3UService().readLocalAsync(url: fileURL)
+                    // The read runs detached and finishes on its own after a Cancel.
+                    guard !Task.isCancelled else { return }
+                    localContent = content
+                    localFileName = fileURL.lastPathComponent
+                    if trimmedName.isEmpty {
+                        name = fileURL.deletingPathExtension().lastPathComponent
+                    }
+                } catch {
+                    report(error)
+                }
             }
         }
     }
@@ -183,7 +231,7 @@ struct AddM3UPlaylistView: View {
     /// error); `false` when the panel doesn't answer the Xtream API and the caller
     /// should fall back to downloading the link as plain M3U.
     private func addAsXtream(credentials: XtreamLinkDetector.Credentials, name: String) async -> Bool {
-        await MainActor.run { progressMessage = L("add_m3u.xtream_detected") }
+        progressMessage = L("add_m3u.xtream_detected")
 
         let playlist = Playlist(
             name: name,
@@ -192,7 +240,7 @@ struct AddM3UPlaylistView: View {
             password: credentials.password,
             type: .xtream
         )
-        let client = XtreamAPIClient(playlist: playlist)
+        let client = ProgressReportingXtreamClient(playlist: playlist)
 
         do {
             _ = try await client.verify()
@@ -202,23 +250,19 @@ struct AddM3UPlaylistView: View {
         }
 
         do {
-            try await XtreamImporter.syncAndSave(playlist: playlist, client: client) { message in
-                self.progressMessage = message
-            }
-            await MainActor.run {
-                self.isLoading = false
-                self.progressMessage = nil
-                self.dismiss()
-            }
+            try await client.importCatalog(
+                of: playlist,
+                status: { progressMessage = $0 },
+                onCommitting: {
+                    isCommitting = true
+                    isOnNetwork = false
+                }
+            )
+            dismiss()
         } catch {
             // Account verified but sync failed: surface the error instead of falling
             // back, since get.php is likely blocked on such panels anyway.
-            await MainActor.run {
-                self.errorMessage = error.localizedDescription
-                self.showError = true
-                self.isLoading = false
-                self.progressMessage = nil
-            }
+            report(error)
         }
         return true
     }
@@ -227,71 +271,68 @@ struct AddM3UPlaylistView: View {
 
     private func savePlaylist() async {
         isLoading = true
-        errorMessage = nil
-        progressMessage = L("add_m3u.preparing")
+        isCommitting = false
+        isOnNetwork = false
+        progressMessage = nil
+        defer {
+            isLoading = false
+            progressMessage = nil
+        }
 
-        let trimmedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedURL = self.trimmedURL
+        let trimmedName = self.trimmedName
 
         // Source unchanged while editing (no new file picked, URL untouched — including
         // the always-empty URL of local-file playlists): only update the name. Without
         // this, local-file playlists could never be renamed at all, and URL playlists
         // re-downloaded the entire list just to change the name.
         if let editing = editingPlaylist, !hasLocalFile, trimmedURL == editing.serverURL {
-            var updated = editing
-            updated.name = trimmedName
             do {
-                try await AppDatabase.shared.write { db in
-                    try updated.save(db)
-                }
-                await MainActor.run {
-                    self.isLoading = false
-                    self.progressMessage = nil
-                    self.dismiss()
-                }
+                try await AppDatabase.shared.updatePlaylist(id: editing.id) { $0.name = trimmedName }
+                dismiss()
             } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.showError = true
-                    self.isLoading = false
-                    self.progressMessage = nil
-                }
+                report(error)
             }
             return
         }
+
+        progressMessage = L("add_m3u.preparing")
 
         // Xtream-style get.php links get connected through the Xtream API when possible:
         // many panels block get.php downloads, and the API unlocks VOD/series/EPG anyway.
         // Only for new playlists — converting an existing M3U playlist would orphan its
         // favorites and watch history. Falls back to the plain M3U flow below.
         if editingPlaylist == nil, !hasLocalFile,
-           let credentials = XtreamLinkDetector.detect(urlString: trimmedURL),
-           await addAsXtream(credentials: credentials, name: trimmedName) {
-            return
+           let credentials = XtreamLinkDetector.detect(urlString: trimmedURL) {
+            isOnNetwork = true
+            if await addAsXtream(credentials: credentials, name: trimmedName) { return }
+            // A cancelled verify fails like a panel without the API does. It must
+            // not go on to download the link as M3U.
+            guard !Task.isCancelled else { return }
         }
 
-        let newPlaylist = Playlist(
-            id: editingPlaylist?.id ?? UUID(),
-            name: trimmedName,
-            serverURL: hasLocalFile ? "" : trimmedURL,
-            username: "",
-            password: "",
-            filterAdultContent: editingPlaylist?.filterAdultContent ?? false,
-            type: .m3u,
-            m3uEpgURL: nil
-        )
+        // An edit starts from the stored row; the form owns its name and its source.
+        var newPlaylist = editingPlaylist ?? Playlist(name: trimmedName, serverURL: "", type: .m3u)
+        newPlaylist.name = trimmedName
+        newPlaylist.serverURL = hasLocalFile ? "" : trimmedURL
 
         do {
             let rawContent: String
             if let local = localContent {
                 rawContent = local
             } else {
+                isOnNetwork = true
                 progressMessage = L("add_m3u.downloading")
                 rawContent = try await M3UService().fetchRemote(urlString: trimmedURL)
             }
 
+            isOnNetwork = false
             progressMessage = L("add_m3u.parsing")
             let parsed = try await M3UParser.parseAsync(rawContent)
+            // The parse runs detached and does not notice a cancel: this is the last
+            // exit before the write. The write itself is one transaction, and a
+            // cancel that lands inside it rolls it back.
+            try Task.checkCancellation()
 
             progressMessage = L("add_m3u.saving_db")
             try await M3UImporter.replace(
@@ -300,19 +341,9 @@ struct AddM3UPlaylistView: View {
                 epgURL: parsed.epgURL,
                 clearServerURL: hasLocalFile
             )
-
-            await MainActor.run {
-                self.isLoading = false
-                self.progressMessage = nil
-                self.dismiss()
-            }
+            dismiss()
         } catch {
-            await MainActor.run {
-                self.errorMessage = error.localizedDescription
-                self.showError = true
-                self.isLoading = false
-                self.progressMessage = nil
-            }
+            report(error)
         }
     }
 }

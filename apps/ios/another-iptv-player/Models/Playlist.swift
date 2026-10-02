@@ -75,6 +75,32 @@ struct Playlist: Identifiable, Codable, FetchableRecord, PersistableRecord, Equa
         }
         return m3uEpgURL
     }
+
+    /// Where the playlist comes from, safe to show in a list: the host, or
+    /// `host:port`. An M3U link carries the account in its query or path
+    /// (`get.php?username=…&password=…`, `/live/user/pass/…`, a token), and the raw
+    /// link was readable in full on wide screens and in screenshots. A playlist
+    /// imported from a file has no URL and gets the "local file" label.
+    nonisolated var displaySource: String {
+        let raw = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return L("playlists.local_file") }
+
+        if let components = URLComponents(string: raw), let host = components.host, !host.isEmpty {
+            // An IPv6 literal needs its brackets back once a port follows it.
+            let shownHost = host.contains(":") && !host.hasPrefix("[") ? "[\(host)]" : host
+            return components.port.map { "\(shownHost):\($0)" } ?? shownHost
+        }
+
+        // No host: typically a link typed without a scheme ("host:8080/get.php?…"),
+        // which parses as scheme "host". Keep only the authority part by hand, so
+        // nothing after the first path, query or fragment separator can leak.
+        var rest = Substring(raw)
+        if let scheme = rest.range(of: "://") { rest = rest[scheme.upperBound...] }
+        let authority = rest.prefix { $0 != "/" && $0 != "?" && $0 != "#" }
+        // "user:pass@host": the part before the last "@" is the account.
+        let host = authority.split(separator: "@", omittingEmptySubsequences: false).last ?? authority
+        return String(host)
+    }
 }
 
 // MARK: - Persistence

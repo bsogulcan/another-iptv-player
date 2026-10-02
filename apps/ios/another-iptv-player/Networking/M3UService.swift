@@ -11,7 +11,7 @@ enum M3UServiceError: LocalizedError {
         switch self {
         case .invalidURL(let url): return L("net.error.invalid_url", url)
         case .networkError(let err): return L("net.error.network", err.localizedDescription)
-        case .serverError(let code): return L("net.error.server", code)
+        case .serverError(let code): return L(plainDigits: "net.error.server", code)
         case .fileReadError(let err): return L("net.error.file_read", err.localizedDescription)
         case .encodingUnsupported: return L("net.error.encoding_unsupported")
         }
@@ -38,7 +38,12 @@ struct M3UService {
             if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
                 throw M3UServiceError.serverError(http.statusCode)
             }
-            return try decode(data: data)
+            // Tens of megabytes for a large list, and the fallback encodings each
+            // scan the whole body: off the main actor, as `readLocalAsync` does.
+            let service = self
+            return try await Task.detached(priority: .userInitiated) {
+                try service.decode(data: data)
+            }.value
         } catch let e as M3UServiceError {
             throw e
         } catch {
@@ -73,6 +78,7 @@ struct M3UService {
 
     // MARK: - Decoding
 
+    // nonisolated: runs inside the detached tasks of `fetchRemote` and `readLocalAsync`.
     nonisolated private func decode(data: Data) throws -> String {
         // BOM önce: UTF-16 dosyalar isoLatin1'den "başarıyla" ama NUL'larla dolu çözülür
         // ve #EXTM3U hiç eşleşmezdi. isoLatin1 HER bayt dizisi için başarılı olduğundan

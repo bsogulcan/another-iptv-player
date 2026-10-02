@@ -49,8 +49,12 @@ final class DownloadManager: NSObject, ObservableObject {
     private var idToPlaylistId: [String: UUID] = [:]
     /// URLSessionTask.taskIdentifier → hedef relative path (delegate'de DB lookup yapmamak için).
     private var taskToRelativePath: [Int: String] = [:]
-    /// `enqueue` async DB write yaparken — aynı id'ye ikinci çağrı gelmesin diye in-memory guard.
-    private var enqueueInFlight: Set<String> = []
+    /// Ids whose `enqueue` is still on its way to the database. Guards against a
+    /// second call for the same id, and is published so a download button can show
+    /// "queued" from the tap: the row it otherwise reads only appears once the
+    /// insert commits, which can wait behind a long write (a catalog refresh, the
+    /// guide publish).
+    @Published private(set) var pendingEnqueueIds: Set<String> = []
     /// Aynı task için didWriteData defalarca tetiklenir; totalBytes'i sadece ilk gerçek değerde DB'ye yazıyoruz.
     private var totalBytesPersistedFor: Set<Int> = []
     /// Son yayınlanan yüzde (taskIdentifier → 0…100). didWriteData saniyede onlarca kez
@@ -159,9 +163,9 @@ final class DownloadManager: NSObject, ObservableObject {
         seasonNumber: Int? = nil,
         episodeNumber: Int? = nil
     ) async {
-        if idToTask[id] != nil || enqueueInFlight.contains(id) { return }
-        enqueueInFlight.insert(id)
-        defer { enqueueInFlight.remove(id) }
+        if idToTask[id] != nil || pendingEnqueueIds.contains(id) { return }
+        pendingEnqueueIds.insert(id)
+        defer { pendingEnqueueIds.remove(id) }
         autoRetryCountById.removeValue(forKey: id)
 
         let ext = containerExtension ?? "mp4"
@@ -279,8 +283,17 @@ final class DownloadManager: NSObject, ObservableObject {
             progress.removeValue(forKey: id)
             autoRetryCountById.removeValue(forKey: id)
         }
-        DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
-        DownloadStorage.removeResumeData(playlistId: playlistId)
+        // Unlinking gigabytes of video takes long enough to stall the playlist
+        // list, so it is not waited for. Nothing can collide with it: a playlist
+        // added again gets a new id, and with it a new directory.
+        Task {
+            await Self.offMain {
+                DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
+                DownloadStorage.removeResumeData(playlistId: playlistId)
+            }
+            // Second bump: a storage figure computed before the files were gone.
+            dbVersion &+= 1
+        }
         dbVersion &+= 1
         if hadAny { Task { await pumpQueue() } }
     }
@@ -304,6 +317,35 @@ final class DownloadManager: NSObject, ObservableObject {
     /// Aktif task'leri iptal eder, dosyaları diskten kaldırır, DB row'larını siler.
     func deleteAll(playlistId: UUID) async {
         // Aktif task'ler
+        var hadAny = cancelActiveTasks(playlistId: playlistId)
+        // DB row'ları (bu playlist'e ait olanlar) ve dosyalar
+        let rows: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+            try DBDownloadedItem.filter(Column("playlistId") == playlistId).fetchAll(db)
+        }) ?? []
+        let paths = rows.map(\.localPath)
+        // Waited for, and before the rows go: the caller recomputes the storage
+        // figure when this returns, and it has to count the bytes as freed.
+        await Self.offMain {
+            for path in paths {
+                DownloadStorage.removeFile(relativePath: path)
+            }
+            // Playlist klasörünü tamamen kaldır (subdir + olası boş klasörler).
+            DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
+            DownloadStorage.removeResumeData(playlistId: playlistId)
+        }
+        _ = try? await AppDatabase.shared.write { db in
+            try DBDownloadedItem.filter(Column("playlistId") == playlistId).deleteAll(db)
+        }
+        // The queue could run while the files were being removed and start a row
+        // that was still stored then. Its row is gone now; stop it as well.
+        if cancelActiveTasks(playlistId: playlistId) { hadAny = true }
+        dbVersion &+= 1
+        if hadAny { await pumpQueue() }
+    }
+
+    /// Cancels the running downloads of a playlist and forgets them. True when at
+    /// least one task was running.
+    private func cancelActiveTasks(playlistId: UUID) -> Bool {
         let activeIds = idToPlaylistId.filter { $0.value == playlistId }.map(\.key)
         var hadAny = false
         for id in activeIds {
@@ -317,25 +359,40 @@ final class DownloadManager: NSObject, ObservableObject {
             progress.removeValue(forKey: id)
             autoRetryCountById.removeValue(forKey: id)
         }
-        // DB row'ları (bu playlist'e ait olanlar) ve dosyalar
-        let rows: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
-            try DBDownloadedItem.filter(Column("playlistId") == playlistId).fetchAll(db)
-        }) ?? []
-        for row in rows {
-            DownloadStorage.removeFile(relativePath: row.localPath)
-        }
-        // Playlist klasörünü tamamen kaldır (subdir + olası boş klasörler).
-        DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
-        DownloadStorage.removeResumeData(playlistId: playlistId)
-        _ = try? await AppDatabase.shared.write { db in
-            try DBDownloadedItem.filter(Column("playlistId") == playlistId).deleteAll(db)
-        }
-        dbVersion &+= 1
-        if hadAny { await pumpQueue() }
+        return hadAny
+    }
+
+    /// Runs file-system work away from the main actor and waits for it. Deleting a
+    /// downloaded film takes about half a second per 1.5 GB, and the purgeable-space
+    /// query costs a frame or two; this class is main-actor isolated.
+    private static func offMain<T: Sendable>(_ work: @escaping @Sendable () -> T) async -> T {
+        await Task.detached(priority: .utility, operation: work).value
     }
 
     /// Tüm playlist'lerin indirmelerini (her statüde) siler.
     func deleteAll() async {
+        cancelAllActiveTasks()
+
+        let all: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+            try DBDownloadedItem.fetchAll(db)
+        }) ?? []
+        let paths = all.map(\.localPath)
+        await Self.offMain {
+            for path in paths {
+                DownloadStorage.removeFile(relativePath: path)
+            }
+        }
+        _ = try? await AppDatabase.shared.write { db in
+            try DBDownloadedItem.deleteAll(db)
+        }
+        // Same as in `deleteAll(playlistId:)`: whatever the queue started meanwhile
+        // has lost its row.
+        cancelAllActiveTasks()
+        await Self.offMain { DownloadStorage.removeAllResumeData() }
+        dbVersion &+= 1
+    }
+
+    private func cancelAllActiveTasks() {
         for (id, task) in idToTask {
             task.cancel()
             taskToId.removeValue(forKey: task.taskIdentifier)
@@ -344,18 +401,6 @@ final class DownloadManager: NSObject, ObservableObject {
         idToTask.removeAll()
         idToPlaylistId.removeAll()
         autoRetryCountById.removeAll()
-
-        let all: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
-            try DBDownloadedItem.fetchAll(db)
-        }) ?? []
-        for row in all {
-            DownloadStorage.removeFile(relativePath: row.localPath)
-        }
-        _ = try? await AppDatabase.shared.write { db in
-            try DBDownloadedItem.deleteAll(db)
-        }
-        DownloadStorage.removeAllResumeData()
-        dbVersion &+= 1
     }
 
     // MARK: - ID helpers
@@ -430,7 +475,7 @@ final class DownloadManager: NSObject, ObservableObject {
                 // Boyut önceki denemeden biliniyorsa başlamadan sığacağını doğrula.
                 if next.totalBytes > 0 {
                     let remainingBytes = Int64(max(next.totalBytes - next.downloadedBytes, 0))
-                    if let available = DownloadStorage.availableCapacityBytes(),
+                    if let available = await Self.offMain({ DownloadStorage.availableCapacityBytes() }),
                        available < remainingBytes + Self.minFreeDiskMargin {
                         downloadLog.error("pumpQueue no-space id=\(next.id, privacy: .public) needed=\(remainingBytes) available=\(available)")
                         await markFailed(
@@ -490,7 +535,10 @@ final class DownloadManager: NSObject, ObservableObject {
                 try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
             }
             if removeFile, let relPath = existing?.localPath {
-                DownloadStorage.removeFile(relativePath: relPath)
+                // Still before the row delete, and waited for: once the row is gone
+                // the same item can be downloaded again, and an unlink that arrived
+                // late would take the new file.
+                await Self.offMain { DownloadStorage.removeFile(relativePath: relPath) }
             }
             _ = try await AppDatabase.shared.write { db in
                 try DBDownloadedItem.filter(Column("id") == id).deleteAll(db)
@@ -572,14 +620,22 @@ extension DownloadManager: URLSessionDownloadDelegate {
             }
             // Content-Length öğrenilir öğrenilmez sığmayacak dosyayı kes: 2 GB boş alana
             // 6 GB film indirmek saatler sonra disk-dolu hatasıyla (ve 3 retry ile) bitiyordu.
+            // The free-space query asks the system for purgeable space and is too slow
+            // for this callback, which runs on the main queue: it is answered off it,
+            // and the task is stopped a few callbacks later.
             if totalJustBecameKnown {
                 let remaining = totalBytesExpectedToWrite - totalBytesWritten
-                if let available = DownloadStorage.availableCapacityBytes(),
-                   available < remaining + Self.minFreeDiskMargin {
-                    downloadLog.error("no-space id=\(id, privacy: .public) needed=\(remaining) available=\(available)")
-                    self.spaceFailedIds.insert(id)
-                    downloadTask.cancel()
-                    return
+                let margin = Self.minFreeDiskMargin
+                Task.detached(priority: .utility) { [weak self] in
+                    guard let available = DownloadStorage.availableCapacityBytes(),
+                          available < remaining + margin else { return }
+                    await MainActor.run { [weak self] in
+                        // The task may have finished, failed or been cancelled since.
+                        guard let self, self.taskToId[taskId] == id else { return }
+                        downloadLog.error("no-space id=\(id, privacy: .public) needed=\(remaining) available=\(available)")
+                        self.spaceFailedIds.insert(id)
+                        downloadTask.cancel()
+                    }
                 }
             }
             if totalBytesExpectedToWrite > 0,

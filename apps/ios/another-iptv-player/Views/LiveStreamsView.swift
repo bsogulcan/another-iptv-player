@@ -1,45 +1,203 @@
+import Combine
 import SwiftUI
 import GRDB
 import GRDBQuery
+
+/// Everything the content of a Live browse screen depends on, apart from a grid's own
+/// sort and filter. Each screen runs one task keyed on it and remembers the key that
+/// task last applied, so coming back to the screen does no work.
+private nonisolated struct LiveBrowseKey: Equatable {
+    /// Debounced search text, trimmed.
+    let query: String
+    let streamsLoaded: Bool
+    /// `PlaylistContentStore.liveRevision`. A scoped reload changes nothing else.
+    let revision: Int
+    /// `HiddenCategoryStore.version`; 0 on a screen that hidden categories do not affect.
+    let hiddenVersion: Int
+    let playlistId: UUID
+    let activePlaylistId: UUID?
+
+    /// False while the store still holds another playlist's lists.
+    var isActive: Bool { playlistId == activePlaylistId }
+
+    var withoutQuery: LiveBrowseKey {
+        LiveBrowseKey(
+            query: "",
+            streamsLoaded: streamsLoaded,
+            revision: revision,
+            hiddenVersion: hiddenVersion,
+            playlistId: playlistId,
+            activePlaylistId: activePlaylistId
+        )
+    }
+}
+
+/// List building for the Live browse screens. Free of view state and `nonisolated`:
+/// all of it runs inside detached tasks, which also means that a superseded run only
+/// has to stop early; its caller throws the result away.
+nonisolated enum LiveBrowseLists {
+    /// A channel list together with its plain streams in the same order, which is the
+    /// form the player takes its queue in.
+    struct Arrangement: Sendable {
+        let items: [LiveStreamWithCategory]
+        let streams: [DBLiveStream]
+
+        static let empty = Arrangement(items: [], streams: [])
+    }
+
+    struct Shelves: Sendable {
+        let categories: [DBCategory]
+        let itemsByCategory: [String: [LiveStreamWithCategory]]
+    }
+
+    /// Home shelves for a search, in catalog order: a category found by its name keeps
+    /// all its channels, any other category keeps the channels that match and is left
+    /// out without one.
+    static func shelves(
+        matching search: String,
+        categories: [DBCategory],
+        itemsByCategory: [String: [LiveStreamWithCategory]],
+        hidden: Set<String>
+    ) -> Shelves {
+        let query = CatalogTextSearch.Query(search)
+        var matched: [DBCategory] = []
+        var matchedItems: [String: [LiveStreamWithCategory]] = [:]
+        for category in categories where !hidden.contains(category.id) {
+            if Task.isCancelled { break }
+            let items = itemsByCategory[category.id] ?? []
+            if query.matches(category.name) {
+                matched.append(category)
+                matchedItems[category.id] = items
+                continue
+            }
+            let hits = items.filter { query.matches($0.stream.name) }
+            if !hits.isEmpty {
+                matched.append(category)
+                matchedItems[category.id] = hits
+            }
+        }
+        return Shelves(categories: matched, itemsByCategory: matchedItems)
+    }
+
+    /// "All Channels": every channel outside the hidden categories, ranked by relevance
+    /// when `search` is not blank. With nothing hidden and no search the result shares
+    /// the catalog's own buffer instead of copying it.
+    static func allChannels(
+        _ source: [LiveStreamWithCategory],
+        hidden: Set<String>,
+        search: String
+    ) -> Arrangement {
+        let visible = hidden.isEmpty
+            ? source
+            : source.filter { !hidden.contains($0.stream.categoryId ?? "") }
+        let items = CatalogTextSearch.rankedFilter(visible, search: search) { $0.stream.name }
+        if Task.isCancelled { return .empty }
+        return Arrangement(items: items, streams: items.map { $0.stream })
+    }
+
+    /// A grid's own order on top of the caller's list: `filter`, then `sort`.
+    static func arranged(
+        _ items: [LiveStreamWithCategory],
+        sort: LiveSortOption,
+        filter: LiveStreamFilter
+    ) -> Arrangement {
+        let filtered = LiveStreamFilter.apply(items, filter)
+        if Task.isCancelled { return .empty }
+        let sorted = sort.apply(to: filtered)
+        if Task.isCancelled { return .empty }
+        return Arrangement(items: sorted, streams: sorted.map { $0.stream })
+    }
+}
+
+/// What the shelf list of the Live home draws.
+private struct LiveShelves {
+    var categories: [DBCategory] = []
+    var itemsByCategory: [String: [LiveStreamWithCategory]] = [:]
+    /// The channels are not in yet. It travels with the items, so a shelf never gets
+    /// "loaded" next to an item list that is only not there yet.
+    var isLoading = false
+    /// Inputs the shelves were built from; nil while the store holds another playlist.
+    var key: LiveBrowseKey?
+}
 
 struct LiveStreamsView: View {
     let playlist: Playlist
     @ObservedObject private var contentStore = PlaylistContentStore.shared
     @ObservedObject private var hiddenStore = HiddenCategoryStore.shared
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
+    @Environment(\.epgGuideEnabled) private var epgGuideEnabled
 
     @State private var searchText = ""
     @State private var debouncedQuery = ""
     @State private var debounceTask: Task<Void, Never>?
     @State private var isSearchActive = false
+    /// Channel whose schedule a card's menu asked for.
+    @State private var scheduleChannel: DBLiveStream?
 
-    @State private var displayCategories: [DBCategory] = []
-    @State private var displayItemsByCategory: [String: [LiveStreamWithCategory]] = [:]
+    /// Shelves of the last search that finished. Without a query the shelves are read
+    /// from the store in `body`: a copy held here would go stale whenever the store
+    /// changes without one of this view's own inputs changing.
+    @State private var searchResult: LiveShelves?
+    /// Key the keyed task last ran to the end for.
+    @State private var appliedKey: LiveBrowseKey?
+    /// Message of the last failed catalog load. The dashboard's alert clears the store's
+    /// copy when it is dismissed; this one keeps the retry on screen until a load gets
+    /// through one of its phases.
+    @State private var failedLoadMessage: String?
 
     @State private var showingCategoryPicker = false
     @State private var pendingScrollTarget: String? = nil
 
-    /// Flattened queue + per-category sections for the display model above. Built on the
-    /// first channel tap after a filter change and reused for later taps, so opening the
-    /// player no longer copies the whole catalog twice on the main thread every time.
-    @State private var playbackModelMemo = LivePlaybackModelMemo()
+    /// Flattened queue + per-category sections for the shelves on screen. Built on the
+    /// first channel tap and reused for as long as the shelves stay the same, so opening
+    /// the player does not copy the whole catalog twice on the main thread every time.
+    @StateObject private var playbackModelMemo = LivePlaybackModelMemo()
 
-    private var livePlaybackModel: LivePlaybackModelMemo.Model {
-        if let model = playbackModelMemo.model { return model }
-        let sections = displayCategories.compactMap { cat -> LiveChannelCategorySection? in
-            let streams = displayItemsByCategory[cat.id]?.map(\.stream) ?? []
-            guard !streams.isEmpty else { return nil }
-            return LiveChannelCategorySection(id: cat.id, title: cat.name, streams: streams)
-        }
-        // Empty categories contribute nothing, so this is the same queue the old
-        // per-tap flatMap over `displayCategories` produced.
-        let model = LivePlaybackModelMemo.Model(queue: sections.flatMap(\.streams), sections: sections)
-        playbackModelMemo.model = model
-        return model
+    private var browseKey: LiveBrowseKey {
+        LiveBrowseKey(
+            query: debouncedQuery.trimmingCharacters(in: .whitespaces),
+            streamsLoaded: contentStore.streamsLoaded,
+            revision: contentStore.liveRevision,
+            hiddenVersion: hiddenStore.version,
+            playlistId: playlist.id,
+            activePlaylistId: contentStore.activePlaylistId
+        )
     }
 
-    private var livePlaybackQueue: [DBLiveStream] {
-        livePlaybackModel.queue
+    private var hiddenCategoryIds: Set<String> {
+        hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")
+    }
+
+    /// The shelves for `key`: the store's own lists, or the search result while a query
+    /// is applied. A query whose first result is still on its way shows the unfiltered
+    /// shelves, and one that follows another shows that one's result, until its own is in.
+    private func shelves(for key: LiveBrowseKey, hidden: Set<String>) -> LiveShelves {
+        guard key.isActive else { return LiveShelves(isLoading: true) }
+        if !key.query.isEmpty, let searchResult { return searchResult }
+        let categories = contentStore.liveCategories
+        return LiveShelves(
+            categories: hidden.isEmpty ? categories : categories.filter { !hidden.contains($0.id) },
+            // The store's own buffers: the Equatable shelf rows compare them by identity.
+            itemsByCategory: contentStore.liveStreamsByCategoryId,
+            // A reload keeps the old lists up while it reads; only a catalog without
+            // any channel yet is one that is still loading.
+            isLoading: !contentStore.streamsLoaded && contentStore.liveStreams.isEmpty,
+            key: key.withoutQuery
+        )
+    }
+
+    private var livePlaybackModel: LivePlaybackModelMemo.Model {
+        let shelves = shelves(for: browseKey, hidden: hiddenCategoryIds)
+        return playbackModelMemo.model(for: shelves.key) {
+            let sections = shelves.categories.compactMap { cat -> LiveChannelCategorySection? in
+                let streams = shelves.itemsByCategory[cat.id]?.map(\.stream) ?? []
+                guard !streams.isEmpty else { return nil }
+                return LiveChannelCategorySection(id: cat.id, title: cat.name, streams: streams)
+            }
+            // Empty categories contribute nothing, so the queue is every channel of the
+            // shelves on screen, in shelf order.
+            return LivePlaybackModelMemo.Model(queue: sections.flatMap(\.streams), sections: sections)
+        }
     }
 
     private var pickerEntries: [CategoryPickerSheet.Entry] {
@@ -52,45 +210,50 @@ struct LiveStreamsView: View {
         }
     }
 
-    private var liveChannelSections: [LiveChannelCategorySection] {
-        livePlaybackModel.sections
-    }
-
-    private func liveQueueIndex(for stream: DBLiveStream) -> Int? {
-        livePlaybackQueue.firstIndex(where: { $0.streamId == stream.streamId })
+    /// A failed load that left nothing to show. A failed reload keeps the lists it had,
+    /// and the dashboard's alert is all it needs.
+    private var loadFailure: String? {
+        guard playlist.id == contentStore.activePlaylistId,
+              !contentStore.isLoading,
+              !contentStore.streamsLoaded,
+              contentStore.liveStreams.isEmpty else { return nil }
+        return contentStore.loadError ?? failedLoadMessage
     }
 
     var body: some View {
+        let key = browseKey
+        let shelves = shelves(for: key, hidden: hiddenCategoryIds)
         Group {
-            if displayCategories.isEmpty {
-                if contentStore.isLoading || playlist.id != contentStore.activePlaylistId {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        Text(contentStore.loadingMessage ?? L("live.empty.preparing"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let loadError = contentStore.loadError, debouncedQuery.isEmpty {
-                    CatalogLoadErrorView(message: loadError) {
-                        Task { await contentStore.loadPlaylist(playlist) }
-                    }
-                } else {
-                    VStack(spacing: 12) {
-                        Image(systemName: "tv.slash")
-                            .font(.largeTitle)
-                            .foregroundColor(.secondary)
-                        Text(debouncedQuery.isEmpty ? L("live.empty.no_category") : L("list.no_result"))
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if let message = loadFailure {
+                CatalogLoadErrorView(message: message) {
+                    failedLoadMessage = nil
+                    Task { await contentStore.loadPlaylist(playlist) }
                 }
+            } else if !shelves.categories.isEmpty {
+                contentList(shelves)
+            } else if contentStore.isLoading || shelves.isLoading {
+                // Also while the categories are in and none of them is a live one: the
+                // channels that follow can still bring the "uncategorized" shelf.
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                    Text(contentStore.loadingMessage ?? L("live.empty.preparing"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if key.query.isEmpty {
+                CatalogEmptyView(.noItems(title: L("live.empty.no_category"), systemImage: "tv.slash"))
             } else {
-                contentList
+                CatalogEmptyView(.noSearchResults)
             }
         }
-        .searchable(text: $searchText, isPresented: $isSearchActive, prompt: L("live.search_placeholder"))
+        .searchable(
+            text: $searchText,
+            isPresented: $isSearchActive,
+            placement: .navigationBarDrawer(displayMode: .automatic),
+            prompt: L("live.search_placeholder")
+        )
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
             debounceTask = Task {
@@ -102,38 +265,45 @@ struct LiveStreamsView: View {
         .onChange(of: isSearchActive) { _, active in
             if !active { searchText = ""; debouncedQuery = "" }
         }
-        .task(id: debouncedQuery) { await recomputeFilter() }
-        .task(id: contentStore.streamsLoaded) { await recomputeFilter() }
-        .task(id: hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")) { await recomputeFilter() }
+        .onChange(of: contentStore.loadError, initial: true) { _, error in
+            if let error, !contentStore.streamsLoaded { failedLoadMessage = error }
+        }
+        .onChange(of: contentStore.liveRevision) { _, _ in
+            // Every load phase that gets through bumps the revision and a failing one
+            // does not, so this also catches a retry started from the dashboard's alert:
+            // its categories bring the shelves back while its channels are still read.
+            if contentStore.loadError == nil { failedLoadMessage = nil }
+        }
+        .task(id: key) { await apply(key) }
+        .liveScheduleDestination($scheduleChannel, playlist: playlist)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink {
-                    EPGGuideView(source: .xtream(playlist))
-                } label: {
-                    Image(systemName: "calendar.day.timeline.left")
-                        .font(.body.weight(.semibold))
+            if epgGuideEnabled {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        EPGGuideView(source: .xtream(playlist))
+                    } label: {
+                        Label(L("epg.guide.title"), systemImage: "calendar.day.timeline.left")
+                    }
                 }
-                .accessibilityLabel(L("epg.guide.title"))
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink {
                     AllLiveView(playlist: playlist)
                 } label: {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.body.weight(.semibold))
+                    Label(L("browse.all_live"), systemImage: "square.grid.2x2")
                 }
                 .disabled(contentStore.liveStreams.isEmpty)
-                .accessibilityLabel(L("browse.all_live"))
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
+                    // Cleared here rather than after the jump, so that picking the
+                    // category it already holds is still a change.
+                    pendingScrollTarget = nil
                     showingCategoryPicker = true
                 } label: {
-                    Image(systemName: "list.bullet.indent")
-                        .font(.body.weight(.semibold))
+                    Label(L("list.jump_to_category"), systemImage: "list.bullet.indent")
                 }
                 .disabled(contentStore.liveCategories.isEmpty)
-                .accessibilityLabel(L("list.jump_to_category"))
             }
         }
         .sheet(isPresented: $showingCategoryPicker) {
@@ -150,11 +320,12 @@ struct LiveStreamsView: View {
     }
 
     private func presentLiveSelection(_ selection: LivePlayerSelection) {
-        playerOverlay.present(playlistId: playlist.id) {
+        let model = livePlaybackModel
+        playerOverlay.injected?.present(playlistId: playlist.id) {
             LivePlayerShell(
                 playlist: playlist,
-                queue: livePlaybackQueue,
-                sections: liveChannelSections,
+                queue: model.queue,
+                sections: model.sections,
                 initialStream: selection.stream,
                 initialHistory: selection.history,
                 subtitle: nil
@@ -165,11 +336,12 @@ struct LiveStreamsView: View {
     private func presentHistoryItem(_ item: DBWatchHistory) {
         guard let url = historyURL(for: item) else { return }
         if item.type == "series" {
-            playerOverlay.present(playlistId: playlist.id) {
+            playerOverlay.injected?.present(playlistId: playlist.id) {
                 HistorySeriesPlayerShell(playlist: playlist, history: item, url: url)
             }
         } else if item.type == "live" {
-            let stream = liveStream(for: item) ?? DBLiveStream(
+            let model = livePlaybackModel
+            let stream = liveStream(for: item, in: model.queue) ?? DBLiveStream(
                 streamId: Int(item.streamId) ?? 0,
                 name: item.title,
                 streamIcon: item.imageURL,
@@ -177,18 +349,18 @@ struct LiveStreamsView: View {
                 sortIndex: 0,
                 playlistId: item.playlistId
             )
-            playerOverlay.present(playlistId: playlist.id) {
+            playerOverlay.injected?.present(playlistId: playlist.id) {
                 LivePlayerShell(
                     playlist: playlist,
-                    queue: livePlaybackQueue,
-                    sections: liveChannelSections,
+                    queue: model.queue,
+                    sections: model.sections,
                     initialStream: stream,
                     initialHistory: item,
                     subtitle: nil
                 )
             }
         } else {
-            playerOverlay.present(playlistId: playlist.id) {
+            playerOverlay.injected?.present(playlistId: playlist.id) {
                 PlayerView(
                     url: url,
                     title: item.title,
@@ -207,7 +379,7 @@ struct LiveStreamsView: View {
         }
     }
 
-    private var contentList: some View {
+    private func contentList(_ shelves: LiveShelves) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
                 ContinueWatchingRow(
@@ -224,15 +396,18 @@ struct LiveStreamsView: View {
                 )
 
                 LazyVStack(spacing: 0) {
-                    ForEach(displayCategories) { category in
+                    ForEach(shelves.categories) { category in
                         LiveCategoryShelfRow(
                             playlist: playlist,
                             category: category,
-                            items: displayItemsByCategory[category.id] ?? [],
+                            items: shelves.itemsByCategory[category.id] ?? [],
                             onStreamSelected: { stream, history in
                                 presentLiveSelection(LivePlayerSelection(stream: stream, history: history))
                             },
-                            isStreamsLoading: !contentStore.streamsLoaded
+                            onScheduleRequested: { stream in
+                                scheduleChannel = stream
+                            },
+                            isStreamsLoading: shelves.isLoading
                         )
                         .equatable()
                         .id(category.id)
@@ -249,11 +424,12 @@ struct LiveStreamsView: View {
             }
             .onChange(of: pendingScrollTarget) { _, target in
                 guard let target else { return }
-                withAnimation(.easeOut(duration: 0.25)) {
+                // A jump, not a glide: an animated scroll runs through every lazy shelf
+                // on the way, and each of them starts loading its logos.
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
                     proxy.scrollTo(target, anchor: .top)
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    pendingScrollTarget = nil
                 }
             }
         }
@@ -275,48 +451,45 @@ struct LiveStreamsView: View {
         }
     }
 
-    private func recomputeFilter() async {
-        guard playlist.id == contentStore.activePlaylistId else {
-            displayCategories = []; displayItemsByCategory = [:]
-            playbackModelMemo.model = nil
+    /// Brings the search result in line with `key`. Without a query there is nothing to
+    /// compute, because `body` reads the shelves from the store; what is left of the
+    /// previous key is dropped.
+    private func apply(_ key: LiveBrowseKey) async {
+        guard key != appliedKey else { return }
+        // Built from other shelves. Dropped now rather than at the next tap, so the old
+        // catalog's queue is not kept alive until then.
+        playbackModelMemo.reset()
+        guard key.isActive, !key.query.isEmpty else {
+            searchResult = nil
+            appliedKey = key
             return
         }
-        let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")
-        let allCats = contentStore.liveCategories.filter { !hidden.contains($0.id) }
-        let allByCategory = contentStore.liveStreamsByCategoryId
-        let q = debouncedQuery.trimmingCharacters(in: .whitespaces)
-
-        if q.isEmpty {
-            displayCategories = allCats
-            displayItemsByCategory = allByCategory
-            playbackModelMemo.model = nil
-            return
+        let hidden = hiddenCategoryIds
+        let categories = contentStore.liveCategories
+        let itemsByCategory = contentStore.liveStreamsByCategoryId
+        let isLoading = !contentStore.streamsLoaded && contentStore.liveStreams.isEmpty
+        let search = key.query
+        let result = await CatalogTextSearch.detached {
+            LiveBrowseLists.shelves(
+                matching: search,
+                categories: categories,
+                itemsByCategory: itemsByCategory,
+                hidden: hidden
+            )
         }
-
-        let result = await Task.detached(priority: .userInitiated) {
-            var cats: [DBCategory] = []
-            var byCategory: [String: [LiveStreamWithCategory]] = [:]
-            for cat in allCats {
-                let catMatch = CatalogTextSearch.matches(search: q, text: cat.name)
-                let items = allByCategory[cat.id] ?? []
-                let filtered = catMatch ? items : items.filter { CatalogTextSearch.matches(search: q, text: $0.stream.name) }
-                if catMatch || !filtered.isEmpty {
-                    cats.append(cat)
-                    byCategory[cat.id] = filtered
-                }
-            }
-            return (cats, byCategory)
-        }.value
-
         guard !Task.isCancelled else { return }
-        displayCategories = result.0
-        displayItemsByCategory = result.1
-        playbackModelMemo.model = nil
+        searchResult = LiveShelves(
+            categories: result.categories,
+            itemsByCategory: result.itemsByCategory,
+            isLoading: isLoading,
+            key: key
+        )
+        appliedKey = key
     }
 
-    private func liveStream(for item: DBWatchHistory) -> DBLiveStream? {
+    private func liveStream(for item: DBWatchHistory, in queue: [DBLiveStream]) -> DBLiveStream? {
         let streamId = Int(item.streamId) ?? 0
-        if let match = livePlaybackQueue.first(where: { $0.streamId == streamId }) {
+        if let match = queue.first(where: { $0.streamId == streamId }) {
             return match
         }
         // Lazy arama: eager flatMap+map tüm katalogu iki kez kopyalayıp tap gecikmesine
@@ -330,15 +503,13 @@ struct LiveStreamsView: View {
 }
 
 // MARK: - Category shelf (horizontal preview)
-private enum CategoryShelf {
-    static let prefetchHeadCount = 32
-}
 
 struct LiveCategoryShelfRow: View, Equatable {
     let playlist: Playlist
     let category: DBCategory
     let items: [LiveStreamWithCategory]
     var onStreamSelected: ((DBLiveStream, DBWatchHistory?) -> Void)? = nil
+    var onScheduleRequested: ((DBLiveStream) -> Void)? = nil
     var isStreamsLoading: Bool = false
 
     static func == (lhs: LiveCategoryShelfRow, rhs: LiveCategoryShelfRow) -> Bool {
@@ -349,39 +520,35 @@ struct LiveCategoryShelfRow: View, Equatable {
     }
 
     @Environment(\.posterMetrics) private var posterMetrics
+    @Environment(\.epgGuideEnabled) private var epgGuideEnabled
+    @StateObject private var headPrefetch = LiveShelfHeadPrefetch()
+
+    private static let cardSpacing = BrowseMetrics.tileShelfSpacing
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                NavigationLink {
-                    LiveCategoryDetailView(playlist: playlist, category: category)
-                } label: {
-                    HStack(spacing: 6) {
-                        Text(category.name)
-                            .font(.headline)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .foregroundStyle(.primary)
-                }
-                Spacer()
+            ShelfHeader(category.name) {
+                LiveCategoryDetailView(playlist: playlist, category: category)
             }
-            .padding(.horizontal, 16)
+            .contextMenu {
+                HideCategoryMenuButton(categoryId: category.id, type: "live", playlistId: playlist.id)
+            }
 
             if items.isEmpty {
                 if isStreamsLoading {
-                    Color.clear.frame(height: posterMetrics.liveShelfIcon + 30)
+                    loadingPlaceholder
                 } else {
                     Text(L("live.empty.no_channel_in_category"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, BrowseMetrics.pageMargin)
                 }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .top, spacing: 12) {
-                        ForEach(items) { item in
+                    LazyHStack(alignment: .top, spacing: Self.cardSpacing) {
+                        // The integer id: the Identifiable one is a string built from the
+                        // stream and playlist ids, for every channel of the category.
+                        ForEach(items, id: \.stream.streamId) { item in
                             LiveStreamCard(
                                 playlistId: playlist.id,
                                 stream: item.stream,
@@ -391,28 +558,58 @@ struct LiveCategoryShelfRow: View, Equatable {
                             ) { stream, history in
                                 onStreamSelected?(stream, history)
                             }
+                            .liveCardMenu(
+                                stream: item.stream,
+                                playlistId: playlist.id,
+                                guideEnabled: epgGuideEnabled,
+                                play: { onStreamSelected?(item.stream, nil) },
+                                schedule: onScheduleRequested
+                            )
                         }
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, BrowseMetrics.pageMargin)
                 }
                 .onAppear {
-                    prefetchIcons(from: items)
+                    headPrefetch.start(
+                        urls: headIconURLs(limit: prefetchHeadCount),
+                        side: posterMetrics.liveShelfIcon
+                    )
                 }
+                .onDisappear { headPrefetch.stop() }
             }
         }
         .padding(.vertical, 6)
     }
 
-    private func prefetchIcons(from list: [LiveStreamWithCategory]) {
-        let urls = list.prefix(CategoryShelf.prefetchHeadCount)
+    /// Stands in for the cards while the channels are not in yet. It is a card that is
+    /// not drawn, so the row is exactly as tall as the loaded one, at every text size and
+    /// with or without the guide line, and nothing below it moves when the channels arrive.
+    private var loadingPlaceholder: some View {
+        LiveStreamCard(
+            playlistId: playlist.id,
+            stream: DBLiveStream(streamId: 0, name: " ", playlistId: playlist.id),
+            width: posterMetrics.liveShelfLabelWidth,
+            iconSize: posterMetrics.liveShelfIcon,
+            imageLoadProfile: .shelf
+        )
+        .hidden()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .padding(.horizontal, BrowseMetrics.pageMargin)
+    }
+
+    private var prefetchHeadCount: Int {
+        ListImagePrefetch.headCount(
+            itemWidth: posterMetrics.liveShelfLabelWidth,
+            spacing: Self.cardSpacing,
+            containerWidth: UIScreen.main.bounds.width
+        )
+    }
+
+    private func headIconURLs(limit: Int) -> [URL] {
+        items.prefix(limit)
             .compactMap { $0.stream.streamIcon }
             .compactMap { URL(string: $0) }
-        ListImagePrefetch.start(
-            urls: urls,
-            width: posterMetrics.liveShelfIcon,
-            height: posterMetrics.liveShelfIcon,
-            loadProfile: .shelf
-        )
     }
 }
 
@@ -424,7 +621,7 @@ struct LiveStreamCard: View {
     var imageLoadProfile: ImageLoadProfile = .standard
     var onStreamSelected: ((DBLiveStream, DBWatchHistory?) -> Void)? = nil
 
-    @Environment(\.epgSnapshot) private var epgSnapshot
+    @Environment(\.epgLineReserved) private var epgLineReserved
 
     var body: some View {
         Button(action: {
@@ -435,27 +632,93 @@ struct LiveStreamCard: View {
                     url: stream.streamIcon.flatMap { URL(string: $0) },
                     width: iconSize,
                     height: iconSize,
-                    cornerRadius: 12,
+                    cornerRadius: BrowseMetrics.tileCornerRadius,
                     iconName: "tv",
                     loadProfile: imageLoadProfile
                 )
+                .cardHover(cornerRadius: BrowseMetrics.tileCornerRadius)
 
+                // Two lines whatever the name: every card of a row, and the
+                // placeholder of a row that is still loading, has the same height.
                 Text(stream.name)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(width: width)
-                    .foregroundColor(.primary)
+                    .tileTitleStyle(width: width)
 
-                if let snapshot = epgSnapshot {
-                    EPGNowNextLine(nowNext: snapshot[EPGChannelKey.forXtream(stream)],
-                                   width: width, reserveSpace: true)
+                if epgLineReserved {
+                    EPGNowNextSlot(channelKey: EPGChannelKey.forXtream(stream), width: width)
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.cardPress)
+        .accessibilityIdentifier("card.live.\(stream.streamId)")
     }
+}
+
+extension View {
+    /// The context menu of a channel card in the Live browse screens: Play, the
+    /// favourite toggle and, while the guide is on, the channel's schedule.
+    fileprivate func liveCardMenu(
+        stream: DBLiveStream,
+        playlistId: UUID,
+        guideEnabled: Bool,
+        play: @escaping () -> Void,
+        schedule: ((DBLiveStream) -> Void)?
+    ) -> some View {
+        cardContextMenuShape(cornerRadius: BrowseMetrics.tileCornerRadius)
+            .contextMenu {
+                PlayMenuButton(action: play)
+                FavoriteMenuButton(streamId: stream.streamId, type: "live", playlistId: playlistId)
+                if guideEnabled, let schedule {
+                    ScheduleMenuButton { schedule(stream) }
+                }
+            }
+    }
+
+    /// Pushes the schedule of the channel `channel` holds.
+    fileprivate func liveScheduleDestination(_ channel: Binding<DBLiveStream?>, playlist: Playlist) -> some View {
+        navigationDestination(item: channel) { stream in
+            ChannelEPGDetailView(
+                playlist: playlist,
+                channelKey: EPGChannelKey.forXtream(stream) ?? "",
+                displayName: stream.name,
+                iconURL: stream.streamIcon.flatMap { URL(string: $0) },
+                liveStream: stream
+            )
+        }
+    }
+}
+
+/// The logo prefetch a shelf row started, kept so that leaving the screen stops exactly
+/// that head. Rebuilding it on disappear would miss when the row was rotated or handed
+/// other channels in between, and a wider guess would also cancel what other shelves
+/// queued for the same logos on the shared prefetcher. Never publishes, like the memos
+/// below, so the Equatable row is not invalidated by it.
+private final class LiveShelfHeadPrefetch: ObservableObject {
+    private var urls: [URL] = []
+    private var side: CGFloat = 0
+
+    func start(urls: [URL], side: CGFloat) {
+        stop()
+        guard !urls.isEmpty else { return }
+        ListImagePrefetch.start(urls: urls, width: side, height: side, loadProfile: .shelf)
+        self.urls = urls
+        self.side = side
+    }
+
+    func stop() {
+        guard !urls.isEmpty else { return }
+        ListImagePrefetch.stop(urls: urls, width: side, height: side, loadProfile: .shelf)
+        urls = []
+    }
+}
+
+/// Outcome of a pushed list's keyed task.
+private struct LiveListResult {
+    /// Inputs it was computed for; a result for other inputs is stale but still the
+    /// best thing to show until its successor is in.
+    let key: LiveBrowseKey
+    let items: [LiveStreamWithCategory]
+    /// `items` as plain streams, when the task built them along the way.
+    var streams: [DBLiveStream]? = nil
 }
 
 // MARK: - Category Detail View
@@ -466,35 +729,57 @@ struct LiveCategoryDetailView: View {
     @State private var searchText = ""
     @State private var debouncedQuery = ""
     @State private var debounceTask: Task<Void, Never>?
-    @State private var displayItems: [LiveStreamWithCategory] = []
+    /// Result of the last search that finished. Without a query the grid is handed the
+    /// store's own array, so there is nothing to keep in sync here.
+    @State private var searchResult: LiveListResult?
+    @State private var appliedKey: LiveBrowseKey?
+    @State private var scheduleChannel: DBLiveStream?
 
     @ObservedObject private var contentStore = PlaylistContentStore.shared
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
 
-    private var currentStreams: [DBLiveStream] { displayItems.map(\.stream) }
+    private var browseKey: LiveBrowseKey {
+        LiveBrowseKey(
+            query: debouncedQuery.trimmingCharacters(in: .whitespaces),
+            streamsLoaded: contentStore.streamsLoaded,
+            revision: contentStore.liveRevision,
+            hiddenVersion: 0,
+            playlistId: playlist.id,
+            activePlaylistId: contentStore.activePlaylistId
+        )
+    }
 
     var body: some View {
+        let key = browseKey
+        let source = key.isActive ? (contentStore.liveStreamsByCategoryId[category.id] ?? []) : []
+        // A search keeps the list that is on screen until its own result is in.
+        let items = key.query.isEmpty ? source : (searchResult?.items ?? source)
+        let isSearchPending = !key.query.isEmpty && searchResult?.key != key
         LiveCategoryContent(
             playlist: playlist,
-            items: displayItems,
-            onStreamSelected: { stream, history in
-                let selection = LivePlayerSelection(stream: stream, history: history)
-                playerOverlay.present(playlistId: playlist.id) {
+            items: items,
+            isSourceLoading: !key.isActive || !contentStore.streamsLoaded || isSearchPending,
+            isSearchResult: !key.query.isEmpty,
+            onStreamSelected: { stream, queue in
+                playerOverlay.injected?.present(playlistId: playlist.id) {
                     LivePlayerShell(
                         playlist: playlist,
-                        queue: currentStreams,
-                        sections: [LiveChannelCategorySection(id: category.id, title: category.name, streams: currentStreams)],
-                        initialStream: selection.stream,
-                        initialHistory: selection.history,
+                        queue: queue,
+                        sections: [LiveChannelCategorySection(id: category.id, title: category.name, streams: queue)],
+                        initialStream: stream,
+                        initialHistory: nil,
                         subtitle: category.name
                     )
                 }
+            },
+            onScheduleRequested: { stream in
+                scheduleChannel = stream
             }
         )
         .equatable()
+        .liveScheduleDestination($scheduleChannel, playlist: playlist)
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.large)
-        .toolbar(.hidden, for: .tabBar)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("live.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
@@ -504,49 +789,136 @@ struct LiveCategoryDetailView: View {
                 await MainActor.run { debouncedQuery = new }
             }
         }
-        .onDisappear { debounceTask?.cancel(); debounceTask = nil }
-        .task(id: debouncedQuery) { await recomputeItems() }
-        .task(id: contentStore.streamsLoaded) { await recomputeItems() }
+        .onDisappear {
+            debounceTask?.cancel()
+            debounceTask = nil
+            // The screen can come back (another tab, then this one again): the text in
+            // the field must not stay ahead of the list for good.
+            if debouncedQuery != searchText { debouncedQuery = searchText }
+        }
+        .task(id: key) { await apply(key) }
     }
 
-    private func recomputeItems() async {
-        guard playlist.id == contentStore.activePlaylistId else { displayItems = []; return }
+    private func apply(_ key: LiveBrowseKey) async {
+        guard key != appliedKey else { return }
+        guard key.isActive, !key.query.isEmpty else {
+            searchResult = nil
+            appliedKey = key
+            return
+        }
         let base = contentStore.liveStreamsByCategoryId[category.id] ?? []
-        let q = debouncedQuery.trimmingCharacters(in: .whitespaces)
-        if q.isEmpty { displayItems = base; return }
-        let result = await Task.detached(priority: .userInitiated) {
-            let filtered = base.filter { CatalogTextSearch.matches(search: q, text: $0.stream.name) }
-            return CatalogTextSearch.sortLiveByRelevance(filtered, search: q)
-        }.value
+        let search = key.query
+        let items = await CatalogTextSearch.detached {
+            CatalogTextSearch.rankedFilter(base, search: search) { $0.stream.name }
+        }
+        // A cancelled scan returns nothing, which must not pass for "no match".
         guard !Task.isCancelled else { return }
-        displayItems = result
+        searchResult = LiveListResult(key: key, items: items)
+        appliedKey = key
+    }
+}
+
+/// Reference box for a grid's channel queue in the caller's order, filled on the first
+/// tap. Like `LivePlaybackModelMemo`, an object that never publishes: filling it does
+/// not invalidate the grid.
+private final class LiveGridQueueMemo: ObservableObject {
+    private var source: [LiveStreamWithCategory]?
+    private var streams: [DBLiveStream] = []
+
+    /// `Array ==` returns at once for a shared buffer, so asking again for the list the
+    /// queue was built from costs nothing.
+    func streams(of items: [LiveStreamWithCategory]) -> [DBLiveStream] {
+        if let source, source == items { return streams }
+        source = items
+        streams = items.map(\.stream)
+        return streams
+    }
+
+    func reset() {
+        source = nil
+        streams = []
     }
 }
 
 struct LiveCategoryContent: View, Equatable {
     let playlist: Playlist
     let items: [LiveStreamWithCategory]
-    var onStreamSelected: ((DBLiveStream, DBWatchHistory?) -> Void)? = nil
+    /// `items` as plain streams in the same order, when the caller has built them off
+    /// the main thread. Without them the grid maps `items` on the first tap.
+    var streams: [DBLiveStream]? = nil
+    /// The caller's list is not final yet (the catalog is still loading, or a filter of
+    /// the caller is still running): an empty list then means "not known yet".
+    var isSourceLoading: Bool = false
+    /// `items` is what a search left over: an empty list then means "no results".
+    var isSearchResult: Bool = false
+    /// Called with the tapped channel and with the channels of the grid in the order
+    /// they are shown, which is the queue the player steps through.
+    var onStreamSelected: ((DBLiveStream, [DBLiveStream]) -> Void)? = nil
+    /// A card's menu asked for the channel's schedule.
+    var onScheduleRequested: ((DBLiveStream) -> Void)? = nil
 
     /// Cheap signature compare (ignores the selection closure) so a parent @Published
     /// re-render doesn't force SwiftUI to re-process a huge channel list. Internal
     /// @State updates still invalidate normally.
     static func == (lhs: LiveCategoryContent, rhs: LiveCategoryContent) -> Bool {
         lhs.playlist.id == rhs.playlist.id
+            && lhs.isSourceLoading == rhs.isSourceLoading
+            && lhs.isSearchResult == rhs.isSearchResult
             && lhs.items.count == rhs.items.count
             && lhs.items.first?.stream.streamId == rhs.items.first?.stream.streamId
             && lhs.items.last?.stream.streamId == rhs.items.last?.stream.streamId
+            && lhs.streams?.count == rhs.streams?.count
+    }
+
+    /// Everything the grid's own order depends on.
+    private nonisolated struct ContentKey: Equatable {
+        let itemsToken: Int
+        let sort: LiveSortOption
+        let filter: Int
+
+        /// The grid shows the caller's list as it is.
+        var keepsSourceOrder: Bool { sort == .defaultOrder && filter == 0 }
+    }
+
+    /// The caller's list after the grid's sort and filter.
+    private struct Arranged {
+        let key: ContentKey
+        let items: [LiveStreamWithCategory]
+        let streams: [DBLiveStream]
+    }
+
+    private enum Displayed {
+        /// The caller's list as it is.
+        case source
+        case arranged(Arranged)
+        /// The caller's list the grid last applied. The caller has handed over another
+        /// one, which replaces it in the update that also resets the page count and the
+        /// scroll position, so the new list is never drawn at the old list's offset.
+        case previous([LiveStreamWithCategory])
+        /// First display with a stored sort: the list has to be sorted before any of
+        /// it can be shown.
+        case pending
     }
 
     @Environment(\.posterMetrics) private var posterMetrics
+    @Environment(\.epgGuideEnabled) private var epgGuideEnabled
 
     @AppStorage(LiveSortOption.storageKey) private var sortOption: LiveSortOption = .defaultOrder
     /// Screen-local toggle filters (catch-up / EPG).
     @State private var filter: LiveStreamFilter = []
-    /// Sort/filter output, recomputed off the main thread on input changes.
-    @State private var displayItems: [LiveStreamWithCategory] = []
+    /// Sort/filter output for `appliedKey`, computed off the main thread; nil while
+    /// that key keeps the caller's order.
+    @State private var arranged: Arranged?
+    /// Inputs the grid shows. It changes together with the list, the page count and the
+    /// scroll position, in one update, and only when an input really changed: coming
+    /// back to the screen leaves all of them alone.
+    @State private var appliedKey: ContentKey?
+    /// The caller's list as of `appliedKey`. Shares its buffer, so keeping it costs nothing.
+    @State private var appliedSource: [LiveStreamWithCategory] = []
     /// Paginated render count so a huge catalog doesn't build one giant ForEach.
     @State private var visibleCount = Self.pageSize
+    @State private var scrollPosition = ScrollPosition(edge: .top)
+    @StateObject private var queueMemo = LiveGridQueueMemo()
 
     private static let pageSize = 90
 
@@ -560,65 +932,101 @@ struct LiveCategoryContent: View, Equatable {
         return hasher.finalize()
     }
 
+    private var contentKey: ContentKey {
+        ContentKey(itemsToken: itemsToken, sort: sortOption, filter: filter.rawValue)
+    }
+
     private var isFilterActive: Bool {
         sortOption != .defaultOrder || !filter.isEmpty
     }
 
-    private func recompute() async {
-        let source = items
-        let sort = sortOption
-        let activeFilter = filter
-        let result = await Task.detached(priority: .userInitiated) {
-            sort.apply(to: LiveStreamFilter.apply(source, activeFilter))
-        }.value
-        displayItems = result
-        visibleCount = min(Self.pageSize, result.count)
-        prefetch(result)
+    /// What is on screen for `key`. The applied key decides, not `key` itself: after a
+    /// sort or filter change, or a new list from the caller, the previous list stays up
+    /// until the new one replaces it.
+    /// Only the very first display has nothing applied yet; the caller's order is then
+    /// shown directly, so a pushed grid is there in its first frame.
+    private func displayed(for key: ContentKey) -> Displayed {
+        guard let appliedKey else { return key.keepsSourceOrder ? .source : .pending }
+        if !appliedKey.keepsSourceOrder, let arranged { return .arranged(arranged) }
+        if appliedKey.itemsToken != key.itemsToken { return .previous(appliedSource) }
+        return .source
     }
 
-    private func loadMore() {
-        guard visibleCount < displayItems.count else { return }
-        visibleCount = min(visibleCount + Self.pageSize, displayItems.count)
+    private func shownItems(_ displayed: Displayed) -> [LiveStreamWithCategory] {
+        switch displayed {
+        case .source: return items
+        case .arranged(let arranged): return arranged.items
+        case .previous(let list): return list
+        case .pending: return []
+        }
+    }
+
+    /// Whether an empty list is the answer for `key` rather than a list still on its way.
+    private func isSettled(_ displayed: Displayed, for key: ContentKey) -> Bool {
+        switch displayed {
+        // Sorting or filtering an empty list changes nothing.
+        case .source: return true
+        case .arranged(let arranged): return arranged.key == key
+        case .previous, .pending: return false
+        }
+    }
+
+    /// Makes the grid show `key`: the list in the new order, the first page of it, from
+    /// the top.
+    private func apply(_ key: ContentKey) async {
+        guard key != appliedKey else { return }
+        let source = items
+        var result: Arranged?
+        if !key.keepsSourceOrder {
+            let sort = key.sort
+            let filter = LiveStreamFilter(rawValue: key.filter)
+            let arrangement = await CatalogTextSearch.detached {
+                LiveBrowseLists.arranged(source, sort: sort, filter: filter)
+            }
+            // Superseded by a newer choice, whose own run will apply it. Without this
+            // a slow sort could land after a fast one and leave the grid in an order
+            // the menu does not show.
+            guard !Task.isCancelled else { return }
+            result = Arranged(key: key, items: arrangement.items, streams: arrangement.streams)
+        }
+        let isFirstDisplay = appliedKey == nil
+        arranged = result
+        appliedSource = source
+        visibleCount = Self.pageSize
+        if !isFirstDisplay { scrollPosition.scrollTo(edge: .top) }
+        appliedKey = key
+        queueMemo.reset()
+        prefetch(result?.items ?? source)
+    }
+
+    private func loadMore(total: Int) {
+        guard visibleCount < total else { return }
+        visibleCount = min(visibleCount + Self.pageSize, total)
+    }
+
+    /// The channels of the grid in the order they are shown.
+    private func playbackQueue() -> [DBLiveStream] {
+        switch displayed(for: contentKey) {
+        case .arranged(let arranged): return arranged.streams
+        case .previous(let list): return queueMemo.streams(of: list)
+        case .source, .pending: return streams ?? queueMemo.streams(of: items)
+        }
     }
 
     var body: some View {
+        let key = contentKey
+        let displayed = displayed(for: key)
+        let shown = shownItems(displayed)
         Group {
-            if displayItems.isEmpty {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "magnifyingglass")
-                        .font(.largeTitle)
-                        .foregroundColor(.secondary)
-                    Text(L("list.no_channel"))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
+            if !shown.isEmpty {
+                grid(shown)
+            } else if isSourceLoading || !isSettled(displayed, for: key) {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if isSearchResult || !filter.isEmpty {
+                CatalogEmptyView(.noSearchResults)
             } else {
-                let columns = [
-                    GridItem(.adaptive(minimum: posterMetrics.liveGridIconSize), spacing: posterMetrics.gridSpacing)
-                ]
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: posterMetrics.gridRowSpacing) {
-                        ForEach(Array(displayItems.prefix(visibleCount).enumerated()), id: \.element.stream.streamId) { index, item in
-                            LiveStreamCard(
-                                playlistId: playlist.id,
-                                stream: item.stream,
-                                width: posterMetrics.liveGridIconSize,
-                                iconSize: posterMetrics.liveGridIconSize,
-                                imageLoadProfile: .grid,
-                                onStreamSelected: onStreamSelected
-                            )
-                            .onAppear { if index >= visibleCount - 15 { loadMore() } }
-                        }
-                    }
-                    .padding()
-
-                    if visibleCount < displayItems.count {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
-                    }
-                }
+                CatalogEmptyView(.noItems(title: L("list.no_channel"), systemImage: "tv.slash"))
             }
         }
         .toolbar {
@@ -626,9 +1034,55 @@ struct LiveCategoryContent: View, Equatable {
                 sortFilterMenu
             }
         }
-        .task(id: itemsToken) { await recompute() }
-        .task(id: sortOption) { await recompute() }
-        .task(id: filter.rawValue) { await recompute() }
+        .task(id: key) { await apply(key) }
+    }
+
+    private func grid(_ shown: [LiveStreamWithCategory]) -> some View {
+        let columns = [
+            GridItem(
+                .adaptive(minimum: posterMetrics.liveGridIconSize),
+                spacing: posterMetrics.gridSpacing,
+                alignment: .top
+            )
+        ]
+        let total = shown.count
+        return ScrollView {
+            LazyVGrid(columns: columns, spacing: posterMetrics.gridRowSpacing) {
+                ForEach(Indexed(shown.prefix(visibleCount)), id: \.element.stream.streamId) { index, item in
+                    LiveStreamCard(
+                        playlistId: playlist.id,
+                        stream: item.stream,
+                        width: posterMetrics.liveGridIconSize,
+                        iconSize: posterMetrics.liveGridIconSize,
+                        imageLoadProfile: .grid,
+                        onStreamSelected: { stream, _ in
+                            onStreamSelected?(stream, playbackQueue())
+                        }
+                    )
+                    .liveCardMenu(
+                        stream: item.stream,
+                        playlistId: playlist.id,
+                        guideEnabled: epgGuideEnabled,
+                        play: { onStreamSelected?(item.stream, playbackQueue()) },
+                        schedule: onScheduleRequested
+                    )
+                    // The next page is a counter bump, triggered from inside the lazy
+                    // grid well before its end comes into view.
+                    .onAppear { if index >= visibleCount - 15 { loadMore(total: total) } }
+                }
+            }
+            .padding()
+        }
+        .scrollPosition($scrollPosition)
+    }
+
+    private func filterBinding(_ flag: LiveStreamFilter) -> Binding<Bool> {
+        Binding(
+            get: { filter.contains(flag) },
+            set: { isOn in
+                if isOn { filter.insert(flag) } else { filter.remove(flag) }
+            }
+        )
     }
 
     private var sortFilterMenu: some View {
@@ -640,26 +1094,16 @@ struct LiveCategoryContent: View, Equatable {
             }
 
             Section(L("filter.title")) {
-                Button {
-                    filter.formSymmetricDifference(.catchup)
-                } label: {
-                    if filter.contains(.catchup) {
-                        Label(L("filter.catchup"), systemImage: "checkmark")
-                    } else {
-                        Text(L("filter.catchup"))
-                    }
+                // Several can be on at once, so the menu stays open while they are
+                // switched; the sort above and "clear" below still close it.
+                Group {
+                    Toggle(L("filter.catchup"), isOn: filterBinding(.catchup))
+                    Toggle(L("filter.has_epg"), isOn: filterBinding(.hasEPG))
                 }
-                Button {
-                    filter.formSymmetricDifference(.hasEPG)
-                } label: {
-                    if filter.contains(.hasEPG) {
-                        Label(L("filter.has_epg"), systemImage: "checkmark")
-                    } else {
-                        Text(L("filter.has_epg"))
-                    }
-                }
+                .menuActionDismissBehavior(.disabled)
+
                 if !filter.isEmpty {
-                    Button(role: .destructive) {
+                    Button {
                         filter = []
                     } label: {
                         Label(L("filter.clear"), systemImage: "xmark.circle")
@@ -667,10 +1111,11 @@ struct LiveCategoryContent: View, Equatable {
                 }
             }
         } label: {
-            Image(systemName: isFilterActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                .font(.body.weight(.semibold))
+            Label(
+                L("sort.title"),
+                systemImage: isFilterActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
+            )
         }
-        .accessibilityLabel(L("sort.title"))
     }
 
     private func prefetch(_ list: [LiveStreamWithCategory]) {
@@ -690,36 +1135,70 @@ struct AllLiveView: View {
 
     @ObservedObject private var contentStore = PlaylistContentStore.shared
     @ObservedObject private var hiddenStore = HiddenCategoryStore.shared
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
+    @AppStorage(LiveSortOption.storageKey) private var sortOption: LiveSortOption = .defaultOrder
     @State private var searchText = ""
     @State private var debouncedQuery = ""
     @State private var debounceTask: Task<Void, Never>?
-    @State private var displayItems: [LiveStreamWithCategory] = []
+    /// Outcome of the last run of the keyed task: the list for a search or with hidden
+    /// categories left out, and the plain streams of whatever list is shown.
+    @State private var result: LiveListResult?
+    @State private var appliedKey: LiveBrowseKey?
+    @State private var scheduleChannel: DBLiveStream?
 
-    private var currentStreams: [DBLiveStream] { displayItems.map(\.stream) }
+    /// Up to this many channels the player builds its channel panel on the tap, in well
+    /// under a frame; there is nothing to prepare for it.
+    private static let panelPrewarmMinimum = 1500
+
+    private var browseKey: LiveBrowseKey {
+        LiveBrowseKey(
+            query: debouncedQuery.trimmingCharacters(in: .whitespaces),
+            streamsLoaded: contentStore.streamsLoaded,
+            revision: contentStore.liveRevision,
+            hiddenVersion: hiddenStore.version,
+            playlistId: playlist.id,
+            activePlaylistId: contentStore.activePlaylistId
+        )
+    }
+
+    /// The whole list as the one section the player's channel panel shows.
+    private static func panelSection(_ streams: [DBLiveStream]) -> LiveChannelCategorySection {
+        LiveChannelCategorySection(id: "all", title: L("browse.all_live"), streams: streams)
+    }
 
     var body: some View {
+        let key = browseKey
+        let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")
+        // With nothing hidden and no search the list is the catalog itself, and the grid
+        // gets the store's array without waiting for the task.
+        let isCatalog = hidden.isEmpty && key.query.isEmpty
+        let isCurrent = result?.key == key
         LiveCategoryContent(
             playlist: playlist,
-            items: displayItems,
-            onStreamSelected: { stream, history in
-                let all = currentStreams
-                playerOverlay.present(playlistId: playlist.id) {
+            items: items(for: key, isCatalog: isCatalog, nothingHidden: hidden.isEmpty),
+            streams: isCurrent ? result?.streams : nil,
+            isSourceLoading: !key.isActive || !contentStore.streamsLoaded || (!isCatalog && !isCurrent),
+            isSearchResult: !key.query.isEmpty,
+            onStreamSelected: { stream, queue in
+                playerOverlay.injected?.present(playlistId: playlist.id) {
                     LivePlayerShell(
                         playlist: playlist,
-                        queue: all,
-                        sections: [LiveChannelCategorySection(id: "all", title: L("browse.all_live"), streams: all)],
+                        queue: queue,
+                        sections: [Self.panelSection(queue)],
                         initialStream: stream,
-                        initialHistory: history,
+                        initialHistory: nil,
                         subtitle: L("browse.all_live")
                     )
                 }
+            },
+            onScheduleRequested: { stream in
+                scheduleChannel = stream
             }
         )
         .equatable()
+        .liveScheduleDestination($scheduleChannel, playlist: playlist)
         .navigationTitle(L("browse.all_live"))
         .navigationBarTitleDisplayMode(.large)
-        .toolbar(.hidden, for: .tabBar)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("live.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
@@ -729,26 +1208,56 @@ struct AllLiveView: View {
                 await MainActor.run { debouncedQuery = new }
             }
         }
-        .onDisappear { debounceTask?.cancel(); debounceTask = nil }
-        .task(id: debouncedQuery) { await recompute() }
-        .task(id: contentStore.streamsLoaded) { await recompute() }
-        .task(id: hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")) { await recompute() }
+        .onDisappear {
+            debounceTask?.cancel()
+            debounceTask = nil
+            // The screen can come back (another tab, then this one again): the text in
+            // the field must not stay ahead of the list for good.
+            if debouncedQuery != searchText { debouncedQuery = searchText }
+        }
+        .task(id: key) { await apply(key) }
     }
 
-    private func recompute() async {
-        guard playlist.id == contentStore.activePlaylistId else { displayItems = []; return }
+    private func items(for key: LiveBrowseKey, isCatalog: Bool, nothingHidden: Bool) -> [LiveStreamWithCategory] {
+        guard key.isActive else { return [] }
+        if isCatalog { return contentStore.liveStreams }
+        // A result for other inputs stays up until its successor is in.
+        if let result { return result.items }
+        // First search with nothing hidden: the catalog stays up until the result is in.
+        return nothingHidden ? contentStore.liveStreams : []
+    }
+
+    private func apply(_ key: LiveBrowseKey) async {
+        guard key != appliedKey else { return }
+        guard key.isActive else {
+            result = nil
+            appliedKey = key
+            return
+        }
         let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")
         let source = contentStore.liveStreams
-        let q = debouncedQuery.trimmingCharacters(in: .whitespaces)
+        let search = key.query
         // All work off the main thread; the catalog can be very large.
-        let result = await Task.detached(priority: .userInitiated) {
-            let base = source.filter { !hidden.contains($0.stream.categoryId ?? "") }
-            if q.isEmpty { return base }
-            let filtered = base.filter { CatalogTextSearch.matches(search: q, text: $0.stream.name) }
-            return CatalogTextSearch.sortLiveByRelevance(filtered, search: q)
-        }.value
+        let list = await CatalogTextSearch.detached {
+            LiveBrowseLists.allChannels(source, hidden: hidden, search: search)
+        }
         guard !Task.isCancelled else { return }
-        displayItems = result
+        result = LiveListResult(key: key, items: list.items, streams: list.streams)
+        appliedKey = key
+        await prewarmChannelPanel(for: list.streams)
+    }
+
+    /// The player lists this screen's queue as a single section, and builds that
+    /// section's panel model on the tap that opens it when it is not cached: one icon
+    /// URL per channel of the whole list. Done here instead, off the main thread, while
+    /// the grid is already on screen. The cache recognises the array by its buffer, so
+    /// this helps as long as the grid hands over these very streams, which it does in
+    /// the default order; with a stored sort the first tap builds the model as before.
+    private func prewarmChannelPanel(for streams: [DBLiveStream]) async {
+        guard sortOption == .defaultOrder, streams.count > Self.panelPrewarmMinimum else { return }
+        _ = await LiveChannelPanelSectionCache.shared.resolveAll(
+            [Self.panelSection(streams)], playlistId: playlist.id
+        )
     }
 }
 
@@ -1216,15 +1725,34 @@ final class LiveShortEPGAttempts {
     }
 }
 
-/// Reference box behind `LiveStreamsView.playbackModelMemo`: filling it from a tap
-/// handler must not invalidate the view the way a value-type @State write would.
-private final class LivePlaybackModelMemo {
+/// Reference box behind `LiveStreamsView.playbackModelMemo`. It is an object that never
+/// publishes, held as a `@StateObject`: filling it from a tap handler does not
+/// invalidate the view, and the view's value stays comparable across parent updates,
+/// which a fresh instance in a plain `@State` initial value never is.
+private final class LivePlaybackModelMemo: ObservableObject {
     struct Model {
         let queue: [DBLiveStream]
         let sections: [LiveChannelCategorySection]
     }
 
-    var model: Model?
+    private var model: Model?
+    /// Inputs of the shelves `model` was built from.
+    private var key: LiveBrowseKey?
+
+    /// The model for the shelves identified by `key`; built when the box is empty or
+    /// holds the model of other shelves.
+    func model(for key: LiveBrowseKey?, build: () -> Model) -> Model {
+        if let model, self.key == key { return model }
+        let built = build()
+        model = built
+        self.key = key
+        return built
+    }
+
+    func reset() {
+        model = nil
+        key = nil
+    }
 }
 
 /// Per-category memo of the channel-panel display model for the Xtream live shell.

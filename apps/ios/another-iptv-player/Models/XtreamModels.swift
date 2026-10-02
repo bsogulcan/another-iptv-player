@@ -1,7 +1,11 @@
 import Foundation
 
+// Everything in this file is `nonisolated`: panel responses are decoded in a detached
+// task (a full movie list is tens of megabytes of JSON), so neither the types nor their
+// Decodable conformances may be tied to the main actor.
+
 // MARK: - Safe Decoder Extension
-extension KeyedDecodingContainer {
+nonisolated extension KeyedDecodingContainer {
     func decodeFlexibleStringIfPresent(forKey key: K) -> String? {
         if let stringValue = try? decodeIfPresent(String.self, forKey: key) {
             return stringValue
@@ -26,7 +30,7 @@ extension KeyedDecodingContainer {
 }
 
 // MARK: - Auth
-struct XtreamAuthResponse: Codable {
+nonisolated struct XtreamAuthResponse: Codable {
     let userInfo: XtreamUserInfo?
     let serverInfo: XtreamServerInfo?
     
@@ -42,7 +46,7 @@ struct XtreamAuthResponse: Codable {
     }
 }
 
-struct XtreamUserInfo: Codable {
+nonisolated struct XtreamUserInfo: Codable {
     let username: String?
     let password: String?
     let message: String?
@@ -86,7 +90,7 @@ struct XtreamUserInfo: Codable {
     }
 }
 
-struct XtreamServerInfo: Codable {
+nonisolated struct XtreamServerInfo: Codable {
     let url: String?
     let port: String?
     let httpsPort: String?
@@ -122,7 +126,7 @@ struct XtreamServerInfo: Codable {
 }
 
 // MARK: - Category
-struct XtreamCategory: Codable, Identifiable {
+nonisolated struct XtreamCategory: Codable, Identifiable {
     let categoryId: String?
     let categoryName: String?
     let parentId: Int?
@@ -147,7 +151,7 @@ struct XtreamCategory: Codable, Identifiable {
 }
 
 // MARK: - Streams
-struct XtreamLiveStream: Codable, Identifiable {
+nonisolated struct XtreamLiveStream: Codable, Identifiable {
     let streamId: Int?
     let streamIcon: String?
     let epgChannelId: String?
@@ -184,7 +188,7 @@ struct XtreamLiveStream: Codable, Identifiable {
     }
 }
 
-struct XtreamVODStream: Codable, Identifiable {
+nonisolated struct XtreamVODStream: Codable, Identifiable {
     let streamId: Int?
     let name: String?
     let streamIcon: String?
@@ -220,7 +224,7 @@ struct XtreamVODStream: Codable, Identifiable {
     }
 }
 
-struct XtreamSeries: Codable, Identifiable {
+nonisolated struct XtreamSeries: Codable, Identifiable {
     let seriesId: Int?
     let name: String?
     let cover: String?
@@ -263,7 +267,7 @@ struct XtreamSeries: Codable, Identifiable {
 }
 
 // MARK: - Error-Safe Decodable
-struct FailableDecodable<Base: Decodable>: Decodable {
+nonisolated struct FailableDecodable<Base: Decodable>: Decodable {
     let base: Base?
 
     init(from decoder: Decoder) throws {
@@ -272,14 +276,16 @@ struct FailableDecodable<Base: Decodable>: Decodable {
     }
 }
 
+extension FailableDecodable: Sendable where Base: Sendable {}
+
 // MARK: - Series Info
-struct XtreamSeriesInfoResponse: Codable {
+nonisolated struct XtreamSeriesInfoResponse: Codable {
     let seasons: [XtreamSeason]?
     let info: XtreamSeriesDetails?
     let episodes: [String: [XtreamEpisode]]?
 }
 
-extension XtreamSeriesInfoResponse {
+nonisolated extension XtreamSeriesInfoResponse {
     /// Episodes regrouped by numeric season, since panels key the dictionary
     /// inconsistently ("1", "01", " 1" all mean season 1).
     var episodesBySeasonNumber: [Int: [XtreamEpisode]] {
@@ -313,7 +319,7 @@ extension XtreamSeriesInfoResponse {
     }
 }
 
-struct XtreamSeriesDetails: Codable {
+nonisolated struct XtreamSeriesDetails: Codable {
     let name: String?
     let cover: String?
     let plot: String?
@@ -356,7 +362,7 @@ struct XtreamSeriesDetails: Codable {
     }
 }
 
-struct XtreamSeason: Codable, Identifiable {
+nonisolated struct XtreamSeason: Codable, Identifiable {
     let name: String?
     let seasonNumber: Int?
     let cover: String?
@@ -390,7 +396,7 @@ struct XtreamSeason: Codable, Identifiable {
     }
 }
 
-struct XtreamEpisode: Codable, Identifiable {
+nonisolated struct XtreamEpisode: Codable, Identifiable {
     let id: String? // "1234"
     let episodeNum: Int?
     let title: String?
@@ -415,7 +421,7 @@ struct XtreamEpisode: Codable, Identifiable {
     }
 }
 
-struct XtreamEpisodeInfo: Codable {
+nonisolated struct XtreamEpisodeInfo: Codable {
     let plot: String?
     let duration: String?
     let rating: String?
@@ -437,7 +443,7 @@ struct XtreamEpisodeInfo: Codable {
     }
 }
 // MARK: - VOD Info
-struct XtreamVODInfoResponse: Codable {
+nonisolated struct XtreamVODInfoResponse: Codable {
     let info: XtreamVODInfo?
     let movieData: XtreamVODMovieData?
     
@@ -447,7 +453,7 @@ struct XtreamVODInfoResponse: Codable {
     }
 }
 
-struct XtreamVODInfo: Codable {
+nonisolated struct XtreamVODInfo: Codable {
     let name: String?
     let movieImage: String?
     let coverBig: String?
@@ -496,7 +502,7 @@ struct XtreamVODInfo: Codable {
     }
 }
 
-struct XtreamVODMovieData: Codable {
+nonisolated struct XtreamVODMovieData: Codable {
     let streamId: Int?
     let name: String?
     let added: String?

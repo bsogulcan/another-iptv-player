@@ -49,22 +49,24 @@ struct PosterMetrics: Equatable, Sendable {
     /// Raf satırı: poster + başlık alanı (yaklaşık 2 satır caption).
     var shelfRowTotalHeight: CGFloat { shelfPosterHeight + scaled(64) }
 
-    /// Kategori detay grid'i için prefetch boyutu (.grid profiliyle eşleşir)
-    func prefetchCategoryDecodePixelSize() -> CGSize {
-        let s = min(UIScreen.main.scale, 2)
-        return CGSize(
-            width: ceil(categoryGridPosterWidth * s),
-            height: ceil(categoryGridPosterHeight * s)
-        )
+    /// Shelf row height for a caption block the caller measures in text units (for example
+    /// with `@ScaledMetric(relativeTo: .caption)`). The poster shrinks with the screen, the
+    /// title under it does not, so the two parts cannot share one scale factor.
+    func shelfRowHeight(captionBlock: CGFloat) -> CGFloat {
+        shelfPosterHeight + captionBlock
     }
 
-    /// Yatay raf önizlemesi için prefetch boyutu (.shelf profiliyle eşleşir)
-    func prefetchShelfDecodePixelSize() -> CGSize {
-        let s = min(UIScreen.main.scale, 2)
-        return CGSize(
-            width: ceil(shelfPosterWidth * s),
-            height: ceil(shelfPosterHeight * s)
-        )
+    /// Cap for the decoded side of a channel logo, in pixels.
+    static let logoDecodePixelCap: CGFloat = 256
+
+    /// One decode side, in points, for channel logos wherever they are drawn (pass it as
+    /// `decodeWidth` / `decodeHeight` and as the prefetch size). A logo decoded once is
+    /// then a memory hit on every screen instead of one bitmap per display size. It follows
+    /// the largest logo tile but is capped in pixels, so an iPad does not hold 360 px
+    /// bitmaps for 32 pt cells. Meant for the profiles that decode at up to 2x.
+    var logoDecodeSide: CGFloat {
+        let cap = (Self.logoDecodePixelCap / CachedImage.decodeScale(for: .grid)).rounded(.down)
+        return min(liveGridIconSize, cap)
     }
 
     private func scaled(_ base: CGFloat) -> CGFloat {

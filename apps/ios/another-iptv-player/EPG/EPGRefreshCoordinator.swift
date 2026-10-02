@@ -9,8 +9,10 @@ enum EPGRefreshPhase: Sendable, Equatable {
 
 /// Orchestrates a single playlist's EPG refresh off the main actor: resolve source
 /// URL → download (conditional GET) → stream-parse into the DB → update bookkeeping.
-/// `nonisolated` so all of this runs on a background thread; only the `progress`
-/// callback hops to the main actor.
+/// `nonisolated` alone does not put it there: with this project's build settings a
+/// nonisolated async function runs on its caller's actor, and the caller is the
+/// main-actor `EPGStore`. `refresh` is `@concurrent` for that reason; only the
+/// `progress` callback hops to the main actor.
 nonisolated struct EPGRefreshCoordinator {
 
     struct RefreshResult: Sendable {
@@ -20,13 +22,21 @@ nonisolated struct EPGRefreshCoordinator {
     }
 
     private let downloader: EPGDownloader
+    private let database: AppDatabase
 
-    init(downloader: EPGDownloader = EPGDownloader()) {
+    /// The app uses the defaults. Tests pass a downloader over a stubbed session
+    /// and an in-memory database.
+    init(downloader: EPGDownloader = EPGDownloader(), database: AppDatabase = .shared) {
         self.downloader = downloader
+        self.database = database
     }
 
     /// Refreshes `playlist`'s guide. Records `epgSource` bookkeeping (attempt time,
     /// success/error) as a side effect and rethrows on failure.
+    ///
+    /// `@concurrent`: everything after the download (gunzip, XML parse, staging
+    /// batches, publish) is synchronous and takes seconds on a large feed.
+    @concurrent
     func refresh(playlist: Playlist,
                  progress: @escaping @MainActor (EPGRefreshPhase) -> Void) async throws -> RefreshResult {
         let candidates = try sourceCandidates(playlist: playlist)
@@ -44,7 +54,7 @@ nonisolated struct EPGRefreshCoordinator {
             let futureCutoff = Int64(now.addingTimeInterval(EPGConstants.futureRetention).timeIntervalSince1970)
 
             await progress(.download)
-            let prior = try? await AppDatabase.shared.read { db in
+            let prior = try? await database.read { db in
                 try DBEPGSource.fetchOne(db, key: playlist.id)
             }
 
@@ -131,7 +141,8 @@ nonisolated struct EPGRefreshCoordinator {
 
     private func defaultOffsetSeconds(playlist: Playlist) async -> Int {
         guard playlist.kind == .xtream else { return 0 }   // M3U offset-less → UTC
-        let tz = await PanelTimeZoneResolver.resolve(playlist: playlist)
+        let tz = await PanelTimeZoneResolver.resolve(playlist: playlist, database: database,
+                                                     urlSession: downloader.urlSession)
         return tz.secondsFromGMT(for: Date())
     }
 
@@ -144,7 +155,7 @@ nonisolated struct EPGRefreshCoordinator {
     }
 
     private func gatherWanted(playlist: Playlist) async throws -> Wanted {
-        try await AppDatabase.shared.read { db in
+        try await database.read { db in
             var keys = Set<String>()
             var names = Set<String>()
             var maxArchive = 0
@@ -170,9 +181,14 @@ nonisolated struct EPGRefreshCoordinator {
 
     private func parseIntoDatabase(fileURL: URL, playlistId: UUID, wanted: Wanted,
                                    pastCutoff: Int64, futureCutoff: Int64, offsetSeconds: Int) throws -> (programmes: Int, channels: Int) {
+        // Synchronous from here to the publish, and every batch blocks its thread
+        // on the database writer. Debug builds and the unit tests stop a change
+        // that brings it back onto the main thread; a release build would stall,
+        // not crash.
+        assert(!Thread.isMainThread, "the guide parse must not run on the main thread")
         // Build the replacement in staging. The live guide remains readable while
         // XML parsing and batched inserts are in progress.
-        try AppDatabase.shared.writeSync { db in
+        try database.writeSync { db in
             try db.execute(sql: "DELETE FROM epgProgrammeStaging WHERE playlistId = ?", arguments: [playlistId])
             try db.execute(sql: "DELETE FROM epgChannelStaging WHERE playlistId = ?", arguments: [playlistId])
         }
@@ -195,7 +211,7 @@ nonisolated struct EPGRefreshCoordinator {
             onChannelBatch: { batch in
                 if Task.isCancelled { return false }
                 do {
-                    try AppDatabase.shared.writeSync { db in
+                    try database.writeSync { db in
                         for c in batch {
                             try db.execute(sql: """
                                 INSERT OR REPLACE INTO epgChannelStaging
@@ -211,7 +227,7 @@ nonisolated struct EPGRefreshCoordinator {
             onProgrammeBatch: { batch in
                 if Task.isCancelled { return false }
                 do {
-                    try AppDatabase.shared.writeSync { db in
+                    try database.writeSync { db in
                         for p in batch {
                             try db.execute(sql: """
                                 INSERT OR REPLACE INTO epgProgrammeStaging
@@ -239,7 +255,7 @@ nonisolated struct EPGRefreshCoordinator {
     /// Swaps staging into the live tables atomically. Readers on the GRDB pool see
     /// either the complete old guide or the complete new guide, never a partial one.
     private func publishStagedGuide(playlistId: UUID) throws {
-        try AppDatabase.shared.writeSync { db in
+        try database.writeSync { db in
             try Self.publishStagedGuide(in: db, playlistId: playlistId)
         }
     }
@@ -269,7 +285,7 @@ nonisolated struct EPGRefreshCoordinator {
     }
 
     private func discardStagedGuide(playlistId: UUID) throws {
-        try AppDatabase.shared.writeSync { db in
+        try database.writeSync { db in
             try db.execute(sql: "DELETE FROM epgProgrammeStaging WHERE playlistId = ?", arguments: [playlistId])
             try db.execute(sql: "DELETE FROM epgChannelStaging WHERE playlistId = ?", arguments: [playlistId])
         }
@@ -278,7 +294,7 @@ nonisolated struct EPGRefreshCoordinator {
     // MARK: - Bookkeeping
 
     private func recordAttempt(playlistId: UUID, sourceType: EPGSourceType) async {
-        try? await AppDatabase.shared.write { db in
+        try? await database.write { db in
             var src = try DBEPGSource.fetchOne(db, key: playlistId) ?? DBEPGSource(playlistId: playlistId, sourceType: sourceType.rawValue)
             src.sourceType = sourceType.rawValue
             src.fetchedAt = Date()
@@ -289,7 +305,7 @@ nonisolated struct EPGRefreshCoordinator {
     private func recordSuccess(playlistId: UUID, sourceType: EPGSourceType, url: URL,
                                etag: String?, lastModified: String?,
                                programmeCount: Int, channelCount: Int) async throws {
-        try await AppDatabase.shared.write { db in
+        try await database.write { db in
             var src = try DBEPGSource.fetchOne(db, key: playlistId) ?? DBEPGSource(playlistId: playlistId, sourceType: sourceType.rawValue)
             src.sourceType = sourceType.rawValue
             src.url = url.absoluteString
@@ -305,7 +321,7 @@ nonisolated struct EPGRefreshCoordinator {
     }
 
     private func recordError(playlistId: UUID, message: String) async {
-        try? await AppDatabase.shared.write { db in
+        try? await database.write { db in
             guard var src = try DBEPGSource.fetchOne(db, key: playlistId) else { return }
             src.lastError = message
             try src.save(db)

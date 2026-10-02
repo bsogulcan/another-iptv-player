@@ -1,15 +1,22 @@
 import SwiftUI
 
 enum ContentRating {
-    private static let roundedFormatter: NumberFormatter = {
+    /// Rebuilt when the app language or the device region changes, so ratings follow
+    /// `AppLocale.current` like every other number on screen.
+    private static var cachedFormatter: NumberFormatter?
+
+    private static var roundedFormatter: NumberFormatter {
+        let locale = AppLocale.current
+        if let cached = cachedFormatter, cached.locale == locale { return cached }
         let f = NumberFormatter()
-        f.locale = .current
+        f.locale = locale
         f.numberStyle = .decimal
         f.maximumFractionDigits = 1
         f.minimumFractionDigits = 0
         f.roundingMode = .halfUp
+        cachedFormatter = f
         return f
-    }()
+    }
 
     /// Boş, yalnızca boşluk veya sayısal olarak 0 olan puanları göstermeyiz.
     /// Sayısal değerler tek ondalık basamağa yuvarlanır (ör. 6.665 → 6.7).
@@ -24,6 +31,15 @@ enum ContentRating {
             return nil
         }
         return roundedFormatter.string(from: numeric)
+    }
+
+    /// The same text for a rating that is already a number (the detail hero), from
+    /// the same formatter, so a poster badge and the hero of the same title agree on
+    /// the decimal separator and on the rounding. A rating of 0 means "not rated":
+    /// it yields an empty string and the caller leaves the label out.
+    static func displayText(_ value: Double) -> String {
+        guard value.isFinite, value != 0 else { return "" }
+        return roundedFormatter.string(from: NSNumber(value: value)) ?? ""
     }
 }
 

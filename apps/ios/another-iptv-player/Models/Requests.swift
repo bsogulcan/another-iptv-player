@@ -3,23 +3,34 @@ import GRDB
 import GRDBQuery
 import Combine
 
+private extension ValueObservation where Reducer: ValueReducer {
+    /// `immediate` fetches the first value synchronously while the view subscribes,
+    /// so its first body already has it instead of the request's default value.
+    /// That read runs on the main thread and waits for a free reader: opt in only
+    /// for single-row or small indexed lookups that decide the first frame's
+    /// layout, never per list row and never for catalog-sized requests. The
+    /// subscription has to start on the main thread, which is where `@Query` starts it.
+    func publisher(in appDatabase: AppDatabase, immediate: Bool) -> DatabasePublishers.Value<Reducer.Value> {
+        immediate
+            ? publisher(in: appDatabase.reader, scheduling: .immediate)
+            : publisher(in: appDatabase.reader)
+    }
+}
+
 struct PlaylistRequest: Queryable, Equatable {
     static var defaultValue: [Playlist]? { nil }
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[Playlist]?, Never> {
-        print("DATABASE: PlaylistRequest publisher called")
-        return ValueObservation
+        ValueObservation
             .tracking { db in
-                let playlists = try Playlist.fetchAll(db)
-                print("DATABASE: FetchAll(playlist) returns \(playlists.count) items")
-                return playlists
+                try Playlist.fetchAll(db)
             }
-            .publisher(in: appDatabase.reader)
+            // The playlist list is the launch frame: with the list in the first body
+            // the root view goes straight to it (or to the remembered playlist)
+            // instead of drawing a blank frame while it waits for the first value.
+            .publisher(in: appDatabase, immediate: true)
             .map { $0 as [Playlist]? }
-            .catch { error in
-                print("DATABASE: PlaylistRequest error: \(error)")
-                return Just([] as [Playlist]?)
-            }
+            .catch { _ in Just([] as [Playlist]?) }
             .eraseToAnyPublisher()
     }
 }
@@ -193,6 +204,8 @@ struct SeriesByIDRequest: Queryable, Equatable {
     
     let seriesId: Int
     let playlistId: UUID
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBSeries?, Never> {
         ValueObservation
@@ -201,7 +214,7 @@ struct SeriesByIDRequest: Queryable, Equatable {
                     .filter(Column("seriesId") == seriesId && Column("playlistId") == playlistId)
                     .fetchOne(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             .catch { _ in Just(nil) }
             .eraseToAnyPublisher()
     }
@@ -212,6 +225,8 @@ struct SeasonsRequest: Queryable, Equatable {
     
     let seriesId: Int
     let playlistId: UUID
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[DBSeason], Never> {
         ValueObservation
@@ -221,7 +236,7 @@ struct SeasonsRequest: Queryable, Equatable {
                     .order(Column("seasonNumber"))
                     .fetchAll(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             .catch { _ in Just([]) }
             .eraseToAnyPublisher()
     }
@@ -231,6 +246,8 @@ struct EpisodesRequest: Queryable, Equatable {
     static var defaultValue: [DBEpisode] { [] }
     
     let seasonId: String
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[DBEpisode], Never> {
         ValueObservation
@@ -240,7 +257,7 @@ struct EpisodesRequest: Queryable, Equatable {
                     .order(Column("episodeNum"))
                     .fetchAll(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             .catch { _ in Just([]) }
             .eraseToAnyPublisher()
     }
@@ -250,6 +267,8 @@ struct VODByIDRequest: Queryable, Equatable {
     
     let streamId: Int
     let playlistId: UUID
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBVODStream?, Never> {
         ValueObservation
@@ -258,7 +277,7 @@ struct VODByIDRequest: Queryable, Equatable {
                     .filter(Column("streamId") == streamId && Column("playlistId") == playlistId)
                     .fetchOne(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             .catch { _ in Just(nil) }
             .eraseToAnyPublisher()
     }
@@ -272,6 +291,8 @@ struct IsFavoriteRequest: Queryable, Equatable {
     let streamId: Int
     let playlistId: UUID
     let type: String
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<Bool, Never> {
         ValueObservation
@@ -283,7 +304,7 @@ struct IsFavoriteRequest: Queryable, Equatable {
                     .fetchCount(db)
                 return count > 0
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             .catch { _ in Just(false) }
             .eraseToAnyPublisher()
     }
@@ -378,6 +399,10 @@ struct WatchHistoryRequest: Queryable, Equatable {
     let streamId: String
     let playlistId: UUID
     let type: String
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    /// For a detail screen's own row only: an episode list opens one of these per
+    /// row, and a synchronous read per row would land on the main thread while scrolling.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBWatchHistory?, Never> {
         ValueObservation
@@ -386,7 +411,7 @@ struct WatchHistoryRequest: Queryable, Equatable {
                     .filter(Column("streamId") == streamId && Column("playlistId") == playlistId && Column("type") == type)
                     .fetchOne(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             // The player saves a history row every few seconds and the observation
             // re-fetches on every write to the table. Without this, each mounted
             // episode row and detail screen re-renders for a row that is not theirs.
@@ -402,6 +427,8 @@ struct RecentWatchHistoryRequest: Queryable, Equatable {
     let playlistId: UUID
     var limit: Int = 20
     var type: String? = nil
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<[DBWatchHistory], Never> {
         ValueObservation
@@ -417,7 +444,7 @@ struct RecentWatchHistoryRequest: Queryable, Equatable {
                     .limit(limit)
                     .fetchAll(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             // A type-filtered list (the Movies or Series shelf) does not change while
             // something of another type plays; do not re-render it on those writes.
             // The playing item's own list still differs in its first row, so the
@@ -503,6 +530,8 @@ struct LatestSeriesWatchHistoryRequest: Queryable, Equatable {
     
     let seriesId: String
     let playlistId: UUID
+    /// First value delivered synchronously on subscription; see `publisher(in:immediate:)`.
+    var immediate: Bool = false
     
     func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBWatchHistory?, Never> {
         ValueObservation
@@ -512,7 +541,7 @@ struct LatestSeriesWatchHistoryRequest: Queryable, Equatable {
                     .order(Column("lastWatchedAt").desc)
                     .fetchOne(db)
             }
-            .publisher(in: appDatabase.reader)
+            .publisher(in: appDatabase, immediate: immediate)
             // Same reason as WatchHistoryRequest: a series detail screen should not
             // re-render while an episode of another series (or a film) is playing.
             .removeDuplicates()

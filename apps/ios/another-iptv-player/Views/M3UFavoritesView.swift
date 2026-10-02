@@ -9,37 +9,51 @@ struct M3UFavoritesView: View {
 
     @ObservedObject private var store = M3UContentStore.shared
     @ObservedObject private var favorites = M3UFavoriteStore.shared
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
 
     @State private var searchText = ""
     @State private var debouncedQuery = ""
     @State private var debounceTask: Task<Void, Never>?
-    @State private var favoriteChannels: [DBM3UChannel] = []
+    /// The favourites that are in the playlist, in playlist order. nil until the first
+    /// scan of the catalog has answered: "none" is only known after it.
+    @State private var favoriteChannels: [DBM3UChannel]?
     @State private var filtered: [DBM3UChannel] = []
+    /// Input of the scan whose result is on screen.
+    @State private var appliedKey: RecomputeKey?
 
     /// Favori kümesi veya katalog değişince yeniden hesaplama tetiği.
-    private var recomputeKey: String {
-        "\(favorites.favoriteIds.count)-\(favorites.favoriteIds.hashValue)-\(store.channels.count)-\(debouncedQuery)"
+    /// The store's revision stands for the catalog: a channel count misses a refresh
+    /// that leaves the size unchanged.
+    private struct RecomputeKey: Equatable {
+        let favoriteIds: Set<String>
+        let revision: Int
+        let query: String
+    }
+
+    private var recomputeKey: RecomputeKey {
+        RecomputeKey(favoriteIds: favorites.favoriteIds, revision: store.revision, query: debouncedQuery)
     }
 
     var body: some View {
         Group {
-            if favoriteChannels.isEmpty {
-                ContentUnavailableView(
-                    L("favorites.empty.title"),
-                    systemImage: "star",
-                    description: Text(L("favorites.empty.message"))
-                )
-            } else if filtered.isEmpty {
-                ContentUnavailableView(
-                    L("favorites.empty.no_result.title"),
-                    systemImage: "magnifyingglass",
-                    description: Text(L("category_picker.not_found.message"))
-                )
-            } else {
-                M3UGroupGridContent(items: filtered) { channel in
-                    present(channel)
+            if favorites.favoriteIds.isEmpty {
+                // Known without the scan, so it is right in the first frame.
+                noFavoritesState
+            } else if let favoriteChannels {
+                if favoriteChannels.isEmpty {
+                    noFavoritesState
+                } else if filtered.isEmpty {
+                    CatalogEmptyView(.noSearchResults)
+                } else {
+                    M3UGroupGridContent(items: filtered, menu: .favorites) { channel in
+                        present(channel)
+                    }
+                    .equatable()
                 }
+            } else {
+                // The scan has not answered yet. Nothing is drawn for those few frames:
+                // the empty state here would flash before the grid replaces it.
+                Color.clear
             }
         }
         .searchable(text: $searchText, prompt: L("favorites.search_placeholder"))
@@ -53,42 +67,48 @@ struct M3UFavoritesView: View {
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
-                await MainActor.run { debouncedQuery = new }
+                debouncedQuery = new
             }
         }
         .task(id: recomputeKey) { await recompute() }
         .onDisappear { debounceTask?.cancel(); debounceTask = nil }
         .navigationTitle(L("favorites.title"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
+    }
+
+    private var noFavoritesState: some View {
+        CatalogEmptyView(.message(
+            title: L("favorites.empty.title"),
+            systemImage: "star",
+            description: L("favorites.empty.message")
+        ))
     }
 
     private func recompute() async {
+        let key = recomputeKey
+        // The task also restarts when the screen comes back (a tab switch); the lists
+        // on screen are still the answer then.
+        guard key != appliedKey else { return }
         let channels = store.channels
-        let ids = favorites.favoriteIds
-        let q = debouncedQuery.trimmingCharacters(in: .whitespaces)
-        let result = await Task.detached(priority: .userInitiated) { () -> ([DBM3UChannel], [DBM3UChannel]) in
+        let ids = key.favoriteIds
+        let query = key.query.trimmingCharacters(in: .whitespaces)
+        let result = await CatalogTextSearch.detached { () -> ([DBM3UChannel], [DBM3UChannel]) in
             // Sıralama: DB'deki kanal listesindeki orijinal sıra (sortIndex) korunur.
-            let favs = channels.filter { ids.contains($0.id) }
-            let filteredList = q.isEmpty
-                ? favs
-                : favs.filter { CatalogTextSearch.matches(search: q, text: $0.name) }
-            return (favs, filteredList)
-        }.value
+            let favs = ids.isEmpty ? [] : channels.filter { ids.contains($0.id) }
+            // A blank query returns the favourites as they are; a real one ranks its hits.
+            let hits = CatalogTextSearch.rankedFilter(favs, search: query) { $0.name }
+            return (favs, hits)
+        }
+        // A cancelled scan returns empty lists, which must not be shown as "no favourites".
         guard !Task.isCancelled else { return }
         favoriteChannels = result.0
         filtered = result.1
+        appliedKey = key
     }
 
     private func present(_ channel: DBM3UChannel) {
-        guard M3UParser.sanitizedURL(from: channel.url) != nil else { return }
         // Favorilerden oynatırken queue = favori listesi (prev/next favoriler arasında geçer).
-        playerOverlay.present {
-            M3UPlayerShell(
-                playlist: playlist,
-                channel: channel,
-                queue: filtered
-            )
-        }
+        guard let overlay = playerOverlay.injected else { return }
+        M3UPlayback.present(channel, queue: filtered, playlist: playlist, overlay: overlay)
     }
 }

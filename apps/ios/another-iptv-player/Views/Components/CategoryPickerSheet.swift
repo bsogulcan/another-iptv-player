@@ -36,11 +36,13 @@ struct CategoryPickerSheet: View {
     /// iki kez normalize edip tarıyordu (binlerce M3U grubunda görünür takılma).
     private func partitionedEntries() -> (visible: [Entry], hidden: [Entry]) {
         let q = query.trimmingCharacters(in: .whitespaces)
+        // Built once: the folded search words are the same for every row.
+        let search = q.isEmpty ? nil : CatalogTextSearch.Query(q)
         let ids = hiddenIds
         var visible: [Entry] = []
         var hidden: [Entry] = []
         for entry in entries {
-            if !q.isEmpty, !CatalogTextSearch.matches(search: q, text: entry.name) { continue }
+            if let search, !search.matches(entry.name) { continue }
             if hidingEnabled, ids.contains(entry.id) {
                 hidden.append(entry)
             } else {
@@ -79,6 +81,10 @@ struct CategoryPickerSheet: View {
                         }
                     }
                     .listStyle(.insetGrouped)
+                    // A category that is hidden or shown travels to its section. Scoped
+                    // to this list, so the shelves behind the sheet are not animated
+                    // by the same change, and typing in the search field is not either.
+                    .animation(.default, value: hiddenStore.version)
                 }
             }
             .navigationTitle(title)
@@ -96,42 +102,69 @@ struct CategoryPickerSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        // Regular width (iPad): the narrower form sheet instead of a page-sized one
+        // for what is a short list. No effect on the compact-width bottom sheet.
+        .presentationSizing(.form)
     }
 
     @ViewBuilder
     private func row(_ entry: Entry, isHidden: Bool) -> some View {
         Button {
-            onSelect(entry.id)
+            if isHidden {
+                // A hidden category has no shelf to jump to, so selecting it would
+                // close the sheet and show nothing. The tap brings it back instead
+                // and the sheet stays open.
+                setHidden(false, entry)
+            } else {
+                onSelect(entry.id)
+            }
         } label: {
             HStack {
                 Text(entry.name)
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                Spacer()
-                Text("\(entry.count)")
-                    .font(.caption.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.15))
-                    .cornerRadius(8)
-            }
-        }
-        .opacity(isHidden ? 0.55 : 1)
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            if hidingEnabled, let pid = playlistId, let t = type {
-                Button {
-                    hiddenStore.setHidden(!isHidden, playlistId: pid, type: t, categoryId: entry.id)
-                } label: {
-                    if isHidden {
-                        Label(L("category_picker.unhide"), systemImage: "eye")
-                    } else {
-                        Label(L("category_picker.hide"), systemImage: "eye.slash")
-                    }
+                if isHidden {
+                    Spacer()
+                    Image(systemName: "eye.slash")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .accessibilityHidden(true)
                 }
-                .tint(isHidden ? .accentColor : .gray)
             }
         }
+        // The `Text` form: the count form draws nothing for 0, and counts are 0
+        // while the streams are still loading.
+        .badge(Text("\(entry.count)").monospacedDigit())
+        .opacity(isHidden ? 0.55 : 1)
+        .accessibilityHint(isHidden ? L("category_picker.unhide") : "")
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            if hidingEnabled {
+                visibilityButton(entry, isHidden: isHidden)
+                    .tint(isHidden ? .accentColor : .gray)
+            }
+        }
+        // The same action for those who do not find the swipe.
+        .contextMenu {
+            if hidingEnabled {
+                visibilityButton(entry, isHidden: isHidden)
+            }
+        }
+    }
+
+    private func visibilityButton(_ entry: Entry, isHidden: Bool) -> some View {
+        Button {
+            setHidden(!isHidden, entry)
+        } label: {
+            if isHidden {
+                Label(L("category_picker.unhide"), systemImage: "eye")
+            } else {
+                Label(L("category_picker.hide"), systemImage: "eye.slash")
+            }
+        }
+    }
+
+    private func setHidden(_ hide: Bool, _ entry: Entry) {
+        guard let pid = playlistId, let t = type else { return }
+        hiddenStore.setHidden(hide, playlistId: pid, type: t, categoryId: entry.id)
     }
 }

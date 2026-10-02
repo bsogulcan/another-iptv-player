@@ -4,10 +4,18 @@ import Nuke
 
 struct ZoomableImageView: UIViewRepresentable {
     let url: URL
+    /// The request under which the caller already has this image on screen, usually at a
+    /// much smaller size. When it is still in the memory cache, that bitmap is shown from
+    /// the first frame and the full-size image replaces it once loaded.
+    var placeholderRequest: ImageRequest? = nil
     var onDismiss: () -> Void
 
+    fileprivate static let imageTag = 1
+    fileprivate static let loaderTag = 2
+    fileprivate static let failureTag = 3
+
     func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = UIScrollView()
+        let scrollView = LayoutReportingScrollView()
         scrollView.backgroundColor = .clear
         scrollView.delegate = context.coordinator
         scrollView.minimumZoomScale = 1.0
@@ -18,31 +26,28 @@ struct ZoomableImageView: UIViewRepresentable {
         
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
-        imageView.tag = 1
+        imageView.tag = Self.imageTag
         imageView.isUserInteractionEnabled = true
         scrollView.addSubview(imageView)
         
-        // Activity Indicator
-        let loader = UIActivityIndicatorView(style: .large)
-        loader.color = .white
-        loader.tag = 2
-        loader.startAnimating()
-        scrollView.addSubview(loader)
-        
-        // Nuke load using Core API
-        ImagePipeline.shared.loadImage(with: url) { [weak imageView, weak loader, weak scrollView] result in
-            DispatchQueue.main.async {
-                loader?.stopAnimating()
-                loader?.removeFromSuperview()
-                
-                if case .success(let response) = result {
-                    imageView?.image = response.image
-                    if let sv = scrollView {
-                        context.coordinator.updateLayout(for: sv, image: response.image)
-                    }
-                }
-            }
+        // The view has no size yet, so nothing can be laid out here. The scroll view
+        // reports every change of its bounds size instead, the first real one included.
+        let coordinator = context.coordinator
+        scrollView.onBoundsSizeChange = { [weak coordinator] scrollView in
+            coordinator?.boundsSizeDidChange(in: scrollView)
         }
+        
+        imageView.image = Self.imageInMemory(url: url, placeholderRequest: placeholderRequest)
+        if imageView.image == nil {
+            // Activity Indicator
+            let loader = UIActivityIndicatorView(style: .large)
+            loader.color = .white
+            loader.tag = Self.loaderTag
+            loader.startAnimating()
+            scrollView.addSubview(loader)
+        }
+        
+        coordinator.loadFullImage(into: scrollView)
         
         // Double tap to zoom
         let doubleTapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleDoubleTap(_:)))
@@ -59,23 +64,100 @@ struct ZoomableImageView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UIScrollView, context: Context) {
         context.coordinator.parent = self
-        if let imageView = uiView.viewWithTag(1) as? UIImageView, let image = imageView.image {
-            context.coordinator.updateLayout(for: uiView, image: image)
-        } else if let loader = uiView.viewWithTag(2) {
-            loader.center = CGPoint(x: uiView.bounds.midX, y: uiView.bounds.midY)
-        }
+    }
+
+    static func dismantleUIView(_ uiView: UIScrollView, coordinator: Coordinator) {
+        // Closing the viewer must not leave a full-size download running.
+        coordinator.cancelLoad()
     }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
+    /// What can be shown without waiting: the original when an earlier visit left it in
+    /// the memory cache, otherwise the smaller copy the caller points at. Memory only;
+    /// this runs on the main thread while the cover is being presented.
+    static func imageInMemory(url: URL, placeholderRequest: ImageRequest?) -> UIImage? {
+        let cache = ImagePipeline.shared.cache
+        if let original = cache.cachedImage(for: ImageRequest(url: url), caches: [.memory]) {
+            return original.image
+        }
+        guard let placeholderRequest else { return nil }
+        return cache.cachedImage(for: placeholderRequest, caches: [.memory])?.image
+    }
+
     class Coordinator: NSObject, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         var parent: ZoomableImageView
         var isDismissing = false
+        private var loadTask: Task<Void, Never>?
 
         init(_ parent: ZoomableImageView) {
             self.parent = parent
+        }
+
+        deinit {
+            loadTask?.cancel()
+        }
+
+        func loadFullImage(into scrollView: UIScrollView) {
+            let request = ImageRequest(url: parent.url, priority: .veryHigh)
+            loadTask = Task { [weak self, weak scrollView] in
+                let image = try? await ImagePipeline.shared.imageTask(with: request).image
+                guard !Task.isCancelled, let self, let scrollView else { return }
+                self.didFinishLoading(image, in: scrollView)
+            }
+        }
+
+        func cancelLoad() {
+            loadTask?.cancel()
+            loadTask = nil
+        }
+
+        private func didFinishLoading(_ image: UIImage?, in scrollView: UIScrollView) {
+            loadTask = nil
+            scrollView.viewWithTag(ZoomableImageView.loaderTag)?.removeFromSuperview()
+            guard let imageView = scrollView.viewWithTag(ZoomableImageView.imageTag) as? UIImageView else { return }
+            if let image {
+                let replacesPlaceholder = imageView.image != nil
+                imageView.image = image
+                if !replacesPlaceholder {
+                    // Nothing has been laid out yet. A pinch on the empty screen still
+                    // changes the zoom scale, and a frame cannot be set under a zoom.
+                    if scrollView.zoomScale != 1.0 {
+                        scrollView.setZoomScale(1.0, animated: false)
+                    }
+                    updateLayout(for: scrollView, image: image)
+                } else if scrollView.zoomScale == 1.0 {
+                    // The placeholder has the same proportions, so a user who already
+                    // zoomed into it keeps the frame and only gets the sharper pixels.
+                    updateLayout(for: scrollView, image: image)
+                }
+            } else if imageView.image == nil {
+                // Nothing to show at all: say so instead of leaving a black screen.
+                let configuration = UIImage.SymbolConfiguration(pointSize: 56, weight: .light)
+                let failure = UIImageView(image: UIImage(systemName: "photo", withConfiguration: configuration))
+                failure.tintColor = UIColor(white: 1, alpha: 0.35)
+                failure.tag = ZoomableImageView.failureTag
+                failure.center = CGPoint(x: scrollView.bounds.midX, y: scrollView.bounds.midY)
+                scrollView.addSubview(failure)
+            }
+        }
+
+        /// Fits the image into the new bounds and keeps the spinner or the failure symbol
+        /// centred. A frame cannot be set on a view that is zoomed, so a zoomed image goes
+        /// back to fit first; in practice that is a rotation.
+        func boundsSizeDidChange(in scrollView: UIScrollView) {
+            if scrollView.zoomScale != 1.0 {
+                scrollView.setZoomScale(1.0, animated: false)
+            }
+            if let imageView = scrollView.viewWithTag(ZoomableImageView.imageTag) as? UIImageView,
+               let image = imageView.image {
+                updateLayout(for: scrollView, image: image)
+            }
+            let center = CGPoint(x: scrollView.bounds.midX, y: scrollView.bounds.midY)
+            scrollView.viewWithTag(ZoomableImageView.loaderTag)?.center = center
+            scrollView.viewWithTag(ZoomableImageView.failureTag)?.center = center
         }
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? {
@@ -165,5 +247,19 @@ struct ZoomableImageView: UIViewRepresentable {
             }
             return true
         }
+    }
+}
+
+/// A scroll view that tells its owner when its bounds change size. `layoutSubviews` also
+/// runs for every scroll and zoom step, which is why the size is compared first.
+private final class LayoutReportingScrollView: UIScrollView {
+    var onBoundsSizeChange: ((UIScrollView) -> Void)?
+    private var lastBoundsSize: CGSize = .zero
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard bounds.size != lastBoundsSize else { return }
+        lastBoundsSize = bounds.size
+        onBoundsSizeChange?(self)
     }
 }

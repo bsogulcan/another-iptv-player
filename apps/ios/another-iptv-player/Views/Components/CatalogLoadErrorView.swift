@@ -1,33 +1,37 @@
 import SwiftUI
 
-/// Katalog yüklemesi başarısız olduğunda üç sekmenin (Canlı/Film/Dizi) boş ekran yerine
-/// gösterdiği ortak hata durumu: mesaj + satır içi "Tekrar Dene". Eskiden hata yalnızca
-/// Dashboard'daki tek seferlik alert'te görünüyor, OK'a basan kullanıcı çıkışsız boş
-/// sekmelerle kalıyordu (tek kurtuluş Ayarlar → Tümünü Yenile'ydi).
+/// The state a catalog tab (Live, Movies, Series, M3U) shows instead of an empty page
+/// when its catalog could not be loaded: what went wrong and a Try Again button.
+///
+/// The layout is the kit's `CatalogEmptyView`; the button sits under it so the tab
+/// always has a way out without a trip to Settings.
 struct CatalogLoadErrorView: View {
     let message: String
     let onRetry: () -> Void
 
+    init(message: String, onRetry: @escaping () -> Void) {
+        self.message = message
+        self.onRetry = onRetry
+    }
+
+    /// For a caller that still holds the error: the text comes from `NetworkErrorText`.
+    init(error: Error, onRetry: @escaping () -> Void) {
+        self.init(message: NetworkErrorText.describe(error), onRetry: onRetry)
+    }
+
     var body: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "wifi.exclamationmark")
-                .font(.largeTitle)
-                .foregroundColor(.secondary)
-            Text(L("catalog.load_failed.title"))
-                .font(.headline)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(4)
-                .padding(.horizontal, 32)
-            Button {
-                onRetry()
-            } label: {
+        VStack(spacing: 0) {
+            CatalogEmptyView(.message(
+                title: L("catalog.load_failed.title"),
+                systemImage: "wifi.exclamationmark",
+                description: message
+            ))
+            .fixedSize(horizontal: false, vertical: true)
+
+            Button(action: onRetry) {
                 Label(L("common.try_again"), systemImage: "arrow.clockwise")
             }
             .buttonStyle(.borderedProminent)
-            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

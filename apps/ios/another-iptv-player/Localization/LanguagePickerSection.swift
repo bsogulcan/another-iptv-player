@@ -9,12 +9,7 @@ struct LanguagePickerSection: View {
             NavigationLink {
                 LanguagePickerListView()
             } label: {
-                HStack {
-                    Text(L("settings.language.title"))
-                    Spacer()
-                    Text(currentLanguageDisplayName)
-                        .foregroundColor(.secondary)
-                }
+                LabeledContent(L("settings.language.title"), value: currentLanguageDisplayName)
             }
         }
     }
@@ -51,9 +46,11 @@ struct LanguagePickerListView: View {
                         if manager.selectedLanguage == lang.code {
                             Image(systemName: "checkmark")
                                 .foregroundColor(.accentColor)
+                                .accessibilityHidden(true)
                         }
                     }
                 }
+                .accessibilityAddTraits(manager.selectedLanguage == lang.code ? .isSelected : [])
             }
         }
         .navigationTitle(L("settings.language.title"))

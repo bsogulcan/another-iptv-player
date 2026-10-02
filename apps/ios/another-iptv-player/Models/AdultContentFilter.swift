@@ -33,6 +33,11 @@ nonisolated enum AdultContentFilter {
         "PORNHUB",
     ]
 
+    /// Everything that separates one word of a name from the next. Built once:
+    /// `isAdultCategoryName` runs for every channel of a catalog, and it used to
+    /// invert the alphanumeric set again on each call.
+    private static let tokenSeparators = CharacterSet.alphanumerics.inverted
+
     // MARK: - Category Check
 
     /// Verilen kategori adının yetişkin içerik içerip içermediğini döner.
@@ -40,7 +45,7 @@ nonisolated enum AdultContentFilter {
         let upper = name.uppercased()
 
         // Alfanümerik olmayan karakterlere göre böl, boş tokenları çıkar
-        let tokens = upper.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        let tokens = upper.components(separatedBy: tokenSeparators)
                           .filter { !$0.isEmpty }
         if tokens.contains(where: { adultTokens.contains($0) }) {
             return true

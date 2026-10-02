@@ -5,8 +5,12 @@ import SwiftUI
 /// The channel column is drawn above that scroller and remains pinned.
 struct EPGGuideView: View {
     @StateObject private var model: EPGGuideViewModel
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
     @ObservedObject private var epgStore = EPGStore.shared
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    /// Also read so the body runs again when the app comes back: the now-line is
+    /// derived from the clock.
+    @Environment(\.scenePhase) private var scenePhase
 
     /// The only horizontal scrollers are the time axis and the complete programme
     /// body. The active one drives the other while preserving native momentum.
@@ -28,11 +32,20 @@ struct EPGGuideView: View {
     @State private var selected: SelectedProgramme?
     @State private var selectionTask: Task<Void, Never>?
     @State private var detailChannel: EPGGuideRow?
+    @State private var searchPresented = false
+    /// The day the grid was last moved to its default time for. Coming back from a
+    /// pushed channel schedule starts the grid's task again; the time the user had
+    /// scrolled to must survive that.
+    @State private var focusedDay: Date?
+    /// A refresh started from this screen loads the guide itself when it is done.
+    @State private var isRefreshingHere = false
 
     private static let axisID = "axis"
     private static let bodyID = "body"
 
-    private let metrics = EPGGuideMetrics(compact: true)
+    private var metrics: EPGGuideMetrics {
+        EPGGuideMetrics.guide(regularWidth: horizontalSizeClass == .regular)
+    }
 
     init(source: EPGGuideViewModel.Source) {
         _model = StateObject(wrappedValue: EPGGuideViewModel(source: source))
@@ -50,24 +63,45 @@ struct EPGGuideView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
             .toolbar { toolbarContent }
-            .searchable(text: $model.searchQuery)
+            .searchable(text: $model.searchQuery, isPresented: $searchPresented, prompt: L("live.search_placeholder"))
+            .onChange(of: searchPresented) { _, presented in
+                // Leaving search brings back the full list and its collapsed categories.
+                if !presented, !model.searchQuery.isEmpty { model.searchQuery = "" }
+            }
             .task {
-                guard model.state == .loading else { return }
+                guard model.needsLoad else { return }
                 await model.load()
             }
             .onDisappear {
                 selectionTask?.cancel()
                 targetReleaseTask?.cancel()
+                // The release task is what clears the target. With it cancelled the
+                // target would stay set, and the axis and the body would no longer
+                // follow each other when the screen comes back.
+                programmaticTargetX = nil
                 model.cancelLoading()
+            }
+            .onChange(of: model.state) { _, state in
+                // The grid is rebuilt with fresh scrollers when it comes back.
+                if state != .ready { focusedDay = nil }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { Task { await model.rollToTodayIfNeeded() } }
+            }
+            .onChange(of: epgStore.lastSuccess[model.playlist.id]) { _, _ in
+                guard !isRefreshingHere else { return }
+                Task { await model.reloadAfterGuideRefresh() }
             }
             .navigationDestination(item: $detailChannel) { row in
                 ChannelEPGDetailView(playlist: model.playlist, channelKey: row.channelKey,
-                                     displayName: row.displayName, iconURL: row.iconURL, liveStream: row.liveStream)
+                                     displayName: row.displayName, iconURL: row.iconURL, liveStream: row.liveStream,
+                                     onPlayChannel: m3uPlayAction(for: row))
             }
             .sheet(item: $selected) { sel in
                 EPGProgrammeDetailSheet(playlist: model.playlist, programme: sel.programme,
                                         channelName: sel.row.displayName, channelIcon: sel.row.iconURL,
-                                        liveStream: sel.row.liveStream)
+                                        liveStream: sel.row.liveStream,
+                                        onPlayChannel: m3uPlayAction(for: sel.row))
                     .presentationDetents([.medium, .large])
             }
     }
@@ -78,54 +112,59 @@ struct EPGGuideView: View {
         case .loading:
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
         case .notConfigured:
-            ContentUnavailableView {
-                Label(L("epg.not_configured.title"), systemImage: "calendar.badge.exclamationmark")
-            } description: {
-                Text(model.playlist.kind == .m3u ? L("epg.not_configured.m3u_message") : L("epg.not_configured.xtream_message"))
-            }
+            CatalogEmptyView(.message(
+                title: L("epg.not_configured.title"),
+                systemImage: "calendar.badge.exclamationmark",
+                description: model.playlist.kind == .m3u
+                    ? L("epg.not_configured.m3u_message") : L("epg.not_configured.xtream_message")
+            ))
         case .empty:
-            ContentUnavailableView {
-                Label(L("epg.empty.title"), systemImage: "calendar")
-            } description: {
-                Text(L("epg.empty.message"))
-            } actions: {
-                Button(L("epg.refresh")) { Task { await epgStore.forceRefresh(playlist: model.playlist); await model.load() } }
+            VStack(spacing: 0) {
+                CatalogEmptyView(.message(title: L("epg.empty.title"), systemImage: "calendar",
+                                          description: L("epg.empty.message")))
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(L("epg.refresh")) { Task { await refreshGuide() } }
+                    .buttonStyle(.bordered)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .allHidden:
+            CatalogEmptyView(.message(title: L("m3u.empty.all_hidden.title"), systemImage: "eye.slash",
+                                      description: L("m3u.empty.all_hidden.message")))
+        case .catalogFailed:
+            CatalogEmptyView(.message(title: L("catalog.load_failed.title"), systemImage: "wifi.exclamationmark",
+                                      description: nil))
         case .ready:
             VStack(spacing: 0) {
-                dayPicker
-                grid
-            }
-        }
-    }
-
-    // MARK: - Day picker
-
-    private var dayPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(model.availableDays, id: \.self) { day in
-                    let isSelected = Calendar.current.isDate(day, inSameDayAs: model.selectedDay)
-                    Button {
-                        Task { await model.selectDay(day) }
-                    } label: {
-                        Text(dayChipLabel(day))
-                            .font(.caption.weight(isSelected ? .semibold : .regular))
-                            .padding(.horizontal, 12).padding(.vertical, 6)
-                            .background(isSelected ? Color.accentColor : Color(.secondarySystemFill), in: Capsule())
-                            .foregroundColor(isSelected ? .white : .primary)
-                    }
-                    .buttonStyle(.plain)
+                EPGDayPicker(days: model.availableDays, selectedDay: model.selectedDay) { day in
+                    Task { await model.selectDay(day) }
                 }
+                .equatable()
+                if let message = model.programmeError {
+                    InlineErrorRow(message: message) {
+                        Task { await model.retryProgrammes() }
+                    }
+                    .padding(.horizontal, BrowseMetrics.pageMargin)
+                    .padding(.bottom, 8)
+                }
+                grid
+                    .overlay {
+                        if model.hasNoSearchResults {
+                            CatalogEmptyView(.noSearchResults)
+                                .background(Color(.systemBackground))
+                        }
+                    }
             }
-            .padding(.horizontal, 12).padding(.vertical, 8)
         }
     }
 
     // MARK: - Grid
 
     private var grid: some View {
-        VStack(spacing: 0) {
+        let metrics = self.metrics
+        // One reading of the clock per pass, so every row draws the line at the
+        // same x as the axis.
+        let nowX = nowLineX
+        return VStack(spacing: 0) {
             // Header: fixed corner + time axis. The axis shares `timePosition`, so it
             // tracks the rows' horizontal scroll.
             HStack(spacing: 0) {
@@ -149,7 +188,7 @@ struct EPGGuideView: View {
                 // scrollers that can transiently drift while syncing; anchoring both
                 // now-lines to one offset keeps them on the exact same screen column.
                 .overlay(alignment: .leading) {
-                    if let nowX = nowLineX {
+                    if let nowX {
                         Rectangle().fill(Color.red)
                             .frame(width: 1.5, height: metrics.axisHeight)
                             .offset(x: nowX - bodyOffsetX)
@@ -172,7 +211,7 @@ struct EPGGuideView: View {
                         case .header(let header):
                             headerRow(header)
                         case .channel(let row):
-                            channelRow(row)
+                            channelRow(row, metrics: metrics, nowX: nowX)
                         }
                     }
                 }
@@ -193,17 +232,23 @@ struct EPGGuideView: View {
         // `grid` only exists after the async model load reaches `.ready`. Position
         // after its first layout pass, then verify once and retry if either binding
         // was not ready when the first command arrived.
+        // The task also starts again each time the screen re-appears; the jump runs
+        // once per selected day.
         .task(id: model.selectedDay) {
+            let day = model.selectedDay
+            guard focusedDay != day else { return }
             await focusSelectedTimeAfterLayout()
+            if !Task.isCancelled { focusedDay = day }
         }
     }
 
     @ViewBuilder
-    private func channelRow(_ row: EPGGuideRow) -> some View {
+    private func channelRow(_ row: EPGGuideRow, metrics: EPGGuideMetrics, nowX: CGFloat?) -> some View {
         HStack(spacing: 0) {
             EPGChannelColumnCell(row: row, metrics: metrics,
-                                 onTap: { playChannel(row) },
-                                 onLongPress: { detailChannel = row })
+                                 onPlay: { playChannel(row) },
+                                 onSchedule: { detailChannel = row })
+                .equatable()
                 .frame(width: metrics.channelColumnWidth, height: metrics.rowHeight)
                 .offset(x: bodyOffsetX)
                 .zIndex(1)
@@ -216,7 +261,7 @@ struct EPGGuideView: View {
                 }
                 .equatable()
 
-                if let nowX = nowLineX {
+                if let nowX {
                     Rectangle().fill(Color.red.opacity(0.85))
                         .frame(width: 1.5, height: metrics.rowHeight)
                         .offset(x: nowX)
@@ -263,24 +308,34 @@ struct EPGGuideView: View {
                     Button(L("epg.categories.expand_all")) { model.setAllCollapsed(false) }
                     Button(L("epg.categories.collapse_all")) { model.setAllCollapsed(true) }
                 } label: {
-                    Image(systemName: "rectangle.expand.vertical")
+                    Label(L("epg.categories.menu_a11y"), systemImage: "rectangle.expand.vertical")
                 }
-                .accessibilityLabel(L("epg.categories.menu_a11y"))
             }
         }
         ToolbarItem(placement: .topBarTrailing) {
+            // The drawer of an inline-title screen is collapsed on open and this
+            // grid has no vertical scroller at its top to pull it out with.
+            Button {
+                searchPresented = true
+            } label: { Label(L("common.search"), systemImage: "magnifyingglass") }
+            .disabled(model.state != .ready)
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            // A plain clock: the arrowed one marks catch-up in the schedule rows
+            // and in the programme sheet.
             Button {
                 scrollToNow(forceToday: true)
-            } label: { Image(systemName: "clock.arrow.circlepath") }
-            .accessibilityLabel(L("epg.jump_to_now"))
+            } label: { Label(L("epg.jump_to_now"), systemImage: "clock") }
+            .disabled(model.state != .ready)
         }
         ToolbarItem(placement: .topBarTrailing) {
             let refreshing = epgStore.refreshState[model.playlist.id]?.isRefreshing ?? false
             Button {
-                Task { await epgStore.forceRefresh(playlist: model.playlist); await model.load() }
+                Task { await refreshGuide() }
             } label: {
-                if refreshing { ProgressView() } else { Image(systemName: "arrow.clockwise") }
+                if refreshing { ProgressView() } else { Label(L("epg.refresh"), systemImage: "arrow.clockwise") }
             }
+            .accessibilityLabel(L("epg.refresh"))
             .disabled(refreshing)
         }
     }
@@ -395,17 +450,46 @@ struct EPGGuideView: View {
         }
     }
 
+    /// Downloads the guide again and loads the result. The store announces a
+    /// finished refresh to every open guide; this one loads on its own once the
+    /// whole refresh is through, so the announcement is not acted on a second time.
+    private func refreshGuide() async {
+        isRefreshingHere = true
+        await epgStore.forceRefresh(playlist: model.playlist)
+        isRefreshingHere = false
+        await model.load()
+    }
+
     private func playChannel(_ row: EPGGuideRow) {
-        guard let stream = row.liveStream else {
-            detailChannel = row  // M3U: no single-view live shell here → open schedule
-            return
+        if let stream = row.liveStream {
+            // Hand the player the live catalog as the Live tab lists it, so prev/next
+            // channel and the channel side panel work, not just the tapped channel.
+            let live = EPGGuidePlayback.xtreamLiveQueue(playlistId: model.playlist.id, including: stream)
+            playerOverlay.injected?.present(playlistId: model.playlist.id) {
+                LivePlayerShell(playlist: model.playlist, queue: live.queue, sections: live.sections,
+                                initialStream: stream, initialHistory: nil, subtitle: row.displayName)
+            }
+        } else if let play = m3uPlayAction(for: row) {
+            play()
+        } else {
+            // No playable channel behind the row; its schedule is still worth showing.
+            detailChannel = row
         }
-        // Hand the player the whole live catalog so prev/next channel and the channel
-        // side panel work, not just the single tapped channel.
-        let live = LiveChannelCategorySection.xtreamLiveQueue()
-        playerOverlay.present(playlistId: model.playlist.id) {
-            LivePlayerShell(playlist: model.playlist, queue: live.queue, sections: live.sections,
-                            initialStream: stream, initialHistory: nil, subtitle: row.displayName)
+    }
+
+    /// Starts an M3U row's channel with its group as the queue, the way the
+    /// channel shelves do. Nil when the row does not resolve to a channel of the
+    /// loaded playlist (an Xtream row, a channel the adult filter has taken out
+    /// since the rows were built) or the channel has no usable URL.
+    private func m3uPlayAction(for row: EPGGuideRow) -> (() -> Void)? {
+        guard case .m3u(let playlist) = model.source,
+              let channel = M3UContentStore.shared.channel(id: row.id),
+              M3UParser.sanitizedURL(from: channel.url) != nil else { return nil }
+        return {
+            let queue = M3UContentStore.shared.queue(for: channel)
+            playerOverlay.injected?.present {
+                M3UPlayerShell(playlist: playlist, channel: channel, queue: queue)
+            }
         }
     }
 
@@ -421,13 +505,5 @@ struct EPGGuideView: View {
             let value = detailed ?? programme
             selected = SelectedProgramme(id: value.id, programme: value, row: row)
         }
-    }
-
-    private func dayChipLabel(_ day: Date) -> String {
-        let cal = Calendar.current
-        if cal.isDateInToday(day) { return L("epg.day.today") }
-        if cal.isDateInTomorrow(day) { return L("epg.day.tomorrow") }
-        if cal.isDateInYesterday(day) { return L("epg.day.yesterday") }
-        return day.formatted(.dateTime.weekday(.abbreviated).day())
     }
 }

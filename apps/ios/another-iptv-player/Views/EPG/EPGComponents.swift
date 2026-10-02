@@ -44,11 +44,20 @@ struct EPGNowNextLine: View {
     var reserveSpace: Bool = false
     var tint: Color = .accentColor
     var textColor: Color = .secondary
+    /// Where the title sits above the full-width capsule. Channel tiles centre
+    /// their name and pass `.center` so the two lines agree.
+    var titleAlignment: Alignment = .leading
+
+    /// Height of the line at the default text size. A layout that has to know it
+    /// in advance scales this the same way (`.caption2`).
+    static let baseHeight: CGFloat = 22
 
     /// Keep the placeholder and populated state exactly the same height. The old
     /// 16pt placeholder was shorter than caption + spacing + bar, so shelves that
     /// were laid out before EPG arrived could clip the progress capsule.
-    private var reservedHeight: CGFloat { 22 }
+    /// Scaled with the title's text style: a fixed height pushed the capsule out
+    /// of the frame from the larger text sizes on.
+    @ScaledMetric(relativeTo: .caption2) private var reservedHeight: CGFloat = EPGNowNextLine.baseHeight
 
     var body: some View {
         if let now = nowNext?.now {
@@ -57,7 +66,7 @@ struct EPGNowNextLine: View {
                     .font(.caption2)
                     .lineLimit(1)
                     .foregroundColor(textColor)
-                    .frame(width: width, alignment: .leading)
+                    .frame(width: width, alignment: titleAlignment)
                 progressCapsule(for: now)
             }
             .frame(width: width, height: reservedHeight, alignment: .topLeading)
@@ -76,6 +85,60 @@ struct EPGNowNextLine: View {
             Capsule().fill(tint).frame(width: max(0, width * fraction), height: 3)
         }
         .frame(width: width, height: 3)
+    }
+}
+
+/// The now/next line under a channel tile. It alone reads the snapshot, so the
+/// once-a-minute swap re-runs this leaf and not the card around it (image, name,
+/// context menu). Draws nothing while the playlist has no guide; with one it
+/// always takes the line's height, so a card does not grow when its programme
+/// arrives.
+struct EPGNowNextSlot: View {
+    let channelKey: String?
+    let width: CGFloat
+
+    @Environment(\.epgSnapshot) private var snapshot
+
+    init(channelKey: String?, width: CGFloat) {
+        self.channelKey = channelKey
+        self.width = width
+    }
+
+    var body: some View {
+        if let snapshot {
+            EPGNowNextLine(nowNext: snapshot[channelKey], width: width,
+                           reserveSpace: true, titleAlignment: .center)
+        }
+    }
+}
+
+// MARK: - Playback from the guide
+
+/// Live queues for playback started from the guide or a programme sheet.
+enum EPGGuidePlayback {
+    /// The live catalog as the Live tab lists it: categories the user hid are left
+    /// out, so channel up/down and the channel panel cannot walk into them.
+    static func xtreamLiveQueue(
+        playlistId: UUID, including stream: DBLiveStream
+    ) -> (queue: [DBLiveStream], sections: [LiveChannelCategorySection]) {
+        let hidden = HiddenCategoryStore.shared.hiddenIds(playlistId: playlistId, type: "live")
+        return visible(LiveChannelCategorySection.xtreamLiveQueue(), hiding: hidden, including: stream)
+    }
+
+    /// `live` without the sections whose id is in `hidden`. The section holding
+    /// `stream` always stays: the channel being started must have a place in its
+    /// own queue, whatever the hidden set says by the time it is tapped.
+    static func visible(
+        _ live: (queue: [DBLiveStream], sections: [LiveChannelCategorySection]),
+        hiding hidden: Set<String>,
+        including stream: DBLiveStream
+    ) -> (queue: [DBLiveStream], sections: [LiveChannelCategorySection]) {
+        guard !hidden.isEmpty else { return live }
+        let sections = live.sections.filter { section in
+            !hidden.contains(section.id) || section.streams.contains { $0.streamId == stream.streamId }
+        }
+        guard sections.count != live.sections.count else { return live }
+        return (sections.flatMap(\.streams), sections)
     }
 }
 
@@ -181,9 +244,34 @@ nonisolated enum PlayerProgrammeStripLayout {
 // MARK: - Time formatting
 
 enum EPGTimeFormat {
-    /// "20:30" in the device locale/timezone (24h or 12h per locale).
+    /// "20:30" in the app locale and the device time zone (24h or 12h per locale).
     static func time(_ date: Date) -> String {
-        date.formatted(.dateTime.hour().minute())
+        date.formatted(.dateTime.hour().minute().locale(AppLocale.current))
+    }
+
+    /// A programme's length: "45 min", "1 hr, 30 min". At least one minute.
+    static func duration(_ interval: TimeInterval) -> String {
+        let minutes = max(1, Int(interval / 60))
+        return Duration.seconds(minutes * 60).formatted(
+            .units(allowed: [.hours, .minutes], width: .abbreviated).locale(AppLocale.current)
+        )
+    }
+
+    /// A day chip or a schedule section that is not today, tomorrow or yesterday.
+    static func day(_ date: Date, wide: Bool) -> String {
+        let style: Date.FormatStyle = wide
+            ? .dateTime.weekday(.wide).day().month()
+            : .dateTime.weekday(.abbreviated).day()
+        return date.formatted(style.locale(AppLocale.current))
+    }
+
+    /// "Today", "Tomorrow", "Yesterday", otherwise the formatted day.
+    static func dayLabel(_ date: Date, wide: Bool) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return L("epg.day.today") }
+        if cal.isDateInTomorrow(date) { return L("epg.day.tomorrow") }
+        if cal.isDateInYesterday(date) { return L("epg.day.yesterday") }
+        return day(date, wide: wide)
     }
 
     /// "20:30 – 21:00"
@@ -209,6 +297,18 @@ struct EPGGuideMetrics: Equatable {
         channelColumnWidth = compact ? 104 : 172
         axisHeight = 28
         headerHeight = 34
+    }
+
+    /// The metrics the guide lays itself out with. Only the channel column
+    /// follows the width class. The hour width is the same in both: the view
+    /// model bakes it into the cell frames it precomputes, and the width class
+    /// flips on rotation and on window resizes, which must not invalidate them.
+    static func guide(regularWidth: Bool) -> EPGGuideMetrics {
+        var metrics = EPGGuideMetrics(compact: true)
+        if regularWidth {
+            metrics.channelColumnWidth = EPGGuideMetrics(compact: false).channelColumnWidth
+        }
+        return metrics
     }
 
     /// X offset (points from midnight) for a given instant on the selected day.

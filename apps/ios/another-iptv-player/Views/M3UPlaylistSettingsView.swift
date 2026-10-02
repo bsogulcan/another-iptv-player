@@ -7,88 +7,76 @@ struct M3UPlaylistSettingsView: View {
     let playlist: Playlist
     let onDismiss: () -> Void
 
-    @State private var channelCount: Int = 0
-    @State private var groupCount: Int = 0
-    @State private var historyCount: Int = 0
+    /// The playlist row as stored. `playlist` is the value the dashboard was opened
+    /// with and never changes afterwards, so everything shown here, handed to the
+    /// importer and the stores or passed to the guide section comes from this copy,
+    /// which is replaced by the row every write returns and re-read whenever the
+    /// form appears and after every re-import.
+    @State private var current: Playlist
 
-    @State private var isSyncing = false
+    /// Row counts; nil until the first read, so the rows do not show a zero that
+    /// is replaced a moment later.
+    @State private var localStats: (channels: Int, groups: Int, history: Int)?
+
+    /// The re-import that is running, if any. The spinner and the phase text sit on
+    /// the row that started it.
+    @State private var runningAction: SyncAction?
     @State private var syncMessage: String?
+    @State private var syncSuccessCount = 0
+    @State private var syncFailureCount = 0
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var showFileImporter = false
 
-    @State private var filterAdultContent: Bool
-    @State private var showClearHistoryAlert = false
+    /// The switch position while its save is on the way; nil follows the row.
+    @State private var pendingAdultFilter: Bool?
+    /// Counts the saves, so only the latest one hands the switch back to the row.
+    @State private var adultFilterGeneration = 0
+    @State private var showClearHistoryDialog = false
 
     @AppStorage("player.pipEnabled") private var pipEnabled = true
     @AppStorage("player.continuePlayingInBackground") private var continuePlayingInBackground = true
     @AppStorage("player.speedUpOnLongPress") private var speedUpOnLongPress = true
     @AppStorage("player.autoPlayNextEpisode") private var autoPlayNextEpisode = true
     @AppStorage("download.wifi_only") private var downloadWifiOnly = false
-    @State private var downloadUsedBytes: Int64 = 0
-    @State private var showingDeleteAllDownloadsAlert = false
+    /// nil until the first measurement.
+    @State private var downloadUsedBytes: Int64?
+    @State private var showingDeleteAllDownloadsDialog = false
 
     @ObservedObject private var locale = LocalizationManager.shared
+
+    private enum SyncAction {
+        case url
+        case file
+    }
 
     init(playlist: Playlist, onDismiss: @escaping () -> Void) {
         self.playlist = playlist
         self.onDismiss = onDismiss
-        _filterAdultContent = State(initialValue: playlist.filterAdultContent)
+        _current = State(initialValue: playlist)
     }
 
     var body: some View {
         Form {
             Section {
-                Button {
+                Button(L("settings.back_to_list")) {
                     onDismiss()
-                } label: {
-                    HStack {
-                        Text(L("settings.back_to_list"))
-                        Spacer()
-                        Image(systemName: "list.bullet.rectangle")
-                    }
                 }
 
-                if !playlist.serverURL.isEmpty {
-                    Button {
+                if !current.serverURL.isEmpty {
+                    syncRow(L("settings.m3u.refresh_url"), action: .url) {
                         Task { await refreshFromURL() }
-                    } label: {
-                        HStack {
-                            Text(L("settings.m3u.refresh_url"))
-                            Spacer()
-                            if isSyncing { ProgressView() }
-                        }
                     }
-                    .disabled(isSyncing)
                 }
 
-                Button {
+                syncRow(L("settings.m3u.refresh_file"), action: .file) {
                     showFileImporter = true
-                } label: {
-                    HStack {
-                        Text(L("settings.m3u.refresh_file"))
-                        Spacer()
-                        Image(systemName: "doc.badge.arrow.up")
-                    }
-                }
-                .disabled(isSyncing)
-
-                if isSyncing, let msg = syncMessage {
-                    Text(msg)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             }
 
             Section(header: Text(L("download.title"))) {
-                NavigationLink {
-                    DownloadsView(playlist: playlist)
-                } label: {
-                    HStack {
-                        Text(L("download.title"))
-                        Spacer()
-                        Image(systemName: "arrow.down.circle")
-                    }
+                NavigationLink(L("download.title")) {
+                    DownloadsView(playlist: current)
                 }
 
                 Toggle(isOn: $downloadWifiOnly) {
@@ -100,22 +88,25 @@ struct M3UPlaylistSettingsView: View {
                     }
                 }
 
-                HStack {
-                    Text(L("download.storage_used"))
-                    Spacer()
-                    Text(ByteCountFormatter.string(fromByteCount: downloadUsedBytes, countStyle: .file))
-                        .foregroundColor(.secondary)
-                }
+                LabeledContent(
+                    L("download.storage_used"),
+                    value: downloadUsedBytes.map { $0.formatted(.byteCount(style: .file).locale(AppLocale.current)) } ?? ""
+                )
 
-                if downloadUsedBytes > 0 {
-                    Button(role: .destructive) {
-                        showingDeleteAllDownloadsAlert = true
-                    } label: {
-                        HStack {
-                            Text(L("download.delete_all"))
-                            Spacer()
-                            Image(systemName: "trash")
+                if let downloadUsedBytes, downloadUsedBytes > 0 {
+                    Button(L("download.delete_all"), role: .destructive) {
+                        showingDeleteAllDownloadsDialog = true
+                    }
+                    .confirmationDialog(L("download.delete_all"), isPresented: $showingDeleteAllDownloadsDialog) {
+                        Button(L("download.delete_all"), role: .destructive) {
+                            Task {
+                                await DownloadManager.shared.deleteAll(playlistId: current.id)
+                                await refreshDownloadUsage()
+                            }
                         }
+                        Button(L("common.cancel"), role: .cancel) { }
+                    } message: {
+                        Text(L("download.delete_all.message"))
                     }
                 }
             }
@@ -158,49 +149,40 @@ struct M3UPlaylistSettingsView: View {
             }
 
             Section(header: Text(L("settings.playlist.info.title"))) {
-                HStack {
-                    Text(L("settings.playlist.name")); Spacer()
-                    Text(playlist.name).foregroundColor(.secondary)
+                LabeledContent(L("settings.playlist.name")) {
+                    Text(current.name).textSelection(.enabled)
                 }
-                HStack {
-                    Text(L("settings.playlist.type")); Spacer()
-                    Text(L("settings.m3u.type_label")).foregroundColor(.secondary)
-                }
-                if !playlist.serverURL.isEmpty {
+                LabeledContent(L("settings.playlist.type"), value: L("settings.m3u.type_label"))
+                if !current.serverURL.isEmpty {
+                    // Stacked, unlike the other pairs: the link is long (it carries
+                    // the account) and would squeeze its label on one line. It is
+                    // cut after three lines; copying gives the whole of it.
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L("settings.m3u.source_url"))
-                        Text(playlist.serverURL)
+                        Text(current.serverURL)
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .lineLimit(3)
+                            .textSelection(.enabled)
                     }
                 } else {
-                    HStack {
-                        Text(L("settings.m3u.source")); Spacer()
-                        Text(L("playlists.local_file")).foregroundColor(.secondary)
-                    }
+                    LabeledContent(L("settings.m3u.source"), value: L("playlists.local_file"))
                 }
             }
 
-            M3UEPGSettingsSection(playlist: playlist)
+            M3UEPGSettingsSection(playlist: $current)
 
             Section(header: Text(L("settings.stats.title"))) {
-                HStack {
-                    Text(L("settings.stats.channel_count")); Spacer()
-                    Text("\(channelCount)").foregroundColor(.secondary)
-                }
-                HStack {
-                    Text(L("settings.stats.group_count")); Spacer()
-                    Text("\(groupCount)").foregroundColor(.secondary)
-                }
-                HStack {
-                    Text(L("settings.stats.history_count")); Spacer()
-                    Text(L("settings.stats.history_items_format", historyCount)).foregroundColor(.secondary)
-                }
+                LabeledContent(L("settings.stats.channel_count"), value: localStats.map { $0.channels.formatted(.number.locale(AppLocale.current)) } ?? "")
+                LabeledContent(L("settings.stats.group_count"), value: localStats.map { $0.groups.formatted(.number.locale(AppLocale.current)) } ?? "")
+                LabeledContent(
+                    L("settings.stats.history_count"),
+                    value: localStats.map { L("settings.stats.history_items_format", $0.history) } ?? ""
+                )
             }
 
             Section(header: Text(L("settings.content_management.title"))) {
-                Toggle(isOn: $filterAdultContent) {
+                Toggle(isOn: adultFilterBinding) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("settings.filter_adult.title"))
                         Text(L("settings.filter_adult.m3u_desc"))
@@ -208,35 +190,36 @@ struct M3UPlaylistSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .onChange(of: filterAdultContent) { _, newValue in
-                    Task { await saveFilterSetting(newValue: newValue) }
-                }
 
-                Button(role: .destructive) {
-                    showClearHistoryAlert = true
-                } label: {
-                    HStack {
-                        Text(L("history.clear.button_entry"))
-                        Spacer()
-                        Image(systemName: "trash")
-                    }
+                Button(L("history.clear.button_entry"), role: .destructive) {
+                    showClearHistoryDialog = true
                 }
-                .disabled(historyCount == 0)
+                .disabled((localStats?.history ?? 0) == 0)
+                // After `.disabled`, so the dialog's own buttons are not disabled with the row.
+                .confirmationDialog(L("history.clear.title"), isPresented: $showClearHistoryDialog) {
+                    Button(L("history.clear.button_entry"), role: .destructive) {
+                        Task { await clearHistory() }
+                    }
+                    Button(L("common.cancel"), role: .cancel) { }
+                } message: {
+                    Text(L("history.clear.message.all"))
+                }
             }
 
             Section(header: Text(L("settings.about.title"))) {
-                HStack {
-                    Text(L("settings.about.version")); Spacer()
+                LabeledContent(L("settings.about.version")) {
                     Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-")
-                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
                 }
                 Link(destination: URL(string: "https://github.com/bsogulcan/another-iptv-player")!) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L("settings.about.github.title"))
+                            // The colour, not the hierarchical style: inside a link
+                            // `.secondary` is a faded tint, pale blue on white.
                             Text(L("settings.about.github.desc"))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.secondary)
                         }
                         Spacer()
                         Image(systemName: "arrow.up.right")
@@ -258,33 +241,75 @@ struct M3UPlaylistSettingsView: View {
         }, message: {
             Text(errorMessage ?? L("common.unknown_error"))
         })
-        .alert(L("history.clear.title"), isPresented: $showClearHistoryAlert) {
-            Button(L("common.cancel"), role: .cancel) { }
-            Button(L("common.confirm_delete_yes"), role: .destructive) {
-                Task { await clearHistory() }
-            }
-        } message: {
-            Text(L("history.clear.message.all"))
-        }
-        .alert(L("download.delete_all"), isPresented: $showingDeleteAllDownloadsAlert) {
-            Button(L("common.cancel"), role: .cancel) { }
-            Button(L("common.confirm_delete_yes"), role: .destructive) {
-                Task {
-                    await DownloadManager.shared.deleteAll(playlistId: playlist.id)
-                    await refreshDownloadUsage()
-                }
-            }
-        } message: {
-            Text(L("download.delete_all.message"))
-        }
+        // Once on the form: on a section these would be applied to every row.
+        .sensoryFeedback(.success, trigger: syncSuccessCount)
+        .sensoryFeedback(.error, trigger: syncFailureCount)
         .task {
+            await reloadStoredRow()
             await fetchStats()
             await refreshDownloadUsage()
         }
         .refreshable {
+            await reloadStoredRow()
             await fetchStats()
             await refreshDownloadUsage()
         }
+    }
+
+    // MARK: - Rows
+
+    /// A re-import row. While its action runs it carries the spinner and, as a
+    /// second line, the phase: a line of the row rather than a row of its own, and
+    /// there for the whole run (blank until the first phase), so the form moves
+    /// once at the start and once at the end. Both rows are disabled meanwhile.
+    private func syncRow(_ title: String, action: SyncAction, perform: @escaping () -> Void) -> some View {
+        let isRunning = runningAction == action
+        return Button(action: perform) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    if isRunning {
+                        Text(syncMessage ?? " ")
+                            .font(.caption)
+                            .foregroundStyle(Color.secondary)
+                    }
+                }
+                Spacer()
+                if isRunning { ProgressView() }
+            }
+        }
+        .disabled(runningAction != nil)
+        .accessibilityLabel(title)
+        .accessibilityValue(isRunning ? (syncMessage ?? "") : "")
+    }
+
+    /// Shows the position the user asked for while its save is running, the stored
+    /// one otherwise.
+    private var adultFilterBinding: Binding<Bool> {
+        Binding(
+            get: { pendingAdultFilter ?? current.filterAdultContent },
+            set: { newValue in
+                pendingAdultFilter = newValue
+                adultFilterGeneration += 1
+                let generation = adultFilterGeneration
+                Task { await saveFilterSetting(newValue: newValue, generation: generation) }
+            }
+        )
+    }
+
+    // MARK: - Local data
+
+    private func storedRow() async -> Playlist? {
+        let pid = playlist.id
+        return try? await AppDatabase.shared.read { db in
+            try Playlist.fetchOne(db, key: pid)
+        }
+    }
+
+    /// The playlist row as it is stored now. Pull to refresh on the Channels tab
+    /// and an edit change it without this screen hearing of it.
+    private func reloadStoredRow() async {
+        if let stored = await storedRow(), stored != current { current = stored }
     }
 
     private func refreshDownloadUsage() async {
@@ -292,7 +317,12 @@ struct M3UPlaylistSettingsView: View {
         let bytes = await Task.detached(priority: .utility) {
             DownloadStorage.usedBytes(playlistId: pid)
         }.value
-        await MainActor.run { downloadUsedBytes = bytes }
+        if downloadUsedBytes == nil {
+            downloadUsedBytes = bytes
+        } else {
+            // A later change adds or removes the delete row.
+            withAnimation { downloadUsedBytes = bytes }
+        }
     }
 
     // MARK: - File Picker
@@ -318,54 +348,77 @@ struct M3UPlaylistSettingsView: View {
     // MARK: - Sync
 
     private func refreshFromURL() async {
-        isSyncing = true
-        syncMessage = L("settings.m3u.downloading")
-        defer {
-            isSyncing = false
-            syncMessage = nil
-        }
+        guard beginSync(.url, message: L("settings.m3u.downloading")) else { return }
         do {
-            let content = try await M3UService().fetchRemote(urlString: playlist.serverURL)
+            // The importer writes the name and the link it is given, so they are
+            // taken from the row as it is now, not as it was when this screen opened.
+            let source = await storedRow() ?? current
+            let content = try await M3UService().fetchRemote(urlString: source.serverURL)
             syncMessage = L("settings.m3u.parsing")
             let parsed = try await M3UParser.parseAsync(content)
             syncMessage = L("settings.m3u.saving")
             try await M3UImporter.replace(
-                playlist: playlist,
+                playlist: source,
                 channels: parsed.channels,
                 epgURL: parsed.epgURL
             )
-            await fetchStats()
-            await M3UContentStore.shared.reloadIfActive(playlist: playlist)
+            await finishSync(importedFrom: source)
         } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+            failSync(error)
         }
     }
 
     private func refreshFromLocalFile(url: URL) async {
-        isSyncing = true
-        syncMessage = L("settings.m3u.reading_file")
-        defer {
-            isSyncing = false
-            syncMessage = nil
-        }
+        guard beginSync(.file, message: L("settings.m3u.reading_file")) else { return }
         do {
+            let source = await storedRow() ?? current
             let content = try await M3UService().readLocalAsync(url: url)
             syncMessage = L("settings.m3u.parsing")
             let parsed = try await M3UParser.parseAsync(content)
             syncMessage = L("settings.m3u.saving")
             try await M3UImporter.replace(
-                playlist: playlist,
+                playlist: source,
                 channels: parsed.channels,
                 epgURL: parsed.epgURL,
                 clearServerURL: true
             )
-            await fetchStats()
-            await M3UContentStore.shared.reloadIfActive(playlist: playlist)
+            await finishSync(importedFrom: source)
         } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+            failSync(error)
         }
+    }
+
+    private func beginSync(_ action: SyncAction, message: String) -> Bool {
+        guard runningAction == nil else { return false }
+        withAnimation {
+            runningAction = action
+            syncMessage = message
+        }
+        return true
+    }
+
+    /// The import changed the row (the header's guide URL, the link cleared by a
+    /// file import), so the screen and the store continue from the stored row.
+    private func finishSync(importedFrom source: Playlist) async {
+        let stored = await storedRow() ?? source
+        await fetchStats()
+        await M3UContentStore.shared.reloadIfActive(playlist: stored)
+        withAnimation {
+            current = stored
+            runningAction = nil
+            syncMessage = nil
+        }
+        syncSuccessCount += 1
+    }
+
+    private func failSync(_ error: Error) {
+        withAnimation {
+            runningAction = nil
+            syncMessage = nil
+        }
+        errorMessage = NetworkErrorText.describe(error)
+        showError = true
+        syncFailureCount += 1
     }
 
     private func fetchStats() async {
@@ -377,27 +430,29 @@ struct M3UPlaylistSettingsView: View {
                 let history = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM watchHistory WHERE playlistId = ?", arguments: [pid]) ?? 0
                 return (count, groups, history)
             }
-            await MainActor.run {
-                self.channelCount = stats.0
-                self.groupCount = stats.1
-                self.historyCount = stats.2
-            }
+            localStats = (channels: stats.0, groups: stats.1, history: stats.2)
         } catch {
-            print("M3U stats fetch error: \(error)")
+            Log.error("Settings", "M3U stats read failed: \(error.localizedDescription)")
         }
     }
 
     // MARK: - Adult Filter / History
 
-    private func saveFilterSetting(newValue: Bool) async {
-        var updated = playlist
-        updated.filterAdultContent = newValue
+    private func saveFilterSetting(newValue: Bool, generation: Int) async {
         do {
-            try await AppDatabase.shared.write { db in
-                try updated.save(db)
+            let saved = try await AppDatabase.shared.updatePlaylist(id: current.id) {
+                $0.filterAdultContent = newValue
             }
-            await M3UContentStore.shared.reloadIfActive(playlist: updated)
+            if let saved { current = saved }
+            if generation == adultFilterGeneration { pendingAdultFilter = nil }
+            if let saved {
+                await M3UContentStore.shared.reloadIfActive(playlist: saved)
+            }
         } catch {
+            // Nothing was saved: the switch goes back to the stored position.
+            if generation == adultFilterGeneration {
+                withAnimation { pendingAdultFilter = nil }
+            }
             errorMessage = L("misc.save_setting_error", error.localizedDescription)
             showError = true
         }

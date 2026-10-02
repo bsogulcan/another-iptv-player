@@ -4,8 +4,9 @@ import Foundation
 /// download guards are discoverable in one place.
 ///
 /// `nonisolated` because the project defaults declarations to `@MainActor`
-/// (`SWIFT_DEFAULT_ACTOR_ISOLATION`), but these constants/helpers are read from
-/// the off-main parse/download paths.
+/// (`SWIFT_DEFAULT_ACTOR_ISOLATION`), and these constants/helpers are read by
+/// code that is not on it: the guide refresh (`EPGRefreshCoordinator.refresh`
+/// is `@concurrent`) and database closures.
 nonisolated enum EPGConstants {
     /// A guide is considered fresh for this long after a successful fetch.
     static let refreshTTL: TimeInterval = 6 * 3600

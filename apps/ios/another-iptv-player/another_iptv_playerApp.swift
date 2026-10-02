@@ -52,6 +52,9 @@ struct another_iptv_playerApp: App {
 /// manager'ı gözlemesine güvenmek çoğu ekranı eski dilde bırakıyordu). `.locale` ve
 /// `.layoutDirection` da seçime göre ayarlanır — Arapça'da sayı/tarih biçimleri ve
 /// RTL yerleşim cihaz diline değil, seçilen dile uyar.
+/// The locale is `AppLocale.current`, the same one `L()` and the formatters use: a bare
+/// language code would drop the device's region, and numbers SwiftUI formats (interpolated
+/// counts) would then disagree in digits and separators with the dates and sizes next to them.
 private struct AppRootView: View {
     @ObservedObject private var localization = LocalizationManager.shared
 
@@ -60,7 +63,7 @@ private struct AppRootView: View {
         let isRTL = Locale.Language(identifier: code).characterDirection == .rightToLeft
         ContentView()
             .environment(\.appDatabase, .shared)
-            .environment(\.locale, Locale(identifier: code))
+            .environment(\.locale, AppLocale.current)
             .environment(\.layoutDirection, isRTL ? .rightToLeft : .leftToRight)
             .id(localization.selectedLanguage)
     }

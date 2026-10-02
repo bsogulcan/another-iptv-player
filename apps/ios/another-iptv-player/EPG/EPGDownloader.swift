@@ -19,6 +19,11 @@ nonisolated struct EPGDownloader {
     /// - Parameters:
     ///   - etag/lastModified: prior validators for `If-None-Match`/`If-Modified-Since`.
     ///   - username/password: for credential redaction in thrown errors only.
+    ///
+    /// `@concurrent`: after the transfer this moves the file and may inflate a
+    /// gzip body of up to `EPGConstants.maxInflatedBytes`, all synchronously. A
+    /// plain nonisolated async function would do that on its caller's actor.
+    @concurrent
     func downloadGuide(url: URL, etag: String?, lastModified: String?,
                        username: String? = nil, password: String? = nil) async throws -> GuideDownload {
         var request = URLRequest(url: url)

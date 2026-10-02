@@ -6,9 +6,10 @@ import GRDBQuery
 struct DownloadsView: View {
     let playlist: Playlist
 
-    @EnvironmentObject private var playerOverlay: PlayerOverlayController
+    @Environment(\.playerOverlayController) private var playerOverlay
     @ObservedObject private var manager = DownloadManager.shared
-    @Query<AllDownloadsRequest> private var items: [DBDownloadedItem]
+    /// `nil` until the database has answered; see `LoadedRequest`.
+    @Query<LoadedRequest<AllDownloadsRequest>> private var loadedItems: [DBDownloadedItem]?
     @State private var searchText: String = ""
     @State private var debouncedQuery: String = ""
     @State private var isSearchActive: Bool = false
@@ -21,92 +22,117 @@ struct DownloadsView: View {
 
     init(playlist: Playlist) {
         self.playlist = playlist
-        _items = Query(AllDownloadsRequest(playlistId: playlist.id), in: \.appDatabase)
+        _loadedItems = Query(LoadedRequest(AllDownloadsRequest(playlistId: playlist.id)), in: \.appDatabase)
     }
 
-    private var filteredItems: [DBDownloadedItem] {
-        let q = debouncedQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return items }
-        return items.filter { item in
-            CatalogTextSearch.matches(search: q, text: item.title)
-                || CatalogTextSearch.matches(search: q, text: item.secondaryTitle ?? "")
+    /// The list as the screen shows it: one section per unfinished status, the
+    /// finished films, then the finished episodes grouped by series.
+    struct Sections: Equatable {
+        struct EpisodeGroup: Equatable {
+            let title: String
+            let episodes: [DBDownloadedItem]
+        }
+
+        var inProgress: [DBDownloadedItem] = []
+        /// Kuyruk `createdAt` artan sırayla gösterilir — sıradaki (en eski) en üstte.
+        /// `AllDownloadsRequest` varsayılan olarak desc döner, burada özellikle ters çeviriyoruz.
+        var queued: [DBDownloadedItem] = []
+        var failed: [DBDownloadedItem] = []
+        var completedMovies: [DBDownloadedItem] = []
+        /// Tamamlanan bölümleri seri bazlı gruplar. Anahtar seriesId + secondaryTitle pair'i,
+        /// böylece seriesId nil ise ada göre gruplayabiliriz.
+        var completedEpisodeGroups: [EpisodeGroup] = []
+
+        var isEmpty: Bool {
+            inProgress.isEmpty && queued.isEmpty && failed.isEmpty
+                && completedMovies.isEmpty && completedEpisodeGroups.isEmpty
         }
     }
 
-    private var inProgress: [DBDownloadedItem] { filteredItems.filter { $0.downloadStatus == .downloading } }
-    /// Kuyruk `createdAt` artan sırayla gösterilir — sıradaki (en eski) en üstte.
-    /// `AllDownloadsRequest` varsayılan olarak desc döner, burada özellikle ters çeviriyoruz.
-    private var queued: [DBDownloadedItem] {
-        filteredItems
-            .filter { $0.downloadStatus == .queued }
-            .sorted { $0.createdAt < $1.createdAt }
-    }
-    private var completed: [DBDownloadedItem] { filteredItems.filter { $0.downloadStatus == .completed } }
-    private var failed: [DBDownloadedItem] { filteredItems.filter { $0.downloadStatus == .failed } }
-
-    private var completedMovies: [DBDownloadedItem] {
-        completed.filter { $0.type == "vod" }
-    }
-
-    /// Tamamlanan bölümleri seri bazlı gruplar. Anahtar seriesId + secondaryTitle pair'i,
-    /// böylece seriesId nil ise ada göre gruplayabiliriz.
-    private var completedEpisodeGroups: [(title: String, episodes: [DBDownloadedItem])] {
-        let episodes = completed.filter { $0.type == "episode" }
-        let grouped = Dictionary(grouping: episodes) { $0.secondaryTitle ?? $0.seriesId ?? "-" }
-        return grouped
-            .map { (key, items) in
+    /// Filters and splits the list in one pass. The body runs again for every
+    /// published percent of a running download, so the search match is done once
+    /// per item here instead of once per section.
+    static func sections(of items: [DBDownloadedItem], matching search: String) -> Sections {
+        let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        let query = q.isEmpty ? nil : CatalogTextSearch.Query(q)
+        var sections = Sections()
+        var episodes: [String: [DBDownloadedItem]] = [:]
+        for item in items {
+            if let query, !query.matches(item.title), !query.matches(item.secondaryTitle ?? "") { continue }
+            switch item.downloadStatus {
+            case .downloading: sections.inProgress.append(item)
+            case .queued: sections.queued.append(item)
+            case .failed: sections.failed.append(item)
+            case .completed:
+                if item.type == "vod" {
+                    sections.completedMovies.append(item)
+                } else if item.type == "episode" {
+                    episodes[item.secondaryTitle ?? item.seriesId ?? "-", default: []].append(item)
+                }
+            }
+        }
+        sections.queued.sort { $0.createdAt < $1.createdAt }
+        sections.completedEpisodeGroups = episodes
+            .map { title, items in
                 let sorted = items.sorted { lhs, rhs in
                     let ls = lhs.seasonNumber ?? 0, rs = rhs.seasonNumber ?? 0
                     if ls != rs { return ls < rs }
                     return (lhs.episodeNumber ?? 0) < (rhs.episodeNumber ?? 0)
                 }
-                return (key, sorted)
+                return Sections.EpisodeGroup(title: title, episodes: sorted)
             }
             .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        return sections
     }
 
     var body: some View {
+        let items = loadedItems ?? []
+        let sections = Self.sections(of: items, matching: debouncedQuery)
         Group {
-            if items.isEmpty {
-                ContentUnavailableView(
-                    L("download.empty.title"),
+            if loadedItems == nil {
+                // Nothing delivered yet: drawing "No downloads" here would flash it
+                // in front of a list that arrives a moment later.
+                Color.clear
+            } else if items.isEmpty {
+                CatalogEmptyView(.message(
+                    title: L("download.empty.title"),
                     systemImage: "arrow.down.circle",
-                    description: Text(L("download.empty.message"))
-                )
-            } else if filteredItems.isEmpty {
-                ContentUnavailableView.search(text: searchText)
+                    description: L("download.empty.message")
+                ))
+            } else if sections.isEmpty {
+                CatalogEmptyView(.noSearchResults)
             } else {
                 List {
-                    if !inProgress.isEmpty {
+                    if !sections.inProgress.isEmpty {
                         Section(L("download.status.downloading")) {
-                            ForEach(inProgress) { item in
+                            ForEach(sections.inProgress) { item in
                                 actionableRow(item)
                             }
                         }
                     }
-                    if !queued.isEmpty {
+                    if !sections.queued.isEmpty {
                         Section(L("download.status.queued")) {
-                            ForEach(queued) { item in
+                            ForEach(sections.queued) { item in
                                 actionableRow(item)
                             }
                         }
                     }
-                    if !failed.isEmpty {
+                    if !sections.failed.isEmpty {
                         Section(L("download.status.failed")) {
-                            ForEach(failed) { item in
+                            ForEach(sections.failed) { item in
                                 actionableRow(item)
                             }
                         }
                     }
-                    if !completedMovies.isEmpty {
+                    if !sections.completedMovies.isEmpty {
                         Section(L("dashboard.movies")) {
-                            ForEach(completedMovies) { item in
+                            ForEach(sections.completedMovies) { item in
                                 actionableRow(item)
                             }
                         }
                     }
 
-                    ForEach(completedEpisodeGroups, id: \.title) { group in
+                    ForEach(sections.completedEpisodeGroups, id: \.title) { group in
                         Section(group.title) {
                             ForEach(group.episodes) { item in
                                 actionableRow(item)
@@ -115,6 +141,11 @@ struct DownloadsView: View {
                     }
                 }
                 .listStyle(.insetGrouped)
+                // A row whose status changes travels to its new section, and a
+                // cancelled or deleted one leaves, instead of the list jumping.
+                // Keyed on the stored rows, which change on status changes only:
+                // neither a progress tick nor typing in the search field animates.
+                .animation(.default, value: items)
             }
         }
         .navigationTitle(L("download.title"))
@@ -179,26 +210,63 @@ struct DownloadsView: View {
     /// trailing swipe = sil/iptal. Bu pattern tüm download statülerine uygulanır.
     @ViewBuilder
     private func actionableRow(_ item: DBDownloadedItem) -> some View {
-        Button {
-            performPrimaryAction(item)
-        } label: {
-            row(item)
+        let isFinished = item.downloadStatus == .completed || item.downloadStatus == .failed
+        Group {
+            if isFinished {
+                // The list's own button style: the system highlights the row and
+                // takes the tap anywhere across it.
+                Button {
+                    performPrimaryAction(item)
+                } label: {
+                    row(item)
+                }
+            } else {
+                // A running or queued download has no primary action, so its row is
+                // not a button; the stop control at its trailing edge is.
+                row(item)
+            }
         }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .trailing) {
+        // A cancel throws the partial file away: an unfinished download takes a
+        // tap on the revealed button, a full swipe alone does not fire it.
+        .swipeActions(edge: .trailing, allowsFullSwipe: isFinished) {
+            removalButton(for: item)
+        }
+        .contextMenu {
             switch item.downloadStatus {
             case .downloading, .queued:
-                Button(role: .destructive) {
-                    manager.cancel(id: item.id)
+                EmptyView()
+            case .failed:
+                Button {
+                    redownload(item)
                 } label: {
-                    Label(L("download.cancel"), systemImage: "xmark")
+                    Label(L("download.retry"), systemImage: "arrow.clockwise")
                 }
-            case .completed, .failed:
-                Button(role: .destructive) {
-                    Task { await manager.delete(id: item.id) }
+            case .completed:
+                Button {
+                    play(item)
                 } label: {
-                    Label(L("download.delete"), systemImage: "trash")
+                    Label(L("download.play"), systemImage: "play")
                 }
+            }
+            removalButton(for: item)
+        }
+    }
+
+    /// Cancel for an unfinished download, delete for a finished or failed one.
+    @ViewBuilder
+    private func removalButton(for item: DBDownloadedItem) -> some View {
+        switch item.downloadStatus {
+        case .downloading, .queued:
+            Button(role: .destructive) {
+                manager.cancel(id: item.id)
+            } label: {
+                Label(L("download.cancel"), systemImage: "xmark")
+            }
+        case .completed, .failed:
+            Button(role: .destructive) {
+                Task { await manager.delete(id: item.id) }
+            } label: {
+                Label(L("download.delete"), systemImage: "trash")
             }
         }
     }
@@ -209,23 +277,7 @@ struct DownloadsView: View {
             break
         case .failed:
             // Retry: sadece aynı id ile yeniden enqueue. Manager zaten failed row'un üzerine yazar.
-            guard let url = URL(string: item.remoteURL) else { return }
-            Task {
-                await manager.enqueue(
-                    id: item.id,
-                    playlistId: item.playlistId,
-                    streamId: item.streamId,
-                    type: item.type,
-                    title: item.title,
-                    secondaryTitle: item.secondaryTitle,
-                    imageURL: item.imageURL,
-                    remoteURL: url,
-                    containerExtension: item.containerExtension,
-                    seriesId: item.seriesId,
-                    seasonNumber: item.seasonNumber,
-                    episodeNumber: item.episodeNumber
-                )
-            }
+            redownload(item)
         case .completed:
             play(item)
         }
@@ -242,35 +294,34 @@ struct DownloadsView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
+            // Concrete colours throughout the row: inside the list's button style a
+            // hierarchical `.primary` / `.secondary` resolves against the accent tint.
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title)
                     .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.primary)
                     .lineLimit(2)
                 if let sub = item.secondaryTitle, !sub.isEmpty {
                     Text(sub)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.secondary)
                         .lineLimit(1)
                 }
                 footer(for: item)
             }
             Spacer()
-            primaryActionIcon(for: item)
+            trailingAccessory(for: item)
         }
         .padding(.vertical, 2)
     }
 
-    /// Satırın birincil aksiyonunu görsel olarak bildirir (tıklanabilir değil — tüm satır butondur).
+    /// Finished and failed rows: an icon that tells what a tap on the row does (the
+    /// row is the button). Unfinished rows: the stop control.
     @ViewBuilder
-    private func primaryActionIcon(for item: DBDownloadedItem) -> some View {
+    private func trailingAccessory(for item: DBDownloadedItem) -> some View {
         switch item.downloadStatus {
-        case .downloading:
-            ProgressView()
-                .controlSize(.small)
-        case .queued:
-            Image(systemName: "clock")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+        case .downloading, .queued:
+            cancelMenu(for: item)
         case .failed:
             Image(systemName: "arrow.clockwise.circle.fill")
                 .font(.title2)
@@ -282,6 +333,26 @@ struct DownloadsView: View {
         }
     }
 
+    /// The stop control of an unfinished download. It opens a menu instead of
+    /// cancelling on the first touch, because a cancel discards what was downloaded.
+    private func cancelMenu(for item: DBDownloadedItem) -> some View {
+        Menu {
+            removalButton(for: item)
+        } label: {
+            Image(systemName: "xmark.circle.fill")
+                .font(.title2)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(Color.secondary)
+                // Widens the touch target without moving the icon off the trailing edge.
+                .padding(.leading, 12)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+        }
+        // Keeps the control's own hit area inside the list row.
+        .buttonStyle(.borderless)
+        .accessibilityLabel(L("download.cancel"))
+    }
+
     @ViewBuilder
     private func footer(for item: DBDownloadedItem) -> some View {
         switch item.downloadStatus {
@@ -291,32 +362,48 @@ struct DownloadsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ProgressView(value: fraction)
                     .progressViewStyle(.linear)
+                    // Progress is published once per percent: the bar glides to the
+                    // new value instead of stepping.
+                    .animation(.linear(duration: 0.4), value: fraction)
                 HStack {
-                    Text(L("download.downloading_format", Int(fraction * 100)))
+                    Text(DetailFormatting.percent(fraction))
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.secondary)
                         .monospacedDigit()
                     if let p, p.totalBytes > 0 {
-                        Text(ByteCountFormatter.string(fromByteCount: p.totalBytes, countStyle: .file))
+                        Text(Self.byteCount(p.totalBytes))
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.secondary)
                     }
                 }
             }
         case .queued:
             Text(L("download.status.queued"))
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.secondary)
         case .completed:
-            Text(ByteCountFormatter.string(fromByteCount: Int64(item.totalBytes), countStyle: .file))
+            Text(Self.byteCount(Int64(item.totalBytes)))
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.secondary)
         case .failed:
-            Text(item.errorMessage ?? L("common.unknown_error"))
+            Text(Self.failureText(item.errorMessage))
                 .font(.caption2)
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.secondary)
                 .lineLimit(2)
         }
+    }
+
+    /// A file size in the app's language and the device's region.
+    static func byteCount(_ bytes: Int64) -> String {
+        bytes.formatted(.byteCount(style: .file).locale(AppLocale.current))
+    }
+
+    /// The stored reason of a failed download. Only the text survives the failure, so
+    /// an empty or missing one falls back to the generic sentence `NetworkErrorText`
+    /// uses for an error it cannot name.
+    static func failureText(_ stored: String?) -> String {
+        let text = stored?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return text.isEmpty ? L("kit.error.generic") : text
     }
 
     private func play(_ item: DBDownloadedItem) {
@@ -364,7 +451,7 @@ struct DownloadsView: View {
                     // the stale position is dropped here; the shell reads nothing else
                     // that depends on it.
                     if history.resumePositionMs(as: .episode) == nil { history.lastTimeMs = 0 }
-                    playerOverlay.present(skipDownloadCheck: true, playlistId: playlist.id) {
+                    playerOverlay.injected?.present(skipDownloadCheck: true, playlistId: playlist.id) {
                         HistorySeriesPlayerShell(
                             playlist: playlist,
                             history: history,
@@ -374,7 +461,7 @@ struct DownloadsView: View {
                     }
                 } else {
                     // Film — prev/next yok, sadece local oynatım + resume.
-                    playerOverlay.present(skipDownloadCheck: true, playlistId: playlist.id) {
+                    playerOverlay.injected?.present(skipDownloadCheck: true, playlistId: playlist.id) {
                         PlayerView(
                             url: localURL,
                             title: item.title,
@@ -406,7 +493,7 @@ struct DownloadsView: View {
                     .fetchOne(db)
             }) else { return }
             await MainActor.run {
-                playerOverlay.dismiss()
+                playerOverlay.injected?.dismiss()
                 pendingMovieDetail = movie
             }
         }
@@ -422,7 +509,7 @@ struct DownloadsView: View {
                     .fetchOne(db)
             }) else { return }
             await MainActor.run {
-                playerOverlay.dismiss()
+                playerOverlay.injected?.dismiss()
                 pendingSeriesDetail = series
             }
         }

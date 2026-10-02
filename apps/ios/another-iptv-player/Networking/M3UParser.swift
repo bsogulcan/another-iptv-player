@@ -57,6 +57,7 @@ enum M3UParserError: LocalizedError {
 /// - Attr değeri içine sızmış newline'ları birleştirir (`joinEXTINFContinuations`).
 /// - EXTINF ve URL aynı satıra yapışık gelmişse (`...,Namehttp://...`) ayırır.
 /// - URL percent-encoding fallback'i ile oynatılabilirliği arttırır.
+/// - An entry whose URL cannot be parsed even with that fallback is left out.
 /// Pure stateless namespace — parse runs in detached tasks, so it must not be MainActor.
 nonisolated enum M3UParser {
 
@@ -89,6 +90,9 @@ nonisolated enum M3UParser {
         var kodiPropLines: Int = 0
         var extgrpLines: Int = 0
         var orphanURIs: Int = 0
+        /// URL lines (or URLs glued to an EXTINF) that `sanitizedURL` cannot turn
+        /// into a URL; they never become a channel.
+        var unparseableURIs: Int = 0
         var lostPendingChannels: Int = 0
         var channelCount: Int = 0
         var noGroupCount: Int = 0
@@ -109,6 +113,7 @@ nonisolated enum M3UParser {
             #EXTGRP:               \(extgrpLines)
             Yorum/bilinmeyen:      \(commentLines)
             Orphan URI (skip):     \(orphanURIs)
+            Unparseable URI (skip): \(unparseableURIs)
             Kayıp pending EXTINF:  \(lostPendingChannels)
             ---
             Toplam kanal:          \(channelCount)
@@ -234,7 +239,13 @@ nonisolated enum M3UParser {
                 ch.groupTitle = grp
             }
 
-            if let embedded = embeddedURL, !embedded.isEmpty {
+            // A glued URL that cannot be parsed is treated as no URL at all: the
+            // entry waits, as any EXTINF does, for a URL line of its own.
+            let embedded = embeddedURL.flatMap { $0.isEmpty ? nil : $0 }
+            let embeddedIsPlayable = embedded.map { sanitizedURL(from: $0) != nil } ?? false
+            if collectDiagnostics, embedded != nil, !embeddedIsPlayable { diag.unparseableURIs += 1 }
+
+            if let embedded, embeddedIsPlayable {
                 // Yapışık EXTINF+URL — kanalı hemen ekle.
                 ch.url = embedded
                 let wasEmpty = ch.name.trimmingCharacters(in: .whitespaces).isEmpty
@@ -273,6 +284,15 @@ nonisolated enum M3UParser {
             if collectDiagnostics { diag.uriLines += 1 }
             guard var ch = state.pendingChannel else {
                 if collectDiagnostics { diag.orphanURIs += 1 }
+                return
+            }
+            // A line no URL can be made of (a space after the port, a port that is
+            // not a number, an unbalanced IPv6 bracket) would become a channel that
+            // nothing can play: a tap does nothing and stepping onto it leaves the
+            // player empty. The line is skipped and the EXTINF stays pending, so a
+            // valid URL on the next line still attaches to it.
+            guard sanitizedURL(from: url) != nil else {
+                if collectDiagnostics { diag.unparseableURIs += 1 }
                 return
             }
             ch.url = url

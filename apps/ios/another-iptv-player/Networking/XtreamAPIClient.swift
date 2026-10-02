@@ -13,7 +13,7 @@ enum XtreamError: LocalizedError {
         case .networkError(let error): return L("net.error.network", error.localizedDescription)
         case .unauthenticated: return L("misc.xtream.auth_error")
         case .decodingError(let error): return L("misc.xtream.decode_error", error.localizedDescription)
-        case .serverError(let status): return L("misc.xtream.server_error", status)
+        case .serverError(let status): return L(plainDigits: "misc.xtream.server_error", status)
         }
     }
 }
@@ -82,7 +82,53 @@ class XtreamAPIClient {
         return comps
     }
     
-    private func fetch<T: Decodable>(action: String? = nil, queryItems: [URLQueryItem] = []) async throws -> T {
+    /// Single-object endpoints (auth, movie and series details, per-channel EPG tables).
+    // final: a subclass in another file (the add-playlist progress client) otherwise
+    // references these file-private helpers from its vtable, which does not link.
+    private final func fetch<T: Decodable & Sendable>(action: String? = nil, queryItems: [URLQueryItem] = []) async throws -> T {
+        let (data, url) = try await load(action: action, queryItems: queryItems)
+        return try await Self.decodeDetached(data, from: url) { try JSONDecoder().decode(T.self, from: $0) }
+    }
+
+    /// List endpoints. Elements are decoded one by one so a single malformed entry
+    /// cannot fail the whole catalog; dropping the failures happens in the same
+    /// detached pass as the decode.
+    private final func fetchList<Item: Decodable & Sendable>(action: String, queryItems: [URLQueryItem] = []) async throws -> [Item] {
+        let (data, url) = try await load(action: action, queryItems: queryItems)
+        return try await Self.decodeDetached(data, from: url) {
+            try JSONDecoder().decode([FailableDecodable<Item>].self, from: $0).compactMap(\.base)
+        }
+    }
+
+    /// This class is main-actor isolated and a full movie or series list is tens of
+    /// megabytes of JSON, so decoding here would freeze the UI for as long as it takes.
+    /// A detached task does not inherit cancellation: a cancelled refresh finishes its
+    /// decode and the caller drops the result.
+    private static func decodeDetached<T: Sendable>(
+        _ data: Data, from url: URL, _ decode: @escaping @Sendable (Data) throws -> T
+    ) async throws -> T {
+        do {
+            return try await Task.detached(priority: .userInitiated) { try decode(data) }.value
+        } catch {
+            logDecodingFailure(error, data: data, url: url)
+            throw XtreamError.decodingError(error)
+        }
+    }
+
+    private static func logDecodingFailure(_ error: Error, data: Data, url: URL) {
+        #if DEBUG
+        print("--- DECODING ERROR ---")
+        print("URL: \(Self.redacted(url.absoluteString))")
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("RAW DATA: \(jsonString)")
+        }
+        print("ERROR: \(error)")
+        print("--- END ERROR ---")
+        #endif
+    }
+
+    /// Builds the request, runs it and returns the raw body once the status is 2xx.
+    private func load(action: String?, queryItems: [URLQueryItem]) async throws -> (data: Data, url: URL) {
         var comps = getBaseURLComponents()
         
         if let action = action {
@@ -104,7 +150,6 @@ class XtreamAPIClient {
             throw XtreamError.invalidURL(Self.redacted(comps.string ?? ""))
         }
 
-
         do {
             let (data, response) = try await urlSession.data(from: url)
 
@@ -125,22 +170,7 @@ class XtreamAPIClient {
                  throw XtreamError.serverError("HTTP \(httpResponse.statusCode)")
             }
 
-            // Catch JSON decoding errors safely
-            do {
-                let decoder = JSONDecoder()
-                return try decoder.decode(T.self, from: data)
-            } catch(let error) {
-                #if DEBUG
-                print("--- DECODING ERROR ---")
-                print("URL: \(Self.redacted(url.absoluteString))")
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("RAW DATA: \(jsonString)")
-                }
-                print("ERROR: \(error)")
-                print("--- END ERROR ---")
-                #endif
-                throw XtreamError.decodingError(error)
-            }
+            return (data, url)
         } catch let error as XtreamError {
             throw error
         } catch {
@@ -163,18 +193,15 @@ class XtreamAPIClient {
     }
     
     func getLiveCategories() async throws -> [XtreamCategory] {
-        let failable: [FailableDecodable<XtreamCategory>] = try await fetch(action: "get_live_categories")
-        return failable.compactMap { $0.base }
+        try await fetchList(action: "get_live_categories")
     }
     
     func getVODCategories() async throws -> [XtreamCategory] {
-        let failable: [FailableDecodable<XtreamCategory>] = try await fetch(action: "get_vod_categories")
-        return failable.compactMap { $0.base }
+        try await fetchList(action: "get_vod_categories")
     }
     
     func getSeriesCategories() async throws -> [XtreamCategory] {
-        let failable: [FailableDecodable<XtreamCategory>] = try await fetch(action: "get_series_categories")
-        return failable.compactMap { $0.base }
+        try await fetchList(action: "get_series_categories")
     }
     
     func getLiveStreams(categoryId: String? = nil) async throws -> [XtreamLiveStream] {
@@ -182,8 +209,7 @@ class XtreamAPIClient {
         if let catId = categoryId {
             queryItems.append(URLQueryItem(name: "category_id", value: catId))
         }
-        let failable: [FailableDecodable<XtreamLiveStream>] = try await fetch(action: "get_live_streams", queryItems: queryItems)
-        return failable.compactMap { $0.base }
+        return try await fetchList(action: "get_live_streams", queryItems: queryItems)
     }
     
     func getVODStreams(categoryId: String? = nil) async throws -> [XtreamVODStream] {
@@ -191,8 +217,7 @@ class XtreamAPIClient {
         if let catId = categoryId {
             queryItems.append(URLQueryItem(name: "category_id", value: catId))
         }
-        let failable: [FailableDecodable<XtreamVODStream>] = try await fetch(action: "get_vod_streams", queryItems: queryItems)
-        return failable.compactMap { $0.base }
+        return try await fetchList(action: "get_vod_streams", queryItems: queryItems)
     }
     
     func getSeries(categoryId: String? = nil) async throws -> [XtreamSeries] {
@@ -200,8 +225,7 @@ class XtreamAPIClient {
         if let catId = categoryId {
             queryItems.append(URLQueryItem(name: "category_id", value: catId))
         }
-        let failable: [FailableDecodable<XtreamSeries>] = try await fetch(action: "get_series", queryItems: queryItems)
-        return failable.compactMap { $0.base }
+        return try await fetchList(action: "get_series", queryItems: queryItems)
     }
     
     func getSeriesInfo(seriesId: Int) async throws -> XtreamSeriesInfoResponse {

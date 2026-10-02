@@ -8,18 +8,23 @@ struct ChannelEPGDetailView: View {
     let displayName: String
     let iconURL: URL?
     let liveStream: DBLiveStream?
+    /// Starts the channel when it is not an Xtream stream (an M3U channel); handed
+    /// on to the programme sheet. Nil when there is nothing to play.
+    let onPlayChannel: (() -> Void)?
 
     @Query<ChannelEPGRequest> private var rows: [DBEPGProgramme]
     @State private var selected: EPGProgramme?
     @State private var hasScrolledToNow = false
     @Environment(\.epgSnapshot) private var epgSnapshot
 
-    init(playlist: Playlist, channelKey: String, displayName: String, iconURL: URL?, liveStream: DBLiveStream?) {
+    init(playlist: Playlist, channelKey: String, displayName: String, iconURL: URL?, liveStream: DBLiveStream?,
+         onPlayChannel: (() -> Void)? = nil) {
         self.playlist = playlist
         self.channelKey = channelKey
         self.displayName = displayName
         self.iconURL = iconURL
         self.liveStream = liveStream
+        self.onPlayChannel = onPlayChannel
         let now = Date()
         let from = Int64(now.addingTimeInterval(-2 * 86_400).timeIntervalSince1970)
         let to = Int64(now.addingTimeInterval(8 * 86_400).timeIntervalSince1970)
@@ -37,7 +42,8 @@ struct ChannelEPGDetailView: View {
     var body: some View {
         Group {
             if programmes.isEmpty {
-                ContentUnavailableView(L("epg.no_data.channel"), systemImage: "calendar.badge.exclamationmark")
+                CatalogEmptyView(.message(title: L("epg.no_data.channel"),
+                                          systemImage: "calendar.badge.exclamationmark", description: nil))
             } else {
                 scheduleList
             }
@@ -46,7 +52,8 @@ struct ChannelEPGDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selected) { programme in
             EPGProgrammeDetailSheet(playlist: playlist, programme: programme,
-                                    channelName: displayName, channelIcon: iconURL, liveStream: liveStream)
+                                    channelName: displayName, channelIcon: iconURL, liveStream: liveStream,
+                                    onPlayChannel: onPlayChannel)
                 .presentationDetents([.medium, .large])
         }
     }
@@ -57,10 +64,14 @@ struct ChannelEPGDetailView: View {
                 ForEach(days, id: \.day) { group in
                     Section(header: Text(dayLabel(group.day))) {
                         ForEach(group.items) { programme in
-                            row(programme)
-                                .id(rowID(programme))
-                                .contentShape(Rectangle())
-                                .onTapGesture { selected = programme }
+                            // A button, so the cell highlights while pressed and
+                            // VoiceOver announces it as one.
+                            Button {
+                                selected = programme
+                            } label: {
+                                row(programme)
+                            }
+                            .id(rowID(programme))
                         }
                     }
                 }
@@ -79,9 +90,9 @@ struct ChannelEPGDetailView: View {
                             withAnimation { proxy.scrollTo(rowID(current), anchor: .center) }
                         }
                     } label: {
-                        Image(systemName: "clock.arrow.circlepath")
+                        // A plain clock: the arrowed one marks catch-up in the rows.
+                        Label(L("epg.jump_to_now"), systemImage: "clock")
                     }
-                    .accessibilityLabel(L("epg.jump_to_now"))
                 }
             }
         }
@@ -99,9 +110,12 @@ struct ChannelEPGDetailView: View {
                 .frame(width: 52, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
+                    // Inside a list button unstyled text takes the accent colour.
                     Text(programme.title).font(.body).lineLimit(1)
+                        .foregroundStyle(.primary)
                     if isCurrent {
                         Text(L("epg.now")).font(.caption2.bold())
+                            .foregroundStyle(.primary)
                             .padding(.horizontal, 5).padding(.vertical, 1)
                             .background(Color.accentColor.opacity(0.2), in: Capsule())
                     }
@@ -147,11 +161,7 @@ struct ChannelEPGDetailView: View {
     }
 
     private func dayLabel(_ day: Date) -> String {
-        let cal = Calendar.current
-        if cal.isDateInToday(day) { return L("epg.day.today") }
-        if cal.isDateInTomorrow(day) { return L("epg.day.tomorrow") }
-        if cal.isDateInYesterday(day) { return L("epg.day.yesterday") }
-        return day.formatted(.dateTime.weekday(.wide).day().month())
+        EPGTimeFormat.dayLabel(day, wide: true)
     }
 }
 

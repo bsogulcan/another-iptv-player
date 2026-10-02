@@ -7,18 +7,23 @@ import GRDB
 /// `timestamp_now` → UTC.
 enum PanelTimeZoneResolver {
 
-    static func resolve(playlist: Playlist) async -> TimeZone {
+    /// - Parameters:
+    ///   - database: Injected by tests; the app writes to the shared database.
+    ///   - urlSession: The guide refresh passes the session it downloads with, so
+    ///     the whole refresh talks to the panel through one session.
+    static func resolve(playlist: Playlist, database: AppDatabase = .shared,
+                        urlSession: URLSession = PanelURLSession.shared) async -> TimeZone {
         // 1. Persisted IANA name.
         if let tz = timeZone(fromIANA: playlist.serverTimezone) { return tz }
 
         // 2. Live verify() — capture and persist server_info.
         guard playlist.kind == .xtream else { return .gmt }
-        let client = XtreamAPIClient(playlist: playlist)
+        let client = XtreamAPIClient(playlist: playlist, urlSession: urlSession)
         guard let response = try? await client.verify() else { return .gmt }
         let serverInfo = response.serverInfo
 
         if let tz = timeZone(fromIANA: serverInfo?.timezone) {
-            await persist(timezone: serverInfo?.timezone, playlist: playlist)
+            await persist(timezone: serverInfo?.timezone, playlist: playlist, database: database)
             return tz
         }
 
@@ -52,11 +57,12 @@ enum PanelTimeZoneResolver {
         return Int(quarter)
     }
 
-    private static func persist(timezone: String?, playlist: Playlist) async {
+    /// Writes the one column. `playlist` is the copy the refresh or the player was
+    /// started with; saving that whole value would put back every setting changed
+    /// since, and would insert the row again if the playlist was deleted meanwhile.
+    private static func persist(timezone: String?, playlist: Playlist, database: AppDatabase) async {
         guard let tz = timezone?.trimmingCharacters(in: .whitespacesAndNewlines), !tz.isEmpty,
               tz != playlist.serverTimezone else { return }
-        var updated = playlist
-        updated.serverTimezone = tz
-        try? await AppDatabase.shared.write { db in try updated.save(db) }
+        _ = try? await database.updatePlaylist(id: playlist.id) { $0.serverTimezone = tz }
     }
 }

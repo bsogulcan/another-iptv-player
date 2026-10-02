@@ -459,6 +459,36 @@ nonisolated struct AppDatabase {
             }
         }
 
+        // The M3U store reads a playlist's whole channel list ordered by sortIndex.
+        // The only index led with groupTitle, so SQLite sorted every load through a
+        // temporary B-tree.
+        //
+        // `.immediate` here and below: the default deferred mode ends the migration
+        // with a foreign key check over the whole database, a noticeable pause on the
+        // upgrade launch of a large catalog. Creating an index cannot break a
+        // foreign key, so there is nothing to check.
+        migrator.registerMigration("addM3UChannelSortIndex", foreignKeyChecks: .immediate) { db in
+            try db.create(
+                index: "idx_m3uChannel_playlist_sort",
+                on: "m3uChannel",
+                columns: ["playlistId", "sortIndex"],
+                ifNotExists: true
+            )
+        }
+
+        // WatchHistoryRequest looks one row up by playlist, type and stream id, and
+        // the detail screens may run that lookup synchronously for their first
+        // frame. Without this it scanned the table (the only index is on
+        // lastWatchedAt). The per-type progress map uses the same prefix.
+        migrator.registerMigration("addWatchHistoryLookupIndex", foreignKeyChecks: .immediate) { db in
+            try db.create(
+                index: "idx_watchHistory_playlist_type_stream",
+                on: "watchHistory",
+                columns: ["playlistId", "type", "streamId"],
+                ifNotExists: true
+            )
+        }
+
         return migrator
     }
 }
@@ -485,6 +515,29 @@ nonisolated extension AppDatabase {
     func read<T>(_ value: @escaping (Database) throws -> T) async throws -> T {
         try await dbWriter.read { db in
             try value(db)
+        }
+    }
+}
+
+// MARK: - Playlist row
+nonisolated extension AppDatabase {
+    /// Changes columns of a playlist row, starting from the row as it is stored now.
+    ///
+    /// Screens hold a `Playlist` value from when they opened. Saving such a copy
+    /// writes every column, so one setting silently reverted another that was saved
+    /// in between (the guide switch undoing the adult filter, a refresh wiping a
+    /// manual EPG URL). Here the row is fetched inside the write transaction and only
+    /// the columns `change` actually modified are written.
+    ///
+    /// Returns the row as saved, for the caller to keep working with instead of its
+    /// own copy, or nil when the playlist no longer exists: a playlist deleted in
+    /// the meantime is not inserted again. `change` must leave `id` alone.
+    @discardableResult
+    func updatePlaylist(id: UUID, _ change: @escaping @Sendable (inout Playlist) -> Void) async throws -> Playlist? {
+        try await write { db in
+            guard var playlist = try Playlist.fetchOne(db, key: id) else { return nil }
+            try playlist.updateChanges(db) { change(&$0) }
+            return playlist
         }
     }
 }

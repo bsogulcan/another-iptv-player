@@ -771,3 +771,130 @@ final class UserFlowsUITests: XCTestCase {
         return app.buttons[label]
     }
 }
+
+// MARK: - Browse behaviour
+
+/// Browse behaviour that the native-feel pass changed. Every test here failed on the
+/// build before that pass; together they pin the behaviour it guarantees.
+@MainActor
+final class BrowseBehaviourUITests: XCTestCase {
+
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        _ = app.wait(for: .runningForeground, timeout: 20)
+        XCTAssertTrue(app.tabBars.buttons["Live TV"].waitForExistence(timeout: 25), "Dashboard did not appear")
+    }
+
+    override func tearDown() {
+        app = nil
+        super.tearDown()
+    }
+
+    /// A pushed category grid keeps the tab bar, as pushed lists do in the system apps.
+    func test_categoryGrid_keepsTabBar() {
+        app.tabBars.buttons["Movies"].tap()
+        let header = app.buttons["Action"].firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 8))
+        header.tap()
+        XCTAssertTrue(app.navigationBars["Action"].waitForExistence(timeout: 6))
+        let moviesTab = app.tabBars.buttons["Movies"]
+        XCTAssertTrue(moviesTab.waitForExistence(timeout: 3), "The tab bar should stay on a pushed category grid")
+        XCTAssertTrue(moviesTab.isHittable, "The tab bar should stay on a pushed category grid")
+    }
+
+    /// The Search tab lists a title that starts with the query above one that only contains it.
+    func test_search_listsPrefixMatchesFirst() {
+        app.tabBars.buttons["Search"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 6))
+        field.tap()
+        field.typeText("mi")
+        let prefixHit = app.staticTexts["Midnight Horizon"].firstMatch
+        let containsHit = app.staticTexts["Family Ties"].firstMatch
+        XCTAssertTrue(prefixHit.waitForExistence(timeout: 8))
+        XCTAssertTrue(containsHit.waitForExistence(timeout: 2))
+        XCTAssertLessThan(prefixHit.frame.minY, containsHit.frame.minY,
+                          "'Midnight Horizon' starts with the query and should be listed first")
+    }
+
+    /// The Search tab's type filter is the search field's system scope bar.
+    func test_search_typeFilterIsTheSystemScopeBar() {
+        app.tabBars.buttons["Search"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 6))
+        field.tap()
+        field.typeText("mi")
+        XCTAssertTrue(app.segmentedControls.buttons["Movies"].waitForExistence(timeout: 6),
+                      "The type filter should be the system scope bar")
+    }
+
+    /// The + button of the playlist list is a menu with both kinds of playlist; no sheet in between.
+    func test_addPlaylist_plusButtonIsAMenu() {
+        app.tabBars.buttons["Settings"].tap()
+        let backRow = app.buttons["Back to Playlists"]
+        XCTAssertTrue(backRow.waitForExistence(timeout: 6))
+        backRow.tap()
+        XCTAssertTrue(app.navigationBars["Playlists"].waitForExistence(timeout: 6))
+        app.navigationBars.buttons["plus"].firstMatch.tap()
+        let xtream = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Xtream Code")).firstMatch
+        XCTAssertTrue(xtream.waitForExistence(timeout: 4))
+        XCTAssertFalse(app.navigationBars["Add Playlist"].exists, "Choosing the kind of playlist should not open a sheet")
+    }
+
+    /// The series page keeps its title when its seasons cannot be loaded; the failure and
+    /// Try Again sit in the seasons section. The demo panel cannot serve seasons.
+    func test_seriesDetail_keepsThePageWhenSeasonsFail() {
+        app.tabBars.buttons["Series"].tap()
+        let poster = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Northern Lights")).firstMatch
+        XCTAssertTrue(poster.waitForExistence(timeout: 8))
+        poster.tap()
+        XCTAssertTrue(app.buttons["Try Again"].waitForExistence(timeout: 20), "The seasons request should fail and offer Try Again")
+        XCTAssertTrue(app.staticTexts["Northern Lights"].exists, "The series title should stay on the page next to the failure")
+    }
+
+    /// Switching the adult-content filter of an Xtream playlist asks before the catalog is downloaded again.
+    func test_adultFilter_asksBeforeDownloadingAgain() {
+        app.tabBars.buttons["Settings"].tap()
+        let toggle = app.switches.matching(NSPredicate(format: "label CONTAINS[c] %@", "Filter Adult Content")).firstMatch
+        var swipes = 0
+        while !(toggle.exists && toggle.isHittable) && swipes < 8 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(toggle.isHittable, "The adult-content switch should be in Settings")
+        let before = toggle.value as? String
+        // The row is the switch element; its inner switch is what reliably takes the tap.
+        if toggle.switches.firstMatch.exists {
+            toggle.switches.firstMatch.tap()
+        } else {
+            toggle.tap()
+        }
+        // The question is an action sheet; on iOS 26 it is a popover without a Cancel
+        // button, dismissed by tapping outside it.
+        let dialog = app.sheets.firstMatch
+        XCTAssertTrue(dialog.waitForExistence(timeout: 4), "Switching the filter should ask first")
+        if dialog.buttons["Cancel"].exists {
+            dialog.buttons["Cancel"].tap()
+        } else {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        }
+        XCTAssertFalse(dialog.waitForExistence(timeout: 2) && dialog.isHittable, "The question should close")
+        XCTAssertEqual(toggle.value as? String, before, "Cancelling should leave the filter as it was")
+    }
+
+    /// A poster offers Add to Favorites in its context menu, without opening the detail.
+    func test_movieCard_contextMenuOffersFavourite() {
+        app.tabBars.buttons["Movies"].tap()
+        let poster = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Midnight Horizon")).firstMatch
+        XCTAssertTrue(poster.waitForExistence(timeout: 8))
+        poster.press(forDuration: 1.2)
+        XCTAssertTrue(app.buttons["Add to Favorites"].waitForExistence(timeout: 4),
+                      "A long press on a poster should offer Add to Favorites")
+        XCTAssertFalse(app.buttons["Watch Now"].exists, "The long press should not open the detail")
+    }
+}

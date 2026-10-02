@@ -1,26 +1,27 @@
 import Foundation
 import GRDB
 
-/// `localized_contains` her satır için çağrılır (100k+ satır); sorgu kelimelerini satır
-/// başına değil, sorgu değiştiğinde bir kez normalize etmek için son-sorgu önbelleği.
+/// The `localized_*` functions run once per row (100k+ rows) with the same query argument,
+/// so the query is prepared when it changes instead of once per row.
 /// `nonisolated`: runs inside GRDB's DatabaseFunction callbacks on DB queues (a
 /// DatabasePool serves concurrent readers), so all state is guarded by the lock.
-private nonisolated final class NormalizedQueryCache: @unchecked Sendable {
+private nonisolated final class PreparedQueryCache: @unchecked Sendable {
     private let lock = NSLock()
     private var lastQuery: String?
-    private var lastWords: [String] = []
+    private var lastPrepared = CatalogTextSearch.Query("")
+    private var lastKey = ""
 
-    func words(for query: String, normalize: (String) -> String) -> [String] {
+    /// The query as words (for `localized_contains`) and as one folded key (for the
+    /// equality and prefix checks of the relevance ordering).
+    func entry(for query: String) -> (prepared: CatalogTextSearch.Query, key: String) {
         lock.lock()
         defer { lock.unlock() }
-        if lastQuery == query { return lastWords }
-        let words = query
-            .components(separatedBy: .whitespaces)
-            .filter { !$0.isEmpty }
-            .map(normalize)
-        lastQuery = query
-        lastWords = words
-        return words
+        if lastQuery != query {
+            lastPrepared = CatalogTextSearch.Query(query)
+            lastKey = CatalogTextSearch.normalize(query)
+            lastQuery = query
+        }
+        return (lastPrepared, lastKey)
     }
 }
 
@@ -98,35 +99,24 @@ nonisolated extension AppDatabase {
     
     private static func databaseConfiguration() -> Configuration {
         var config = Configuration()
+        // A detail screen reads its row while it is being pushed. A reader has to be
+        // free for that even when the catalog load, the guide index and a search each
+        // hold one, so the pool is a little larger than GRDB's default of five.
+        config.maximumReaderCount = 8
         config.prepareDatabase { db in
-            let foldLocale = Locale(identifier: "en_US_POSIX")
-            let alphanumericSet = CharacterSet.alphanumerics
-
-            // Must stay in sync with CatalogTextSearch.normalize (see rationale there):
-            // locale-invariant case fold + "ı"→"i" so lowercase queries match ALL-CAPS
-            // names in both English ("HISTORY") and Turkish ("IŞIK") catalogs.
-            let normalize: @Sendable (String) -> String = { s in
-                let folded = s.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: foldLocale)
-                return folded
-                    .replacingOccurrences(of: "ı", with: "i")
-                    .components(separatedBy: alphanumericSet.inverted)
-                    .joined()
-            }
-
-            let queryCache = NormalizedQueryCache()
+            // Folding and matching live in CatalogTextSearch, shared with the in-memory
+            // searches, so a query selects the same rows whichever path answers it.
+            let queryCache = PreparedQueryCache()
             let containsFunc = DatabaseFunction("localized_contains", argumentCount: 2, pure: true) { (dbValues: [DatabaseValue]) -> DatabaseValueConvertible? in
                 guard dbValues.count == 2,
                       let text = String.fromDatabaseValue(dbValues[0]),
                       let query = String.fromDatabaseValue(dbValues[1]) else { return nil }
 
-                let normalizedText = normalize(text)
-                let queryWords = queryCache.words(for: query, normalize: normalize)
-                if queryWords.isEmpty { return false }
-
-                // Every word in the query must be found in the normalized text
-                return queryWords.allSatisfy { word in
-                    normalizedText.contains(word)
-                }
+                let prepared = queryCache.entry(for: query).prepared
+                // As a SQL predicate an empty query selects no row; `Query` alone would
+                // let a blank one match everything.
+                if prepared.isEmpty { return false }
+                return prepared.matches(text)
             }
             db.add(function: containsFunc)
             
@@ -134,7 +124,7 @@ nonisolated extension AppDatabase {
                 guard dbValues.count == 2,
                       let text = String.fromDatabaseValue(dbValues[0]),
                       let query = String.fromDatabaseValue(dbValues[1]) else { return nil }
-                return normalize(text).hasPrefix(normalize(query))
+                return CatalogTextSearch.normalize(text).hasPrefix(queryCache.entry(for: query).key)
             }
             db.add(function: startsWithFunc)
             
@@ -142,7 +132,7 @@ nonisolated extension AppDatabase {
                 guard dbValues.count == 2,
                       let text = String.fromDatabaseValue(dbValues[0]),
                       let query = String.fromDatabaseValue(dbValues[1]) else { return nil }
-                return normalize(text) == normalize(query)
+                return CatalogTextSearch.normalize(text) == queryCache.entry(for: query).key
             }
             db.add(function: equalsFunc)
         }

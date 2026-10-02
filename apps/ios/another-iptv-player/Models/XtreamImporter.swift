@@ -6,20 +6,35 @@ import GRDB
 /// M3U flow's Xtream auto-detection.
 enum XtreamImporter {
 
+    /// Stage of an import, for callers whose UI depends on it: cancelling the task
+    /// only has an effect while `.downloading`.
+    enum Phase {
+        case downloading
+        case saving
+    }
+
     /// Full sync: downloads everything from the panel, then saves playlist + content.
     /// The playlist row is saved before content so it stays visible even if a later
     /// step fails. `progress` receives localized status messages on the main actor.
+    ///
+    /// The catalog is replaced, not merged: on an edit (same playlist id) rows the new
+    /// payload no longer contains, or that the adult filter now excludes, are removed,
+    /// exactly as a refresh from Settings does.
+    ///
+    /// Cancelling the calling task while the download runs throws and leaves the
+    /// database untouched. Once `.saving` has been reported the import completes
+    /// regardless of cancellation.
     static func syncAndSave(
         playlist: Playlist,
         client: XtreamAPIClient,
-        progress: @escaping @MainActor (String) -> Void
+        database: AppDatabase = .shared,
+        progress: @escaping @MainActor (String) -> Void,
+        onPhase: (@MainActor (Phase) -> Void)? = nil
     ) async throws {
-        print("--- XTREAM IMPORT: SYNC STARTED (SQLITE) ---")
-        let totalStartTime = Date()
-
         // Altı endpoint bağımsız — sıralı beklemek toplam süreyi altı gidiş-dönüşün
         // TOPLAMI yapıyordu; paralel çekim yavaş panellerde süreyi yarıdan fazla kısaltır.
         let fetchStart = Date()
+        onPhase?(.downloading)
         progress(L("add_playlist.fetching_categories"))
         async let liveCatsTask = client.getLiveCategories()
         async let vodCatsTask = client.getVODCategories()
@@ -30,67 +45,39 @@ enum XtreamImporter {
         let (liveCats, vodCats, seriesCats, liveStreams, vods, series) = try await (
             liveCatsTask, vodCatsTask, seriesCatsTask, liveStreamsTask, vodsTask, seriesTask
         )
-        print("NETWORK: All 6 endpoints fetched in \(Date().timeIntervalSince(fetchStart)) seconds | live=\(liveStreams.count) vod=\(vods.count) series=\(series.count)")
+        let fetchSeconds = Date().timeIntervalSince(fetchStart)
 
-        // 1. Save the playlist first so it shows up in the list even if content insertion fails.
-        try await AppDatabase.shared.write { db in
-            try playlist.save(db)
-        }
-        print("DATABASE: Playlist saved successfully")
+        // Last exit for a cancel. The requests fail on their own when the task is
+        // cancelled, but the decode that follows them does not notice, so a cancel
+        // that lands late arrives here with a complete payload.
+        try Task.checkCancellation()
 
+        onPhase?(.saving)
         progress(L("add_playlist.saving_db"))
-        let insertStart = Date()
+        let saveStart = Date()
 
-        // Adult content filter
+        // The two writes run in their own task so a cancel can no longer reach them.
+        // GRDB rolls a cancelled async write back; landing between the two it would
+        // leave a playlist without content or, on an edit, new credentials over the
+        // old catalog.
+        let pid = playlist.id
         let filterAdult = playlist.filterAdultContent
-        let adultLiveCatIds   = filterAdult ? AdultContentFilter.adultCategoryIds(from: liveCats)   : []
-        let adultVodCatIds    = filterAdult ? AdultContentFilter.adultCategoryIds(from: vodCats)    : []
-        let adultSeriesCatIds = filterAdult ? AdultContentFilter.adultCategoryIds(from: seriesCats) : []
+        try await Task {
+            // 1. Save the playlist first so it shows up in the list even if content insertion fails.
+            try await database.write { db in
+                try playlist.save(db)
+            }
+            // 2. Replace the catalog in one transaction (delete-then-insert per type).
+            try await database.write { db in
+                try PlaylistContentStore.replaceLiveCatalog(db: db, pid: pid, categories: liveCats, streams: liveStreams, filterAdult: filterAdult)
+                try PlaylistContentStore.replaceVODCatalog(db: db, pid: pid, categories: vodCats, streams: vods, filterAdult: filterAdult)
+                try PlaylistContentStore.replaceSeriesCatalog(db: db, pid: pid, categories: seriesCats, series: series, filterAdult: filterAdult)
+            }
+        }.value
 
-        // 2. Save content (upsert avoids conflicts).
-        try await AppDatabase.shared.write { db in
-            // Categories
-            for (index, cat) in liveCats.enumerated() {
-                if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "live", sortIndex: index, playlistId: playlist.id)
-                try dbCat.save(db)
-            }
-            for (index, cat) in vodCats.enumerated() {
-                if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "vod", sortIndex: index, playlistId: playlist.id)
-                try dbCat.save(db)
-            }
-            for (index, cat) in seriesCats.enumerated() {
-                if filterAdult, let name = cat.categoryName, AdultContentFilter.isAdultCategoryName(name) { continue }
-                let dbCat = DBCategory(id: cat.id, name: cat.categoryName ?? L("content.unnamed"), parentId: cat.parentId, type: "series", sortIndex: index, playlistId: playlist.id)
-                try dbCat.save(db)
-            }
-
-            // Live Streams
-            for (index, stream) in liveStreams.enumerated() {
-                if filterAdult, AdultContentFilter.isAdultLiveStream(stream, adultCategoryIds: adultLiveCatIds) { continue }
-                let dbStream = DBLiveStream(streamId: stream.id, name: stream.name ?? L("content.unnamed"), streamIcon: stream.streamIcon, epgChannelId: stream.epgChannelId, categoryId: stream.categoryId, sortIndex: index, playlistId: playlist.id, tvArchive: stream.tvArchive ?? 0, tvArchiveDuration: stream.tvArchiveDuration ?? 0)
-                try dbStream.save(db)
-            }
-
-            // VODs
-            for (index, stream) in vods.enumerated() {
-                if filterAdult, AdultContentFilter.isAdultVODStream(stream, adultCategoryIds: adultVodCatIds) { continue }
-                var dbVOD = DBVODStream(streamId: stream.id, name: stream.name ?? L("content.unnamed"), streamIcon: stream.streamIcon, categoryId: stream.categoryId, rating: stream.rating, containerExtension: stream.containerExtension, sortIndex: index, playlistId: playlist.id)
-                dbVOD.added = stream.added
-                try dbVOD.save(db)
-            }
-
-            // Series
-            for (index, s) in series.enumerated() {
-                if filterAdult, let cid = s.categoryId, adultSeriesCatIds.contains(cid) { continue }
-                var dbSeries = DBSeries(seriesId: s.id, name: s.name ?? L("content.unnamed"), cover: s.cover, plot: s.plot, genre: s.genre, rating: s.rating, categoryId: s.categoryId, sortIndex: index, playlistId: playlist.id)
-                dbSeries.lastModified = s.lastModified
-                try dbSeries.save(db)
-            }
-        }
-
-        print("DATABASE: Total Insertion completed in \(Date().timeIntervalSince(insertStart)) seconds")
-        print("--- TOTAL SYNC TIME: \(Date().timeIntervalSince(totalStartTime)) seconds ---")
+        Log.info("XtreamImport", String(
+            format: "live=%d vod=%d series=%d fetched in %.2fs, saved in %.2fs",
+            liveStreams.count, vods.count, series.count, fetchSeconds, Date().timeIntervalSince(saveStart)
+        ))
     }
 }

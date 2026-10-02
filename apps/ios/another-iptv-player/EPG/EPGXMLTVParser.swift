@@ -28,14 +28,16 @@ nonisolated struct XMLTVParseDiagnostics: Equatable, Sendable {
     var malformedDates = 0
 }
 
-/// Streaming XMLTV parser (Foundation `XMLParser`, SAX). Designed to run inside a
-/// detached task. Channels/programmes are filtered to a wanted set *during* parse
-/// so the ~98% of a large feed that a playlist doesn't reference never allocates
-/// child text. Timestamps are parsed with byte arithmetic — no `DateFormatter`
+/// Streaming XMLTV parser (Foundation `XMLParser`, SAX). Meant to be run away
+/// from the main thread. Channels/programmes are filtered to a wanted set
+/// *during* parse so the ~98% of a large feed that a playlist doesn't reference
+/// never allocates child text. Timestamps are parsed with byte arithmetic — no `DateFormatter`
 /// per row (feeds routinely carry 100k–500k programmes).
 ///
-/// `nonisolated` so it runs off the main actor (the project defaults declarations
-/// to `@MainActor`).
+/// `nonisolated` lifts the project's default `@MainActor` isolation, nothing
+/// more: `parse` is synchronous and runs on the thread that calls it, callbacks
+/// included. Keeping it off the main thread is the caller's job
+/// (`EPGRefreshCoordinator.refresh` is `@concurrent` for that reason).
 nonisolated final class EPGXMLTVParser: NSObject, XMLParserDelegate {
 
     struct Options: Sendable {
