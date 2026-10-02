@@ -109,8 +109,9 @@ struct CastNotice: Equatable {
 
 /// App-level AirPlay cast orchestrator. Owns the whole cast lifecycle — remux
 /// session, cast player, route observation — as one explicit state machine.
-/// The playback engine knows nothing about casting: it is stopped when a cast
-/// engagement starts and reloaded (via `resumeDirectPlayback`) when it ends.
+/// The playback engine is stopped when a cast engagement starts. A route drop
+/// keeps the ready player on the phone; a failure reloads the direct engine via
+/// `resumeDirectPlayback`.
 ///
 /// Invariants (each one was a field-fragility root cause before this existed):
 /// - Single connection: while an engagement exists only the remux writer (or the
@@ -118,8 +119,9 @@ struct CastNotice: Equatable {
 ///   changes never warm up the phone-side player first.
 /// - One AVPlayer per engagement: content changes swap the player item, never the
 ///   player, so the AirPlay route is not torn down and re-acquired on every zap.
-/// - Single exit path: every failure/disconnect funnels through `endCasting`,
-///   which always resumes direct playback — there is no state in which neither
+/// - Single exit path: every failure funnels through `endCasting`,
+///   which resumes direct playback. A confirmed disconnect keeps the ready item
+///   playing locally — there is no state in which neither
 ///   the engine nor the cast player exists.
 ///   (One bounded exception: when a remux writer still holds the source at the
 ///   exit, the resume waits for it to close, for at most `resumeDrainCapSeconds`,
@@ -142,11 +144,14 @@ final class CastController: ObservableObject {
     var nativelyPlayable: Bool
     /// Playback was paused when the engagement began; start the cast paused too.
     var startPaused: Bool = false
-    /// Selected external subtitle (SRT) to expose on the AirPlay target as an HLS WebVTT
-    /// rendition. Only used on the remux path (TS/VOD); nil = cast without subtitles.
+    /// Selected external subtitle to expose as WebVTT on the receiver. Embedded
+    /// text subtitles use their FFmpeg stream index instead of a file URL.
     var subtitleFileURL: URL? = nil
     var subtitleName: String? = nil
     var subtitleLanguage: String? = nil
+    var audioStreamIndex: Int? = nil
+    var subtitleStreamIndex: Int? = nil
+    var subtitleDelaySeconds: Double = 0
   }
 
   private struct Pending {
@@ -232,6 +237,9 @@ final class CastController: ObservableObject {
   @Published private(set) var isSeekable = false
   @Published private(set) var isPlaybackEstablished = false
   @Published private(set) var isExternalPlaybackActive = false
+  /// AirPlay ended, but the same player and source connection keep playing on
+  /// the phone. No engine reload is needed until this content is left.
+  @Published private(set) var isContinuingLocally = false
   /// Bumped when `castVideoView` may point to a new view.
   @Published private(set) var surfaceRevision = 0
   /// True exactly while the state is `.preparing` (a session is being built, or its
@@ -290,6 +298,7 @@ final class CastController: ObservableObject {
   /// An AirPlay route became active at some point during this engagement.
   private var routeWasActiveDuringEngagement = false
   private var routeDropConfirmWork: DispatchWorkItem?
+  private var localVideoCheckWork: DispatchWorkItem?
   private var pickerGraceWork: DispatchWorkItem?
   private var retryWork: DispatchWorkItem?
   /// The wait before the provider's HLS twin is loaded (native live cast).
@@ -485,7 +494,8 @@ final class CastController: ObservableObject {
   /// three places that decide it: parking, sharing a live controller with a newly
   /// created screen, and a content change.
   var hasRouteToPreserve: Bool {
-    Self.shouldPreserveEngagement(
+    guard !isContinuingLocally else { return false }
+    return Self.shouldPreserveEngagement(
       routeWasActive: routeWasActiveDuringEngagement,
       routeActiveNow: isAirPlayRouteActive,
       externalPlaybackActive: castPlayer?.isExternalPlaybackActive == true
@@ -1097,6 +1107,43 @@ final class CastController: ObservableObject {
     castPlayer?.setRate(rate)
   }
 
+  func setLocalPlaybackSpeed(_ speed: Float) {
+    castPlayer?.setPlaybackSpeed(isContinuingLocally ? speed : 1)
+  }
+
+  /// A remux contains only the chosen streams. A new choice therefore rebuilds
+  /// the writer on the same player and drains the previous source connection.
+  @discardableResult
+  func updateRemuxTracks(_ update: (inout Content) -> Void) -> Bool {
+    let active: Active?
+    var content: Content
+    switch state {
+    case .idle: return false
+    case let .preparing(pending):
+      active = nil
+      content = pending.content
+    case let .casting(current):
+      active = current
+      content = current.content
+    case let .refreshing(current, next):
+      active = current
+      content = next.content
+    }
+    guard !content.nativelyPlayable else { return false }
+    update(&content)
+    content.startAt = content.isLive ? 0 : position
+    content.startPaused = rebuildStartsPaused(fallback: content.startPaused)
+    let completion = takePendingCompletion()
+    let drain = currentSession()
+    stopAllSessions()
+    if !isBuffering { isBuffering = true }
+    beginRemuxSession(
+      content: content, replacing: active, retryUsed: false,
+      openDelaySeconds: drain == nil ? 0 : 3, previousToDrain: drain, completion: completion
+    )
+    return true
+  }
+
   func setVolume(_ value: Double) {
     castPlayer?.setVolume(Float(min(max(value, 0), 125) / 100))
   }
@@ -1143,6 +1190,8 @@ final class CastController: ObservableObject {
   /// the resume of direct playback will wait for the writers to close, and the
   /// "loading" presentation stays up meanwhile (see `beginResumeWait`).
   private func transition(to newState: State, awaitingResume: Bool = false) {
+    localVideoCheckWork?.cancel()
+    localVideoCheckWork = nil
     routeDropConfirmWork?.cancel()
     routeDropConfirmWork = nil
     pickerGraceWork?.cancel()
@@ -1175,6 +1224,7 @@ final class CastController: ObservableObject {
     if isEngaged {
       rearmPickerSettleWhilePreparing()
     } else {
+      isContinuingLocally = false
       routeWasActiveDuringEngagement = false
       externalPlaybackSeenDuringEngagement = false
       // What the route pickers reported belongs to the engagement that just ended.
@@ -1545,7 +1595,10 @@ final class CastController: ObservableObject {
         previousToDrain: previousToDrain,
         subtitleFileURL: content.subtitleFileURL,
         subtitleName: content.subtitleName,
-        subtitleLanguage: content.subtitleLanguage
+        subtitleLanguage: content.subtitleLanguage,
+        audioStreamIndex: content.audioStreamIndex,
+        subtitleStreamIndex: content.subtitleStreamIndex,
+        subtitleDelaySeconds: content.subtitleDelaySeconds
       )
     } catch {
       // Rare (temp dir creation). Resume the REQUESTED content directly — the
@@ -1626,17 +1679,18 @@ final class CastController: ObservableObject {
       return
     }
     endBackgroundHold()
+    let actualOffset = session.videoStartOffsetSeconds
+    let initialLocalTime = content.isLive || session.effectiveStartOffsetSeconds != session.startOffsetSeconds
+      ? 0 : max(session.startOffsetSeconds - actualOffset, 0)
     let player = ensureCastPlayer()
     player.load(
-      url: localURL, startAt: nil, autoPlay: !content.startPaused,
-      // A WebVTT rendition is only present when the writer added one (external subtitle,
-      // TS/VOD path); turning it on here makes it show on the AirPlay target.
-      preferredLegible: content.subtitleFileURL != nil
+      url: localURL, startAt: initialLocalTime, autoPlay: !content.startPaused,
+      // Select only a rendition the writer actually authored (text subtitles).
+      preferredLegible: session.hasSubtitleRendition
     )
     // The input seek may have failed on a non-seekable source: the writer then
     // remuxes from 0:00 and reports it — presenting the requested offset would
     // show one position while the TV plays another.
-    let actualOffset = session.effectiveStartOffsetSeconds
     let timeline = RemuxTimeline(
       offset: actualOffset,
       knownDuration: content.knownDuration > 0
@@ -1646,12 +1700,14 @@ final class CastController: ObservableObject {
     transition(to: .casting(Active(session: session, content: content, timeline: timeline)))
     Log.info(
       "AirPlayCast",
-      "remux session ready (offset \(Int(actualOffset))s, \(content.isLive ? "live" : "vod"))"
+      String(format: "remux session ready (offset %.3fs, preroll skipped %.3fs, %@)",
+        actualOffset, initialLocalTime, content.isLive ? "live" : "vod")
     )
     // A live-edge seek issued on the previous item says nothing about this one:
     // its first fall-behind gets its own seek before a rebuild.
     liveEdgeSeekGraceUntil = nil
-    if position != actualOffset { position = actualOffset }
+    let initialSourceTime = actualOffset + initialLocalTime
+    if position != initialSourceTime { position = initialSourceTime }
     if isBuffering { isBuffering = false }
     // A paused start is the user's own pause carried over, not a side effect of
     // whatever ends the cast later (see `resumeStartsPaused`).
@@ -1664,7 +1720,7 @@ final class CastController: ObservableObject {
     // A seek that arrived while preparing re-aimed `content.startAt`, but this
     // session was already remuxing from its original offset — chase the target.
     // Never chase when the input could not seek (it would loop rebuilding).
-    if actualOffset == session.startOffsetSeconds,
+    if session.effectiveStartOffsetSeconds == session.startOffsetSeconds,
        abs(content.startAt - session.startOffsetSeconds) > 2 {
       seek(toSource: content.startAt)
     }
@@ -2065,7 +2121,7 @@ final class CastController: ObservableObject {
     return max(windowEnd - liveEdgeMarginSeconds, windowStart)
   }
 
-  /// Should the time tick act (see `fellBehindAction`) because the playhead
+  /// Only live playlists trim segments. Should the time tick act because the playhead
   /// fell out of the served window? Not while paused (nothing is being fetched),
   /// and not while a live-edge seek is still settling.
   static func shouldSelfHeal(
@@ -2073,9 +2129,10 @@ final class CastController: ObservableObject {
     windowStart: TimeInterval,
     windowEnd: TimeInterval,
     isPaused: Bool,
-    liveEdgeSeekSettling: Bool
+    liveEdgeSeekSettling: Bool,
+    isLive: Bool = true
   ) -> Bool {
-    guard !isPaused, !liveEdgeSeekSettling else { return false }
+    guard isLive, !isPaused, !liveEdgeSeekSettling else { return false }
     return isBehindServedWindow(
       localTime: localTime, windowStart: windowStart, windowEnd: windowEnd
     )
@@ -2303,6 +2360,7 @@ final class CastController: ObservableObject {
     // During a refresh the old player may still tick; ignore so the scrubber
     // stays pinned at the seek target.
     guard case let .casting(active) = state, let castPlayer else { return }
+    guard !castPlayer.isInitialSeekPending else { return }
     let reported = active.session == nil ? time : active.timeline.sourceTime(fromLocal: time)
     if position != reported { position = reported }
     // The writer's VOD pacing gate follows the playback position.
@@ -2313,8 +2371,9 @@ final class CastController: ObservableObject {
     if duration != total { duration = total }
     onTimeTick?(reported)
     guard active.session != nil else { return }
-    // Self-heal: fell behind the served window (long pause on a live sliding
-    // window, or the event playlist trimmed) — refresh the session in place.
+    // Only live playlists discard old segments. VOD event playlists retain
+    // them: AirPlay's reported seekable range may advance independently of its
+    // playhead, and rebuilding on that report repeats scenes and stalls playback.
     let window = castPlayer.seekableRange
     let liveEdgeSeekSettling = liveEdgeSeekGraceUntil.map { Date() < $0 } ?? false
     // A live-edge seek that brought the playhead back re-arms the one-shot.
@@ -2327,7 +2386,7 @@ final class CastController: ObservableObject {
     if Self.shouldSelfHeal(
       localTime: time, windowStart: window.start, windowEnd: window.end,
       isPaused: castPlayer.isPaused,
-      liveEdgeSeekSettling: liveEdgeSeekSettling
+      liveEdgeSeekSettling: liveEdgeSeekSettling, isLive: active.content.isLive
     ) {
       switch Self.fellBehindAction(
         isLive: active.content.isLive, liveEdgeSeekTried: liveEdgeSeekGraceUntil != nil
@@ -2354,15 +2413,22 @@ final class CastController: ObservableObject {
     guard let castPlayer else { return }
     let externalNow = castPlayer.isExternalPlaybackActive
     let externalJustActivated = externalNow && !isExternalPlaybackActive
+    let externalJustDeactivated = !externalNow && isExternalPlaybackActive
     if isExternalPlaybackActive != externalNow {
       isExternalPlaybackActive = externalNow
       Log.info("AirPlayCast", "external playback \(externalNow ? "on" : "off")")
     }
     // The receiver took the picture: the wait for that is over, for the whole
     // engagement (see `armExternalWaitIfNeeded`).
-    if externalNow { noteExternalPlaybackSeen() }
+    if externalNow {
+      isContinuingLocally = false
+      noteExternalPlaybackSeen()
+    }
     notePausedState(castPlayer.isPaused)
     guard case var .casting(active) = state else { return }
+    if externalJustDeactivated, active.session != nil, !isAirPlayRouteActive {
+      if castPlayer.restoreLocalVideoSurface() { bumpSurfaceRevision() }
+    }
     // From here on the receiver fetches the session from this phone by itself;
     // nothing else would notice a receiver that cannot reach it.
     if externalJustActivated, let session = active.session {
@@ -2378,9 +2444,10 @@ final class CastController: ObservableObject {
     // own join — the phone-side player's earlier position corrections do not carry
     // over. EXT-X-START pins fresh joins to 0; this is the safety net for players
     // that ignore it AND it preserves an in-window position the user had seeked to.
-    if externalJustActivated, active.session != nil, !active.content.isLive {
+    if externalJustActivated, active.session != nil, !active.content.isLive,
+       !castPlayer.isInitialSeekPending {
       let localExpected = active.timeline.localTarget(forSource: position)
-      if abs(castPlayer.currentTime - localExpected) > 5 {
+      if abs(castPlayer.currentTime - localExpected) > 1 {
         Log.info("AirPlayCast", "correcting position after AirPlay handoff")
         castPlayer.seek(to: localExpected)
       }
@@ -2396,12 +2463,15 @@ final class CastController: ObservableObject {
         && (active.session != nil || active.nativeTwinURL != nil))
       if isSeekable != seekable { isSeekable = seekable }
       // AVPlayer can treat a growing event playlist as live and join at its
-      // edge; remuxed VOD must start from local 0 (the requested offset).
+      // edge; remuxed VOD must start after the preceding keyframe preroll.
       if active.session != nil, !active.content.isLive, !active.didCorrectLiveEdgeJoin {
         active.didCorrectLiveEdgeJoin = true
         state = .casting(active)
-        if castPlayer.currentTime > 3 {
-          castPlayer.seek(to: 0)
+        let localStart = active.timeline.localTarget(
+          forSource: active.session?.effectiveStartOffsetSeconds ?? active.timeline.offset
+        )
+        if !castPlayer.isInitialSeekPending, abs(castPlayer.currentTime - localStart) > 1 {
+          castPlayer.seek(to: localStart)
         }
       }
     }
@@ -2549,6 +2619,11 @@ final class CastController: ObservableObject {
   private func handleRouteChange() {
     guard !isDisposed, isEngaged else { return }
     if isAirPlayRouteActive {
+      localVideoCheckWork?.cancel()
+      localVideoCheckWork = nil
+      castPlayer?.prepareForExternalPlayback()
+      isContinuingLocally = false
+      castPlayer?.setPlaybackSpeed(1)
       if routeDropConfirmWork != nil { Log.info("AirPlayCast", "route back") }
       routeDropConfirmWork?.cancel()
       routeDropConfirmWork = nil
@@ -2558,7 +2633,7 @@ final class CastController: ObservableObject {
       pickerSettleDeadline = nil
       // Route changes come in bursts; a wait that is already running keeps its time.
       if externalWaitWork == nil { armExternalWaitIfNeeded() }
-    } else if routeWasActiveDuringEngagement, routeDropConfirmWork == nil {
+    } else if !isContinuingLocally, routeWasActiveDuringEngagement, routeDropConfirmWork == nil {
       switch state {
       case .casting, .refreshing:
         // Content finished: the TV may drop the route at the end of playback while
@@ -2582,6 +2657,7 @@ final class CastController: ObservableObject {
   /// not picked a device yet (grace window — how long depends on what the route
   /// pickers reported, see `routeLessWaitSeconds`) or a drop is pending confirmation.
   private func armRouteWatch() {
+    guard !isContinuingLocally else { return }
     guard !isAirPlayRouteActive else {
       noteRouteActive()
       // A route alone is not a cast: the receiver still has to take the picture.
@@ -2754,9 +2830,65 @@ final class CastController: ObservableObject {
       guard let self, !self.isDisposed else { return }
       self.routeDropConfirmWork = nil
       guard !self.isAirPlayRouteActive else { return }
-      self.endCasting(resume: true, reason: .routeDropped)
+      if !self.continuePlaybackLocally() {
+        self.endCasting(resume: true, reason: .routeDropped)
+      }
     }
     routeDropConfirmWork = work
+    DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: work)
+  }
+
+  /// Keep the prepared remux item when a confirmed route drop returns video
+  /// to this screen. A parked controller has no screen to receive it and must
+  /// still be disposed through the normal exit path.
+  @discardableResult
+  func continuePlaybackLocally() -> Bool {
+    guard !isDisposed, ownerToken != nil, case let .casting(active) = state,
+          active.session != nil, let castPlayer, castPlayer.isReadyToPlay,
+          !castPlayer.isExternalPlaybackActive, !isAirPlayRouteActive,
+          !isCompleted else { return false }
+    routeDropConfirmWork?.cancel()
+    routeDropConfirmWork = nil
+    pickerGraceWork?.cancel()
+    pickerGraceWork = nil
+    receiverWatchdogWork?.cancel()
+    receiverWatchdogWork = nil
+    externalWaitWork?.cancel()
+    externalWaitWork = nil
+    nativeWatchdogWork?.cancel()
+    nativeWatchdogWork = nil
+    routeWasActiveDuringEngagement = false
+    externalPlaybackSeenDuringEngagement = false
+    pickerSettleDeadline = nil
+    isContinuingLocally = true
+    if castPlayer.restoreLocalVideoSurface() { bumpSurfaceRevision() }
+    checkLocalVideoReturn(for: castPlayer)
+    Log.info("AirPlayCast", "continuing on phone with existing player and buffer; video surface reattached")
+    Self.persistSessionLog()
+    return true
+  }
+
+  /// A fresh layer normally receives a frame without reopening the source. If
+  /// the local decoder cannot resume, hand back to the normal engine rather than
+  /// leave audio playing over a black surface. Only judge a visible foreground
+  /// surface; a background/offscreen layer is allowed to have no decoded frame.
+  private func checkLocalVideoReturn(for player: AirPlayCastPlayer) {
+    localVideoCheckWork?.cancel()
+    let work = DispatchWorkItem { [weak self, weak player] in
+      guard let self, let player, self.castPlayer === player,
+            !self.isDisposed, self.isContinuingLocally, case .casting = self.state,
+            !self.isAirPlayRouteActive, !player.isExternalPlaybackActive else { return }
+      self.localVideoCheckWork = nil
+      guard UIApplication.shared.applicationState == .active,
+            player.view.window != nil, !player.view.bounds.isEmpty else { return }
+      if player.isLocalVideoReadyForDisplay {
+        Log.info("AirPlayCast", "phone video frame ready after AirPlay return")
+      } else {
+        Log.info("AirPlayCast", "phone video has no frame after AirPlay return; resuming direct engine")
+        self.endCasting(resume: true, reason: .routeDropped)
+      }
+    }
+    localVideoCheckWork = work
     DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: work)
   }
 
@@ -2838,6 +2970,7 @@ final class CastController: ObservableObject {
   /// only stretches a wait that is already running.
   func pickerWillOpen() {
     guard !isDisposed, isEngaged else { return }
+    castPlayer?.prepareForExternalPlayback()
     isPickerPresented = true
     // The user is choosing again: an earlier close no longer counts.
     pickerSettleDeadline = nil
@@ -2866,7 +2999,7 @@ final class CastController: ObservableObject {
     // a TV picked a few seconds before the wait for a speaker runs out would be
     // ended as a route without video.
     if externalWaitWork != nil { armExternalWaitIfNeeded() }
-    guard !isDisposed, Self.shouldSettleAfterPickerClose(
+    guard !isDisposed, !isContinuingLocally, Self.shouldSettleAfterPickerClose(
       isEngaged: isEngaged,
       routeWasActive: routeWasActiveDuringEngagement,
       routeActiveNow: isAirPlayRouteActive,

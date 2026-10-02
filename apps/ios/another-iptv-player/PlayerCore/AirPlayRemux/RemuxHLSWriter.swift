@@ -102,12 +102,23 @@ final class RemuxHLSWriter {
   /// Test için biçimi zorlamaya izin verir; nil = codec'e göre otomatik.
   let forcedFormat: SegmentFormat?
 
-  /// External subtitle to expose to the AirPlay target as an HLS WebVTT rendition.
-  /// nil = cast video-only (unchanged behaviour). Phase 1: TS/VOD only.
+  /// External or selected embedded text subtitles share a segmented WebVTT
+  /// rendition on both container paths. With neither selected, no rendition is added.
   private let subtitleFileURL: URL?
   private let subtitleName: String?
   private let subtitleLanguage: String?
-  private var subtitleAssetsWritten = false
+  private let audioStreamIndex: Int?
+  private let subtitleStreamIndex: Int?
+  private let subtitleDelaySeconds: Double
+  private var subtitleDecoder: TextSubtitleDecoder?
+  private var subtitleEntries: [SubtitleEntry] = []
+  private var subtitleInputStartTime: Int64 = 0
+  private var subtitleTimestampBase: Int64 = 0
+  private var subtitleUsesFMP4 = false
+  private var subtitleVariantBandwidth = 6_000_000
+  private var hasSubtitles = false
+  private var loggedFirstSubtitleCue = false
+  private var loggedFirstPublishedSubtitleCue = false
   private let clientPlaylistLock = NSLock()
   private var clientPlaylistFileNameStorage = "stream.m3u8"
   /// Filename the cast AVPlayer should load: the subtitle master once a rendition has
@@ -189,6 +200,23 @@ final class RemuxHLSWriter {
   /// (seek edilemeyen kaynak) 0'a döner — zaman çizelgesi muhasebesi buna bakmalı,
   /// aksi halde UI istenen konumu gösterirken cast 0:00'dan oynar.
   private(set) var effectiveStartSeconds: TimeInterval
+
+  /// Source time of the first video keyframe actually written. A backward input
+  /// seek can land several seconds before the requested position.
+  var firstVideoContentSeconds: TimeInterval? {
+    firstVideoLock.lock()
+    defer { firstVideoLock.unlock() }
+    return firstVideoContentStorage
+  }
+  private let firstVideoLock = NSLock()
+  private var firstVideoContentStorage: TimeInterval?
+
+  private func noteFirstVideoContentSeconds(_ seconds: TimeInterval) {
+    guard seconds.isFinite else { return }
+    firstVideoLock.lock()
+    if firstVideoContentStorage == nil { firstVideoContentStorage = seconds }
+    firstVideoLock.unlock()
+  }
 
   /// Can a new writer be opened on this source at another position? False until the
   /// input is open; then whether its I/O reports byte seeking, and false again once
@@ -316,7 +344,10 @@ final class RemuxHLSWriter {
     forcedFormat: SegmentFormat? = nil,
     subtitleFileURL: URL? = nil,
     subtitleName: String? = nil,
-    subtitleLanguage: String? = nil
+    subtitleLanguage: String? = nil,
+    audioStreamIndex: Int? = nil,
+    subtitleStreamIndex: Int? = nil,
+    subtitleDelaySeconds: Double = 0
   ) {
     self.sourceURL = sourceURL
     self.outputDirectory = outputDirectory
@@ -329,6 +360,9 @@ final class RemuxHLSWriter {
     self.subtitleFileURL = subtitleFileURL
     self.subtitleName = subtitleName
     self.subtitleLanguage = subtitleLanguage
+    self.audioStreamIndex = audioStreamIndex
+    self.subtitleStreamIndex = subtitleStreamIndex
+    self.subtitleDelaySeconds = subtitleDelaySeconds
     effectiveStartSeconds = startSeconds
     targetSegmentSeconds = isLive ? 1.5 : 4
     cancelled.pointee = 0
@@ -840,8 +874,13 @@ final class RemuxHLSWriter {
   }
 
   private func recordSegment(
-    index: Int, fileName: String, duration: Double, discontinuity: Bool = false, final: Bool
+    index: Int, fileName: String, duration: Double, discontinuity: Bool = false,
+    sourceStartSeconds: Double = 0, final: Bool
   ) {
+    subtitleVariantBandwidth = Self.variantBandwidth(
+      segmentBytes: fileSize(named: fileName), duration: duration,
+      previous: subtitleVariantBandwidth
+    )
     segments.append(SegmentRecord(
       index: index,
       fileName: fileName,
@@ -859,64 +898,109 @@ final class RemuxHLSWriter {
         try? FileManager.default.removeItem(
           at: outputDirectory.appendingPathComponent(old.fileName)
         )
+        try? FileManager.default.removeItem(
+          at: outputDirectory.appendingPathComponent(String(format: "subs%05d.vtt", old.index))
+        )
       }
     }
+    writeSubtitleAssets(
+      index: index, sourceStartSeconds: sourceStartSeconds, duration: duration, final: final
+    )
     writePlaylist(final: final)
-    writeSubtitleAssetsIfNeeded()
   }
 
-  /// Once the first segment exists (so the container format is known), write the WebVTT
-  /// subtitle rendition + a master playlist that references the (unchanged) video playlist
-  /// and the subtitle group, then point the cast player at that master. Runs at most once.
-  /// Phase 1 scope: external SRT over the H.264/MPEG-TS VOD path only — HEVC/fMP4 and live
-  /// are skipped (cast stays video-only) rather than shipping mis-synced subtitles.
-  private func writeSubtitleAssetsIfNeeded() {
-    guard !subtitleAssetsWritten,
-          let subtitleFileURL,
-          let firstSegment = segments.first
-    else { return }
-    subtitleAssetsWritten = true  // attempt once, regardless of outcome
-    guard firstSegment.fileName.hasSuffix(".ts"), !isLive else { return }
-    // Cues are in source time; the video carries source time plus the session's
-    // constant TS base, so the map has to name the same base.
-    guard let built = AirPlaySubtitleRendition.build(
-      fromSRTFile: subtitleFileURL, mpegtsClock: Self.tsTimestampBase90k
-    ) else {
-      Log.error("AirPlayRemux", "subtitle file unreadable/empty; casting video-only")
-      return
+  /// Match the video's segment sequence and timestamp origin on TS and fMP4.
+  /// Empty WebVTT segments are required too: captions can start much later than video.
+  private func writeSubtitleAssets(
+    index: Int, sourceStartSeconds: Double, duration: Double, final: Bool
+  ) {
+    guard hasSubtitles else { return }
+    let contentStart = Self.contentSeconds(
+      containerSeconds: sourceStartSeconds, inputStartTime: subtitleInputStartTime
+    )
+    let contentEnd = contentStart + Self.publishedSegmentDuration(measuredSeconds: duration)
+    let cues = subtitleEntries.compactMap { entry -> SubtitleEntry? in
+      let start = entry.startTime + subtitleDelaySeconds
+      let end = entry.endTime + subtitleDelaySeconds
+      guard end > contentStart, start < contentEnd else { return nil }
+      return SubtitleEntry(startTime: start, endTime: end, text: entry.text)
     }
-    let vttName = "subs.vtt"
-    let subsPlaylistName = "subs.m3u8"
-    let masterName = "master.m3u8"
-    let duration = max(built.durationSeconds, sourceDurationSeconds, 1)
+    let clock = Int64((sourceStartSeconds * 90_000).rounded()) + subtitleTimestampBase
+    let built = AirPlaySubtitleRendition.build(
+      from: cues, mpegtsClock: clock, localSeconds: max(contentStart, 0)
+    )
+    if !cues.isEmpty, !loggedFirstPublishedSubtitleCue {
+      loggedFirstPublishedSubtitleCue = true
+      Log.info("AirPlayRemux", "subtitle published: segment=\(index), cues=\(cues.count), local=\(contentStart), MPEGTS=\(clock)")
+    }
     do {
       try built.webVTT.write(
-        to: outputDirectory.appendingPathComponent(vttName), atomically: true, encoding: .utf8
+        to: outputDirectory.appendingPathComponent(String(format: "subs%05d.vtt", index)),
+        atomically: true, encoding: .utf8
       )
-      try AirPlaySubtitleRendition
-        .subtitleMediaPlaylist(vttFileName: vttName, durationSeconds: duration)
-        .write(
-          to: outputDirectory.appendingPathComponent(subsPlaylistName),
-          atomically: true, encoding: .utf8
-        )
+      var lines = ["#EXTM3U", "#EXT-X-VERSION:3",
+        "#EXT-X-TARGETDURATION:\(Int(segments.map(\.duration).max()?.rounded(.up) ?? 1))",
+        "#EXT-X-MEDIA-SEQUENCE:\(segments.first?.index ?? 0)"]
+      if isLive {
+        lines.append("#EXT-X-DISCONTINUITY-SEQUENCE:\(discontinuitySequence)")
+      } else {
+        lines.append("#EXT-X-PLAYLIST-TYPE:EVENT")
+      }
+      for segment in segments {
+        if segment.discontinuity { lines.append("#EXT-X-DISCONTINUITY") }
+        lines.append(String(format: "#EXTINF:%.3f,", segment.duration))
+        lines.append(String(format: "subs%05d.vtt", segment.index))
+      }
+      if final { lines.append("#EXT-X-ENDLIST") }
+      try (lines.joined(separator: "\n") + "\n").write(
+        to: outputDirectory.appendingPathComponent("subs.m3u8"),
+        atomically: true, encoding: .utf8
+      )
       try AirPlaySubtitleRendition.masterPlaylist(
-        videoPlaylistFileName: "stream.m3u8",
-        subtitlePlaylistFileName: subsPlaylistName,
-        name: subtitleName ?? "Subtitles",
-        languageCode: subtitleLanguage
+        videoPlaylistFileName: "stream.m3u8", subtitlePlaylistFileName: "subs.m3u8",
+        name: subtitleName ?? "Subtitles", languageCode: subtitleLanguage,
+        bandwidth: subtitleVariantBandwidth, version: subtitleUsesFMP4 ? 7 : 3
       ).write(
-        to: outputDirectory.appendingPathComponent(masterName), atomically: true, encoding: .utf8
+        to: outputDirectory.appendingPathComponent("master.m3u8"),
+        atomically: true, encoding: .utf8
       )
-      setClientPlaylistFileName(masterName)
-      Log.info("AirPlayRemux", "subtitle rendition written (~\(Int(built.durationSeconds))s of cues)")
+      setClientPlaylistFileName("master.m3u8")
+      // Decoded cues are a streaming window; external files remain reusable on seek.
+      if subtitleDecoder != nil {
+        subtitleEntries.removeAll { $0.endTime + subtitleDelaySeconds <= contentEnd }
+      }
     } catch {
       Log.error("AirPlayRemux", "subtitle rendition write failed: \(error.localizedDescription)")
     }
   }
 
+  private func decodeSubtitlePacket(_ packet: inout AVPacket, input: UnsafeMutablePointer<AVFormatContext>) -> Bool {
+    guard let subtitleDecoder, Int(packet.stream_index) == subtitleStreamIndex,
+          let stream = input.pointee.streams[Int(packet.stream_index)]
+    else { return false }
+    let entries = subtitleDecoder.decode(
+      packet: &packet, timeBase: stream.pointee.time_base, inputStartTime: subtitleInputStartTime
+    )
+    if let first = entries.first, !loggedFirstSubtitleCue {
+      loggedFirstSubtitleCue = true
+      Log.info("AirPlayRemux", "subtitle decoded: stream=\(packet.stream_index), start=\(first.startTime), end=\(first.endTime)")
+    }
+    subtitleEntries += entries
+    return true
+  }
+
   /// İlk segment kısa tutulur ki playlist (ve TV'deki ilk kare) erken hazır olsun.
   private func targetDuration(forSegmentIndex index: Int) -> Double {
     index == 0 ? min(1.5, targetSegmentSeconds) : targetSegmentSeconds
+  }
+
+  /// A fixed 6 Mbit/s variant understated UHD segments (~20 Mbit/s), which the
+  /// receiver rejected. Retain the observed peak with room for mux/subtitle overhead.
+  static func variantBandwidth(segmentBytes: Int64, duration: Double, previous: Int) -> Int {
+    let seconds = publishedSegmentDuration(measuredSeconds: duration)
+    let measured = (Double(max(segmentBytes, 0)) * 8 / seconds * 1.25).rounded(.up)
+    guard measured.isFinite, measured < Double(Int.max) else { return previous }
+    return max(previous, Int(measured))
   }
 
   /// Constant added to every timestamp on the MPEG-TS path, in 90 kHz ticks (10 s).
@@ -976,8 +1060,9 @@ final class RemuxHLSWriter {
   /// stream order: the first one whose rate is known, else the first one (nil when
   /// there is no audio). A rate of 0 means probing saw no frame of that stream.
   /// Pure function.
-  static func preferredAudioCandidate(sampleRates: [Int32]) -> Int? {
-    sampleRates.firstIndex { $0 > 0 } ?? (sampleRates.isEmpty ? nil : 0)
+  static func preferredAudioCandidate(sampleRates: [Int32], selectedIndex: Int? = nil) -> Int? {
+    if let selectedIndex, sampleRates.indices.contains(selectedIndex) { return selectedIndex }
+    return sampleRates.firstIndex { $0 > 0 } ?? (sampleRates.isEmpty ? nil : 0)
   }
 
   // MARK: - Remux loop (queue üzerinde)
@@ -1087,7 +1172,7 @@ final class RemuxHLSWriter {
       }
     }
 
-    // Stream seçimi: ilk uyumlu video + ilk ses (uyumsuzsa transcode).
+    // Stream selection: compatible video and the selected audio (transcode if needed).
     let streamCount = Int(input.pointee.nb_streams)
     var videoInputIndex = -1
     var videoIsHEVC = false
@@ -1112,23 +1197,43 @@ final class RemuxHLSWriter {
       }
     }
     guard videoInputIndex >= 0 else { throw RemuxError.noCompatibleStreams }
-    // The first audio stream, as before, unless probing left its sample rate unknown
-    // and a later stream has one: a declared stream that has delivered nothing must
-    // not be picked over one that plays.
+    // An explicit selection is preserved even if probing missed its first frame;
+    // the parameters check below then retries instead of choosing another language.
+    // Without a selection, prefer a stream whose sample rate is already known.
     if let choice = Self.preferredAudioCandidate(
-      sampleRates: audioCandidates.map { $0.sampleRate }
+      sampleRates: audioCandidates.map { $0.sampleRate },
+      selectedIndex: audioCandidates.firstIndex { $0.index == audioStreamIndex }
     ) {
       firstAudioIndex = audioCandidates[choice].index
       audioCodecId = audioCandidates[choice].codecId
       if choice > 0 {
         Log.info(
           "AirPlayRemux",
-          "audio stream \(firstAudioIndex) chosen: the earlier ones have no sample rate yet"
+          "audio stream \(firstAudioIndex) chosen (requested stream: \(audioStreamIndex ?? -1))"
         )
       }
     }
 
     let format = forcedFormat ?? (videoIsHEVC ? .fmp4 : .mpegTS)
+    subtitleInputStartTime = input.pointee.start_time
+    subtitleTimestampBase = format == .mpegTS ? Self.tsTimestampBase90k : 0
+    subtitleUsesFMP4 = format == .fmp4
+    if let subtitleFileURL,
+       let text = try? String(contentsOf: subtitleFileURL, encoding: .utf8) {
+      subtitleEntries = SRTParser().parse(content: text)
+      hasSubtitles = !subtitleEntries.isEmpty
+      Log.info("AirPlayRemux", "external subtitle: cues=\(subtitleEntries.count), input origin=\(subtitleInputStartTime)")
+    } else if let subtitleStreamIndex, (0..<streamCount).contains(subtitleStreamIndex),
+              let stream = input.pointee.streams[subtitleStreamIndex] {
+      subtitleDecoder = TextSubtitleDecoder(stream: stream)
+      hasSubtitles = subtitleDecoder != nil
+      if let parameters = stream.pointee.codecpar {
+        Log.info("AirPlayRemux", "subtitle stream \(subtitleStreamIndex): codec=\(String(cString: avcodec_get_name(parameters.pointee.codec_id))), supported=\(hasSubtitles), input origin=\(subtitleInputStartTime)")
+      }
+      if !hasSubtitles {
+        Log.error("AirPlayRemux", "selected subtitle is not a supported text stream")
+      }
+    }
     let passthrough = format == .fmp4 ? Self.fmp4AudioPassthrough : Self.tsAudioPassthrough
 
     var audioMode: AudioMode = .none
@@ -1323,6 +1428,7 @@ final class RemuxHLSWriter {
         fileName: fileName,
         duration: endSeconds - segment.startSeconds,
         discontinuity: segment.afterDiscontinuity,
+        sourceStartSeconds: segment.startSeconds,
         final: final
       )
     }
@@ -1394,6 +1500,7 @@ final class RemuxHLSWriter {
       if readResult < 0 { throw RemuxError.readFailed(readResult) }
       defer { av_packet_unref(&packet) }
       notePacketRead()
+      if decodeSubtitlePacket(&packet, input: input) { continue }
       let inIndex = Int(packet.stream_index)
       guard let inStream = input.pointee.streams[inIndex] else { continue }
       let isVideo = inIndex == videoInputIndex
@@ -1457,6 +1564,7 @@ final class RemuxHLSWriter {
       }
       if current == nil {
         guard isVideo, isKeyframe else { continue }
+        noteFirstVideoContentSeconds(contentSeconds)
         try openSegment(startSeconds: seconds)
       }
       guard let segment = current else { continue }
@@ -1633,6 +1741,7 @@ final class RemuxHLSWriter {
         index: segmentIndex,
         fileName: fileName,
         duration: endSeconds - segmentStart,
+        sourceStartSeconds: segmentStart,
         final: final
       )
       segmentIndex += 1
@@ -1693,6 +1802,7 @@ final class RemuxHLSWriter {
       if readResult < 0 { throw RemuxError.readFailed(readResult) }
       defer { av_packet_unref(&packet) }
       notePacketRead()
+      if decodeSubtitlePacket(&packet, input: input) { continue }
       let inIndex = Int(packet.stream_index)
       guard let inStream = input.pointee.streams[inIndex] else { continue }
       let isVideo = inIndex == videoInputIndex
@@ -1708,6 +1818,7 @@ final class RemuxHLSWriter {
       if !startedAtKeyframe {
         guard isVideo, isKeyframe else { continue }
         startedAtKeyframe = true
+        noteFirstVideoContentSeconds(contentSeconds)
         segmentStart = seconds
         segmentLast = seconds
       }
@@ -1797,10 +1908,20 @@ final class RemuxHLSWriter {
       packet.stream_index = Int32(outIndex)
       av_packet_rescale_ts(&packet, inStream.pointee.time_base, outStream.pointee.time_base)
       if isVideo {
+        let isFirstVideoPacket = !videoClock.hasReference
         guard let repaired = videoClock.repairVideo(pts: packet.pts, duration: packet.duration)
         else { continue }
         packet.pts = repaired.pts
         packet.dts = repaired.dts
+        if isFirstVideoPacket {
+          // The MP4 muxer rebases tfdt to the first decode timestamp. Absolute
+          // source PTS survive only in edit lists, which HLS ignores. WebVTT must
+          // use the fragment's media clock, including its first frame's CTS offset.
+          subtitleTimestampBase = -av_rescale_q(
+            repaired.dts, outStream.pointee.time_base, AVRational(num: 1, den: 90_000)
+          )
+          Log.info("AirPlayRemux", "fmp4 subtitle clock offset=\(subtitleTimestampBase)")
+        }
       } else {
         guard let repaired = audioClock.repairAudio(
           pts: packet.pts, dts: packet.dts, duration: packet.duration

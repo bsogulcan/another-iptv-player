@@ -647,6 +647,8 @@ final class VideoPlayerController: ObservableObject {
   @Published private(set) var needsAirPlayPreparation: Bool = false
   /// Cast oturumu sunumda: transport/scrubber cast'e akar, track menüsü pasif.
   @Published private(set) var isCastPresenting: Bool = false
+  @Published private(set) var isLocalCastPlayback: Bool = false
+  @Published private(set) var canSelectPlaybackTracks = true
   /// Video şu anda AirPlay hedefinde oynuyor (native external ya da remux cast);
   /// yerel yüzeyde "AirPlay'de oynatılıyor" placeholder'ı gösterilir.
   @Published private(set) var isAirPlayPlaybackActive: Bool = false
@@ -1159,6 +1161,17 @@ final class VideoPlayerController: ObservableObject {
       isCastPresenting = castPresenting
       // A seek target belongs to the cast presentation it was sent to.
       castSeekTarget = nil
+    }
+    let trackSelectionAvailable = !castPresenting || castController?.isRemuxing == true
+    if canSelectPlaybackTracks != trackSelectionAvailable {
+      canSelectPlaybackTracks = trackSelectionAvailable
+    }
+    let localCastPlayback = castController?.isContinuingLocally == true
+    if isLocalCastPlayback != localCastPlayback {
+      isLocalCastPlayback = localCastPlayback
+      castController?.setLocalPlaybackSpeed(localCastPlayback ? playbackSpeed : 1)
+      if localCastPlayback { rate = playbackSpeed }
+      else if castPresenting { rate = 1 }
     }
     updateAudioOnlyAirPlay()
     syncFromEngine()
@@ -1745,6 +1758,15 @@ final class VideoPlayerController: ObservableObject {
         && (engineExternal || continuesInPlace)
         && !nativeNext
       if cast.isEngaged || crossoverToRemux || continueNativeExternalPlayback {
+        if origin == .newContent {
+          // The retained menu belongs to the previous source. Never apply its
+          // stream indexes to a new channel or episode.
+          videoTracks = []
+          audioTracks = []
+          subtitleTracks = [TrackMenuOption(id: -1, title: L("player.subtitle_off"))]
+          currentAudioTrackId = -1
+          currentSubtitleTrackId = -1
+        }
         pendingPreferredTrackSelection = false
         setupAudioSession()
         // Motor durdurulmuş; altyazı modeli önceki içeriğin seçimini taşıyor.
@@ -1996,8 +2018,10 @@ final class VideoPlayerController: ObservableObject {
   func setRate(_ newRate: Float) {
     let applied: Float
     if let cast = castController, cast.isPresenting {
-      cast.setRate(newRate)
-      applied = newRate
+      applied = cast.isContinuingLocally
+        ? VideoPlayerControllerLogic.engineRate(requested: newRate, chosenSpeed: playbackSpeed)
+        : newRate
+      cast.setRate(applied)
     } else {
       applied = VideoPlayerControllerLogic.engineRate(
         requested: newRate, chosenSpeed: playbackSpeed
@@ -2016,11 +2040,14 @@ final class VideoPlayerController: ObservableObject {
       speed, isLive: currentContentIsLive
     )
     if playbackSpeed != sanitized { playbackSpeed = sanitized }
-    // Not sent to a cast: AirPlayCastPlayer resumes at 1x on every play and
-    // ignores a rate set while paused, so the TV would not keep it. The choice
-    // takes effect when playback is back on the engine.
-    guard !castPresentingNow else { return }
-    engine.setPlaybackRate(Double(sanitized))
+    // Keep the TV at 1x. After returning to the phone, the retained AVPlayer
+    // applies the chosen speed and also keeps it through play/pause.
+    if castPresentingNow {
+      guard castController?.isContinuingLocally == true else { return }
+      castController?.setLocalPlaybackSpeed(sanitized)
+    } else {
+      engine.setPlaybackRate(Double(sanitized))
+    }
     if rate != sanitized { rate = sanitized }
   }
 
@@ -2080,6 +2107,8 @@ final class VideoPlayerController: ObservableObject {
   }
 
   func updateTracks(applyPreferences: Bool = false, skipSubtitleSelection: Bool = false) {
+    // Remux owns the connection now; retain the source menu and its stream ids.
+    if castController?.isPresenting == true, engine.layer == nil { return }
     engine.reloadTrackList { [weak self] video, audio, subs, vid, aid, sid in
       guard let self else { return }
       // Guarded like the rest of the class: @Published fires objectWillChange even on
@@ -2118,7 +2147,8 @@ final class VideoPlayerController: ObservableObject {
   }
 
   func selectAudioTrack(id: Int) {
-    engine.selectAudioTrack(id: id)
+    let changedCast = castController?.updateRemuxTracks { $0.audioStreamIndex = id } ?? false
+    if !changedCast { engine.selectAudioTrack(id: id) }
     currentAudioTrackId = id
     if let opt = audioTracks.first(where: { $0.id == id }) {
       PlaybackTrackPreferences.saveAudio(from: opt)
@@ -2126,8 +2156,16 @@ final class VideoPlayerController: ObservableObject {
   }
 
   func selectSubtitleTrack(id: Int) {
-    engine.selectSubtitleTrack(id: id)
+    if castController?.isPresenting != true { engine.selectSubtitleTrack(id: id) }
     currentSubtitleTrackId = id
+    let external = selectedExternalSubtitle()
+    let embeddedIndex = engine.embeddedSubtitleStreamIndex(id: id)
+    castController?.updateRemuxTracks {
+      $0.subtitleStreamIndex = embeddedIndex
+      $0.subtitleFileURL = external?.url
+      $0.subtitleName = external?.name ?? subtitleTracks.first { $0.id == id }?.title
+      $0.subtitleLanguage = external?.language ?? subtitleTracks.first { $0.id == id }?.langCode
+    }
     if let opt = subtitleTracks.first(where: { $0.id == id }) {
       PlaybackTrackPreferences.saveSubtitle(from: opt)
       if let key = importedSubtitleContentKey {
@@ -2282,14 +2320,19 @@ final class VideoPlayerController: ObservableObject {
       nativelyPlayable: false,
       startPaused: ks.isPlaybackEstablished && ks.isPaused,
       subtitleFileURL: subtitle?.url,
-      subtitleName: subtitle?.name,
-      subtitleLanguage: subtitle?.language
+      subtitleName: subtitle?.name ?? subtitleTracks.first { $0.id == currentSubtitleTrackId }?.title,
+      subtitleLanguage: subtitle?.language ?? subtitleTracks.first { $0.id == currentSubtitleTrackId }?.langCode,
+      audioStreamIndex: ks.isFFmpegBackendActive && currentAudioTrackId >= 0 ? currentAudioTrackId : nil,
+      subtitleStreamIndex: ks.embeddedSubtitleStreamIndex(id: currentSubtitleTrackId),
+      subtitleDelaySeconds: subtitleDelaySeconds
     )
     // Experimental and off by default: a live channel whose provider also serves
     // HLS is handed to the receiver as that stream, with no remux. Decided here,
     // at the explicit tap and nowhere else; `content` keeps the original URL, so
     // a failed attempt falls back to the remux below and an exit resumes it.
-    let nativeLiveCastEnabled = UserDefaults.standard.bool(
+    let nativeLiveCastEnabled = content.audioStreamIndex == nil
+      && content.subtitleStreamIndex == nil && content.subtitleFileURL == nil
+      && UserDefaults.standard.bool(
       forKey: CastNativeURL.enabledDefaultsKey
     )
     if let nativeURL = CastNativeURL.candidate(

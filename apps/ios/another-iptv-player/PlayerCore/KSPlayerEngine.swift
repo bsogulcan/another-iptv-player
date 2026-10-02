@@ -210,6 +210,7 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     }
     currentLoadURL = url
     currentLoadIsFFmpegOnly = ffmpegFirst
+    KSOptions.audioPlayerType = RecoveringAudioEnginePlayer.self
     AVAssetTrackDataRateGuard.install()
     let options = Self.makeOptions(
       liveLowLatency: liveLowLatency,
@@ -258,6 +259,10 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       releasePictureInPictureController()
       return
     }
+    // SubtitleModel toggles SubtitleInfo.isEnabled when a choice changes.
+    // FFmpegAssetTrack implements that by dereferencing its AVStream pointer:
+    // clear the choice while that stream still exists, before shutdown frees it.
+    detachEmbeddedSubtitleSelection()
     oldLayer.delegate = nil
     oldLayer.stop()
     // KSPlayerLayer never invalidates its repeating 0.1 s timer; left alone it keeps
@@ -280,6 +285,7 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     cancelPendingSeek()
     endBackgroundVideoSuspension()
     if let failed = layer {
+      detachEmbeddedSubtitleSelection()
       failed.delegate = nil
       failed.stop()
       KSPlayerRunLoopGuard.invalidateProgressTimer(of: failed)
@@ -1433,9 +1439,17 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       return
     }
     guard let info = subtitleInfosById[id] else { return }
+    // Retained menu metadata can still supply a stream index for casting, but
+    // an embedded info must never be enabled after its source was closed.
+    if layer == nil, info is FFmpegAssetTrack { return }
     subtitleModel.selectedSubtitleInfo = info
     // And the other way round: only one subtitle at a time.
     selectLegibleOption(nil)
+  }
+
+  /// Menu subtitle ids are insertion indexes, not FFmpeg stream indexes.
+  func embeddedSubtitleStreamIndex(id: Int) -> Int? {
+    (subtitleInfosById[id] as? FFmpegAssetTrack).map { Int($0.trackID) }
   }
 
   private func deselectSubtitleInfo() {
@@ -1443,6 +1457,10 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     if subtitleText != nil { subtitleText = nil }
     if subtitleImage != nil { subtitleImage = nil }
     if subtitleImageOrigin != .zero { subtitleImageOrigin = .zero }
+  }
+
+  private func detachEmbeddedSubtitleSelection() {
+    if subtitleModel.selectedSubtitleInfo is FFmpegAssetTrack { deselectSubtitleInfo() }
   }
 
   // MARK: - Subtitles
@@ -1631,6 +1649,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     playbackWatchdogWorkItem = nil
     guard !isDisposed, let layer, let player = layer.player as? KSMEPlayer else { return }
     let state = layer.state
+    if state.isPlaying, player.loadState == .playable {
+      (player.audioOutput as? RecoveringAudioEnginePlayer)?.recoverIfStopped()
+    }
     // A live stream that ended while the video track is switched off for the
     // background: the audio has drained, but KSPlayer never calls `finish`, because
     // the suspended track's stale frames keep its queue from emptying. Live only: a

@@ -1766,7 +1766,7 @@ private struct PlayerViewImpl: View {
         }
         // Back to the speed chosen in the menu, not to a hard-coded 1x. A cast does not
         // take the chosen speed (its player resumes at 1x), so it returns to 1x.
-        player.setRate(player.isCastPresenting ? 1.0 : player.playbackSpeed)
+        player.setRate(player.isCastPresenting && !player.isLocalCastPlayback ? 1.0 : player.playbackSpeed)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
@@ -3210,11 +3210,8 @@ private struct PlayerViewImpl: View {
             }
             .accessibilityLabel(L("player.a11y.subtitle_appearance"))
 
-            // Hide track settings only once playback is actually on the AirPlay
-            // target (local engine stopped -> empty track list). Stays visible
-            // through the remux prepare/picker window so the toolbar does not
-            // collapse the instant the AirPlay button is tapped.
-            if !player.isAirPlayPlaybackActive {
+            // Remux selections are forwarded to the writer while AirPlay plays.
+            if player.canSelectPlaybackTracks {
                 groupedCapsuleButton(systemName: "gearshape") {
                     openTrackSettings()
                 }
@@ -3399,7 +3396,7 @@ private struct PlayerViewImpl: View {
                 Label(L("player.a11y.subtitle_appearance"), systemImage: "textformat.size")
             }
 
-            if !player.isAirPlayPlaybackActive {
+            if player.canSelectPlaybackTracks {
                 Button {
                     moreMenuDidAct()
                     openTrackSettings()
@@ -3495,7 +3492,7 @@ private struct PlayerViewImpl: View {
     /// Speed is for recorded content played on the phone: a live source delivers at 1x,
     /// and the cast player resumes at 1x whatever was chosen.
     private var showsPlaybackSpeedMenu: Bool {
-        !isLiveStream && !player.isCastPresenting
+        !isLiveStream && (!player.isCastPresenting || player.isLocalCastPlayback)
     }
 
     private func playbackSpeedTitle(_ speed: Float) -> String {
@@ -3555,10 +3552,9 @@ private struct PlayerViewImpl: View {
         .pickerStyle(.menu)
     }
 
-    /// Track pickers act on the phone engine. During a cast, and once video is on the
-    /// AirPlay target, that engine is stopped and its track list is empty.
+    /// Remux casts retain source tracks and forward selections to their writer.
     private var showsTrackMenuPickers: Bool {
-        !player.isCastPresenting && !player.isAirPlayPlaybackActive
+        player.canSelectPlaybackTracks
     }
 
     /// Always a labelled submenu, like the aspect, speed and sleep-timer rows. Listed

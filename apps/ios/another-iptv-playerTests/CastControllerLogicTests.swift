@@ -786,11 +786,17 @@ struct CastLiveWindowTests {
         #expect(CastController.fellBehindAction(isLive: true, liveEdgeSeekTried: true) == .rebuildSession)
     }
 
-    /// VOD keeps its own path (a seek, in window or as a refresh), whatever a live
-    /// item earlier in the engagement left in the latch.
-    @Test func vodFallBehindSeeksAgain() {
-        #expect(CastController.fellBehindAction(isLive: false, liveEdgeSeekTried: false) == .reseek)
-        #expect(CastController.fellBehindAction(isLive: false, liveEdgeSeekTried: true) == .reseek)
+    /// AirPlay may report a growing event range ahead of its VOD playhead. The
+    /// writer retains these segments; refreshing here repeats the previous GOP.
+    @Test func vodDoesNotRebuildWhenReceiverRangeAdvances() {
+        #expect(!CastController.shouldSelfHeal(
+            localTime: 14, windowStart: 20, windowEnd: 35,
+            isPaused: false, liveEdgeSeekSettling: false, isLive: false
+        ))
+        #expect(CastController.shouldSelfHeal(
+            localTime: 14, windowStart: 20, windowEnd: 35,
+            isPaused: false, liveEdgeSeekSettling: false, isLive: true
+        ))
     }
 
     /// The one-shot is armed again once a seek that was tried has settled and the

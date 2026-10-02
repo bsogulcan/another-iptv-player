@@ -73,6 +73,8 @@ final class LocalHTTPServer {
   private let receiverLock = NSLock()
   private var trackedSessions = Set<String>()
   private var fetchCountersBySession: [String: FetchCounters] = [:]
+  /// Only the first few subtitle responses per peer/session enter the shared log.
+  private var subtitleResponseCounts: [String: Int] = [:]
 
   /// What was asked of one session and by whom: the record that tells, after a cast
   /// went wrong, "the TV never connected" from "the TV was refused" from "the TV
@@ -313,6 +315,8 @@ final class LocalHTTPServer {
     receiverLock.lock()
     trackedSessions.remove(session)
     fetchCountersBySession[session] = nil
+    subtitleResponseCounts[session + ":receiver"] = nil
+    subtitleResponseCounts[session + ":phone"] = nil
     receiverLock.unlock()
   }
 
@@ -370,6 +374,19 @@ final class LocalHTTPServer {
       fetchCountersBySession[session] = counters
     }
     receiverLock.unlock()
+  }
+
+  private func noteSubtitleResponse(session: String, fromReceiver: Bool, served: Bool) {
+    let peer = fromReceiver ? "receiver" : "phone"
+    let key = session + ":" + peer
+    receiverLock.lock()
+    let count = subtitleResponseCounts[key] ?? 0
+    let shouldLog = trackedSessions.contains(session) && count < 4
+    if shouldLog { subtitleResponseCounts[key] = count + 1 }
+    receiverLock.unlock()
+    if shouldLog {
+      Log.info("AirPlayRemux", "subtitle fetch from \(peer): \(served ? "served" : "refused")")
+    }
   }
 
   /// Is a request from `address` evidence that the receiver can reach the phone?
@@ -593,8 +610,11 @@ final class LocalHTTPServer {
     }
     // The answer a receiver got is counted where it is sent (record only).
     func noteAnswer(served: Bool) {
-      guard let session, peer.isReceiver else { return }
-      noteReceiverResponse(session: session, served: served)
+      guard let session else { return }
+      if components.last?.hasSuffix(".vtt") == true {
+        noteSubtitleResponse(session: session, fromReceiver: peer.isReceiver, served: served)
+      }
+      if peer.isReceiver { noteReceiverResponse(session: session, served: served) }
     }
     let fileURL = components.reduce(directory) { $0.appendingPathComponent($1) }
     guard let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),

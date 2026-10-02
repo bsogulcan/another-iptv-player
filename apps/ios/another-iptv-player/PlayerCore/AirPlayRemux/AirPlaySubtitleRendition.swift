@@ -1,20 +1,12 @@
 import Foundation
 
 /// Builds the HLS WebVTT subtitle rendition served alongside the remuxed video so
-/// subtitles show on the AirPlay target. The remuxed TS video segments carry absolute
-/// source PTS, and WebVTT cues are emitted in verbatim source (SRT) time with
-/// `X-TIMESTAMP-MAP:MPEGTS:0` — so cue N lines up with the video frame at source-time N
-/// whether the cast started from 0:00 or from a resume position (both are absolute
-/// source time). If a panel's muxer applied a constant PTS offset, only `mpegtsClock`
-/// needs tuning — the cue times stay put.
+/// subtitles show on the AirPlay target. Cue times are relative to the source's
+/// start time. Each segment's timestamp map pairs its content time with the media
+/// clock: absolute PTS plus the base on TS, or PTS relative to the first DTS on fMP4.
 ///
-/// The writer adds one constant base to every TS timestamp
-/// (`RemuxHLSWriter.tsTimestampBase90k`) and passes that same value as `mpegtsClock`,
-/// so the map reads `MPEGTS:<base>` rather than `MPEGTS:0`; without it every cue would
-/// show that base early.
-///
-/// Phase 1 covers text subtitles (external SRT) over the H.264/MPEG-TS remux path.
-/// HEVC/fMP4 and bitmap (PGS/DVB) subtitles are out of scope here.
+/// Text subtitles use the video's timestamp origin on TS and fMP4. Bitmap
+/// (PGS/DVB) subtitles need compositing and are not representable as WebVTT.
 enum AirPlaySubtitleRendition {
   static let videoGroupID = "subs"
 
@@ -34,9 +26,9 @@ enum AirPlaySubtitleRendition {
     return build(from: entries, mpegtsClock: mpegtsClock)
   }
 
-  static func build(from entries: [SubtitleEntry], mpegtsClock: Int64 = 0) -> Built {
+  static func build(from entries: [SubtitleEntry], mpegtsClock: Int64 = 0, localSeconds: Double = 0) -> Built {
     var out = "WEBVTT\n"
-    out += "X-TIMESTAMP-MAP=MPEGTS:\(mpegtsClock),LOCAL:00:00:00.000\n\n"
+    out += "X-TIMESTAMP-MAP=MPEGTS:\(mpegtsClock),LOCAL:\(timestamp(localSeconds))\n\n"
     var maxEnd: Double = 0
     for entry in entries {
       let start = max(entry.startTime, 0)
@@ -73,21 +65,28 @@ enum AirPlaySubtitleRendition {
     videoPlaylistFileName: String,
     subtitlePlaylistFileName: String,
     name: String,
-    languageCode: String?
+    languageCode: String?,
+    bandwidth: Int = 6_000_000,
+    version: Int = 3
   ) -> String {
     var mediaLine =
       "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"\(videoGroupID)\",NAME=\"\(sanitize(name))\","
     mediaLine += "DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,"
-    if let lang = languageCode, !lang.isEmpty {
-      mediaLine += "LANGUAGE=\"\(sanitize(lang))\","
-    }
+    // Container tags commonly use ISO 639-2 ("tur"); HLS uses BCP 47 ("tr").
+    // Keep region/script subtags, and include "und" for an unknown language.
+    let parts = (languageCode ?? "und").replacingOccurrences(of: "_", with: "-")
+      .split(separator: "-").map(String.init)
+    let base = parts.first ?? "und"
+    let language = ([PlaybackTrackPreferences.twoLetterCode(for: base) ?? base]
+      + parts.dropFirst()).joined(separator: "-")
+    mediaLine += "LANGUAGE=\"\(sanitize(language))\","
     mediaLine += "URI=\"\(subtitlePlaylistFileName)\""
     return [
       "#EXTM3U",
-      "#EXT-X-VERSION:3",
+      "#EXT-X-VERSION:\(version)",
       "#EXT-X-INDEPENDENT-SEGMENTS",
       mediaLine,
-      "#EXT-X-STREAM-INF:BANDWIDTH=6000000,SUBTITLES=\"\(videoGroupID)\"",
+      "#EXT-X-STREAM-INF:BANDWIDTH=\(bandwidth),SUBTITLES=\"\(videoGroupID)\"",
       videoPlaylistFileName,
       "",
     ].joined(separator: "\n")

@@ -141,6 +141,7 @@ final class AirPlayRemuxSession {
 
   /// Bu oturumun kaynak bağlantısı fiilen kapandı mı (writer döngüsü çözüldü)?
   var isSourceClosed: Bool { writer.isClosed }
+  var hasSubtitleRendition: Bool { writer.clientPlaylistFileName == "master.m3u8" }
 
   init(
     sourceURL: URL,
@@ -152,7 +153,10 @@ final class AirPlayRemuxSession {
     previousToDrain: AirPlayRemuxSession? = nil,
     subtitleFileURL: URL? = nil,
     subtitleName: String? = nil,
-    subtitleLanguage: String? = nil
+    subtitleLanguage: String? = nil,
+    audioStreamIndex: Int? = nil,
+    subtitleStreamIndex: Int? = nil,
+    subtitleDelaySeconds: Double = 0
   ) throws {
     self.sourceURL = sourceURL
     self.startOffsetSeconds = isLive ? 0 : startOffsetSeconds
@@ -179,7 +183,10 @@ final class AirPlayRemuxSession {
       readyToOpen: readyToOpen,
       subtitleFileURL: subtitleFileURL,
       subtitleName: subtitleName,
-      subtitleLanguage: subtitleLanguage
+      subtitleLanguage: subtitleLanguage,
+      audioStreamIndex: audioStreamIndex,
+      subtitleStreamIndex: subtitleStreamIndex,
+      subtitleDelaySeconds: subtitleDelaySeconds
     )
     server.beginTrackingReceiverFetches(session: sessionPathComponent)
   }
@@ -334,6 +341,13 @@ final class AirPlayRemuxSession {
   /// Girdi seek'inin gerçekte düştüğü konum; seek edilemeyen kaynakta 0'a düşer.
   /// Zaman çizelgesi muhasebesi istenen offset yerine bunu kullanmalı.
   var effectiveStartOffsetSeconds: TimeInterval { writer.effectiveStartSeconds }
+
+  /// Actual source origin of the local video timeline, including backward seek
+  /// preroll. Live sources retain their existing relative timeline.
+  var videoStartOffsetSeconds: TimeInterval {
+    isLive ? effectiveStartOffsetSeconds
+      : (writer.firstVideoContentSeconds ?? effectiveStartOffsetSeconds)
+  }
 
   /// Can this session be rebuilt at another position? False until the writer has
   /// opened the source, then true when the input can seek and no start seek was

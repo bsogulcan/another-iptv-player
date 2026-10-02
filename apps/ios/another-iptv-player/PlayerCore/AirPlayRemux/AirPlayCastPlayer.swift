@@ -16,13 +16,17 @@ final class AirPlayCastPlayer: NSObject {
     var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
   }
 
-  let view = View()
+  private(set) var view = View()
   private let player = AVPlayer()
   private var item: AVPlayerItem?
   private var timeObserver: Any?
   private var playerObservations: [NSKeyValueObservation] = []
   private var itemObservation: NSKeyValueObservation?
   private var reportedError = false
+  private var initialSeekSeconds: TimeInterval?
+  private var initialSeekStarted = false
+  private var playAfterInitialSeek = false
+  var isInitialSeekPending: Bool { initialSeekSeconds != nil }
   /// When the current item is a remux stream carrying an HLS WebVTT subtitle rendition,
   /// enable it (so it shows on the AirPlay target) once the item is ready. Cleared after
   /// the first selection so a later status change doesn't re-trigger it.
@@ -86,7 +90,11 @@ final class AirPlayCastPlayer: NSObject {
       DispatchQueue.main.async { self?.onStateChange?() }
     })
     playerObservations.append(player.observe(\.isExternalPlaybackActive) { [weak self] _, _ in
-      DispatchQueue.main.async { self?.onStateChange?() }
+      DispatchQueue.main.async {
+        guard let self else { return }
+        if let item = self.item { self.logLegibleSelection(on: item, context: "external playback \(self.isExternalPlaybackActive ? "on" : "off")") }
+        self.onStateChange?()
+      }
     })
     timeObserver = player.addPeriodicTimeObserver(
       forInterval: CMTime(value: 1, timescale: 4), queue: .main
@@ -117,6 +125,9 @@ final class AirPlayCastPlayer: NSObject {
     reportedError = false
     recordedErrorLogEntries = 0
     recordedStalls = 0
+    initialSeekSeconds = startAt.flatMap { $0.isFinite && $0 > 0.5 ? $0 : nil }
+    initialSeekStarted = false
+    playAfterInitialSeek = autoPlay
     selectLegibleOnReady = preferredLegible
     applyTrackPreferencesOnReady = appliesTrackPreferences
     var assetOptions: [String: Any] = [:]
@@ -142,6 +153,9 @@ final class AirPlayCastPlayer: NSObject {
                 userInfo: [NSLocalizedDescriptionKey: "cast item failed"]
               ))
         } else {
+          if observedItem.status == .readyToPlay {
+            self.seekToInitialPositionIfNeeded(on: observedItem)
+          }
           if observedItem.status == .readyToPlay, self.selectLegibleOnReady {
             self.selectLegibleOnReady = false
             self.enableFirstLegibleOption(on: observedItem)
@@ -176,19 +190,35 @@ final class AirPlayCastPlayer: NSObject {
       self, selector: #selector(itemPlaybackStalled(_:)),
       name: .AVPlayerItemPlaybackStalled, object: newItem
     )
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(itemMediaSelectionChanged(_:)),
+      name: AVPlayerItem.mediaSelectionDidChangeNotification, object: newItem
+    )
     player.replaceCurrentItem(with: newItem)
-    if let startAt, startAt > 0.5 {
-      player.seek(
-        to: CMTime(seconds: startAt, preferredTimescale: 600),
-        toleranceBefore: .positiveInfinity, toleranceAfter: .positiveInfinity
-      )
-    }
-    if autoPlay {
+    if autoPlay, !isInitialSeekPending {
       player.play()
     } else {
       // Explicit: replacing the item does not reset the rate, so a player that
       // was playing the previous item would start the new one by itself.
       player.pause()
+    }
+  }
+
+  /// Seek after readiness, before playing. An unbounded keyframe seek issued
+  /// before the item is ready can replay the preroll after every remux rebuild.
+  private func seekToInitialPositionIfNeeded(on item: AVPlayerItem) {
+    guard let seconds = initialSeekSeconds, !initialSeekStarted else { return }
+    initialSeekStarted = true
+    player.seek(
+      to: CMTime(seconds: seconds, preferredTimescale: 600),
+      toleranceBefore: .zero, toleranceAfter: .zero
+    ) { [weak self, weak item] _ in
+      DispatchQueue.main.async {
+        guard let self, let item, self.item === item else { return }
+        self.initialSeekSeconds = nil
+        if self.playAfterInitialSeek { self.player.play() }
+        self.onStateChange?()
+      }
     }
   }
 
@@ -201,8 +231,13 @@ final class AirPlayCastPlayer: NSObject {
       guard let group = try? await asset.loadMediaSelectionGroup(for: .legible),
             let option = group.options.first,
             self.item === item
-      else { return }
+      else {
+        if self.item === item { Log.info("AirPlayCast", "subtitle selection: no legible option available") }
+        return
+      }
+      self.player.appliesMediaSelectionCriteriaAutomatically = false
       item.select(option, in: group)
+      self.logLegibleSelection(on: item, context: "subtitle enabled")
     }
   }
 
@@ -222,6 +257,7 @@ final class AirPlayCastPlayer: NSObject {
         if let pick = PlaybackTrackPreferences.pickAudio(
           from: Self.trackRows(for: options), prefs: preferences
         ), options.indices.contains(pick) {
+          self.player.appliesMediaSelectionCriteriaAutomatically = false
           item.select(options[pick], in: group)
         }
       }
@@ -236,9 +272,11 @@ final class AirPlayCastPlayer: NSObject {
           from: Self.trackRows(for: options), prefs: preferences
         )
         if let pick, options.indices.contains(pick) {
+          self.player.appliesMediaSelectionCriteriaAutomatically = false
           item.select(options[pick], in: group)
         } else if pick == -1, group.allowsEmptySelection {
           // "Subtitles off" was chosen on the engine.
+          self.player.appliesMediaSelectionCriteriaAutomatically = false
           item.select(nil, in: group)
         }
       }
@@ -272,6 +310,9 @@ final class AirPlayCastPlayer: NSObject {
       NotificationCenter.default.removeObserver(
         self, name: .AVPlayerItemPlaybackStalled, object: item
       )
+      NotificationCenter.default.removeObserver(
+        self, name: AVPlayerItem.mediaSelectionDidChangeNotification, object: item
+      )
     }
     itemObservation = nil
   }
@@ -282,6 +323,7 @@ final class AirPlayCastPlayer: NSObject {
   /// what closes its connections; a pause would leave them open.
   func unload() {
     stopObservingCurrentItem()
+    initialSeekSeconds = nil
     selectLegibleOnReady = false
     applyTrackPreferencesOnReady = false
     // A failure of the item being dropped must not be reported after the fact.
@@ -320,6 +362,23 @@ final class AirPlayCastPlayer: NSObject {
   }
 
   // MARK: - Record-only diagnostics
+
+  @objc private func itemMediaSelectionChanged(_ notification: Notification) {
+    DispatchQueue.main.async { [weak self] in
+      guard let self, let item = self.item,
+            (notification.object as? AVPlayerItem) === item else { return }
+      self.logLegibleSelection(on: item, context: "media selection changed")
+    }
+  }
+
+  private func logLegibleSelection(on item: AVPlayerItem, context: String) {
+    Task { @MainActor in
+      guard let group = try? await item.asset.loadMediaSelectionGroup(for: .legible),
+            self.item === item else { return }
+      let selected = item.currentMediaSelection.selectedMediaOption(in: group)
+      Log.info("AirPlayCast", "\(context): subtitle=\(selected?.displayName ?? "off"), options=\(group.options.count)")
+    }
+  }
 
   /// A new entry in the current item's error log. Logged, never reported.
   @objc private func itemLoggedError(_ notification: Notification) {
@@ -387,14 +446,46 @@ final class AirPlayCastPlayer: NSObject {
     return comment.isEmpty ? "\(domain) \(statusCode)" : "\(domain) \(statusCode) (\(comment))"
   }
 
-  func play() { player.play() }
-  func pause() { player.pause() }
+  /// An item being ready only proves demuxing succeeded, not that the phone's
+  /// layer received a frame after the external screen relinquished playback.
+  var isLocalVideoReadyForDisplay: Bool { view.playerLayer.isReadyForDisplay }
+
+  @discardableResult
+  func restoreLocalVideoSurface() -> Bool {
+    guard player.usesExternalPlaybackWhileExternalScreenIsActive else { return false }
+    player.usesExternalPlaybackWhileExternalScreenIsActive = false
+    let gravity = view.playerLayer.videoGravity
+    view.playerLayer.player = nil
+    let replacement = View()
+    replacement.playerLayer.videoGravity = gravity
+    replacement.playerLayer.player = player
+    view = replacement
+    return true
+  }
+
+  func prepareForExternalPlayback() {
+    player.usesExternalPlaybackWhileExternalScreenIsActive = true
+  }
+
+  func play() {
+    playAfterInitialSeek = true
+    if !isInitialSeekPending { player.play() }
+  }
+  func pause() {
+    playAfterInitialSeek = false
+    player.pause()
+  }
+
+  func setPlaybackSpeed(_ speed: Float) {
+    player.defaultRate = speed
+    if player.rate > 0 { player.rate = speed }
+  }
 
   func seek(to seconds: TimeInterval, completion: ((Bool) -> Void)? = nil) {
     player.seek(
       to: CMTime(seconds: max(seconds, 0), preferredTimescale: 600),
-      toleranceBefore: CMTime(seconds: 1, preferredTimescale: 600),
-      toleranceAfter: CMTime(seconds: 1, preferredTimescale: 600)
+      toleranceBefore: .zero,
+      toleranceAfter: .zero
     ) { finished in
       completion?(finished)
     }
