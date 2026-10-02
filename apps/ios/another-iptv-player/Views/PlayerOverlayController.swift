@@ -32,6 +32,13 @@ final class PlayerOverlayController: ObservableObject {
         playlistId: UUID? = nil,
         @ViewBuilder content: () -> Content
     ) {
+        // The overlay is a SwiftUI sibling inside the dashboard window, so it sits below the
+        // software keyboard. End editing before anything else — also ahead of the
+        // download-warning branch: UIKit restores the first responder when an alert closes,
+        // so resigning only on confirm would let the keyboard come back over the player.
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
         let pkg = PlayerOverlayPresentation(root: AnyView(content()), onDismiss: onDismiss)
         let shouldWarn: Bool = {
             if skipDownloadCheck { return false }
@@ -67,6 +74,14 @@ final class PlayerOverlayController: ObservableObject {
         // `present()` / `confirmPending()`, before any new content is shown.
         presentation = nil
         callback?()
+    }
+
+    /// Dismisses only while `id` is still the presentation on screen. The player's own
+    /// exits finish after a short animation; by then a newer item may have been
+    /// presented, and a late dismiss must not close that one.
+    func dismiss(presentationID id: UUID) {
+        guard presentation?.id == id else { return }
+        dismiss()
     }
 
     /// Shrink the active player into the floating mini card (no teardown).

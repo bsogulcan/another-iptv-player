@@ -260,7 +260,8 @@ struct VODView: View {
                         playlist: playlist,
                         queue: queue,
                         initialMovie: movie,
-                        initialResumeMs: item.lastTimeMs,
+                        // A finished film starts over instead of reopening in its last seconds.
+                        initialResumeMs: item.resumePositionMs(as: .film),
                         onNavigateToDetail: navigateToDetail
                     )
                 }
@@ -281,7 +282,7 @@ struct VODView: View {
                 streamId: item.streamId,
                 type: item.type,
                 seriesId: item.seriesId,
-                resumeTimeMs: item.lastTimeMs,
+                resumeTimeMs: item.resumePositionMs(as: .film),
                 containerExtension: item.containerExtension,
                 onNavigateToDetail: navigateToDetail
             )
@@ -950,7 +951,8 @@ struct VODPlayerShell: View {
             tx.disablesAnimations = true
             withTransaction(tx) {
                 currentMovie = movie
-                resumeMs = history?.lastTimeMs
+                // Previous / next in the film queue: a finished film starts over.
+                resumeMs = history?.resumePositionMs(as: .film)
             }
         }
     }

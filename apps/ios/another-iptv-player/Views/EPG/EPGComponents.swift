@@ -85,10 +85,18 @@ struct EPGNowNextLine: View {
 /// shown while watching a live channel.
 struct PlayerProgrammeStrip: View {
     let programme: EPGProgramme
+    /// Programme after `programme`, shown as a "Next: …" line when known.
+    var next: EPGProgramme? = nil
     var tint: Color = .white
 
-    /// Width the progress capsule fills within the strip.
-    private let barWidth: CGFloat = 188
+    /// Width the progress capsule fills within the strip. The player passes a smaller
+    /// one when the strip itself is capped below it, so the capsule's end is not cut.
+    var barWidth: CGFloat = PlayerProgrammeStripLayout.defaultBarWidth
+
+    /// "Next: 21:00 Title". Shared with the player's channel banner.
+    static func nextLine(_ programme: EPGProgramme) -> String {
+        L("epg.next_format", "\(EPGTimeFormat.time(programme.start)) \(programme.title)")
+    }
 
     var body: some View {
         let fraction = programme.progress(at: Date()) ?? 0
@@ -97,7 +105,10 @@ struct PlayerProgrammeStrip: View {
             Text(programme.title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(.white)
-                .lineLimit(2)
+                // One title line when the "next" line is shown: the strip keeps its
+                // height, which the failure banner and the brightness capsule above
+                // this corner are laid out around.
+                .lineLimit(next == nil ? 2 : 1)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(EPGTimeFormat.range(programme.start, programme.stop))
@@ -110,8 +121,60 @@ struct PlayerProgrammeStrip: View {
                 Capsule().fill(tint).frame(width: max(0, barWidth * fraction), height: 3)
             }
             .frame(width: barWidth, height: 3)
+
+            if let next {
+                Text(Self.nextLine(next))
+                    .font(.caption2.weight(.medium))
+                    .foregroundColor(.white.opacity(0.72))
+                    .lineLimit(1)
+            }
         }
         .shadow(color: .black.opacity(0.55), radius: 3, y: 1)
+    }
+}
+
+/// Width of the player's programme strip, kept free of view state so it can be
+/// unit-tested. The strip sits in the bottom leading corner of the chrome and the live
+/// channel row (skip, channel list, ...) in the bottom trailing one, at the same height:
+/// on a narrow screen the strip has to end before the row begins.
+nonisolated enum PlayerProgrammeStripLayout {
+    /// Width the strip may take when nothing is in its way.
+    static let defaultMaxWidth: CGFloat = 240
+    /// Never narrower than this; the title is truncated rather than squeezed away.
+    static let minimumMaxWidth: CGFloat = 120
+    static let defaultBarWidth: CGFloat = 188
+
+    /// Side of one round chrome button and the spacing between two of them.
+    static let rowButtonSide: CGFloat = 44
+    static let rowButtonSpacing: CGFloat = 8
+    /// From the container's trailing safe-area edge to the row's last button: the
+    /// chrome's 12 pt padding plus the row's own 12 pt.
+    static let rowTrailingInset: CGFloat = 24
+    /// From the container's leading safe-area edge to the strip.
+    static let stripLeadingInset: CGFloat = 20
+    /// Clear space kept between the strip and the first button of the row.
+    static let gapToRow: CGFloat = 12
+
+    /// - Parameters:
+    ///   - containerWidth: full width of the player, safe-area insets included.
+    ///   - rowButtonCount: buttons in the live channel row; 0 when the row is not shown.
+    static func maxWidth(
+        containerWidth: CGFloat,
+        leadingInset: CGFloat,
+        trailingInset: CGFloat,
+        rowButtonCount: Int
+    ) -> CGFloat {
+        guard rowButtonCount > 0, containerWidth.isFinite else { return defaultMaxWidth }
+        let count = CGFloat(rowButtonCount)
+        let rowWidth = count * rowButtonSide + (count - 1) * rowButtonSpacing
+        let rowLeading = containerWidth - trailingInset - rowTrailingInset - rowWidth
+        let available = rowLeading - gapToRow - (stripLeadingInset + leadingInset)
+        return min(defaultMaxWidth, max(minimumMaxWidth, available))
+    }
+
+    /// The progress capsule never outgrows the strip it sits in.
+    static func barWidth(stripMaxWidth: CGFloat) -> CGFloat {
+        min(defaultBarWidth, max(0, stripMaxWidth))
     }
 }
 

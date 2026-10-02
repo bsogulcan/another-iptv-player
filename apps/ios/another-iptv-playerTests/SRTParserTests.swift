@@ -96,4 +96,65 @@ struct SRTParserTests {
         try #require(entries.count == 1)
         #expect(entries[0].text == "Good one")
     }
+
+    // MARK: - Markup
+
+    @Test
+    func stripsDisplayMarkupFromCueText() throws {
+        let srt = #"""
+        1
+        00:00:01,000 --> 00:00:04,000
+        <i>Italic</i> and <B>bold</B>
+        <font color="#ffff00">Coloured</font> {\an8}top {i}old style{/i}
+
+        """#
+        let entries = SRTParser().parse(content: srt)
+        try #require(entries.count == 1)
+        #expect(entries[0].text == "Italic and bold\nColoured top old style")
+    }
+
+    /// A tag on a line of its own must not leave an empty row in the cue.
+    @Test
+    func dropsLinesThatWereOnlyMarkup() throws {
+        let srt = #"""
+        1
+        00:00:01,000 --> 00:00:04,000
+        <i>
+        Hello
+        </i>
+        {\an8}
+
+        """#
+        let entries = SRTParser().parse(content: srt)
+        try #require(entries.count == 1)
+        #expect(entries[0].text == "Hello")
+    }
+
+    /// Only known tags are markup; dialogue that happens to use brackets stays.
+    @Test
+    func keepsBracketsThatAreNotMarkup() {
+        let line = "a < b, <because> and <br> {laughs}"
+        #expect(SRTParser.strippingMarkupTags(line) == line)
+        #expect(SRTParser.strippingOverrideBlocks(line) == line)
+    }
+
+    @Test
+    func stripsWebVTTTags() {
+        let line = "<v Roger>Hi <c.yellow.bg_blue>there</c> <00:00:01.500>now</v>"
+        #expect(SRTParser.strippingMarkupTags(line) == "Hi there now")
+    }
+
+    @Test
+    func stripsOverrideBlocks() {
+        #expect(SRTParser.strippingOverrideBlocks(#"{\an8}Top {\i1}italic{\i0} {\pos(10,20)}here"#) == "Top italic here")
+    }
+
+    /// On a whole file a tag-only line is removed with its line break: a blank line in
+    /// its place would end the cue before its text.
+    @Test
+    func removesTagOnlyLinesFromWholeFile() {
+        let file = "1\n00:00:01,000 --> 00:00:02,000\n<i>\nHello\n</i>\n\n2\n00:00:03,000 --> 00:00:04,000\n<b>Bye</b>\n"
+        let expected = "1\n00:00:01,000 --> 00:00:02,000\nHello\n\n2\n00:00:03,000 --> 00:00:04,000\nBye\n"
+        #expect(SRTParser.strippingMarkupTags(file) == expected)
+    }
 }

@@ -20,8 +20,11 @@ nonisolated enum EPGConstants {
     static let maxCatchupPastDays = 7
     static let minCatchupPastDays = 1
 
-    /// How far ahead the now/next index looks when picking the "next" programme.
-    static let nowNextLookahead: TimeInterval = 12 * 3600
+    /// Upper bound on how much longer an on-air programme may still run to be
+    /// picked up by the minute now-index. It turns the `stopTs` scan into a closed
+    /// range instead of a walk over the whole retained future; 48 h still covers
+    /// day-long placeholder entries and multi-day events.
+    static let nowIndexMaxRemaining: TimeInterval = 48 * 3600
 
     /// Rows written per DB transaction while parsing a guide.
     static let parseBatchSize = 2_000

@@ -18,7 +18,7 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>To play via AirPlay, video is streamed to your Apple TV over the local network.</string>
+	<string>Used to play streams hosted on your local network and to send video to your TV over AirPlay.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

@@ -296,7 +296,9 @@ struct M3UChannelsView: View {
                 playlist: playlist,
                 channel: channel,
                 queue: queue,
-                resumeTimeMs: item.type == "live" ? nil : item.lastTimeMs
+                // M3U VOD is always typed "vod": a finished item starts over instead of
+                // reopening in its last seconds.
+                resumeTimeMs: item.type == "live" ? nil : item.resumePositionMs(as: .film)
             )
         }
     }
@@ -610,7 +612,17 @@ struct M3UPlayerShell: View {
     @State private var currentIndex: Int
     @State private var resumeTimeMs: Int?
     @State private var showChannelSidePanel: Bool = false
+    /// Queue index a prev/next burst has landed on but that is not loaded yet. The
+    /// chrome follows it at once; playback waits for the burst to end, so only its last
+    /// item opens a connection (same scheme as `LivePlayerShell`).
+    @State private var pendingZapIndex: Int?
+    @State private var pendingZapTask: Task<Void, Never>?
+    /// The presentation revision PlayerView sees: the overlay's, adopted together with
+    /// the selection of a new presentation, or a fresh one when the item that is already
+    /// playing is picked again (see `LivePlayerShell.reselectRevision`).
+    @State private var reselectRevision: UUID?
     @Environment(\.playerOverlayPresentationID) private var overlayPresentationID
+    @Environment(\.playerOverlayMode) private var overlayMode
     @ObservedObject private var favorites = M3UFavoriteStore.shared
     @ObservedObject private var m3uStore = M3UContentStore.shared
     @ObservedObject private var hiddenStore = HiddenCategoryStore.shared
@@ -639,12 +651,28 @@ struct M3UPlayerShell: View {
         _resumeTimeMs = State(initialValue: resumeTimeMs)
     }
 
+    /// Trailing debounce for prev/next presses.
+    private static let zapDebounceNanoseconds: UInt64 = 250_000_000
+
     private var channel: DBM3UChannel { queue[currentIndex] }
+
+    /// Index the chrome presents: the pending zap target while a burst is being
+    /// coalesced, otherwise the one that is playing.
+    private var visibleIndex: Int {
+        if let pending = pendingZapIndex, queue.indices.contains(pending) { return pending }
+        return currentIndex
+    }
 
     var body: some View {
         if let url = M3UParser.sanitizedURL(from: channel.url) {
             let classification = M3UStreamClassifier.classify(url: url, groupTitle: channel.groupTitle)
+            // `url`, `streamId` and the stream's own settings are PlayerView's playback
+            // identity and stay on the playing item until a zap burst settles; what the
+            // viewer reads (title, artwork, EPG, highlighted row, favourite) follows
+            // `visible` at once.
             let activeChannel = channel
+            let visibleIdx = visibleIndex
+            let visible = queue[visibleIdx]
             // Queue tek elemansa prev/next anlamsız; aksi hâlde live (showLiveChannelSkip) ve
             // VOD (showVODQueueSkip) için callback'leri ikisi de açık bırakılır. PlayerView
             // `type` + `isLive` kombinasyonundan hangi UI'ı göstereceğine karar veriyor.
@@ -653,9 +681,9 @@ struct M3UPlayerShell: View {
             ZStack(alignment: .bottom) {
                 PlayerView(
                     url: url,
-                    title: activeChannel.name,
-                    subtitle: activeChannel.groupTitle,
-                    artworkURL: activeChannel.tvgLogo.flatMap { URL(string: $0) },
+                    title: visible.name,
+                    subtitle: visible.groupTitle,
+                    artworkURL: visible.tvgLogo.flatMap { URL(string: $0) },
                     isLiveStream: classification.isLive,
                     playlistId: playlist.id,
                     streamId: activeChannel.id,
@@ -663,13 +691,13 @@ struct M3UPlayerShell: View {
                     resumeTimeMs: resumeTimeMs,
                     containerExtension: classification.containerExtension,
                     userAgent: activeChannel.userAgent,
-                    epgChannelKey: classification.isLive ? EPGChannelKey.forM3U(activeChannel) : nil,
-                    canGoToPreviousChannel: hasQueueNav && currentIndex > 0,
-                    canGoToNextChannel: hasQueueNav && currentIndex < queue.count - 1,
+                    epgChannelKey: classification.isLive ? EPGChannelKey.forM3U(visible) : nil,
+                    canGoToPreviousChannel: hasQueueNav && visibleIdx > 0,
+                    canGoToNextChannel: hasQueueNav && visibleIdx < queue.count - 1,
                     onPreviousChannel: hasQueueNav ? { jump(offset: -1) } : nil,
                     onNextChannel: hasQueueNav ? { jump(offset: 1) } : nil,
                     channelPanelSections: panelSections,
-                    currentChannelPanelItemId: activeChannel.id,
+                    currentChannelPanelItemId: visible.id,
                     onSelectChannelPanelItem: { id in selectPanelItem(id: id) },
                     isLiveChannelSidePanelVisible: showChannelSidePanel,
                     onToggleLiveChannelSidePanel: panelSections.isEmpty ? nil : {
@@ -683,30 +711,60 @@ struct M3UPlayerShell: View {
                             showChannelSidePanel = false
                         }
                     },
-                    isFavorite: favorites.isFavorite(channelId: activeChannel.id),
+                    isFavorite: favorites.isFavorite(channelId: visible.id),
                     onToggleFavorite: {
-                        Task { await favorites.toggle(channel: activeChannel) }
+                        Task { await favorites.toggle(channel: visible) }
                     }
                 )
+                .environment(\.playerOverlayPresentationID, reselectRevision ?? overlayPresentationID)
 
-                if showChannelSidePanel, !panelSections.isEmpty {
-                    LiveChannelSidePanel(
-                        sections: panelSections,
-                        currentItemId: activeChannel.id,
-                        onSelectChannel: { id in selectPanelItem(id: id) }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .zIndex(1)
+                // Its own container: the mode-driven removal below animates the panel
+                // without putting an implicit animation on the player next to it.
+                ZStack(alignment: .bottom) {
+                    // Never over the mini card: there the strip covered the card and the
+                    // tab bar, and nothing in reach could close it.
+                    if showChannelSidePanel, overlayMode == .fullscreen, !panelSections.isEmpty {
+                        LiveChannelSidePanel(
+                            sections: panelSections,
+                            currentItemId: visible.id,
+                            onSelectChannel: { id in selectPanelItem(id: id) }
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.22), value: overlayMode)
+                .zIndex(1)
             }
             .task(id: panelSectionsCacheKey) { await recomputeLivePanelSections() }
-            .onChange(of: overlayPresentationID) { _, _ in
-                applyInitialSelectionIfNeeded()
+            .onAppear {
+                // From here on PlayerView gets the revision from this shell's state
+                // (see `reselectRevision`); the value is the one it already has.
+                if reselectRevision == nil { reselectRevision = overlayPresentationID }
+            }
+            .onChange(of: overlayPresentationID) { _, id in
+                applyInitialSelectionIfNeeded(presentationID: id)
+            }
+            .onChange(of: overlayMode) { _, mode in
+                // Minimized (pull-down, edge swipe, accessibility escape): the panel
+                // stays closed, also after the card is expanded again.
+                if mode == .mini, showChannelSidePanel {
+                    showChannelSidePanel = false
+                }
+            }
+            .onDisappear {
+                // The player is gone: a burst that had not settled must not load anything.
+                cancelPendingZap()
             }
         }
     }
 
-    private func applyInitialSelectionIfNeeded() {
+    private func applyInitialSelectionIfNeeded(presentationID: UUID?) {
+        // A newly presented item replaces whatever a prev/next burst was about to load.
+        cancelPendingZap()
+        // PlayerView sees the new presentation in the same update as the selection
+        // adopted below. Before the guard: the same item presented again still changes
+        // the revision, which is what lets PlayerView retry it.
+        reselectRevision = presentationID
         guard channel.id != initialChannel.id
                 || queue.map(\.id) != initialQueue.map(\.id)
                 || resumeTimeMs != initialResumeMs else { return }
@@ -751,15 +809,53 @@ struct M3UPlayerShell: View {
         livePanelSections = result
     }
 
+    /// Previous / next: the chrome moves to the target at once, the load is debounced so
+    /// a burst of presses (buttons, headset, lock screen) opens only its last item
+    /// instead of one connection per press.
     private func jump(offset: Int) {
-        let target = currentIndex + offset
+        // Steps from the visible item, so a burst keeps walking from where the previous
+        // press landed rather than from the item still playing.
+        let target = visibleIndex + offset
         guard target >= 0, target < queue.count else { return }
+        pendingZapTask?.cancel()
+        pendingZapIndex = target
+        pendingZapTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: Self.zapDebounceNanoseconds)
+            guard !Task.isCancelled else { return }
+            commitPendingZap()
+        }
+    }
+
+    private func commitPendingZap() {
+        pendingZapTask = nil
+        guard let target = pendingZapIndex else { return }
+        pendingZapIndex = nil
+        // A burst can come back to where it started: nothing to load then.
+        guard queue.indices.contains(target), target != currentIndex else { return }
         currentIndex = target
         resumeTimeMs = nil
     }
 
+    /// Drops a pending prev/next burst; the chrome falls back to the playing item.
+    private func cancelPendingZap() {
+        pendingZapTask?.cancel()
+        pendingZapTask = nil
+        if pendingZapIndex != nil { pendingZapIndex = nil }
+    }
+
     private func selectPanelItem(id: String) {
+        // A pick from the list is deliberate: it supersedes a burst that is still
+        // waiting and loads at once (no zap debounce).
+        cancelPendingZap()
         if let idx = queue.firstIndex(where: { $0.id == id }) {
+            if idx == currentIndex {
+                // The channel that is already loaded was picked again. There is nothing
+                // to switch, but the viewer may be looking at an ended or failed stream:
+                // pass the pick on as a new presentation revision and let PlayerView,
+                // which knows the playback state, decide whether to reload.
+                reselectRevision = UUID()
+                return
+            }
             currentIndex = idx
             resumeTimeMs = nil
             return
@@ -768,8 +864,11 @@ struct M3UPlayerShell: View {
         guard let section = livePanelSections.first(where: { section in
             section.items.contains(where: { $0.id == id })
         }) else { return }
-        let channelsById = Dictionary(uniqueKeysWithValues: m3uStore.channels.map { ($0.id, $0) })
-        let newQueue = section.items.compactMap { channelsById[$0.id] }
+        // A store-built section is keyed by its group, so the new queue comes from that
+        // one group; indexing the whole catalog on the main thread for a single pick
+        // stalled the tap on large playlists.
+        let wanted = Set(section.items.map(\.id))
+        let newQueue = (m3uStore.channelsByGroup[section.id] ?? []).filter { wanted.contains($0.id) }
         guard let newIdx = newQueue.firstIndex(where: { $0.id == id }) else { return }
         queue = newQueue
         currentIndex = newIdx

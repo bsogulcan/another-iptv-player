@@ -35,11 +35,10 @@ struct MovieDetailView: View {
     }
 
     private var resumeMs: Int? {
-        guard let h = watchHistory, h.lastTimeMs > 5000 else { return nil }
         // Bitmiş (≥%98) filmde "Devam et" son saniyelere ışınlıyordu; nil dönünce
         // birincil aksiyon baştan izlemeye düşer (resumeProgress ile tutarlı).
-        if h.durationMs > 0, Double(h.lastTimeMs) / Double(h.durationMs) >= 0.98 { return nil }
-        return h.lastTimeMs
+        // The rule itself lives in WatchResume so every entry point shares it.
+        watchHistory?.resumePositionMs(as: .film)
     }
 
     private var resumeProgress: Double? {

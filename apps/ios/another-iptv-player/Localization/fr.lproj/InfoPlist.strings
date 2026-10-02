@@ -1,1 +1,1 @@
-"NSLocalNetworkUsageDescription" = "Pour la lecture via AirPlay, la vidéo est transmise à l'Apple TV via le réseau local.";
+"NSLocalNetworkUsageDescription" = "Permet de lire les flux hébergés sur le réseau local et d'envoyer la vidéo au téléviseur via AirPlay.";

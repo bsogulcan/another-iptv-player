@@ -4,14 +4,30 @@ struct SubtitleAppearanceSheet: View {
     @ObservedObject var player: VideoPlayerController
     @Environment(\.dismiss) private var dismiss
 
+    /// The style being edited. Every change goes straight to the playing picture and
+    /// is saved; there is no separate apply step.
     @State private var draft: SubtitleAppearanceSettings
+    /// The style as it was when the sheet opened: what Cancel goes back to.
     @State private var initial: SubtitleAppearanceSettings
+    /// The time offset belongs to the content being played, not to the (global) style:
+    /// it is edited here but read from and committed to the player, never to `draft`.
+    @State private var delaySeconds: Double
+    @State private var initialDelaySeconds: Double
+    /// While the offset slider is dragged its value is only previewed on the player;
+    /// it is committed for the content when the drag ends.
+    @State private var isEditingDelay = false
+
+    private static let delaySecondsRange: ClosedRange<Double> = -10...10
 
     init(player: VideoPlayerController) {
         self.player = player
         let loaded = SubtitleAppearancePersistence.load()
         _draft = State(initialValue: loaded)
         _initial = State(initialValue: loaded)
+        let range = Self.delaySecondsRange
+        let delay = min(max(player.subtitleDelaySeconds, range.lowerBound), range.upperBound)
+        _delaySeconds = State(initialValue: delay)
+        _initialDelaySeconds = State(initialValue: delay)
     }
 
     var body: some View {
@@ -35,33 +51,62 @@ struct SubtitleAppearanceSheet: View {
             .navigationTitle(L("subtitle.settings_title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Changes are already live, so only Cancel has work to do: it puts back
+                // what the sheet opened with. Done and a swipe down keep what is on screen.
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(L("common.close")) { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L("subtitle.apply")) {
-                        didApply = true
-                        player.applySubtitleAppearanceSettings(draft)
+                    Button(L("common.cancel")) {
+                        restoreInitialSettings()
                         dismiss()
                     }
-                    .disabled(draft == initial)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L("common.done")) { dismiss() }
                 }
             }
-            .onChange(of: draft.delaySeconds) { _, new in
-                player.applySubtitleDelaySeconds(new)
+            // The panel leaves the video visible, so the style is judged on the real
+            // cue: every change is applied (and saved) as it is made.
+            .onChange(of: draft) { _, new in
+                player.applySubtitleAppearanceSettings(new)
             }
-            // Gecikme slider'ı canlı önizleme için anında mpv'ye gider; Apply'sız
-            // kapanışta eski değere dönmezsek oynatma, sheet'in bir daha göstermeyeceği
-            // bir gecikmeyle kalıyordu.
+            .onChange(of: delaySeconds) { _, new in
+                if isEditingDelay {
+                    player.applySubtitleDelaySeconds(new)
+                } else {
+                    // Reset, Cancel and VoiceOver adjustments change the value in one step.
+                    commitDelay(new)
+                }
+            }
+            // The panel can stay open while the next title starts. That title has an
+            // offset of its own, which the slider and Cancel must follow; the echo of
+            // this sheet's own commit is equal to `delaySeconds` and changes nothing.
+            .onChange(of: player.subtitleDelaySeconds) { _, published in
+                guard published != SubtitleDelayStore.clamp(delaySeconds) else { return }
+                let range = Self.delaySecondsRange
+                delaySeconds = min(max(published, range.lowerBound), range.upperBound)
+                initialDelaySeconds = delaySeconds
+            }
+            // A drag still in flight when the sheet goes away never reports its end;
+            // without this the player would keep an offset that was only previewed.
             .onDisappear {
-                if !didApply {
-                    player.applySubtitleDelaySeconds(initial.delaySeconds)
-                }
+                commitDelay(delaySeconds)
             }
         }
     }
 
-    @State private var didApply = false
+    /// Makes `seconds` the offset of the content being played, unless it already is.
+    private func commitDelay(_ seconds: Double) {
+        guard SubtitleDelayStore.clamp(seconds) != player.subtitleDelaySeconds else { return }
+        player.commitSubtitleDelaySeconds(seconds)
+    }
+
+    private func restoreInitialSettings() {
+        if draft != initial {
+            draft = initial
+            player.applySubtitleAppearanceSettings(initial)
+        }
+        delaySeconds = initialDelaySeconds
+        commitDelay(initialDelaySeconds)
+    }
 
     // MARK: - Sections
 
@@ -222,6 +267,7 @@ struct SubtitleAppearanceSheet: View {
         Section {
             Button(role: .destructive) {
                 draft = .default
+                delaySeconds = 0
             } label: {
                 HStack {
                     Image(systemName: "arrow.counterclockwise")
@@ -229,7 +275,7 @@ struct SubtitleAppearanceSheet: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .disabled(draft == .default)
+            .disabled(draft == .default && abs(delaySeconds) < 0.05)
         }
     }
 
@@ -237,13 +283,17 @@ struct SubtitleAppearanceSheet: View {
         Section {
             stepperRow(
                 label: L("subtitle.time_offset"),
-                value: $draft.delaySeconds,
-                range: SubtitleAppearanceSettings.delaySecondsRange,
+                value: $delaySeconds,
+                range: Self.delaySecondsRange,
                 step: 0.1,
                 display: { s in
                     if abs(s) < 0.05 { return L("subtitle.no_delay") }
                     let sign = s > 0 ? "+" : ""
                     return "\(sign)\(String(format: "%.1f", s)) s"
+                },
+                onEditingChanged: { editing in
+                    isEditingDelay = editing
+                    if !editing { commitDelay(delaySeconds) }
                 }
             )
         } header: {
@@ -261,7 +311,8 @@ struct SubtitleAppearanceSheet: View {
         value: Binding<Double>,
         range: ClosedRange<Double>,
         step: Double,
-        display: @escaping (Double) -> String
+        display: @escaping (Double) -> String,
+        onEditingChanged: @escaping (Bool) -> Void = { _ in }
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -272,7 +323,16 @@ struct SubtitleAppearanceSheet: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
-            Slider(value: value, in: range, step: step)
+            // The slider carries the same label and value for VoiceOver.
+            .accessibilityHidden(true)
+            Slider(
+                value: value,
+                in: range,
+                step: step,
+                label: { Text(label) },
+                onEditingChanged: onEditingChanged
+            )
+            .accessibilityValue(display(value.wrappedValue))
         }
         .padding(.vertical, 4)
     }
@@ -296,27 +356,24 @@ private struct SubtitlePreviewCard: View {
                 endPoint: .bottom
             )
 
+            // Mirrors the player's cue (KSSubtitleCueText): same outline renderer, same
+            // padding, and the block (not just its lines) placed by the alignment.
             Text(displayText)
                 .font(previewFont)
                 .italic(settings.italic)
                 .kerning(CGFloat(settings.letterSpacing))
                 .lineSpacing(previewLineSpacing)
                 .multilineTextAlignment(previewTextAlignment)
+                .foregroundStyle(Color(hex6: settings.textColorHex6))
+                .textRenderer(settings.outlineRenderer)
+                .padding(.horizontal, CGFloat(settings.padding) + 8)
+                .padding(.vertical, 4)
+                .background(previewBackground)
+                .padding(.horizontal, previewEdgeInset)
                 .frame(
                     maxWidth: .infinity,
                     alignment: previewFrameAlignment
                 )
-                .foregroundStyle(Color(hex6: settings.textColorHex6))
-                .shadow(
-                    color: Color(hex6: settings.outlineColorHex6).opacity(settings.outlineSize > 0 ? 0.9 : 0),
-                    radius: CGFloat(settings.outlineSize * 0.6),
-                    x: 0,
-                    y: 0
-                )
-                .padding(.horizontal, CGFloat(settings.padding))
-                .padding(.vertical, CGFloat(settings.padding * 2 / 3))
-                .background(previewBackground)
-                .padding(.horizontal, 20)
                 .padding(.bottom, previewBottomPadding)
         }
         .frame(height: 180)
@@ -365,10 +422,18 @@ private struct SubtitlePreviewCard: View {
         }
     }
 
+    /// Same inset the player gives a side-aligned cue block.
+    private var previewEdgeInset: CGFloat {
+        switch settings.textAlignment {
+        case .left, .right: return 12
+        case .center, .justify: return 0
+        }
+    }
+
     @ViewBuilder
     private var previewBackground: some View {
         if settings.backgroundEnabled {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
+            RoundedRectangle(cornerRadius: 4)
                 .fill(Color(hex6: settings.backgroundColorHex6).opacity(settings.backgroundOpacity))
         } else {
             Color.clear

@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import KSPlayer
 import Libavcodec
 import Libavutil
 import ObjectiveC
@@ -106,6 +107,76 @@ struct DecoderProbeTests {
     }
 }
 
+// MARK: - Audio track chosen while the source opens
+
+struct WantedAudioIndexTests {
+    private func index(
+        _ languages: [String?],
+        decodable: [Bool]? = nil,
+        hasAudioFormat: [Bool]? = nil,
+        preferred: String?
+    ) -> Int? {
+        GuardedKSOptions.wantedAudioIndex(
+            languageCodes: languages,
+            decodable: decodable ?? languages.map { _ in true },
+            hasAudioFormat: hasAudioFormat ?? languages.map { _ in true },
+            preferredLanguage: preferred
+        )
+    }
+
+    /// nil leaves the choice to FFmpeg, as before the preference was hooked up.
+    @Test func withoutAPreferenceFFmpegChooses() {
+        #expect(index(["eng", "tur"], preferred: nil) == nil)
+        #expect(index(["eng", "tur"], preferred: "") == nil)
+        #expect(index([], preferred: "tur") == nil)
+    }
+
+    @Test func preferredLanguageIsChosenBeforePlayback() {
+        #expect(index(["eng", "tur", "deu"], preferred: "tur") == 1)
+        // Stored as two letters, tagged with three.
+        #expect(index(["eng", "ger"], preferred: "de") == 1)
+        #expect(index(["eng", nil, "tur"], preferred: "tr") == 2)
+    }
+
+    @Test func unknownPreferenceLeavesFFmpegsChoice() {
+        #expect(index(["eng", "deu"], preferred: "tur") == nil)
+        #expect(index([nil, nil], preferred: "tur") == nil)
+    }
+
+    /// A track without a decoder must never be asked for, preferred or not: KSPlayer
+    /// would keep its dead decoder and crash on the next seek.
+    @Test func undecodablePreferredTrackIsSkipped() {
+        #expect(index(["tur", "eng"], decodable: [false, true], preferred: "tur") == 1)
+        #expect(index(["tur", "eng", "tur"], decodable: [false, true, true], preferred: "tur") == 2)
+    }
+
+    /// The guard that existed before the preference: with an undecodable track in the
+    /// list the first decodable one is named, and nothing when none is.
+    @Test func undecodableTracksStillSteerTheChoice() {
+        #expect(index(["eng", "tur"], decodable: [false, true], preferred: nil) == 1)
+        #expect(index(["eng", "tur"], decodable: [false, false], preferred: "tur") == nil)
+        #expect(GuardedKSOptions.firstDecodableIndexIfNeeded([true, true]) == nil)
+        #expect(GuardedKSOptions.firstDecodableIndexIfNeeded([false, true, true]) == 1)
+        #expect(GuardedKSOptions.firstDecodableIndexIfNeeded([]) == nil)
+    }
+
+    /// FFmpeg finds nothing when asked for a stream whose parameters are unknown, and
+    /// KSPlayer then enables the first audio track instead of FFmpeg's best one.
+    @Test func trackWithoutAudioFormatIsNotAskedFor() {
+        #expect(index(["eng", "tur"], hasAudioFormat: [true, false], preferred: "tur") == nil)
+        #expect(index(["eng", "tur", "tur"], hasAudioFormat: [true, false, true], preferred: "tur") == 2)
+        // A shorter list leaves the remaining tracks selectable.
+        #expect(index(["eng", "tur"], hasAudioFormat: [], preferred: "tur") == 1)
+    }
+
+    @Test func audioFormatNeedsChannelsAndSampleRate() {
+        #expect(DecoderProbe.isKnownAudioFormat(sampleRate: 48000, channelCount: 2))
+        #expect(!DecoderProbe.isKnownAudioFormat(sampleRate: 0, channelCount: 2))
+        #expect(!DecoderProbe.isKnownAudioFormat(sampleRate: 48000, channelCount: 0))
+        #expect(!DecoderProbe.isKnownAudioFormat(sampleRate: 0, channelCount: 0))
+    }
+}
+
 // MARK: - Non-finite AVAssetTrack data rate (trapping Int64 conversion)
 
 private final class DataRateStub: NSObject {
@@ -150,5 +221,64 @@ struct AVAssetTrackDataRateGuardTests {
             guard let cls = NSClassFromString(name) else { continue }
             #expect(class_getMethodImplementation(cls, selector) == base, "\(name) overrides the getter")
         }
+    }
+}
+
+// MARK: - Capacity timer in the default run-loop mode (no start while scrolling)
+
+private final class LazyTimerHolder {
+    var first = 1
+    var second = "two"
+    lazy var timer: Timer = Timer(timeInterval: 60, repeats: true) { _ in }
+}
+
+private final class TimerlessHolder {
+    var first = 1
+}
+
+@MainActor
+struct KSPlayerRunLoopGuardTests {
+    /// Pins the private property names the guard reads at the pinned KSPlayer revision.
+    /// Building the item opens nothing: the source is only touched by `prepareToPlay()`.
+    @Test func capacityTimerLabelMatchesKSPlayer() {
+        let item = MEPlayerItem(url: URL(fileURLWithPath: "/dev/null"), options: GuardedKSOptions())
+        defer { item.shutdown() }
+        let timer = KSPlayerRunLoopGuard.timer(
+            labelled: KSPlayerRunLoopGuard.capacityTimerLabel, of: item
+        )
+        #expect(timer != nil, "MEPlayerItem no longer stores a lazy `timer`")
+        #expect(timer?.timeInterval == 0.05)
+        #expect(timer?.isValid == true)
+    }
+
+    @Test func playerItemLabelMatchesKSPlayer() {
+        let options = GuardedKSOptions()
+        // No Metal view: the test only needs the player's stored properties.
+        options.videoDisable = true
+        let player = KSMEPlayer(url: URL(fileURLWithPath: "/dev/null"), options: options)
+        defer { player.shutdown() }
+        #expect(KSPlayerRunLoopGuard.child(labelled: KSPlayerRunLoopGuard.playerItemLabel, of: player) is MEPlayerItem)
+        #expect(KSPlayerRunLoopGuard.capacityTimer(of: player) != nil)
+        #expect(KSPlayerRunLoopGuard.promoteCapacityTimer(of: player))
+        // Promoting twice is harmless.
+        #expect(KSPlayerRunLoopGuard.promoteCapacityTimer(of: player))
+    }
+
+    /// A lazy property that was never used holds no timer yet.
+    @Test func unusedLazyTimerIsNotFound() {
+        let holder = LazyTimerHolder()
+        #expect(KSPlayerRunLoopGuard.timer(labelled: KSPlayerRunLoopGuard.capacityTimerLabel, of: holder) == nil)
+        let created = holder.timer
+        #expect(KSPlayerRunLoopGuard.timer(labelled: KSPlayerRunLoopGuard.capacityTimerLabel, of: holder) === created)
+        // The second read goes through the remembered position.
+        #expect(KSPlayerRunLoopGuard.timer(labelled: KSPlayerRunLoopGuard.capacityTimerLabel, of: holder) === created)
+    }
+
+    /// A renamed or missing property must degrade to "nothing found", never trap.
+    @Test func missingPropertyDegradesSilently() {
+        let holder = TimerlessHolder()
+        #expect(KSPlayerRunLoopGuard.child(labelled: "playerItem", of: holder) == nil)
+        #expect(KSPlayerRunLoopGuard.timer(labelled: KSPlayerRunLoopGuard.capacityTimerLabel, of: holder) == nil)
+        #expect(KSPlayerRunLoopGuard.child(labelled: "first", of: holder) as? Int == 1)
     }
 }

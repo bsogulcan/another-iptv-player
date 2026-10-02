@@ -202,7 +202,26 @@ struct EngineOrderSelectionTests {
         #expect(!KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/movie.mp4")))
         #expect(!KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/live/stream.m3u8")))
         #expect(!KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/clip.MOV")))
-        #expect(!KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/song.m4a")))
+        #expect(!KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/movie.m4v")))
+    }
+
+    /// KSAVPlayer fails every item without a playable video track, so an audio-only
+    /// URL sent there first was opened twice and ended on FFmpeg anyway.
+    @Test func audioOnlyFilesGoFFmpegFirst() {
+        #expect(KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/radio.mp3")))
+        #expect(KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/song.m4a")))
+        #expect(KSPlayerEngine.prefersFFmpegFirst(for: url("http://host/stream.AAC")))
+    }
+
+    /// The engine's open order is not the same question as "can a plain AVPlayer play
+    /// it": the cast player has no video-track check and plays audio files natively.
+    @Test func audioOnlyFilesStayAVFoundationPlayable() {
+        for name in ["radio.mp3", "song.m4a", "stream.AAC", "movie.mp4", "live/stream.m3u8", "clip.MOV"] {
+            #expect(KSPlayerEngine.isAVFoundationPlayable(url("http://host/\(name)")), "\(name)")
+        }
+        #expect(!KSPlayerEngine.isAVFoundationPlayable(url("http://host/movie.mkv")))
+        #expect(!KSPlayerEngine.isAVFoundationPlayable(url("http://host/channel.ts")))
+        #expect(!KSPlayerEngine.isAVFoundationPlayable(url("http://host:8080/user/pass/12345")))
     }
 
     @Test func ffmpegContainersGoFFmpegFirst() {
@@ -214,6 +233,29 @@ struct EngineOrderSelectionTests {
     /// Uzantısız Xtream canlı URL'leri (http://host/user/pass/12345) FFmpeg'e gitmeli.
     @Test func extensionlessXtreamLiveGoesFFmpegFirst() {
         #expect(KSPlayerEngine.prefersFFmpegFirst(for: url("http://host:8080/user/pass/12345")))
+    }
+}
+
+// MARK: - Cast player item swap (the paused state must survive a load)
+
+struct AirPlayCastPlayerLoadTests {
+    /// `replaceCurrentItem` keeps the player's rate, so an item loaded with
+    /// `autoPlay: false` behind a playing one used to start by itself (a cast paused
+    /// on the TV resumed after a seek rebuild). Only the requested rate is checked,
+    /// synchronously; the URLs are never played.
+    @Test func loadWithoutAutoPlayPausesAPlayingPlayer() {
+        let player = AirPlayCastPlayer()
+        defer { player.dispose() }
+        let directory = URL(fileURLWithPath: NSTemporaryDirectory())
+        player.load(
+            url: directory.appendingPathComponent("cast-swap-a.m3u8"),
+            startAt: nil, autoPlay: true
+        )
+        player.load(
+            url: directory.appendingPathComponent("cast-swap-b.m3u8"),
+            startAt: nil, autoPlay: false, userAgent: "TestAgent/1.0"
+        )
+        #expect(player.isPaused)
     }
 }
 

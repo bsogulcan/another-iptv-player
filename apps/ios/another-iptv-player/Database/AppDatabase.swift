@@ -421,7 +421,9 @@ nonisolated struct AppDatabase {
             }
             try db.alter(table: "playlist") { t in
                 t.add(column: "serverTimezone", .text)   // IANA name from server_info
-                t.add(column: "timeshiftStyle", .text)   // "path" | "php" — probe result cache
+                // Probe result cache. Written by TimeshiftStyleCache: "m3u8" | "path" | "php",
+                // or "path-no-m3u8" | "php-no-m3u8" (same column, no migration needed).
+                t.add(column: "timeshiftStyle", .text)
             }
             try db.alter(table: "m3uChannel") { t in
                 t.add(column: "catchup", .text)

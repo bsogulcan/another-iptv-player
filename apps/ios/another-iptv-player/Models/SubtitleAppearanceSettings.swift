@@ -28,17 +28,6 @@ enum SubtitleFontWeight: String, CaseIterable, Codable, Identifiable {
         case .extraBold: return L("style.weight.extra_bold")
         }
     }
-
-    /// libass / CoreText için iOS sistem yazı tipi postscript adı. Cihazda aranır; bulunamazsa fallback olur.
-    var iosPostscriptName: String {
-        switch self {
-        case .thin: return "SFProDisplay-Thin"
-        case .normal: return "SFProDisplay-Regular"
-        case .medium: return "SFProDisplay-Medium"
-        case .bold: return "SFProDisplay-Bold"
-        case .extraBold: return "SFProDisplay-Heavy"
-        }
-    }
 }
 
 enum SubtitleTextAlignment: String, CaseIterable, Codable, Identifiable {
@@ -88,6 +77,9 @@ struct SubtitleAppearanceSettings: Equatable {
     var outlineColorHex6: UInt32
     var verticalOffset: Int
 
+    /// Legacy: the subtitle time offset used to be part of the global style. It now lives
+    /// per content in `SubtitleDelayStore` and nothing reads this field. It is still decoded
+    /// so settings saved by earlier versions load, but it is never written back.
     var delaySeconds: Double
 
     static let `default` = SubtitleAppearanceSettings(
@@ -204,7 +196,8 @@ extension SubtitleAppearanceSettings: Codable {
         try c.encode(outlineSize, forKey: .outlineSize)
         try c.encode(outlineColorHex6, forKey: .outlineColorHex6)
         try c.encode(verticalOffset, forKey: .verticalOffset)
-        try c.encode(delaySeconds, forKey: .delaySeconds)
+        // `delaySeconds` is deliberately not encoded: the offset is stored per content now, and
+        // re-encoding the old global value on every style save kept a dead number alive.
     }
 }
 

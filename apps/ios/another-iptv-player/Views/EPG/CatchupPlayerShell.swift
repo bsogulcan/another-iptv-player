@@ -29,7 +29,17 @@ struct CatchupPlayerShell: View {
             playlistId: playlist.id,
             streamId: String(stream.streamId),
             type: "live",
-            suppressWatchHistory: true
+            suppressWatchHistory: true,
+            // The resolver's probe sees only the playlist text. When the `.m3u8` it
+            // chose does not play, the next catch-up start goes back to `.ts`.
+            onPlaybackFailure: { playedSeconds in
+                let failedURL = url
+                let playlistId = playlist.id
+                Task {
+                    await CatchupURLResolver.reportPlaybackFailure(
+                        of: failedURL, playedSeconds: playedSeconds, playlistId: playlistId)
+                }
+            }
         )
     }
 }
@@ -61,7 +71,7 @@ final class CatchupPlaybackController: ObservableObject {
             let resolved = try await CatchupURLResolver.resolve(
                 playlist: playlist, streamId: stream.streamId,
                 startUTC: programme.startUTC, durationMinutes: duration,
-                panelTimeZone: timeZone, allowedFormats: nil)
+                panelTimeZone: timeZone)
             guard generation == Self.requestGeneration else { return }
             overlay.present(playlistId: playlist.id) {
                 CatchupPlayerShell(playlist: playlist, stream: stream, programme: programme, url: resolved.url)

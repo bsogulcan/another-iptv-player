@@ -49,13 +49,15 @@ final class EPGStore: ObservableObject {
     @Published private(set) var snapshot: EPGSnapshot?
     @Published private(set) var refreshState: [UUID: EPGRefreshState] = [:]
     @Published private(set) var lastSuccess: [UUID: Date] = [:]
-    /// `now` used for progress/highlight math; bumped by the tick.
-    @Published private(set) var nowDate: Date = Date()
 
     private var activePlaylistId: UUID?
     private var resolution: [String: String] = [:]   // aliasKey → stored channelKey
     private var configured = false                    // active playlist has a successful epgSource
     private var version = 0
+    /// Ticks overlap (minute timer vs. a refresh finishing) and their reads can
+    /// complete out of order; these keep an older index from replacing a newer one.
+    private var tickSequence = 0
+    private var publishedTickSequence = 0
 
     private var tickTask: Task<Void, Never>?
     private var activeRefreshTasks: [UUID: Task<Void, Never>] = [:]
@@ -133,43 +135,26 @@ final class EPGStore: ObservableObject {
     // MARK: - Now/next index
 
     func tick() async {
-        nowDate = Date()
         guard let pid = activePlaylistId else { snapshot = nil; return }
         let now = Int64(Date().timeIntervalSince1970)
-        let lookahead = now + Int64(EPGConstants.nowNextLookahead)
+        // Captured here because the fold below runs off the main actor.
+        let aliases = resolution
+        tickSequence += 1
+        let sequence = tickSequence
 
-        let rows: [DBEPGProgramme]
+        let dict: [String: EPGNowNext]
         do {
-            rows = try await AppDatabase.shared.read { db in
-                try DBEPGProgramme.fetchAll(db, sql: """
-                    SELECT * FROM epgProgramme
-                    WHERE playlistId = ? AND stopTs > ? AND startTs < ?
-                    ORDER BY channelKey, startTs
-                    """, arguments: [pid, now, lookahead])
+            // The query and the whole fold stay on GRDB's reader queue. The main
+            // thread also presents FFmpeg video frames, so with a large guide doing
+            // this after the `await` hitched playback once a minute.
+            dict = try await AppDatabase.shared.read { db in
+                try Self.fetchNowIndex(db, playlistId: pid, now: now, resolution: aliases)
             }
         } catch {
             return
         }
-        guard pid == activePlaylistId else { return }
-
-        var byStored: [String: EPGNowNext] = [:]
-        for row in rows {
-            let prog = EPGProgramme(from: row)
-            var entry = byStored[row.channelKey] ?? EPGNowNext()
-            if prog.isCurrent(at: Date()) {
-                if entry.now == nil { entry.now = prog }
-            } else if prog.start.timeIntervalSince1970 > Double(now) {
-                if entry.next == nil { entry.next = prog }
-            }
-            byStored[row.channelKey] = entry
-        }
-
-        // Fold in alias entries so lookups by a channel's own id/name resolve to
-        // the stored (possibly display-name-matched) key.
-        var dict = byStored
-        for (alias, stored) in resolution where dict[alias] == nil {
-            if let nn = byStored[stored] { dict[alias] = nn }
-        }
+        guard pid == activePlaylistId, sequence > publishedTickSequence else { return }
+        publishedTickSequence = sequence
 
         if dict.isEmpty && !configured {
             snapshot = nil
@@ -180,6 +165,43 @@ final class EPGStore: ObservableObject {
         // need a new snapshot version to redraw.
         version += 1
         snapshot = EPGSnapshot(version: version, byChannelKey: dict)
+    }
+
+    /// Runs inside the database reader closure, away from the main actor. Fetches
+    /// only the programmes on air at `now`, and only the columns the snapshot's
+    /// consumers read. No `ORDER BY`: a global sort made SQLite build a temporary
+    /// B-tree, and `makeNowIndex` resolves overlaps itself. Kept internal so the
+    /// query can be regression-tested against an in-memory database.
+    nonisolated static func fetchNowIndex(_ db: Database, playlistId: UUID, now: Int64,
+                                          resolution: [String: String]) throws -> [String: EPGNowNext] {
+        let latestStop = now + Int64(EPGConstants.nowIndexMaxRemaining)
+        let rows = try EPGGuideProgrammeRecord.fetchAll(db, sql: """
+            SELECT channelKey, startTs, stopTs, title FROM epgProgramme
+            WHERE playlistId = ? AND stopTs > ? AND stopTs <= ? AND startTs <= ?
+            """, arguments: [playlistId, now, latestStop, now])
+        return makeNowIndex(rows, resolution: resolution)
+    }
+
+    /// Folds on-air rows into the snapshot dictionary. When guide data overlaps
+    /// (a day-long placeholder under a real programme) the row that started last
+    /// wins, so the result does not depend on row order.
+    nonisolated static func makeNowIndex(_ rows: [EPGGuideProgrammeRecord],
+                                         resolution: [String: String]) -> [String: EPGNowNext] {
+        var latest: [String: EPGGuideProgrammeRecord] = [:]
+        latest.reserveCapacity(min(rows.count, 4_096))
+        for row in rows {
+            if let kept = latest[row.channelKey], kept.startTs >= row.startTs { continue }
+            latest[row.channelKey] = row
+        }
+        let byStored = latest.mapValues { EPGNowNext(now: $0.programme) }
+
+        // Fold in alias entries so lookups by a channel's own id/name resolve to
+        // the stored (possibly display-name-matched) key.
+        var dict = byStored
+        for (alias, stored) in resolution where dict[alias] == nil {
+            if let nn = byStored[stored] { dict[alias] = nn }
+        }
+        return dict
     }
 
     func nowNext(channelKey: String?) -> EPGNowNext? { snapshot?[channelKey] }
@@ -354,12 +376,19 @@ final class EPGStore: ObservableObject {
     /// missing it — pulls `get_short_epg` and stores it.
     func ensureShortEPG(playlist: Playlist, stream: DBLiveStream) async {
         guard playlist.kind == .xtream else { return }
-        let idKey = EPGConstants.normalizeChannelKey(stream.epgChannelId)
-        let nameKey = EPGConstants.normalizeChannelKey(stream.name)
-        let key = storedKey(idKey: idKey, nameKey: nameKey) ?? idKey ?? "#stream:\(stream.streamId)"
+        // The key the channel cards and the player look this channel up by. Without one
+        // (no EPG id and no name) nothing could display the answer, so nothing is asked.
+        guard let key = EPGChannelKey.forXtream(stream) else { return }
         if let existing = snapshot?[key], existing.now != nil { return }
         guard let response = try? await XtreamAPIClient(playlist: playlist).getShortEPG(streamId: stream.streamId) else { return }
-        await storeListings(response.epgListings, playlistId: playlist.id, fallbackKey: key)
+        // Stored under the lookup key itself, not under a guide alias or the listing's
+        // own `channel_id`: the index publishes a stored key as it is, so the lookup
+        // above and the player's are direct hits whatever the alias map holds.
+        let stored = await storeListings(response.epgListings, playlistId: playlist.id,
+                                         fallbackKey: key, ignoresListingChannelId: true)
+        // An empty or unusable answer leaves the index as it is: rebuilding it would
+        // publish a new snapshot, and redraw every card, for no change.
+        guard stored else { return }
         await tick()
     }
 
@@ -368,10 +397,19 @@ final class EPGStore: ObservableObject {
         await storeListings(response.epgListings, playlistId: playlist.id, fallbackKey: channelKey)
     }
 
-    private func storeListings(_ listings: [XtreamEPGListing], playlistId: UUID, fallbackKey: String) async {
+    /// Returns true when at least one row was written.
+    /// `ignoresListingChannelId`: store every row under `fallbackKey`, whatever
+    /// `channel_id` the panel put in the listing. The short-EPG fallback needs that:
+    /// its rows are read back under a key derived from the channel, and a listing id
+    /// that differs from it would hide them from the lookup.
+    @discardableResult
+    private func storeListings(_ listings: [XtreamEPGListing], playlistId: UUID, fallbackKey: String,
+                               ignoresListingChannelId: Bool = false) async -> Bool {
         let rows: [DBEPGProgramme] = listings.compactMap { listing in
             guard let start = listing.startTimestamp, let stop = listing.stopTimestamp, stop > start else { return nil }
-            let key = EPGConstants.normalizeChannelKey(listing.channelId) ?? fallbackKey
+            let key = ignoresListingChannelId
+                ? fallbackKey
+                : (EPGConstants.normalizeChannelKey(listing.channelId) ?? fallbackKey)
             return DBEPGProgramme(
                 playlistId: playlistId, channelKey: key,
                 startTs: Int64(start), stopTs: Int64(stop),
@@ -380,10 +418,12 @@ final class EPGStore: ObservableObject {
                 category: nil, iconURL: nil, episodeNum: nil
             )
         }
-        guard !rows.isEmpty else { return }
-        try? await AppDatabase.shared.write { db in
+        guard !rows.isEmpty else { return false }
+        // The write is one transaction: when it throws, nothing was stored.
+        let written: Void? = try? await AppDatabase.shared.write { db in
             for r in rows { try r.insert(db) }
         }
+        return written != nil
     }
 
     // MARK: - Refresh orchestration

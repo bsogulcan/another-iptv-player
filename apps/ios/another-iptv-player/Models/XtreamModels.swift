@@ -53,9 +53,11 @@ struct XtreamUserInfo: Codable {
     let activeCons: String?
     let createdAt: String?
     let maxConnections: String?
-    /// e.g. ["m3u8", "ts", "rtmp"] — used to prefer a seekable `.m3u8` timeshift
-    /// extension when available. Some panels send this as a comma-joined string
-    /// rather than a JSON array, so decoding is tolerant (nil = unknown).
+    /// e.g. ["m3u8", "ts", "rtmp"]. Decoded but not consulted anywhere: the catch-up
+    /// resolver probes the timeshift URL shapes itself (`.m3u8` first) and caches the
+    /// winner in `Playlist.timeshiftStyle` instead of trusting this list. Some panels
+    /// send this as a comma-joined string rather than a JSON array, so decoding is
+    /// tolerant (nil = unknown).
     let allowedOutputFormats: [String]?
 
     enum CodingKeys: String, CodingKey {

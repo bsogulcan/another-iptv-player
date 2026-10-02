@@ -89,10 +89,26 @@ struct CatchupURLBuilderTests {
         #expect(s.contains("password=pass"))
     }
 
+    // MARK: - Resolver candidates
+
     @Test
-    func extensionPreferenceFromAllowedFormats() {
-        #expect(CatchupURLResolver.preferredExtension(["m3u8", "ts"]) == "m3u8")
-        #expect(CatchupURLResolver.preferredExtension(["ts", "rtmp"]) == "ts")
-        #expect(CatchupURLResolver.preferredExtension(nil) == "ts")
+    func candidatesCoverEveryShapeInTheGivenOrder() {
+        let list = CatchupURLResolver.candidates(
+            playlist: playlist(), streamId: 5, startUTC: refDate, durationMinutes: 60,
+            panelTimeZone: .gmt, order: [.hls, .path, .php])
+        #expect(list.map(\.style) == [.hls, .path, .php])
+        #expect(list[0].url.absoluteString == "http://host:8080/timeshift/user/pass/60/2026-07-22:11-30/5.m3u8")
+        #expect(list[1].url.absoluteString == "http://host:8080/timeshift/user/pass/60/2026-07-22:11-30/5.ts")
+        #expect(list[2].url.absoluteString.hasPrefix("http://host:8080/streaming/timeshift.php?"))
+    }
+
+    @Test
+    func hlsCandidateRoutesToTheAVPlayerPath() {
+        // The engine picks AVPlayer by path extension, so the HLS shape must end in
+        // `.m3u8` and the raw path shape must not.
+        let list = CatchupURLResolver.candidates(
+            playlist: playlist(), streamId: 9, startUTC: refDate, durationMinutes: 30,
+            panelTimeZone: .gmt, order: [.path, .hls])
+        #expect(list.map(\.url.pathExtension) == ["ts", "m3u8"])
     }
 }

@@ -28,6 +28,85 @@ struct EPGGuidePerformanceTests {
     }
 
     @Test
+    func nowIndexKeepsLatestStartedProgrammeAndFoldsAliases() {
+        // Deliberately unordered: the minute query no longer sorts its rows.
+        let rows = [
+            EPGGuideProgrammeRecord(channelKey: "news", startTs: 3_600, stopTs: 7_200, title: "Bulletin"),
+            EPGGuideProgrammeRecord(channelKey: "sport", startTs: 3_000, stopTs: 9_000, title: "Match"),
+            EPGGuideProgrammeRecord(channelKey: "news", startTs: 0, stopTs: 86_400, title: "Placeholder")
+        ]
+
+        let index = EPGStore.makeNowIndex(rows, resolution: [
+            "news hd": "news",       // alias of a stored key
+            "sport": "news",         // a stored key is never overwritten by an alias
+            "radio": "no-guide"      // alias whose stored key has nothing on air
+        ])
+
+        #expect(index.count == 3)
+        #expect(index["news"]?.now?.title == "Bulletin")
+        #expect(index["news hd"]?.now?.title == "Bulletin")
+        #expect(index["sport"]?.now?.title == "Match")
+        #expect(index["radio"] == nil)
+        #expect(index["news"]?.now?.start == Date(timeIntervalSince1970: 3_600))
+        #expect(index["news"]?.now?.stop == Date(timeIntervalSince1970: 7_200))
+    }
+
+    @Test
+    func nowIndexQueryReturnsOnlyProgrammesOnAir() async throws {
+        let database = AppDatabase.empty()
+        let playlistId = UUID()
+        let otherPlaylistId = UUID()
+        let now: Int64 = 1_800_000_000
+
+        // (playlist, channelKey, start offset, stop offset, title), offsets from `now`.
+        let programmes: [(UUID, String, Int64, Int64, String)] = [
+            (playlistId, "news", -7_200, -3_600, "Earlier"),
+            (playlistId, "news", -600, 600, "Bulletin"),
+            (playlistId, "news", 600, 4_200, "Later"),
+            (playlistId, "film", -3_600, 82_800, "Placeholder"),
+            (playlistId, "film", -60, 1_800, "Film"),
+            (playlistId, "edge", -1_800, 0, "Just ended"),
+            (playlistId, "edge", 0, 1_800, "Just started"),
+            (playlistId, "upcoming", 60, 3_660, "Not yet"),
+            (otherPlaylistId, "news", -600, 600, "Other playlist")
+        ]
+
+        try await database.write { db in
+            for id in [playlistId, otherPlaylistId] {
+                try db.execute(
+                    sql: """
+                        INSERT INTO playlist (id, name, serverURL, username, password)
+                        VALUES (?, 'Test', 'https://example.com', '', '')
+                        """,
+                    arguments: [id]
+                )
+            }
+            for (id, channelKey, start, stop, title) in programmes {
+                try db.execute(
+                    sql: """
+                        INSERT INTO epgProgramme
+                            (playlistId, channelKey, startTs, stopTs, title)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                    arguments: [id, channelKey, now + start, now + stop, title]
+                )
+            }
+        }
+
+        let index = try await database.read { db in
+            try EPGStore.fetchNowIndex(db, playlistId: playlistId, now: now,
+                                       resolution: ["news hd": "news"])
+        }
+
+        #expect(index.count == 4)
+        #expect(index["news"]?.now?.title == "Bulletin")
+        #expect(index["news hd"]?.now?.title == "Bulletin")
+        #expect(index["film"]?.now?.title == "Film")
+        #expect(index["edge"]?.now?.title == "Just started")
+        #expect(index["upcoming"] == nil)
+    }
+
+    @Test
     func layoutsAreStoredOnlyForChannelsWithGuideData() {
         let start = Date(timeIntervalSince1970: 1_800_000_000)
         let end = start.addingTimeInterval(86_400)

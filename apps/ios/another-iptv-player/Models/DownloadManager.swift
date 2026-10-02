@@ -457,7 +457,8 @@ final class DownloadManager: NSObject, ObservableObject {
     /// DB row'u zaten var kabul edilir. URLSession task'ini kurar ve bellek içi haritalara yazar.
     /// Önceki denemeden resume data varsa kaldığı yerden devam eder, yoksa sıfırdan başlar.
     private func startTask(id: String, playlistId: UUID, remoteURL: URL, relPath: String) {
-        downloadLog.info("start id=\(id, privacy: .public) playlist=\(playlistId.uuidString, privacy: .public) url=\(remoteURL.absoluteString, privacy: .public)")
+        // The remote URL carries the panel credentials; a public log line only gets the redacted form.
+        downloadLog.info("start id=\(id, privacy: .public) playlist=\(playlistId.uuidString, privacy: .public) url=\(Log.redact(remoteURL), privacy: .public)")
         let task: URLSessionDownloadTask
         if let resumeData = DownloadStorage.loadResumeData(forId: id) {
             // Consume the blob up front: if this attempt fails again we either get

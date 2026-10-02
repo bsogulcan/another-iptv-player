@@ -1,1 +1,1 @@
-"NSLocalNetworkUsageDescription" = "通过 AirPlay 播放时，视频将通过本地网络传输到 Apple TV。";
+"NSLocalNetworkUsageDescription" = "用于播放本地网络中的流媒体，并通过 AirPlay 将视频传输到电视。";

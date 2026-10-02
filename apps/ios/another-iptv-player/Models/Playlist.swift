@@ -24,7 +24,10 @@ struct Playlist: Identifiable, Codable, FetchableRecord, PersistableRecord, Equa
     /// IANA timezone name from Xtream `server_info` — timeshift `start` params are
     /// interpreted in the panel's local time, not the device's.
     var serverTimezone: String? = nil
-    /// Cached probe result for the timeshift URL shape: "path" | "php".
+    /// Cached catch-up probe result (`TimeshiftStyleCache.storedValue`): the timeshift URL
+    /// shape that last won, "m3u8" | "path" | "php", or "path-no-m3u8" | "php-no-m3u8" once
+    /// the `.m3u8` shape was probed and lost on this panel. It only reorders the probe;
+    /// nil means never probed.
     var timeshiftStyle: String? = nil
 
     enum CodingKeys: String, CodingKey {

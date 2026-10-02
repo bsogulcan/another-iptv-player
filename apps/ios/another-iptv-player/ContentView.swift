@@ -271,6 +271,10 @@ struct ContentView: View {
                     HiddenCategoryStore.shared.removeAll(playlistId: id)
                     DownloadManager.shared.cleanupPlaylist(playlistId: id)
                     ImportedSubtitleStore.removeAll(playlistId: id)
+                    // The per-content subtitle offsets are keyed by the same content
+                    // keys; without this they outlive the playlist until the store's
+                    // entry cap evicts them.
+                    SubtitleDelayStore.removeAll(playlistId: id)
                 }
             } catch {
                 print("Failed to delete playlist: \(error)")

@@ -345,7 +345,7 @@ struct DownloadsView: View {
                 if item.type == "episode" {
                     // Diziye ait — HistorySeriesPlayerShell hem resume hem de bir sonraki/önceki
                     // bölüme geçişi yönetir (sıralama dizinin kendi episode order'ı, indirme sırası değil).
-                    let history = existingHistory ?? DBWatchHistory(
+                    var history = existingHistory ?? DBWatchHistory(
                         id: "\(playlist.id)_series_\(item.streamId)",
                         playlistId: playlist.id,
                         streamId: item.streamId,
@@ -359,6 +359,11 @@ struct DownloadsView: View {
                         imageURL: item.imageURL,
                         containerExtension: item.containerExtension
                     )
+                    // Picking a finished episode starts it over. The shell resumes from
+                    // history.lastTimeMs (its Continue Watching entry relies on that), so
+                    // the stale position is dropped here; the shell reads nothing else
+                    // that depends on it.
+                    if history.resumePositionMs(as: .episode) == nil { history.lastTimeMs = 0 }
                     playerOverlay.present(skipDownloadCheck: true, playlistId: playlist.id) {
                         HistorySeriesPlayerShell(
                             playlist: playlist,
@@ -380,7 +385,8 @@ struct DownloadsView: View {
                             streamId: item.streamId,
                             type: "vod",
                             seriesId: item.seriesId,
-                            resumeTimeMs: existingHistory?.lastTimeMs,
+                            // A finished film starts over instead of reopening in its last seconds.
+                            resumeTimeMs: existingHistory?.resumePositionMs(as: .film),
                             containerExtension: item.containerExtension,
                             onNavigateToDetail: navigateToMovieDetail
                         )

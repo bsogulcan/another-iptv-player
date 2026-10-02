@@ -116,7 +116,12 @@ nonisolated struct EPGProgramme: Identifiable, Equatable, Hashable, Sendable {
 }
 
 /// Current + next programme for one channel.
-struct EPGNowNext: Equatable, Sendable {
+///
+/// `nonisolated` because `EPGStore` builds the index on GRDB's reader queue.
+/// The minute index fills `now` only, from the slim guide columns (title and
+/// times): nothing displays `next`, and fetching it for every channel each
+/// minute was most of the rebuild's cost.
+nonisolated struct EPGNowNext: Equatable, Sendable {
     var now: EPGProgramme?
     var next: EPGProgramme?
 

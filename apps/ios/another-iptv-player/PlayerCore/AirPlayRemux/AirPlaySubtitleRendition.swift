@@ -8,6 +8,11 @@ import Foundation
 /// source time). If a panel's muxer applied a constant PTS offset, only `mpegtsClock`
 /// needs tuning — the cue times stay put.
 ///
+/// The writer adds one constant base to every TS timestamp
+/// (`RemuxHLSWriter.tsTimestampBase90k`) and passes that same value as `mpegtsClock`,
+/// so the map reads `MPEGTS:<base>` rather than `MPEGTS:0`; without it every cue would
+/// show that base early.
+///
 /// Phase 1 covers text subtitles (external SRT) over the H.264/MPEG-TS remux path.
 /// HEVC/fMP4 and bitmap (PGS/DVB) subtitles are out of scope here.
 enum AirPlaySubtitleRendition {

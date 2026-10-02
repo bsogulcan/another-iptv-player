@@ -1,1 +1,1 @@
-"NSLocalNetworkUsageDescription" = "AirPlay से चलाने के लिए, वीडियो स्थानीय नेटवर्क के ज़रिए Apple TV पर भेजा जाता है।";
+"NSLocalNetworkUsageDescription" = "स्थानीय नेटवर्क पर होस्ट की गई स्ट्रीम चलाने और AirPlay से वीडियो टीवी पर भेजने के लिए इस्तेमाल होता है।";

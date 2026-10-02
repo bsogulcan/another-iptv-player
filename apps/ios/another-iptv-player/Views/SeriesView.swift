@@ -207,7 +207,9 @@ struct SeriesView: View {
                     streamId: item.streamId,
                     type: item.type,
                     seriesId: item.seriesId,
-                    resumeTimeMs: item.lastTimeMs,
+                    // Non-episode fallback: a finished item starts over instead of
+                    // reopening in its last seconds.
+                    resumeTimeMs: item.resumePositionMs(as: .film),
                     containerExtension: item.containerExtension,
                     onNavigateToDetail: navigateToDetail
                 )
@@ -1055,8 +1057,9 @@ struct SeriesDetailView: View {
                         seriesName: currentSeries.name,
                         seriesCover: currentSeries.cover
                     ) { ep, history in
-                        selectedEpisode = (ep, history)
-                        presentEpisodeOverlay(ep: ep, history: history)
+                        let resumable = resumableHistory(history)
+                        selectedEpisode = (ep, resumable)
+                        presentEpisodeOverlay(ep: ep, history: resumable)
                     }
                 }
             }
@@ -1154,10 +1157,20 @@ struct SeriesDetailView: View {
                     .fetchOne(db)
             }
             await MainActor.run {
-                selectedEpisode = (ep, hist)
-                presentEpisodeOverlay(ep: ep, history: hist)
+                let resumable = resumableHistory(hist)
+                selectedEpisode = (ep, resumable)
+                presentEpisodeOverlay(ep: ep, history: resumable)
             }
         }
+    }
+
+    /// History to resume from on an explicit episode pick or next / previous (auto-advance
+    /// included): nil once the episode counts as finished, so it starts over instead of
+    /// replaying its last seconds and cascading into the next one. The Resume button keeps
+    /// passing the raw history.
+    private func resumableHistory(_ history: DBWatchHistory?) -> DBWatchHistory? {
+        guard let history, history.resumePositionMs(as: .episode) != nil else { return nil }
+        return history
     }
 
     private func fetchSeriesInfo() async {

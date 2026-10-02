@@ -19,8 +19,27 @@ struct LiveStreamsView: View {
     @State private var showingCategoryPicker = false
     @State private var pendingScrollTarget: String? = nil
 
+    /// Flattened queue + per-category sections for the display model above. Built on the
+    /// first channel tap after a filter change and reused for later taps, so opening the
+    /// player no longer copies the whole catalog twice on the main thread every time.
+    @State private var playbackModelMemo = LivePlaybackModelMemo()
+
+    private var livePlaybackModel: LivePlaybackModelMemo.Model {
+        if let model = playbackModelMemo.model { return model }
+        let sections = displayCategories.compactMap { cat -> LiveChannelCategorySection? in
+            let streams = displayItemsByCategory[cat.id]?.map(\.stream) ?? []
+            guard !streams.isEmpty else { return nil }
+            return LiveChannelCategorySection(id: cat.id, title: cat.name, streams: streams)
+        }
+        // Empty categories contribute nothing, so this is the same queue the old
+        // per-tap flatMap over `displayCategories` produced.
+        let model = LivePlaybackModelMemo.Model(queue: sections.flatMap(\.streams), sections: sections)
+        playbackModelMemo.model = model
+        return model
+    }
+
     private var livePlaybackQueue: [DBLiveStream] {
-        displayCategories.flatMap { displayItemsByCategory[$0.id]?.map(\.stream) ?? [] }
+        livePlaybackModel.queue
     }
 
     private var pickerEntries: [CategoryPickerSheet.Entry] {
@@ -34,11 +53,7 @@ struct LiveStreamsView: View {
     }
 
     private var liveChannelSections: [LiveChannelCategorySection] {
-        displayCategories.compactMap { cat in
-            let streams = displayItemsByCategory[cat.id]?.map(\.stream) ?? []
-            guard !streams.isEmpty else { return nil }
-            return LiveChannelCategorySection(id: cat.id, title: cat.name, streams: streams)
-        }
+        livePlaybackModel.sections
     }
 
     private func liveQueueIndex(for stream: DBLiveStream) -> Int? {
@@ -184,7 +199,9 @@ struct LiveStreamsView: View {
                     streamId: item.streamId,
                     type: item.type,
                     seriesId: item.seriesId,
-                    resumeTimeMs: item.lastTimeMs
+                    // Same rule as VODView: a finished film starts over instead of
+                    // reopening in its last seconds.
+                    resumeTimeMs: item.resumePositionMs(as: .film)
                 )
             }
         }
@@ -260,7 +277,9 @@ struct LiveStreamsView: View {
 
     private func recomputeFilter() async {
         guard playlist.id == contentStore.activePlaylistId else {
-            displayCategories = []; displayItemsByCategory = [:]; return
+            displayCategories = []; displayItemsByCategory = [:]
+            playbackModelMemo.model = nil
+            return
         }
         let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "live")
         let allCats = contentStore.liveCategories.filter { !hidden.contains($0.id) }
@@ -270,6 +289,7 @@ struct LiveStreamsView: View {
         if q.isEmpty {
             displayCategories = allCats
             displayItemsByCategory = allByCategory
+            playbackModelMemo.model = nil
             return
         }
 
@@ -291,6 +311,7 @@ struct LiveStreamsView: View {
         guard !Task.isCancelled else { return }
         displayCategories = result.0
         displayItemsByCategory = result.1
+        playbackModelMemo.model = nil
     }
 
     private func liveStream(for item: DBWatchHistory) -> DBLiveStream? {
@@ -745,10 +766,43 @@ struct LivePlayerShell: View {
     private let initialStream: DBLiveStream
     private let initialHistory: DBWatchHistory?
 
+    /// What the player is loading or playing. During a prev/next burst it lags
+    /// `visibleStream` until the zap debounce fires.
     @State private var session: LivePlaybackSession
+    /// Channel a prev/next burst has landed on but that is not loaded yet. The chrome
+    /// (title, EPG strip, highlighted row) follows it at once; playback waits for the
+    /// burst to end so only its last channel opens a connection.
+    @State private var pendingZapStream: DBLiveStream?
+    @State private var pendingZapTask: Task<Void, Never>?
+    /// Channel that was playing before the current one, for last-channel recall.
+    @State private var lastChannelStream: DBLiveStream?
+    /// Full panel model, set once the categories missing at init were built off-main.
+    @State private var completedPanel: CompletedPanel?
     @State private var showChannelSidePanel: Bool = false
     @State private var isFavorite = false
+    /// The presentation revision PlayerView sees. PlayerView treats a new revision with
+    /// an unchanged stream as "the viewer asked for this channel again" (the shell
+    /// itself cannot see whether playback ended or failed), so it gets a fresh one when
+    /// the channel that is already playing is picked again. It also carries the
+    /// overlay's own revision, adopted together with the selection of a new
+    /// presentation: passed straight through, the new revision reached PlayerView one
+    /// update before the new channel did, and a failed or ended old channel was
+    /// reloaded first.
+    @State private var reselectRevision: UUID?
     @Environment(\.playerOverlayPresentationID) private var overlayPresentationID
+    @Environment(\.playerOverlayMode) private var overlayMode
+    @Environment(\.epgSnapshot) private var epgSnapshot
+
+    /// Trailing debounce for prev/next presses.
+    private static let zapDebounceNanoseconds: UInt64 = 250_000_000
+    /// Wait before the short-EPG fallback asks the panel, so channels that are only
+    /// zapped past cost no request.
+    private static let shortEPGDelayNanoseconds: UInt64 = 1_500_000_000
+
+    private struct CompletedPanel {
+        let token: UUID
+        let sections: [ChannelPanelSection]
+    }
 
     init(
         playlist: Playlist,
@@ -764,21 +818,15 @@ struct LivePlayerShell: View {
         self.subtitle = subtitle
         self.initialStream = initialStream
         self.initialHistory = initialHistory
-        // Sections shell ömrü boyunca değişmez; her body değerlendirmesinde (kanal zap,
-        // panel aç/kapa) on binlerce kanalı yeniden map'lemek yerine bir kez kur.
-        self.panelSections = sections.map { section in
-            ChannelPanelSection(
-                id: section.id,
-                title: section.title,
-                items: section.streams.map { stream in
-                    ChannelPanelItem(
-                        id: String(stream.streamId),
-                        name: stream.name,
-                        iconURL: stream.streamIcon.flatMap { URL(string: $0) }
-                    )
-                }
-            )
-        }
+        // Panel items come from a per-category cache, so reopening the player does not map
+        // (and parse an icon URL for) every channel of the catalog again. On a cold cache
+        // of a large catalog only the current category is built here; the rest is filled
+        // in off the main thread by `completePanelSections()`.
+        let panel = LiveChannelPanelSectionCache.shared.resolve(
+            sections, playlistId: playlist.id, currentStreamId: initialStream.streamId
+        )
+        self.initialPanelSections = panel.sections
+        self.panelBuildToken = panel.isComplete ? nil : UUID()
         let initialURL = PlaybackURLBuilder(playlist: playlist).liveURL(streamId: initialStream.streamId)
         _session = State(initialValue: LivePlaybackSession(
             stream: initialStream,
@@ -787,38 +835,87 @@ struct LivePlayerShell: View {
         ))
     }
 
+    /// Channel the chrome presents: the pending zap target while a burst is being
+    /// coalesced, otherwise the one that is playing.
+    private var visibleStream: DBLiveStream {
+        pendingZapStream ?? session.stream
+    }
+
     private var currentIndex: Int? {
-        queue.firstIndex(where: { $0.streamId == session.stream.streamId })
+        let streamId = visibleStream.streamId
+        return queue.firstIndex(where: { $0.streamId == streamId })
     }
 
     /// Category name of the channel on screen, shown under the title. Derived from the
     /// current stream so it updates on zap, and never echoes the channel name itself.
     private var liveSubtitle: String? {
-        if let categoryId = session.stream.categoryId,
+        let stream = visibleStream
+        if let categoryId = stream.categoryId,
            let name = PlaylistContentStore.shared.liveCategories.first(where: { $0.id == categoryId })?.name,
            !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return name
         }
-        if let subtitle, subtitle != session.stream.name { return subtitle }
+        if let subtitle, subtitle != stream.name { return subtitle }
         return nil
     }
 
-    private let panelSections: [ChannelPanelSection]
+    /// Panel model available at init: every cached category plus the current one.
+    private let initialPanelSections: [ChannelPanelSection]
+    /// Non-nil while `initialPanelSections` is missing categories; identifies this
+    /// presentation's off-main completion (the shell's @State outlives a re-presentation).
+    private let panelBuildToken: UUID?
+
+    private var panelSections: [ChannelPanelSection] {
+        if let token = panelBuildToken, let completed = completedPanel, completed.token == token {
+            return completed.sections
+        }
+        return initialPanelSections
+    }
+
+    // MARK: Last-channel recall
+
+    /// Channel that was playing before the current one, or nil when there is nothing to
+    /// jump back to. Channels skipped inside a prev/next burst never played and are not
+    /// remembered.
+    var lastChannel: DBLiveStream? {
+        guard let last = lastChannelStream,
+              last.playlistId == playlist.id,
+              last.streamId != session.stream.streamId else { return nil }
+        return last
+    }
+
+    /// Ready-made action for a player-chrome button: nil when there is no last channel.
+    var onRecallLastChannel: (() -> Void)? {
+        guard lastChannel != nil else { return nil }
+        return { recallLastChannel() }
+    }
+
+    /// Jumps back to `lastChannel`. The channel being left becomes the new last channel,
+    /// so calling this repeatedly toggles between the two.
+    func recallLastChannel() {
+        guard let last = lastChannel else { return }
+        switchTo(stream: last, resumeTimeMs: nil)
+    }
 
     var body: some View {
         if let url = session.url {
+            // `url` + `streamId` are PlayerView's playback identity, so they stay on the
+            // playing channel until a zap burst settles; everything the viewer reads
+            // (title, artwork, EPG, highlighted row, favourite) follows `visible` at once.
+            let visible = visibleStream
+            let visibleItemId = String(visible.streamId)
             ZStack(alignment: .bottom) {
                 PlayerView(
                     url: url,
-                    title: session.stream.name,
+                    title: visible.name,
                     subtitle: liveSubtitle,
-                    artworkURL: session.stream.streamIcon.flatMap { URL(string: $0) },
+                    artworkURL: visible.streamIcon.flatMap { URL(string: $0) },
                     isLiveStream: true,
                     playlistId: playlist.id,
                     streamId: String(session.stream.streamId),
                     type: "live",
                     resumeTimeMs: session.resumeTimeMs,
-                    epgChannelKey: EPGChannelKey.forXtream(session.stream),
+                    epgChannelKey: EPGChannelKey.forXtream(visible),
                     canGoToPreviousChannel: (currentIndex ?? 0) > 0,
                     canGoToNextChannel: {
                         guard let index = currentIndex else { return false }
@@ -826,8 +923,10 @@ struct LivePlayerShell: View {
                     }(),
                     onPreviousChannel: { jump(offset: -1) },
                     onNextChannel: { jump(offset: 1) },
+                    canRecallLastChannel: lastChannel != nil,
+                    onRecallLastChannel: onRecallLastChannel,
                     channelPanelSections: panelSections,
-                    currentChannelPanelItemId: String(session.stream.streamId),
+                    currentChannelPanelItemId: visibleItemId,
                     onSelectChannelPanelItem: { id in selectPanelItem(id: id) },
                     isLiveChannelSidePanelVisible: showChannelSidePanel,
                     onToggleLiveChannelSidePanel: {
@@ -844,27 +943,63 @@ struct LivePlayerShell: View {
                     isFavorite: isFavorite,
                     onToggleFavorite: toggleFavorite
                 )
+                .environment(\.playerOverlayPresentationID, reselectRevision ?? overlayPresentationID)
 
-                if showChannelSidePanel, !sections.isEmpty {
-                    LiveChannelSidePanel(
-                        sections: panelSections,
-                        currentItemId: String(session.stream.streamId),
-                        onSelectChannel: { id in selectPanelItem(id: id) }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .zIndex(1)
+                // Its own container: the mode-driven removal below animates the panel
+                // without putting an implicit animation on the player next to it.
+                ZStack(alignment: .bottom) {
+                    // Never over the mini card: there the strip covered the card and the
+                    // tab bar, and nothing in reach could close it.
+                    if showChannelSidePanel, overlayMode == .fullscreen, !sections.isEmpty {
+                        LiveChannelSidePanel(
+                            sections: panelSections,
+                            currentItemId: visibleItemId,
+                            onSelectChannel: { id in selectPanelItem(id: id) }
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.22), value: overlayMode)
+                .zIndex(1)
             }
-            .task(id: "\(playlist.id.uuidString)-\(session.stream.streamId)") {
+            .task(id: "\(playlist.id.uuidString)-\(visible.streamId)") {
                 await refreshFavorite()
             }
-            .onChange(of: overlayPresentationID) { _, _ in
-                applyInitialSelectionIfNeeded()
+            .task(id: panelBuildToken) {
+                await completePanelSections()
+            }
+            .task(id: shortEPGTaskKey(for: visible)) {
+                await loadShortEPGIfMissing(for: visible)
+            }
+            .onAppear {
+                // From here on PlayerView gets the revision from this shell's state
+                // (see `reselectRevision`); the value is the one it already has.
+                if reselectRevision == nil { reselectRevision = overlayPresentationID }
+            }
+            .onChange(of: overlayPresentationID) { _, id in
+                applyInitialSelectionIfNeeded(presentationID: id)
+            }
+            .onChange(of: overlayMode) { _, mode in
+                // Minimized (pull-down, edge swipe, accessibility escape): the panel
+                // stays closed, also after the card is expanded again.
+                if mode == .mini, showChannelSidePanel {
+                    showChannelSidePanel = false
+                }
+            }
+            .onDisappear {
+                // The player is gone: a burst that had not settled must not load anything.
+                cancelPendingZap()
             }
         }
     }
 
-    private func applyInitialSelectionIfNeeded() {
+    private func applyInitialSelectionIfNeeded(presentationID: UUID?) {
+        // A newly presented channel replaces whatever a prev/next burst was about to load.
+        cancelPendingZap()
+        // PlayerView sees the new presentation in the same update as the selection
+        // adopted below. Before the guard: the same channel presented again still
+        // changes the revision, which is what lets PlayerView retry it.
+        reselectRevision = presentationID
         let targetURL = PlaybackURLBuilder(playlist: playlist).liveURL(streamId: initialStream.streamId)
         let targetResume = initialHistory?.lastTimeMs
         guard session.stream.streamId != initialStream.streamId
@@ -874,6 +1009,9 @@ struct LivePlayerShell: View {
         tx.disablesAnimations = true
         withTransaction(tx) {
             showChannelSidePanel = false
+            if session.stream.streamId != initialStream.streamId {
+                lastChannelStream = session.stream
+            }
             session = LivePlaybackSession(
                 stream: initialStream,
                 url: targetURL,
@@ -882,29 +1020,121 @@ struct LivePlayerShell: View {
         }
     }
 
+    /// Builds the categories `init` left out (cold cache, large catalog) off the main
+    /// thread and swaps the full panel model in.
+    private func completePanelSections() async {
+        guard let token = panelBuildToken, completedPanel?.token != token else { return }
+        let full = await LiveChannelPanelSectionCache.shared.resolveAll(sections, playlistId: playlist.id)
+        guard !Task.isCancelled else { return }
+        completedPanel = CompletedPanel(token: token, sections: full)
+    }
+
     private func selectPanelItem(id: String) {
         guard let streamId = Int(id) else { return }
+        // Lazy fallback: no whole-catalog copy just to find one channel of another category.
         guard let stream = queue.first(where: { $0.streamId == streamId })
-            ?? sections.flatMap(\.streams).first(where: { $0.streamId == streamId }) else { return }
+            ?? sections.lazy.map(\.streams).joined().first(where: { $0.streamId == streamId }) else { return }
+        if stream.streamId == session.stream.streamId,
+           session.url == PlaybackURLBuilder(playlist: playlist).liveURL(streamId: stream.streamId) {
+            // The channel that is already loaded was picked again. `switchTo` has nothing
+            // to load, but the viewer may be looking at an ended or failed stream: pass
+            // the pick on as a new presentation revision and let PlayerView, which knows
+            // the playback state, decide whether to reload.
+            cancelPendingZap()
+            reselectRevision = UUID()
+            return
+        }
+        // A pick from the list is deliberate, so it loads at once (no zap debounce).
         switchTo(stream: stream, resumeTimeMs: nil)
     }
 
+    // MARK: Short-EPG fallback
+
+    /// Re-keyed when the visible channel changes and when its guide entry appears or
+    /// runs out, so the fallback is reconsidered at exactly those moments.
+    private func shortEPGTaskKey(for stream: DBLiveStream) -> String {
+        let hasNow = epgSnapshot?[EPGChannelKey.forXtream(stream)]?.now != nil
+        return "\(playlist.id.uuidString)-\(stream.streamId)-\(hasNow ? "guide" : "none")"
+    }
+
+    /// Player now/next for a channel the XMLTV guide does not cover: asks the panel's
+    /// `get_short_epg` once the viewer has settled on the channel. The request, the
+    /// database write and the snapshot rebuild all run off the main thread inside
+    /// `EPGStore.ensureShortEPG`; this task only waits for them.
+    private func loadShortEPGIfMissing(for stream: DBLiveStream) async {
+        guard playlist.kind == .xtream, playlist.epgEnabled else { return }
+        guard epgSnapshot?[EPGChannelKey.forXtream(stream)]?.now == nil else { return }
+        // Cancelled by the next zap (the task is keyed on the channel).
+        try? await Task.sleep(nanoseconds: Self.shortEPGDelayNanoseconds)
+        guard !Task.isCancelled else { return }
+        guard LiveShortEPGAttempts.shared.claim(playlistId: playlist.id, streamId: stream.streamId) else { return }
+        await EPGStore.shared.ensureShortEPG(playlist: playlist, stream: stream)
+        // A zap during the request cancels it before anything is stored; the channel
+        // must not stay blocked for an answer it never got. After a completed store
+        // this is harmless: the guide check above returns before the next claim.
+        if Task.isCancelled {
+            LiveShortEPGAttempts.shared.release(playlistId: playlist.id, streamId: stream.streamId)
+        }
+    }
+
+    /// Previous / next: the chrome moves to the target at once, the load is debounced so
+    /// a burst of presses (buttons, headset, lock screen) opens only its last channel
+    /// instead of one panel connection per press.
     private func jump(offset: Int) {
+        // `currentIndex` follows the visible channel, so a burst keeps stepping from
+        // where the previous press landed rather than from the channel still playing.
         guard let index = currentIndex else { return }
         let target = index + offset
         guard target >= 0, target < queue.count else { return }
         let targetStream = queue[target]
-        switchTo(stream: targetStream, resumeTimeMs: nil)
+        pendingZapTask?.cancel()
+        var tx = Transaction()
+        tx.disablesAnimations = true
+        withTransaction(tx) {
+            pendingZapStream = targetStream
+        }
+        pendingZapTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: Self.zapDebounceNanoseconds)
+            guard !Task.isCancelled else { return }
+            commitPendingZap()
+        }
+    }
+
+    private func commitPendingZap() {
+        guard let stream = pendingZapStream else {
+            pendingZapTask = nil
+            return
+        }
+        switchTo(stream: stream, resumeTimeMs: nil)
+    }
+
+    /// Drops a pending prev/next burst; the chrome falls back to the playing channel.
+    private func cancelPendingZap() {
+        pendingZapTask?.cancel()
+        pendingZapTask = nil
+        guard pendingZapStream != nil else { return }
+        var tx = Transaction()
+        tx.disablesAnimations = true
+        withTransaction(tx) {
+            pendingZapStream = nil
+        }
     }
 
     private func switchTo(stream: DBLiveStream, resumeTimeMs: Int?) {
         let targetURL = PlaybackURLBuilder(playlist: playlist).liveURL(streamId: stream.streamId)
         if session.stream.streamId == stream.streamId, session.url == targetURL {
+            // Already playing (a burst can come back to where it started): nothing to load.
+            cancelPendingZap()
             return
         }
+        // Every committed switch supersedes a burst that is still waiting.
+        pendingZapTask?.cancel()
+        pendingZapTask = nil
         var tx = Transaction()
         tx.disablesAnimations = true
         withTransaction(tx) {
+            lastChannelStream = session.stream
+            pendingZapStream = nil
             session = LivePlaybackSession(
                 stream: stream,
                 url: targetURL,
@@ -914,7 +1144,7 @@ struct LivePlayerShell: View {
     }
 
     private func refreshFavorite() async {
-        let streamId = session.stream.streamId
+        let streamId = visibleStream.streamId
         let value = (try? await AppDatabase.shared.read { db in
             try DBFavorite
                 .filter(Column("streamId") == streamId
@@ -922,12 +1152,12 @@ struct LivePlayerShell: View {
                     && Column("type") == "live")
                 .fetchCount(db) > 0
         }) ?? false
-        guard !Task.isCancelled, session.stream.streamId == streamId else { return }
+        guard !Task.isCancelled, visibleStream.streamId == streamId else { return }
         isFavorite = value
     }
 
     private func toggleFavorite() {
-        let streamId = session.stream.streamId
+        let streamId = visibleStream.streamId
         let nextValue = !isFavorite
         isFavorite = nextValue
         Task {
@@ -946,7 +1176,7 @@ struct LivePlayerShell: View {
                     }
                 }
             } catch {
-                if session.stream.streamId == streamId { isFavorite.toggle() }
+                if visibleStream.streamId == streamId { isFavorite.toggle() }
             }
         }
     }
@@ -956,4 +1186,177 @@ struct LivePlaybackSession: Equatable {
     var stream: DBLiveStream
     var url: URL?
     var resumeTimeMs: Int?
+}
+
+/// Remembers which channels the short-EPG fallback already asked the panel about, so
+/// a channel without guide data is not queried again on every zap past it.
+final class LiveShortEPGAttempts {
+    static let shared = LiveShortEPGAttempts()
+
+    /// A channel is asked again after this long: one answer covers only the next few
+    /// programmes, and a panel that had nothing may have data later.
+    static let retryInterval: TimeInterval = 30 * 60
+
+    private var lastAttempt: [String: Date] = [:]
+
+    /// True when a request for this channel may go out now. The attempt is recorded,
+    /// whatever its outcome; only a cancelled request is taken back with `release`.
+    func claim(playlistId: UUID, streamId: Int, now: Date = Date()) -> Bool {
+        let key = "\(playlistId.uuidString)-\(streamId)"
+        if let last = lastAttempt[key], now.timeIntervalSince(last) < Self.retryInterval {
+            return false
+        }
+        lastAttempt[key] = now
+        return true
+    }
+
+    /// Forgets an attempt whose request was cancelled before the panel answered.
+    func release(playlistId: UUID, streamId: Int) {
+        lastAttempt["\(playlistId.uuidString)-\(streamId)"] = nil
+    }
+}
+
+/// Reference box behind `LiveStreamsView.playbackModelMemo`: filling it from a tap
+/// handler must not invalidate the view the way a value-type @State write would.
+private final class LivePlaybackModelMemo {
+    struct Model {
+        let queue: [DBLiveStream]
+        let sections: [LiveChannelCategorySection]
+    }
+
+    var model: Model?
+}
+
+/// Per-category memo of the channel-panel display model for the Xtream live shell.
+///
+/// Mapping every stream to a `ChannelPanelItem` costs one `URL(string:)` per channel and
+/// used to run on the main thread for the whole catalog at every player open. An entry is
+/// reused for as long as its category's title and streams are unchanged; only the most
+/// recently used playlist is kept, so the footprint stays bounded by one catalog.
+final class LiveChannelPanelSectionCache {
+    static let shared = LiveChannelPanelSectionCache()
+
+    struct Resolution {
+        let sections: [ChannelPanelSection]
+        /// False when some categories were left out for `resolveAll` to build.
+        let isComplete: Bool
+    }
+
+    private struct Entry {
+        let title: String
+        /// Source the section was built from. `Array ==` short-circuits on a shared
+        /// buffer, so validating an unchanged category is O(1).
+        let streams: [DBLiveStream]
+        let section: ChannelPanelSection
+    }
+
+    /// Up to this many uncached channels are mapped inline (a few milliseconds); above
+    /// it only the current category is, so a cold open of a huge catalog does not stall
+    /// the tap that opened the player.
+    private static let inlineBuildLimit = 1500
+
+    private var playlistId: UUID?
+    private var entries: [String: Entry] = [:]
+
+    /// Synchronous resolution for `LivePlayerShell.init`. Returns every category when all
+    /// of them are cached or cheap to build; otherwise the cached ones plus the category
+    /// holding `currentStreamId`, in their original order, flagged incomplete.
+    func resolve(
+        _ sections: [LiveChannelCategorySection],
+        playlistId: UUID,
+        currentStreamId: Int
+    ) -> Resolution {
+        adopt(playlistId)
+        var resolved = sections.map { cachedSection(for: $0) }
+        let missing = resolved.indices.filter { resolved[$0] == nil }
+        guard !missing.isEmpty else {
+            return Resolution(sections: resolved.compactMap { $0 }, isComplete: true)
+        }
+
+        let missingChannelCount = missing.reduce(0) { $0 + sections[$1].streams.count }
+        if missingChannelCount <= Self.inlineBuildLimit {
+            for index in missing {
+                resolved[index] = buildAndStore(sections[index])
+            }
+            return Resolution(sections: resolved.compactMap { $0 }, isComplete: true)
+        }
+
+        let currentIndex = sections.firstIndex { section in
+            section.streams.contains(where: { $0.streamId == currentStreamId })
+        }
+        if let currentIndex {
+            if resolved[currentIndex] == nil {
+                resolved[currentIndex] = buildAndStore(sections[currentIndex])
+            }
+        } else if missing.count == sections.count, let first = missing.first {
+            // Nothing cached and the channel is in no category (e.g. a history entry):
+            // build one category anyway so the player still offers its channel list.
+            resolved[first] = buildAndStore(sections[first])
+        }
+        return Resolution(
+            sections: resolved.compactMap { $0 },
+            isComplete: !resolved.contains(where: { $0 == nil })
+        )
+    }
+
+    /// Full resolution; categories missing from the cache are built off the main thread.
+    func resolveAll(
+        _ sections: [LiveChannelCategorySection],
+        playlistId: UUID
+    ) async -> [ChannelPanelSection] {
+        adopt(playlistId)
+        var resolved = sections.map { cachedSection(for: $0) }
+        let missing = resolved.indices.filter { resolved[$0] == nil }
+        guard !missing.isEmpty else { return resolved.compactMap { $0 } }
+
+        let pending = missing.map { sections[$0] }
+        let built = await Task.detached(priority: .userInitiated) {
+            pending.map { LiveChannelPanelSectionCache.makePanelSection($0) }
+        }.value
+
+        // Another playlist may have taken the cache over while this was building.
+        let canStore = self.playlistId == playlistId
+        for (offset, index) in missing.enumerated() {
+            resolved[index] = built[offset]
+            if canStore {
+                let source = pending[offset]
+                entries[source.id] = Entry(title: source.title, streams: source.streams, section: built[offset])
+            }
+        }
+        return resolved.compactMap { $0 }
+    }
+
+    private func adopt(_ playlistId: UUID) {
+        guard self.playlistId != playlistId else { return }
+        self.playlistId = playlistId
+        entries.removeAll()
+    }
+
+    private func cachedSection(for section: LiveChannelCategorySection) -> ChannelPanelSection? {
+        guard let entry = entries[section.id],
+              entry.title == section.title,
+              entry.streams == section.streams else { return nil }
+        return entry.section
+    }
+
+    private func buildAndStore(_ section: LiveChannelCategorySection) -> ChannelPanelSection {
+        let built = Self.makePanelSection(section)
+        entries[section.id] = Entry(title: section.title, streams: section.streams, section: built)
+        return built
+    }
+
+    /// `nonisolated`: also runs inside the detached task in `resolveAll`.
+    nonisolated private static func makePanelSection(_ section: LiveChannelCategorySection) -> ChannelPanelSection {
+        ChannelPanelSection(
+            id: section.id,
+            title: section.title,
+            items: section.streams.map { stream in
+                ChannelPanelItem(
+                    id: String(stream.streamId),
+                    name: stream.name,
+                    iconURL: stream.streamIcon.flatMap { URL(string: $0) }
+                )
+            }
+        )
+    }
 }

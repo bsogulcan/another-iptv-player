@@ -218,7 +218,10 @@ private struct SeriesPlaybackSession: Equatable {
         }()
         subtitle = seriesTitle
         artworkURL = episode.cover.flatMap { URL(string: $0) }
-        resumeTimeMs = resumeHistory?.lastTimeMs
+        // Neighbour steps (next / previous / auto-advance) must not land in the last seconds
+        // of an episode that was already watched: it would end at once and cascade onward.
+        // The item opened from Continue Watching keeps its raw position (init above).
+        resumeTimeMs = resumeHistory?.resumePositionMs(as: .episode)
         containerExtension = episode.containerExtension
         self.seriesId = seriesId
     }
