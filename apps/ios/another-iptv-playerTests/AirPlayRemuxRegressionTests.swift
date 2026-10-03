@@ -8,6 +8,66 @@ import Testing
 @Suite("AirPlayRemuxRegression")
 struct AirPlayRemuxRegressionTests {
 
+    @Test
+    func vodPublicationKeepsMovingWhenReceiverClockStops() {
+        var clock = RemuxHLSWriter.VODPacingClock()
+        #expect(clock.limit(mediaSeconds: 0, playbackFloor: 0, uptime: 0) == 25)
+        // Slow opening does not enlarge the initial burst.
+        #expect(clock.limit(mediaSeconds: 25.1, playbackFloor: 0, uptime: 100) == 25)
+        #expect(clock.limit(mediaSeconds: 27, playbackFloor: 0, uptime: 102) == 27)
+        // Polling without elapsed time does not grant additional download credit.
+        #expect(clock.limit(mediaSeconds: 28, playbackFloor: 0, uptime: 102) == 27)
+        #expect(clock.limit(mediaSeconds: 40, playbackFloor: 0, uptime: 115) == 40)
+    }
+
+    @Test
+    func vodPublicationUsesSeekOriginAndCatchesUpWithPlayback() {
+        var clock = RemuxHLSWriter.VODPacingClock()
+        #expect(clock.limit(mediaSeconds: 625.1, playbackFloor: 600, uptime: 10) == 625)
+        #expect(clock.limit(mediaSeconds: 627, playbackFloor: 600, uptime: 12) == 627)
+        #expect(clock.limit(mediaSeconds: 640, playbackFloor: 620, uptime: 13) == 645)
+        // A delayed/backward player callback must not freeze publication again.
+        #expect(clock.limit(mediaSeconds: 646, playbackFloor: 600, uptime: 14) == 646)
+    }
+
+    /// An AirPlay receiver can reload an EVENT playlist before advancing its
+    /// playback clock. Both muxers must keep publishing beyond the initial 25 s
+    /// buffer, otherwise the receiver rejects the stale playlist with -12888.
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
+    func eventPlaylistAdvancesWithoutPlaybackFeedback(fmp4: Bool) async throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("remux-event-progress-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let movieURL = dir.appendingPathComponent("source.mp4")
+        try await Self.writeTestMovie(to: movieURL, seconds: 40)
+        let writer = RemuxHLSWriter(
+            sourceURL: movieURL, outputDirectory: dir, startSeconds: 0,
+            isLive: false, userAgent: nil, forcedFormat: fmp4 ? .fmp4 : .mpegTS
+        )
+        defer { writer.cancel() }
+        writer.onError = { Issue.record("remux error: \($0.localizedDescription)") }
+        writer.start()
+        var publishedSeconds = 0.0
+        let deadline = ProcessInfo.processInfo.systemUptime + 12
+        while ProcessInfo.processInfo.systemUptime < deadline {
+            if let playlist = try? String(contentsOf: writer.playlistURL, encoding: .utf8) {
+                publishedSeconds = playlist.split(separator: "\n")
+                    .filter { $0.hasPrefix("#EXTINF:") }
+                    .compactMap { Double($0.dropFirst(8).split(separator: ",")[0]) }
+                    .reduce(0, +)
+                if publishedSeconds > 26 { break }
+            }
+            try await Task.sleep(nanoseconds: 100_000_000)
+        }
+        writer.cancel()
+        for _ in 0..<50 where !writer.isClosed {
+            try await Task.sleep(nanoseconds: 20_000_000)
+        }
+        #expect(writer.isClosed)
+        if writer.isClosed { try? FileManager.default.removeItem(at: dir) }
+        #expect(publishedSeconds > 26, "EVENT playlist stopped at \(publishedSeconds)s without playback feedback")
+    }
+
     // MARK: - ADTS AAC into fMP4 (remux-hls-authoring-1)
 
     /// MPEG-TS carries AAC as ADTS frames without extradata. The fMP4 path (HEVC

@@ -240,12 +240,45 @@ final class RemuxHLSWriter {
 
   var onError: ((Error) -> Void)?
 
-  // MARK: - VOD pacing (round-16 leaky bucket)
+  // MARK: - VOD EVENT publication pacing
 
-  /// VOD'da yazıcı, oynatma konumunun en fazla bu kadar ilerisine yazar. Sınırsız
-  /// bırakılırsa tüm film hat hızında iner: panelin bağlantı sınırı doyar
-  /// (devir hataları), disk/pil boşa gider.
-  private let pacingAheadSeconds: Double = 25
+  /// A growing EVENT playlist must continue publishing even while the receiver's
+  /// playback clock is stationary (startup, handoff or pause). A hard 25 s cap
+  /// deadlocked AirPlay startup: the receiver waited for a playlist update while
+  /// the writer waited for playback, ending in CoreMedia -12888.
+  /// Keep the initial buffer, then publish at real-time speed. Pausing can grow
+  /// the on-disk EVENT archive; the session's existing storage watch still applies.
+  struct VODPacingClock {
+    static let bufferSeconds: Double = 25
+    private var anchorUptime: TimeInterval?
+    private var anchorMediaSeconds: Double = 0
+
+    mutating func limit(
+      mediaSeconds: Double, playbackFloor: Double, uptime: TimeInterval
+    ) -> Double {
+      let bufferedLimit = playbackFloor + Self.bufferSeconds
+      guard let anchorUptime else {
+        // Start the clock only when the initial buffer is full. Time spent
+        // opening/probing the source must not become extra download credit.
+        if mediaSeconds > bufferedLimit {
+          self.anchorUptime = uptime
+          anchorMediaSeconds = bufferedLimit
+        }
+        return bufferedLimit
+      }
+      let publicationLimit = anchorMediaSeconds + max(uptime - anchorUptime, 0)
+      if bufferedLimit > publicationLimit {
+        self.anchorUptime = uptime
+        anchorMediaSeconds = bufferedLimit
+        return bufferedLimit
+      }
+      return publicationLimit
+    }
+  }
+
+  // Accessed only on the remux thread; playback feedback has its own lock below.
+  private var vodPacingClock = VODPacingClock()
+  private var loggedVODPacing = false
   private let positionLock = NSLock()
   private var playbackPositionSeconds: Double = 0
 
@@ -262,15 +295,22 @@ final class RemuxHLSWriter {
     return playbackPositionSeconds
   }
 
-  /// Yazılan medya zamanı izin verilen pencerenin ilerisindeyse bekler (iptal duyarlı).
-  /// Oynatma başlamadan önce taban gerçek başlangıç konumudur (seek başarısızsa 0):
-  /// oturum, başlangıç tamponunu (12 sn < 25 sn pencere) engellenmeden biriktirir.
+  /// Pace beyond the initial buffer without depending on receiver playback.
+  /// The actual seek position is the floor (0 when the source refused the seek).
   private func waitForPacing(mediaSeconds: Double) {
     guard !isLive else { return }
     var holding = false
     while cancelled.pointee == 0 {
       let floorPosition = max(currentPlaybackPosition(), effectiveStartSeconds)
-      if mediaSeconds <= floorPosition + pacingAheadSeconds { break }
+      let limit = vodPacingClock.limit(
+        mediaSeconds: mediaSeconds, playbackFloor: floorPosition,
+        uptime: ProcessInfo.processInfo.systemUptime
+      )
+      if mediaSeconds <= limit { break }
+      if !loggedVODPacing {
+        loggedVODPacing = true
+        Log.info("AirPlayRemux", "VOD buffer full; continuing EVENT publication at real-time speed")
+      }
       // A pacing sleep is a deliberate wait, not a stalled source: keep it out of
       // the stall clock the session's start deadline reads.
       if !holding {
