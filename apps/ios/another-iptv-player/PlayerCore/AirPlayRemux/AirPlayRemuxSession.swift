@@ -156,7 +156,8 @@ final class AirPlayRemuxSession {
     subtitleLanguage: String? = nil,
     audioStreamIndex: Int? = nil,
     subtitleStreamIndex: Int? = nil,
-    subtitleDelaySeconds: Double = 0
+    subtitleDelaySeconds: Double = 0,
+    applyTrackPreferences: Bool = false
   ) throws {
     self.sourceURL = sourceURL
     self.startOffsetSeconds = isLive ? 0 : startOffsetSeconds
@@ -186,7 +187,8 @@ final class AirPlayRemuxSession {
       subtitleLanguage: subtitleLanguage,
       audioStreamIndex: audioStreamIndex,
       subtitleStreamIndex: subtitleStreamIndex,
-      subtitleDelaySeconds: subtitleDelaySeconds
+      subtitleDelaySeconds: subtitleDelaySeconds,
+      applyTrackPreferences: applyTrackPreferences
     )
     server.beginTrackingReceiverFetches(session: sessionPathComponent)
   }
@@ -337,6 +339,7 @@ final class AirPlayRemuxSession {
   static let listenerProbeAttempts = 5
 
   var sourceDurationSeconds: TimeInterval { writer.sourceDurationSeconds }
+  var sourceTracks: RemuxSourceTracks? { writer.sourceTracks }
 
   /// Girdi seek'inin gerçekte düştüğü konum; seek edilemeyen kaynakta 0'a düşer.
   /// Zaman çizelgesi muhasebesi istenen offset yerine bunu kullanmalı.

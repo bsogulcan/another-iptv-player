@@ -1,0 +1,63 @@
+{
+  "identifier" : "7E1A4C92",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "9F2B6D10",
+      "localizations" : [
+        {
+          "description" : "A small one-time tip for the developer",
+          "displayName" : "Buy Me a Coffee",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.ogos.another_iptv_player.tip.small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "9F2B6D11",
+      "localizations" : [
+        {
+          "description" : "A medium one-time tip for the developer",
+          "displayName" : "Support Development",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.ogos.another_iptv_player.tip.medium",
+      "referenceName" : "Medium Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "9F2B6D12",
+      "localizations" : [
+        {
+          "description" : "A large one-time tip for the developer",
+          "displayName" : "Fuel the Next Update",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.ogos.another_iptv_player.tip.large",
+      "referenceName" : "Large Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

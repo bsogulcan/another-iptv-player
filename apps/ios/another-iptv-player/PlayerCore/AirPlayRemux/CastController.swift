@@ -152,6 +152,9 @@ final class CastController: ObservableObject {
     var audioStreamIndex: Int? = nil
     var subtitleStreamIndex: Int? = nil
     var subtitleDelaySeconds: Double = 0
+    /// New content opened entirely on the cast pipeline has no engine track list.
+    var discoversSourceTracks = false
+    var applyTrackPreferences = false
   }
 
   private struct Pending {
@@ -229,6 +232,7 @@ final class CastController: ObservableObject {
   /// presentation is "loading" at the resume position, not the stopped engine's
   /// stale state.
   @Published private(set) var isPresenting = false
+  @Published private(set) var sourceTracks: RemuxSourceTracks?
   @Published private(set) var position: TimeInterval = 0
   @Published private(set) var duration: TimeInterval = 0
   @Published private(set) var isPaused = false
@@ -266,6 +270,25 @@ final class CastController: ObservableObject {
   var resumeDirectPlayback: ((Content, TimeInterval) -> Void)?
   /// Source-time tick while casting (drives the subtitle overlay).
   var onTimeTick: ((TimeInterval) -> Void)?
+
+  // Independent of screen-owned hooks so dismissing the player does not freeze history.
+  private var parkedHistoryWriter: ((TimeInterval, TimeInterval) -> Void)?
+  private var lastParkedHistorySave: Date?
+
+  func setParkedHistoryWriter(_ writer: ((TimeInterval, TimeInterval) -> Void)?) {
+    parkedHistoryWriter = writer
+    lastParkedHistorySave = nil
+  }
+
+  private func saveParkedHistory(force: Bool = false) {
+    guard ownerToken == nil, isPlaybackEstablished, position.isFinite,
+          duration.isFinite, duration > 0, let writer = parkedHistoryWriter else { return }
+    let now = Date()
+    guard force || lastParkedHistorySave.map({ now.timeIntervalSince($0) >= PlayerWatchHistoryPolicy.periodicIntervalSeconds }) ?? true else { return }
+    lastParkedHistorySave = now
+    writer(position, duration)
+  }
+
   private var ownerToken: UUID?
 
   var castVideoView: UIView? { castPlayer?.view }
@@ -293,6 +316,7 @@ final class CastController: ObservableObject {
 
   // MARK: - Private state
 
+  private let routeIsActiveOverride: (() -> Bool)?
   private var state: State = .idle
   private var castPlayer: AirPlayCastPlayer?
   /// An AirPlay route became active at some point during this engagement.
@@ -389,6 +413,7 @@ final class CastController: ObservableObject {
     // A resume still waiting belongs to the previous owner's content; the new
     // owner's hook must never be handed it.
     cancelPendingResume()
+    saveParkedHistory(force: true)
     ownerToken = token
     self.stopDirectPlayback = stopDirectPlayback
     self.resumeDirectPlayback = resumeDirectPlayback
@@ -510,7 +535,8 @@ final class CastController: ObservableObject {
     routeWasActive || routeActiveNow || externalPlaybackActive
   }
 
-  init() {
+  init(routeIsActive: (() -> Bool)? = nil) {
+    routeIsActiveOverride = routeIsActive
     NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.handleRouteChange() }
@@ -896,6 +922,9 @@ final class CastController: ObservableObject {
     case .continueCasting:
       break
     }
+    saveParkedHistory(force: true)
+    setParkedHistoryWriter(nil)
+    sourceTracks = nil
     // The rebuild-loop guard is about one source: an error on the previous
     // content must not cost the new one its in-place rebuild.
     lastRuntimeRebuildAt = nil
@@ -1021,6 +1050,8 @@ final class CastController: ObservableObject {
   /// Owner teardown (player screen closing): stop everything, no resume.
   func dispose() {
     guard !isDisposed else { return }
+    saveParkedHistory(force: true)
+    setParkedHistoryWriter(nil)
     isDisposed = true
     ownerToken = nil
     clearCrossScreenHandoffIfNeeded()
@@ -1225,6 +1256,7 @@ final class CastController: ObservableObject {
       rearmPickerSettleWhilePreparing()
     } else {
       isContinuingLocally = false
+      sourceTracks = nil
       routeWasActiveDuringEngagement = false
       externalPlaybackSeenDuringEngagement = false
       // What the route pickers reported belongs to the engagement that just ended.
@@ -1252,6 +1284,7 @@ final class CastController: ObservableObject {
   /// `reason` is published as a notice unless it is a silent one.
   private func endCasting(resume: Bool, reason: CastEndReason) {
     guard !isDisposed, isEngaged else { return }
+    saveParkedHistory(force: true)
     Log.info("AirPlayCast", "ending cast (\(reason))")
     let resumeInfo: (Content, TimeInterval)?
     let pendingCompletion: ((Bool) -> Void)?
@@ -1598,7 +1631,8 @@ final class CastController: ObservableObject {
         subtitleLanguage: content.subtitleLanguage,
         audioStreamIndex: content.audioStreamIndex,
         subtitleStreamIndex: content.subtitleStreamIndex,
-        subtitleDelaySeconds: content.subtitleDelaySeconds
+        subtitleDelaySeconds: content.subtitleDelaySeconds,
+        applyTrackPreferences: content.applyTrackPreferences
       )
     } catch {
       // Rare (temp dir creation). Resume the REQUESTED content directly — the
@@ -1664,7 +1698,7 @@ final class CastController: ObservableObject {
   }
 
   private func sessionDidStart(_ session: AirPlayRemuxSession, localURL: URL) {
-    let content: Content
+    var content: Content
     let completion: ((Bool) -> Void)?
     switch state {
     case let .preparing(pending):
@@ -1677,6 +1711,17 @@ final class CastController: ObservableObject {
     case .idle, .casting:
       session.stop()
       return
+    }
+    if content.discoversSourceTracks, let tracks = session.sourceTracks {
+      content.audioStreamIndex = tracks.selectedAudioID >= 0 ? tracks.selectedAudioID : nil
+      content.subtitleStreamIndex = tracks.selectedSubtitleID >= 0 ? tracks.selectedSubtitleID : nil
+      let subtitle = tracks.subtitles.first { $0.id == tracks.selectedSubtitleID }
+      content.subtitleName = subtitle?.title
+      content.subtitleLanguage = subtitle?.langCode
+      // Subsequent seeks/track changes preserve the resolved choice, including Off.
+      content.applyTrackPreferences = false
+      sourceTracks = tracks
+      Log.info("AirPlayCast", "source tracks ready: audio=\(tracks.audio.count), subtitles=\(tracks.subtitles.count)")
     }
     endBackgroundHold()
     let actualOffset = session.videoStartOffsetSeconds
@@ -1708,6 +1753,11 @@ final class CastController: ObservableObject {
     liveEdgeSeekGraceUntil = nil
     let initialSourceTime = actualOffset + initialLocalTime
     if position != initialSourceTime { position = initialSourceTime }
+    // A paused next episode may not emit a time tick yet. Publish the probed
+    // source duration now so its resume position can already be saved.
+    if timeline.knownDuration > 0, duration != timeline.knownDuration {
+      duration = timeline.knownDuration
+    }
     if isBuffering { isBuffering = false }
     // A paused start is the user's own pause carried over, not a side effect of
     // whatever ends the cast later (see `resumeStartsPaused`).
@@ -2370,6 +2420,7 @@ final class CastController: ObservableObject {
       : active.timeline.totalDuration(localPlayerDuration: castPlayer.duration)
     if duration != total { duration = total }
     onTimeTick?(reported)
+    saveParkedHistory()
     guard active.session != nil else { return }
     // Only live playlists discard old segments. VOD event playlists retain
     // them: AirPlay's reported seekable range may advance independently of its
@@ -2452,6 +2503,7 @@ final class CastController: ObservableObject {
         castPlayer.seek(to: localExpected)
       }
     }
+    if !isPaused && castPlayer.isPaused { saveParkedHistory(force: true) }
     let resumedNow = isPaused && !castPlayer.isPaused
     if isPaused != castPlayer.isPaused { isPaused = castPlayer.isPaused }
     if isBuffering != castPlayer.isBuffering { isBuffering = castPlayer.isBuffering }
@@ -2549,6 +2601,7 @@ final class CastController: ObservableObject {
 
   private func handleCastEnded() {
     guard case .casting = state else { return }
+    saveParkedHistory(force: true)
     // Played to the end of the written playlist (ENDLIST): drives auto-next.
     if !isCompleted { isCompleted = true }
     if !isPaused { isPaused = true }
@@ -2603,7 +2656,8 @@ final class CastController: ObservableObject {
   /// decides whether raising the device picker or offering Cancel makes sense);
   /// nothing outside this class may start or end an engagement from it.
   var isAirPlayRouteActive: Bool {
-    AVAudioSession.sharedInstance().currentRoute.outputs
+    if let routeIsActiveOverride { return routeIsActiveOverride() }
+    return AVAudioSession.sharedInstance().currentRoute.outputs
       .contains { $0.portType == .airPlay }
   }
 

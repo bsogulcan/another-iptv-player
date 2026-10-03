@@ -25,7 +25,7 @@ private final class CastSubtitleCollector: NSObject, @preconcurrency AVPlayerIte
   }
 }
 
-@Suite("SelectedCastTracks")
+@Suite("SelectedCastTracks", .serialized)
 struct SelectedCastTracksTests {
   /// Reproduce a return from AirPlay after a non-keyframe resume. Keeping the
   /// item avoids another provider open and the second loading cycle.
@@ -120,6 +120,172 @@ struct SelectedCastTracksTests {
     #expect(!controller.isEngaged)
     #expect(player.currentItem == nil)
     #expect(engineResumes == 0)
+  }
+
+  /// A zap during AirPlay never opens KSPlayer for the new source. Its menus
+  /// must be discovered by the existing remux connection, with source-specific
+  /// stream IDs, including two episodes whose track metadata is identical.
+  @Test(arguments: ["selected-tracks", "selected-tracks-growing", "selected-tracks-bframes"]) @MainActor
+  func castOpenedContentPublishesItsOwnTracks(fixture: String) async throws {
+    let source = try #require(Bundle(for: CastTracksFixtureBundle.self)
+      .url(forResource: fixture, withExtension: "mkv"))
+    let preferencesKey = "playback.trackPreferences.v1"
+    let savedPreferences = UserDefaults.standard.object(forKey: preferencesKey)
+    PlaybackTrackPreferences.saveAudio(from: TrackMenuOption(id: 99, title: "Türkçe", langCode: "tur"))
+    PlaybackTrackPreferences.saveSubtitle(from: TrackMenuOption(id: 88, title: "Türkçe", langCode: "tur"))
+    let cast = CastController(routeIsActive: { true })
+    let owner = VideoPlayerController(castController: cast)
+    defer {
+      cast.dispose()
+      owner.teardown()
+      UserDefaults.standard.set(savedPreferences, forKey: preferencesKey)
+    }
+    #expect(owner.audioTracks.isEmpty)
+    let firstSource = try #require(Bundle(for: CastTracksFixtureBundle.self).url(
+      forResource: fixture == "selected-tracks" ? "selected-tracks-growing" : "selected-tracks",
+      withExtension: "mkv"
+    ))
+    var ready: Bool?
+    try #require(cast.startRemuxCast(content: CastController.Content(
+      url: firstSource, isLive: false, userAgent: nil, startAt: 0,
+      knownDuration: 0, nativelyPlayable: false, startPaused: true,
+      discoversSourceTracks: true, applyTrackPreferences: true
+    )) { ready = $0 })
+    for _ in 0..<150 {
+      if ready == true, owner.audioTracks.count == 2, cast.sourceTracks != nil { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    try #require(ready == true)
+    let originalView = try #require(cast.castVideoView as? AirPlayCastPlayer.View)
+    let originalItem = originalView.playerLayer.player?.currentItem
+    // Exercise the actual new-content path that clears the previous menus.
+    owner.play(url: source)
+    owner.pause()
+    #expect(owner.audioTracks.isEmpty)
+    for _ in 0..<150 {
+      if originalView.playerLayer.player?.currentItem !== originalItem,
+         owner.audioTracks.count == 2, cast.sourceTracks != nil { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    #expect(cast.castVideoView === originalView, "changing content must retain the cast player")
+    #expect(owner.engine.layer == nil, "opening a second source connection is not track discovery")
+    #expect(owner.audioTracks.map(\.id) == [1, 2])
+    #expect(owner.currentAudioTrackId == 2)
+    let subtitleID = fixture == "selected-tracks-growing" ? 3 : 4
+    // The growing fixture has no subtitle language tag: publish its row, but
+    // don't pretend an unknown language matches the user's Turkish preference.
+    #expect(owner.currentSubtitleTrackId == (fixture == "selected-tracks-growing" ? -1 : subtitleID))
+    #expect(owner.subtitleTracks.contains { $0.id == subtitleID })
+    #expect(owner.canSelectPlaybackTracks)
+    let view = try #require(cast.castVideoView as? AirPlayCastPlayer.View)
+    let player = try #require(view.playerLayer.player)
+
+    func replacement(after previous: AVPlayerItem?) async throws -> AVPlayerItem {
+      for _ in 0..<150 {
+        if let item = player.currentItem, item !== previous, item.status == .readyToPlay { return item }
+        try await Task.sleep(for: .milliseconds(100))
+      }
+      throw NSError(domain: "CastCatalogTest", code: 1)
+    }
+    let previous = player.currentItem
+    owner.selectSubtitleTrack(id: -1)
+    let offItem = try await replacement(after: previous)
+    try await Task.sleep(for: .milliseconds(100))
+    #expect(cast.sourceTracks?.selectedSubtitleID == -1, "saved Turkish must not undo an explicit Off choice")
+    #expect(owner.currentSubtitleTrackId == -1)
+    owner.selectSubtitleTrack(id: subtitleID)
+    let onItem = try await replacement(after: offItem)
+    #expect(cast.sourceTracks?.selectedSubtitleID == subtitleID, "cast menu IDs are source stream IDs, not the old engine's IDs")
+    let url = try #require((onItem.asset as? AVURLAsset)?.url)
+    let (manifest, _) = try await URLSession.shared.data(from: url)
+    #expect(String(decoding: manifest, as: UTF8.self).contains("TYPE=SUBTITLES"))
+    owner.selectAudioTrack(id: 1)
+    let audioItem = try await replacement(after: onItem)
+    let audioURL = try #require((audioItem.asset as? AVURLAsset)?.url)
+    let directory = LocalHTTPServer.shared.directory
+      .appendingPathComponent(audioURL.deletingLastPathComponent().lastPathComponent)
+    #expect(try audioSampleRate(in: directory.appendingPathComponent("seg00000.ts")) == 32_000)
+    #expect(cast.sourceTracks?.selectedAudioID == 1)
+    #expect(owner.engine.layer == nil)
+  }
+
+  @Test @MainActor
+  func completedEpisodeAdvancesWithResumeAndSavedLanguages() async throws {
+    let bundle = Bundle(for: CastTracksFixtureBundle.self)
+    let first = try #require(bundle.url(forResource: "selected-tracks", withExtension: "mkv"))
+    let next = try #require(bundle.url(forResource: "selected-tracks-bframes", withExtension: "mkv"))
+    let key = "playback.trackPreferences.v1"
+    let saved = UserDefaults.standard.object(forKey: key)
+    PlaybackTrackPreferences.saveAudio(from: TrackMenuOption(id: 99, title: "English", langCode: "eng"))
+    PlaybackTrackPreferences.saveSubtitle(from: TrackMenuOption(id: -1, title: "Off"))
+    let cast = CastController(routeIsActive: { true })
+    let owner = VideoPlayerController(castController: cast)
+    defer {
+      cast.dispose()
+      owner.teardown()
+      UserDefaults.standard.set(saved, forKey: key)
+    }
+    try #require(cast.startRemuxCast(content: CastController.Content(
+      url: first, isLive: false, userAgent: nil, startAt: 5.5,
+      knownDuration: 8, nativelyPlayable: false,
+      discoversSourceTracks: true, applyTrackPreferences: true
+    )) { _ in })
+    for _ in 0..<200 {
+      if owner.state == .ended { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    try #require(owner.state == .ended, "AirPlay ENDLIST must reach the auto-next trigger")
+    #expect(owner.timeMs >= 7_000)
+    let view = try #require(cast.castVideoView)
+    // The next/previous episode shell supplies this episode's own history position.
+    owner.play(url: next, startSeconds: 5.5)
+    owner.pause()
+    for _ in 0..<150 {
+      if cast.isPlaybackEstablished, !cast.isCompleted, owner.audioTracks.count == 2,
+         owner.timeMs >= 5_400 { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    #expect(cast.castVideoView === view)
+    #expect(!cast.isCompleted)
+    #expect(owner.timeMs >= 5_400 && owner.timeMs < 6_500)
+    #expect(owner.clock.timeMs == owner.timeMs)
+    #expect(owner.durationMs >= 7_500)
+    #expect(owner.currentAudioTrackId == 1)
+    #expect(owner.currentSubtitleTrackId == -1)
+    #expect(owner.engine.layer == nil)
+  }
+
+  @Test @MainActor
+  func parkedCastKeepsSavingSourcePositionWithoutScreenOwner() async throws {
+    let source = try #require(Bundle(for: CastTracksFixtureBundle.self)
+      .url(forResource: "selected-tracks-growing", withExtension: "mkv"))
+    let cast = CastController(routeIsActive: { true })
+    let owner = VideoPlayerController(castController: cast)
+    defer { cast.dispose(); owner.teardown() }
+    var saves: [(TimeInterval, TimeInterval)] = []
+    cast.setParkedHistoryWriter { saves.append(($0, $1)) }
+    try #require(cast.startRemuxCast(content: CastController.Content(
+      url: source, isLive: false, userAgent: nil, startAt: 12.5,
+      knownDuration: 36, nativelyPlayable: false
+    )) { _ in })
+    for _ in 0..<150 {
+      if cast.isPlaybackEstablished, cast.position >= 12.4 { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    try #require(cast.isPlaybackEstablished)
+    #expect(saves.isEmpty, "the mounted screen already saves history")
+    owner.teardown() // Real dismissal path parks playback and detaches screen hooks.
+    for _ in 0..<130 {
+      if saves.count >= 2 { break }
+      try await Task.sleep(for: .milliseconds(100))
+    }
+    try #require(saves.count >= 2, "history must keep advancing without PlayerView's timer")
+    #expect(saves[0].0 >= 12.4, "save source time, not the remux clock starting near zero")
+    #expect(saves[1].0 > saves[0].0 + 5)
+    #expect(saves.allSatisfy { $0.1 == 36 })
+    let previousCount = saves.count
+    cast.dispose()
+    #expect(saves.count == previousCount + 1, "flush the final position before ending the session")
   }
 
   @Test @MainActor

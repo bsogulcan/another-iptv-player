@@ -186,8 +186,21 @@
 
 "settings.about.title" = "इसके बारे में";
 "settings.about.version" = "संस्करण";
+"settings.about.tip.title" = "ऐप को सपोर्ट करें";
+"settings.about.tip.desc" = "एक टिप देकर ऐप के विकास में योगदान दें।";
 "settings.about.github.title" = "GitHub पर समर्थन करें";
 "settings.about.github.desc" = "GitHub पर प्रोजेक्ट में योगदान दें";
+
+// MARK: - Tip jar
+"tip.title" = "टिप जार";
+"tip.footer" = "यह ऐप मुफ़्त और ओपन सोर्स है। अगर आपको यह पसंद है, तो आपकी टिप डेवलपमेंट जारी रखने में मदद करती है। टिप एक बार की ख़रीदारी है और इससे कोई फ़ीचर अनलॉक नहीं होता।";
+"tip.tier.small" = "मुझे एक कॉफ़ी पिलाएँ";
+"tip.tier.medium" = "डेवलपमेंट में सहयोग दें";
+"tip.tier.large" = "अगले अपडेट को आगे बढ़ाएँ";
+"tip.unavailable" = "टिप अभी उपलब्ध नहीं हैं। कृपया बाद में फिर कोशिश करें।";
+"tip.thanks.title" = "धन्यवाद!";
+"tip.thanks.message" = "आपका सहयोग बहुत मायने रखता है और इस प्रोजेक्ट को आगे बढ़ाने में मदद करता है।";
+"tip.pending" = "आपकी ख़रीदारी स्वीकृति की प्रतीक्षा में है।";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

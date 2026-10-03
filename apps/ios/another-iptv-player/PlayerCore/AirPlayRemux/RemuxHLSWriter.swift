@@ -4,6 +4,14 @@ import Libavformat
 import Libavutil
 import Libswresample
 
+/// Copied source metadata; no FFmpeg pointers escape the remux thread.
+struct RemuxSourceTracks: Equatable {
+  let audio: [TrackMenuOption]
+  let subtitles: [TrackMenuOption]
+  let selectedAudioID: Int
+  let selectedSubtitleID: Int
+}
+
 /// FFmpeg remux: kaynak URL (mkv/ts/avi…) → HLS segmentleri. Video daima passthrough
 /// (H.264/HEVC); ses uyumluysa passthrough, değilse (MP2/DTS/TrueHD…) AAC'ye transcode
 /// edilir. Arka plan kuyruğunda koşar.
@@ -105,10 +113,11 @@ final class RemuxHLSWriter {
   /// External or selected embedded text subtitles share a segmented WebVTT
   /// rendition on both container paths. With neither selected, no rendition is added.
   private let subtitleFileURL: URL?
-  private let subtitleName: String?
-  private let subtitleLanguage: String?
+  private var subtitleName: String?
+  private var subtitleLanguage: String?
   private let audioStreamIndex: Int?
-  private let subtitleStreamIndex: Int?
+  private let applyTrackPreferences: Bool
+  private var subtitleStreamIndex: Int?
   private let subtitleDelaySeconds: Double
   private var subtitleDecoder: TextSubtitleDecoder?
   private var subtitleEntries: [SubtitleEntry] = []
@@ -216,6 +225,14 @@ final class RemuxHLSWriter {
     firstVideoLock.lock()
     if firstVideoContentStorage == nil { firstVideoContentStorage = seconds }
     firstVideoLock.unlock()
+  }
+
+  private let sourceTracksLock = NSLock()
+  private var sourceTracksStorage: RemuxSourceTracks?
+  var sourceTracks: RemuxSourceTracks? {
+    sourceTracksLock.lock()
+    defer { sourceTracksLock.unlock() }
+    return sourceTracksStorage
   }
 
   /// Can a new writer be opened on this source at another position? False until the
@@ -387,7 +404,8 @@ final class RemuxHLSWriter {
     subtitleLanguage: String? = nil,
     audioStreamIndex: Int? = nil,
     subtitleStreamIndex: Int? = nil,
-    subtitleDelaySeconds: Double = 0
+    subtitleDelaySeconds: Double = 0,
+    applyTrackPreferences: Bool = false
   ) {
     self.sourceURL = sourceURL
     self.outputDirectory = outputDirectory
@@ -400,6 +418,7 @@ final class RemuxHLSWriter {
     self.subtitleFileURL = subtitleFileURL
     self.subtitleName = subtitleName
     self.subtitleLanguage = subtitleLanguage
+    self.applyTrackPreferences = applyTrackPreferences
     self.audioStreamIndex = audioStreamIndex
     self.subtitleStreamIndex = subtitleStreamIndex
     self.subtitleDelaySeconds = subtitleDelaySeconds
@@ -1219,6 +1238,23 @@ final class RemuxHLSWriter {
     var firstAudioIndex = -1
     var audioCodecId: UInt32 = 0
     var audioCandidates: [(index: Int, codecId: UInt32, sampleRate: Int32)] = []
+    var audioRows: [TrackMenuOption] = []
+    var subtitleRows: [TrackMenuOption] = []
+    func metadata(_ stream: UnsafeMutablePointer<AVStream>, _ key: String) -> String? {
+      guard let value = av_dict_get(stream.pointee.metadata, key, nil, 0)?.pointee.value else { return nil }
+      let text = String(cString: value).trimmingCharacters(in: .whitespacesAndNewlines)
+      return text.isEmpty ? nil : text
+    }
+    func row(_ stream: UnsafeMutablePointer<AVStream>, index: Int, kind: String, ordinal: Int) -> TrackMenuOption {
+      let title = metadata(stream, "title")
+      let language = metadata(stream, "language")
+      let languageName = language.flatMap { Locale.current.localizedString(forLanguageCode: $0) }
+      return TrackMenuOption(
+        id: index, title: title ?? languageName ?? "\(kind) \(ordinal)",
+        detail: stream.pointee.codecpar.map { String(cString: avcodec_get_name($0.pointee.codec_id)) },
+        langCode: language, isSyntheticTitle: title == nil
+      )
+    }
     for i in 0..<streamCount {
       guard let inStream = input.pointee.streams[i],
             let codecpar = inStream.pointee.codecpar
@@ -1232,17 +1268,34 @@ final class RemuxHLSWriter {
         }
       case AVMEDIA_TYPE_AUDIO:
         audioCandidates.append((i, codecId, codecpar.pointee.sample_rate))
+        audioRows.append(row(inStream, index: i, kind: L("player.tracks.audio"), ordinal: audioRows.count + 1))
+      case AVMEDIA_TYPE_SUBTITLE:
+        if TextSubtitleDecoder.textCodecs.contains(codecId) {
+          subtitleRows.append(row(inStream, index: i, kind: L("player.tracks.subtitle"), ordinal: subtitleRows.count + 1))
+        }
       default:
         break
       }
     }
     guard videoInputIndex >= 0 else { throw RemuxError.noCompatibleStreams }
+    let preferences = applyTrackPreferences ? PlaybackTrackPreferences.load() : nil
+    let preferredAudioID = audioStreamIndex ?? preferences.flatMap {
+      PlaybackTrackPreferences.pickAudio(from: audioRows, prefs: $0)
+    }
+    if subtitleStreamIndex == nil, subtitleFileURL == nil, let preferences {
+      let pick = PlaybackTrackPreferences.pickSubtitle(from: subtitleRows, prefs: preferences)
+      subtitleStreamIndex = pick.flatMap { $0 >= 0 ? $0 : nil }
+    }
+    if let selectedSubtitle = subtitleRows.first(where: { $0.id == subtitleStreamIndex }) {
+      if subtitleName == nil { subtitleName = selectedSubtitle.title }
+      if subtitleLanguage == nil { subtitleLanguage = selectedSubtitle.langCode }
+    }
     // An explicit selection is preserved even if probing missed its first frame;
     // the parameters check below then retries instead of choosing another language.
     // Without a selection, prefer a stream whose sample rate is already known.
     if let choice = Self.preferredAudioCandidate(
       sampleRates: audioCandidates.map { $0.sampleRate },
-      selectedIndex: audioCandidates.firstIndex { $0.index == audioStreamIndex }
+      selectedIndex: audioCandidates.firstIndex { $0.index == preferredAudioID }
     ) {
       firstAudioIndex = audioCandidates[choice].index
       audioCodecId = audioCandidates[choice].codecId
@@ -1274,6 +1327,13 @@ final class RemuxHLSWriter {
         Log.error("AirPlayRemux", "selected subtitle is not a supported text stream")
       }
     }
+    let tracks = RemuxSourceTracks(
+      audio: audioRows, subtitles: subtitleRows, selectedAudioID: firstAudioIndex,
+      selectedSubtitleID: hasSubtitles && subtitleFileURL == nil ? (subtitleStreamIndex ?? -1) : -1
+    )
+    sourceTracksLock.lock()
+    sourceTracksStorage = tracks
+    sourceTracksLock.unlock()
     let passthrough = format == .fmp4 ? Self.fmp4AudioPassthrough : Self.tsAudioPassthrough
 
     var audioMode: AudioMode = .none

@@ -186,8 +186,21 @@
 
 "settings.about.title" = "О приложении";
 "settings.about.version" = "Версия";
+"settings.about.tip.title" = "Поддержать приложение";
+"settings.about.tip.desc" = "Помогите развитию приложения, оставив чаевые.";
 "settings.about.github.title" = "Поддержать на GitHub";
 "settings.about.github.desc" = "Вклад в проект на GitHub";
+
+// MARK: - Tip jar
+"tip.title" = "Чаевые";
+"tip.footer" = "Это приложение бесплатное и с открытым исходным кодом. Если оно вам нравится, чаевые помогут продолжать разработку. Чаевые — разовые покупки, они не открывают никаких функций.";
+"tip.tier.small" = "Угостить меня кофе";
+"tip.tier.medium" = "Поддержать разработку";
+"tip.tier.large" = "Помочь следующему обновлению";
+"tip.unavailable" = "Чаевые сейчас недоступны. Повторите попытку позже.";
+"tip.thanks.title" = "Спасибо!";
+"tip.thanks.message" = "Ваша поддержка очень важна и помогает развивать проект.";
+"tip.pending" = "Покупка ожидает подтверждения.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

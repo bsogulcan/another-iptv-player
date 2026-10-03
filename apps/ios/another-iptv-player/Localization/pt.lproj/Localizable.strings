@@ -186,8 +186,21 @@
 
 "settings.about.title" = "Sobre";
 "settings.about.version" = "Versão";
+"settings.about.tip.title" = "Apoiar o aplicativo";
+"settings.about.tip.desc" = "Contribua para o desenvolvimento do aplicativo com uma gorjeta.";
 "settings.about.github.title" = "Apoiar no GitHub";
 "settings.about.github.desc" = "Contribua com o projeto no GitHub";
+
+// MARK: - Tip jar
+"tip.title" = "Gorjetas";
+"tip.footer" = "Este app é gratuito e de código aberto. Se você gosta dele, uma gorjeta ajuda a manter o desenvolvimento. As gorjetas são compras únicas e não desbloqueiam nenhum recurso.";
+"tip.tier.small" = "Pague-me um café";
+"tip.tier.medium" = "Apoie o desenvolvimento";
+"tip.tier.large" = "Impulsione a próxima atualização";
+"tip.unavailable" = "As gorjetas não estão disponíveis no momento. Tente novamente mais tarde.";
+"tip.thanks.title" = "Obrigado!";
+"tip.thanks.message" = "Seu apoio significa muito e ajuda a manter este projeto vivo.";
+"tip.pending" = "Sua compra está aguardando aprovação.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

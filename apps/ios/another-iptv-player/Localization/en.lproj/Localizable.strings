@@ -186,8 +186,21 @@
 
 "settings.about.title" = "About";
 "settings.about.version" = "Version";
+"settings.about.tip.title" = "Support the App";
+"settings.about.tip.desc" = "Help the app grow with a tip.";
 "settings.about.github.title" = "Support on GitHub";
 "settings.about.github.desc" = "Contribute to the project on GitHub";
+
+// MARK: - Tip jar
+"tip.title" = "Tip Jar";
+"tip.footer" = "This app is free and open source. If you enjoy it, a tip helps keep development going. Tips are one-time purchases and don't unlock any features.";
+"tip.tier.small" = "Buy Me a Coffee";
+"tip.tier.medium" = "Support Development";
+"tip.tier.large" = "Fuel the Next Update";
+"tip.unavailable" = "Tips aren't available right now. Please try again later.";
+"tip.thanks.title" = "Thank you!";
+"tip.thanks.message" = "Your support means a lot and helps keep this project going.";
+"tip.pending" = "Your purchase is awaiting approval.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

@@ -186,8 +186,21 @@
 
 "settings.about.title" = "Hakkında";
 "settings.about.version" = "Sürüm";
+"settings.about.tip.title" = "Uygulamayı Destekle";
+"settings.about.tip.desc" = "Bir bahşişle uygulamanın gelişimine katkıda bulun.";
 "settings.about.github.title" = "GitHub'da Destekle";
 "settings.about.github.desc" = "Projeye GitHub üzerinden katkıda bulun";
+
+// MARK: - Tip jar
+"tip.title" = "Destek Ol";
+"tip.footer" = "Bu uygulama ücretsiz ve açık kaynaklıdır. Beğendiysen, bahşişin geliştirmenin sürmesine yardımcı olur. Bahşişler tek seferlik satın alımlardır ve herhangi bir özelliğin kilidini açmaz.";
+"tip.tier.small" = "Bana Bir Kahve Ismarla";
+"tip.tier.medium" = "Geliştirmeye Destek Ol";
+"tip.tier.large" = "Sonraki Güncellemeye Güç Ver";
+"tip.unavailable" = "Bahşiş seçenekleri şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.";
+"tip.thanks.title" = "Teşekkürler!";
+"tip.thanks.message" = "Desteğin çok değerli ve projenin sürmesine yardımcı oluyor.";
+"tip.pending" = "Satın alma işlemin onay bekliyor.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

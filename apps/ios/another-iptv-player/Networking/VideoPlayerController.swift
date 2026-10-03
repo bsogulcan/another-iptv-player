@@ -645,6 +645,7 @@ final class VideoPlayerController: ObservableObject {
   @Published private(set) var isCastPresenting: Bool = false
   @Published private(set) var isLocalCastPlayback: Bool = false
   @Published private(set) var canSelectPlaybackTracks = true
+  private var appliedCastSourceTracks: RemuxSourceTracks?
   /// Video şu anda AirPlay hedefinde oynuyor (native external ya da remux cast);
   /// yerel yüzeyde "AirPlay'de oynatılıyor" placeholder'ı gösterilir.
   @Published private(set) var isAirPlayPlaybackActive: Bool = false
@@ -826,9 +827,9 @@ final class VideoPlayerController: ObservableObject {
   @Published private(set) var importedSubtitleFiles: [URL] = []
   private var importedSubtitleContentKey: String?
 
-  init() {
+  init(castController providedCastController: CastController? = nil) {
     engine = KSPlayerEngine()
-    castController = CastController.takeCrossScreenHandoff()
+    castController = providedCastController ?? CastController.takeCrossScreenHandoff()
       ?? Self.engagedCastController()
       ?? CastController()
     refreshAirPlayRoute()
@@ -1157,6 +1158,16 @@ final class VideoPlayerController: ObservableObject {
       isCastPresenting = castPresenting
       // A seek target belongs to the cast presentation it was sent to.
       castSeekTarget = nil
+    }
+    let sourceTracks = castController?.sourceTracks
+    if sourceTracks != appliedCastSourceTracks {
+      appliedCastSourceTracks = sourceTracks
+      if let sourceTracks {
+        audioTracks = sourceTracks.audio
+        subtitleTracks = [TrackMenuOption(id: -1, title: L("player.subtitle_off"))] + sourceTracks.subtitles
+        currentAudioTrackId = sourceTracks.selectedAudioID
+        currentSubtitleTrackId = sourceTracks.selectedSubtitleID
+      }
     }
     let trackSelectionAvailable = !castPresenting || castController?.isRemuxing == true
     if canSelectPlaybackTracks != trackSelectionAvailable {
@@ -1760,6 +1771,7 @@ final class VideoPlayerController: ObservableObject {
         if origin == .newContent {
           // The retained menu belongs to the previous source. Never apply its
           // stream indexes to a new channel or episode.
+          appliedCastSourceTracks = nil
           videoTracks = []
           audioTracks = []
           subtitleTracks = [TrackMenuOption(id: -1, title: L("player.subtitle_off"))]
@@ -1781,7 +1793,10 @@ final class VideoPlayerController: ObservableObject {
           userAgent: userAgent,
           startAt: isLiveStream ? 0 : (startSeconds ?? 0),
           knownDuration: 0,
-          nativelyPlayable: nativeNext
+          nativelyPlayable: nativeNext,
+          subtitleDelaySeconds: subtitleDelaySeconds,
+          discoversSourceTracks: true,
+          applyTrackPreferences: true
         )
         let takenByCast: Bool
         if cast.isEngaged {
@@ -2157,8 +2172,9 @@ final class VideoPlayerController: ObservableObject {
   func selectSubtitleTrack(id: Int) {
     if castController?.isPresenting != true { engine.selectSubtitleTrack(id: id) }
     currentSubtitleTrackId = id
-    let external = selectedExternalSubtitle()
-    let embeddedIndex = engine.embeddedSubtitleStreamIndex(id: id)
+    let hasSourceCatalog = castController?.sourceTracks != nil
+    let external = hasSourceCatalog ? nil : selectedExternalSubtitle()
+    let embeddedIndex = hasSourceCatalog ? (id >= 0 ? id : nil) : engine.embeddedSubtitleStreamIndex(id: id)
     castController?.updateRemuxTracks {
       $0.subtitleStreamIndex = embeddedIndex
       $0.subtitleFileURL = external?.url

@@ -186,8 +186,21 @@
 
 "settings.about.title" = "关于";
 "settings.about.version" = "版本";
+"settings.about.tip.title" = "支持应用";
+"settings.about.tip.desc" = "通过打赏助力应用成长。";
 "settings.about.github.title" = "在 GitHub 支持我们";
 "settings.about.github.desc" = "在 GitHub 为项目贡献";
+
+// MARK: - Tip jar
+"tip.title" = "打赏";
+"tip.footer" = "本应用免费且开源。如果你喜欢它，打赏有助于开发持续进行。打赏为一次性购买，不会解锁任何功能。";
+"tip.tier.small" = "请我喝杯咖啡";
+"tip.tier.medium" = "支持开发";
+"tip.tier.large" = "助力下一次更新";
+"tip.unavailable" = "打赏暂时不可用，请稍后再试。";
+"tip.thanks.title" = "谢谢！";
+"tip.thanks.message" = "你的支持意义重大，能帮助这个项目持续发展。";
+"tip.pending" = "你的购买正在等待批准。";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

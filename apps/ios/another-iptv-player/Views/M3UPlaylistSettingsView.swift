@@ -73,6 +73,8 @@ struct M3UPlaylistSettingsView: View {
                 syncRow(L("settings.m3u.refresh_file"), action: .file) {
                     showFileImporter = true
                 }
+
+                TipJarRow()
             }
 
             Section(header: Text(L("download.title"))) {

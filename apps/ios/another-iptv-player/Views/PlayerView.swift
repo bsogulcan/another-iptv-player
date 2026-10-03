@@ -266,10 +266,9 @@ private struct PlayerViewImpl: View {
     /// lives in the chrome, so the chrome must stay up meanwhile: unmounting the picker
     /// loses its "list closed" callback, the only signal of a cancelled list.
     @State private var isAirPlayPickerListOpen = false
-    /// The More menu was opened: the chrome hosts it, so auto-hide waits until a row is
-    /// chosen or this moment passes. A deadline, not a flag: SwiftUI does not report a
-    /// menu that was closed without a choice, and a flag would then never clear.
-    @State private var moreMenuHoldUntil: Date?
+    /// UIKit reports both selection and cancellation, so the chrome remains mounted
+    /// for the entire native menu interaction, including long subtitle lists.
+    @State private var isMoreMenuPresented = false
     /// A programmatic open of the hidden route picker is waiting for the system to
     /// report the device list. The token keeps an older check from judging a newer open.
     @State private var isAwaitingHiddenAirPlayPicker = false
@@ -290,8 +289,6 @@ private struct PlayerViewImpl: View {
         UIAccessibility.isVoiceOverRunning || UIAccessibility.isSwitchControlRunning
     /// Minutes chosen for the running sleep timer (the controller publishes only its end).
     @State private var sleepTimerChoiceMinutes = 0
-    /// Bumped while a sleep timer runs so the menu row's remaining time is re-read.
-    @State private var sleepTimerMenuTick: UInt64 = 0
     /// iPhone landscape is compact height; decides where the rotate and recall buttons sit.
     @Environment(\.verticalSizeClass) private var chromeVerticalSizeClass
     /// Transient AirPlay notice (why a cast ended / could not start), shown like the
@@ -1282,7 +1279,7 @@ private struct PlayerViewImpl: View {
                 // closed" callback can no longer arrive to clear the flag.
                 if !visible, isAirPlayPickerListOpen { isAirPlayPickerListOpen = false }
                 // The More menu went away with the chrome as well.
-                if !visible, moreMenuHoldUntil != nil { moreMenuHoldUntil = nil }
+                if !visible, isMoreMenuPresented { isMoreMenuPresented = false }
                 // A focused chrome control that just unmounted leaves keyboard focus
                 // nowhere; a tap that brought the chrome back is a cue to re-arm it too.
                 claimHardwareKeyboardFocus()
@@ -1622,6 +1619,14 @@ private struct PlayerViewImpl: View {
             url: url, startSeconds: initialStartSeconds, isLiveStream: isLiveStream,
             userAgent: userAgent
         )
+        // Capture only immutable identity tags: the cast can outlive this view.
+        if !suppressWatchHistory, let tags = historySaveTags {
+            player.castController?.setParkedHistoryWriter { position, duration in
+                tags.save(timeMs: Int(position * 1000), durationMs: Int(duration * 1000))
+            }
+        } else {
+            player.castController?.setParkedHistoryWriter(nil)
+        }
         applySelectedAspectMode(force: true)
         player.setPlaybackPresentation(makePresentation())
         applySeriesEpisodeRemoteCommands()
@@ -1728,7 +1733,7 @@ private struct PlayerViewImpl: View {
                 if playing { saveLiveHistoryOnce() }
             }
             .onChange(of: player.state) { _, newState in
-                if newState == .paused { saveProgressHistory() }
+                if newState == .paused || newState == .ended { saveProgressHistory() }
             }
             .onReceive(player.clock.$timeMs) { timeMs in
                 noteClockTickForHistory(timeMs)
@@ -2460,9 +2465,7 @@ private struct PlayerViewImpl: View {
                     }
 
                     // Sibling of the zoom layer: centred on the screen, never scaled or panned.
-                    openingArtworkLayer(
-                        pictureSize: visiblePictureSize(fitted: fittedSize, container: geo.size)
-                    )
+                    openingArtworkLayer(containerSize: geo.size)
                 }
                 // Clip to the screen so the `.fill` crop never bleeds past the viewport into
                 // the chrome. Only Fill overflows, so the clip (an offscreen compositing pass
@@ -3085,36 +3088,7 @@ private struct PlayerViewImpl: View {
             containerExtension: containerExtension,
             isLive: isLiveStream || type == "live"
         )
-        let currentTime = Int(player.timeMs)
-        let duration = Int(player.durationMs)
-        // Canlı yayında mpv duration çoğunlukla 0 kalır; guard'ı canlıda atlamazsak
-        // "son izlenen kanallar" hiç dolmaz. VOD/dizide geçerli süre şartı sürer.
-        guard duration > 0 || resolvedTags.type == "live" else { return }
-
-        let history = DBWatchHistory(
-            id: "\(resolvedTags.playlistId)_\(resolvedTags.type)_\(resolvedTags.streamId)",
-            playlistId: resolvedTags.playlistId,
-            streamId: resolvedTags.streamId,
-            type: resolvedTags.type,
-            lastTimeMs: currentTime,
-            durationMs: duration,
-            lastWatchedAt: Date(),
-            seriesId: resolvedTags.seriesId,
-            title: resolvedTags.title,
-            secondaryTitle: resolvedTags.secondaryTitle,
-            imageURL: resolvedTags.imageURL,
-            containerExtension: resolvedTags.containerExtension
-        )
-
-        Task {
-            do {
-                try await AppDatabase.shared.write { db in
-                    try history.save(db)
-                }
-            } catch {
-                Log.error("WatchHistory", "Failed to save watch history: \(error)")
-            }
-        }
+        resolvedTags.save(timeMs: Int(player.timeMs), durationMs: Int(player.durationMs))
     }
 
     // MARK: - Chrome
@@ -3328,252 +3302,112 @@ private struct PlayerViewImpl: View {
             && !player.isCastPresenting
     }
 
-    /// The More menu of both size classes: aspect, speed, sleep timer and the track
-    /// pickers, then the actions that open a sheet. All SwiftUI (no UIKit-backed menu).
     private var compactTopChromeMoreMenu: some View {
-        Menu {
-            aspectModeMenuPicker
-                // Second report of an opening menu, next to the label's pressed state
-                // below. SwiftUI calls it for the first opening after the chrome
-                // appeared only, so it cannot be the only one.
-                .onAppear { holdChromeForMoreMenu() }
-
-            if showsPlaybackSpeedMenu {
-                playbackSpeedMenuPicker
+        PlayerMoreMenuButton(
+            makeMenu: { makeMoreMenu() },
+            onPresentationChange: { presented in
+                isMoreMenuPresented = presented
+                if !presented { resetTimer() }
             }
-
-            sleepTimerMenuPicker
-
-            if showsTrackMenuPickers {
-                if player.audioTracks.count > 1 {
-                    trackMenuPicker(
-                        title: L("player.tracks.audio"),
-                        systemImage: "waveform",
-                        options: player.audioTracks,
-                        selection: Binding(
-                            get: { player.currentAudioTrackId },
-                            set: { id in
-                                moreMenuDidAct()
-                                player.selectAudioTrack(id: id)
-                            }
-                        )
-                    )
-                }
-                // The list always starts with "Off"; a picker needs a real track too.
-                if player.subtitleTracks.count > 1 {
-                    trackMenuPicker(
-                        title: L("player.tracks.subtitle"),
-                        systemImage: "captions.bubble",
-                        options: player.subtitleTracks,
-                        selection: Binding(
-                            get: { player.currentSubtitleTrackId },
-                            set: { id in
-                                moreMenuDidAct()
-                                player.selectSubtitleTrack(id: id)
-                            }
-                        )
-                    )
-                }
-            }
-
-            Divider()
-
-            if canShowPiPTopChromeAction {
-                Button {
-                    moreMenuDidAct()
-                    requestPictureInPicture()
-                } label: {
-                    Label(L("player.a11y.pip"), systemImage: "pip")
-                }
-                .disabled(!isPiPActionEnabled)
-            }
-
-            Button {
-                moreMenuDidAct()
-                showSubtitleAppearance = true
-            } label: {
-                Label(L("player.a11y.subtitle_appearance"), systemImage: "textformat.size")
-            }
-
-            if player.canSelectPlaybackTracks {
-                Button {
-                    moreMenuDidAct()
-                    openTrackSettings()
-                } label: {
-                    Label(L("player.a11y.track_settings"), systemImage: "gearshape")
-                }
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.96))
-                .shadow(color: .black.opacity(0.25), radius: 2, y: 0.5)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        // Declared order top to bottom wherever the menu opens, so rows keep their place.
-        .menuOrder(.fixed)
-        // Opening the menu holds the chrome (see `moreMenuHoldUntil`). The menu's button
-        // stays pressed for as long as its menu is open, and the button style is where
-        // SwiftUI reports that. A gesture on the menu does not work: the menu's own
-        // button takes the touch, so a tap, a long press or a drag there never fires.
-        .buttonStyle(MoreMenuButtonStyle { pressed in
-            if pressed { holdChromeForMoreMenu() }
-        })
-        .accessibilityLabel(L("detail.show_more"))
-        .accessibilityIdentifier("player.more")
-        // The chrome has to be up for the menu to be opened, so its appearance is the
-        // dependable moment to refresh what the track pickers will list.
+        )
+        .frame(width: 44, height: 44)
         .onAppear { refreshTrackMenuLists() }
-        // Menu rows are built when this view's body runs. A live stream publishes no
-        // clock ticks, so while the chrome stays up (paused, AirPlay, VoiceOver) nothing
-        // would re-read the sleep timer's remaining time.
-        .task(id: player.sleepTimerEndsAt) {
-            guard player.sleepTimerEndsAt != nil else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 20_000_000_000)
-                guard !Task.isCancelled else { return }
-                sleepTimerMenuTick &+= 1
+    }
+
+    /// Built only when UIKit opens the menu. Each action captures a value, not a
+    /// live Picker binding; playback changes cannot replace an open submenu.
+    private func makeMoreMenu() -> UIMenu {
+        func action(
+            _ title: String, image: String? = nil, selected: Bool = false,
+            enabled: Bool = true, perform: @escaping () -> Void
+        ) -> UIAction {
+            UIAction(
+                title: title, image: image.flatMap { UIImage(systemName: $0) },
+                attributes: enabled ? [] : [.disabled], state: selected ? .on : .off
+            ) { _ in perform() }
+        }
+        func submenu(_ title: String, image: String, children: [UIMenuElement]) -> UIMenu {
+            UIMenu(title: title, image: UIImage(systemName: image),
+                   options: .singleSelection, children: children)
+        }
+        var settings: [UIMenuElement] = [submenu(
+            L("player.aspect.title"), image: selectedAspectMode.iconName,
+            children: VideoAspectMode.allCases.map { mode in
+                action(aspectModeTitle(mode), image: mode.iconName, selected: mode == selectedAspectMode) {
+                    guard mode != selectedAspectMode else { return }
+                    resetVideoTransformForAspectSwitch()
+                    videoAspectModeRaw = mode.rawValue
+                }
+            }
+        )]
+        if !isLiveStream && (!player.isCastPresenting || player.isLocalCastPlayback) {
+            settings.append(submenu(L("player.speed.title"), image: "speedometer",
+                children: Self.playbackSpeedOptions.map { speed in
+                    action(String(format: "%gx", Double(speed)), selected: speed == player.playbackSpeed) {
+                        player.setPlaybackSpeed(speed)
+                    }
+                }))
+        }
+        let sleepTitle: String
+        if let endsAt = player.sleepTimerEndsAt {
+            sleepTitle = L("player.sleep.remaining", max(1, Int((endsAt.timeIntervalSinceNow / 60).rounded(.up))))
+        } else {
+            sleepTitle = L("player.sleep.title")
+        }
+        let sleepChoice = player.sleepTimerEndsAt == nil ? 0 : sleepTimerChoiceMinutes
+        settings.append(submenu(sleepTitle, image: "moon.zzz", children: [0, 15, 30, 60].map { minutes in
+            action(minutes == 0 ? L("player.sleep.off") : L("player.sleep.minutes", minutes),
+                   selected: minutes == sleepChoice) {
+                sleepTimerChoiceMinutes = minutes
+                player.setSleepTimer(minutes: minutes > 0 ? minutes : nil)
+            }
+        }))
+        if player.canSelectPlaybackTracks {
+            if player.audioTracks.count > 1 {
+                settings.append(submenu(L("player.tracks.audio"), image: "waveform",
+                    children: player.audioTracks.map { track in
+                        action(track.title, selected: track.id == player.currentAudioTrackId) {
+                            player.selectAudioTrack(id: track.id)
+                        }
+                    }))
+            }
+            if player.subtitleTracks.count > 1 {
+                settings.append(submenu(L("player.tracks.subtitle"), image: "captions.bubble",
+                    children: player.subtitleTracks.map { track in
+                        action(track.title, selected: track.id == player.currentSubtitleTrackId) {
+                            player.selectSubtitleTrack(id: track.id)
+                        }
+                    }))
             }
         }
+        var actions: [UIMenuElement] = []
+        if canShowPiPTopChromeAction {
+            actions.append(action(L("player.a11y.pip"), image: "pip", enabled: isPiPActionEnabled) {
+                requestPictureInPicture()
+            })
+        }
+        actions.append(action(L("player.a11y.subtitle_appearance"), image: "textformat.size") {
+            showSubtitleAppearance = true
+        })
+        if player.canSelectPlaybackTracks {
+            actions.append(action(L("player.a11y.track_settings"), image: "gearshape") {
+                openTrackSettings()
+            })
+        }
+        return UIMenu(children: [
+            UIMenu(options: .displayInline, children: settings),
+            UIMenu(options: .displayInline, children: actions)
+        ])
     }
 
-    /// Longest the open More menu keeps the chrome up when no row is chosen.
-    private static let moreMenuHoldSeconds: TimeInterval = 30
+    private static let playbackSpeedOptions: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
-    /// The More menu is opening: the chrome that hosts it stays up until a row is
-    /// chosen or the hold runs out.
-    private func holdChromeForMoreMenu() {
-        moreMenuHoldUntil = Date().addingTimeInterval(Self.moreMenuHoldSeconds)
-    }
-
-    /// A row of the More menu was chosen: the menu is closed, so its hold on the
-    /// chrome ends and a normal auto-hide window starts.
-    private func moreMenuDidAct() {
-        if moreMenuHoldUntil != nil { moreMenuHoldUntil = nil }
-        resetTimer()
-    }
-
-    /// Localized name of an aspect mode for the menu and for VoiceOver.
     private func aspectModeTitle(_ mode: VideoAspectMode) -> String {
         switch mode {
         case .fit: return L("player.aspect_fit")
         case .fill: return L("player.aspect_fill")
         case .center: return "1:1"
         }
-    }
-
-    private var aspectModeMenuPicker: some View {
-        Picker(
-            selection: Binding(
-                get: { selectedAspectMode },
-                set: { mode in
-                    moreMenuDidAct()
-                    guard mode != selectedAspectMode else { return }
-                    // Same zoom / pan reset as the cycling button; a plain binding to the
-                    // stored raw value would skip it.
-                    resetVideoTransformForAspectSwitch()
-                    videoAspectModeRaw = mode.rawValue
-                }
-            )
-        ) {
-            ForEach(VideoAspectMode.allCases, id: \.self) { mode in
-                Label(aspectModeTitle(mode), systemImage: mode.iconName).tag(mode)
-            }
-        } label: {
-            Label(L("player.aspect.title"), systemImage: selectedAspectMode.iconName)
-        }
-        .pickerStyle(.menu)
-    }
-
-    private static let playbackSpeedOptions: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
-
-    /// Speed is for recorded content played on the phone: a live source delivers at 1x,
-    /// and the cast player resumes at 1x whatever was chosen.
-    private var showsPlaybackSpeedMenu: Bool {
-        !isLiveStream && (!player.isCastPresenting || player.isLocalCastPlayback)
-    }
-
-    private func playbackSpeedTitle(_ speed: Float) -> String {
-        String(format: "%gx", Double(speed))
-    }
-
-    private var playbackSpeedMenuPicker: some View {
-        Picker(
-            selection: Binding(
-                get: { player.playbackSpeed },
-                set: { speed in
-                    moreMenuDidAct()
-                    player.setPlaybackSpeed(speed)
-                }
-            )
-        ) {
-            ForEach(Self.playbackSpeedOptions, id: \.self) { speed in
-                Text(playbackSpeedTitle(speed)).tag(speed)
-            }
-        } label: {
-            Label(L("player.speed.title"), systemImage: "speedometer")
-        }
-        .pickerStyle(.menu)
-    }
-
-    private static let sleepTimerOptionsMinutes = [15, 30, 60]
-
-    /// Row title of the sleep timer: its name, or the time left while one is running.
-    private var sleepTimerMenuTitle: String {
-        // Read for the dependency only: each tick re-evaluates this title.
-        _ = sleepTimerMenuTick
-        guard let endsAt = player.sleepTimerEndsAt else { return L("player.sleep.title") }
-        let minutesLeft = max(1, Int((endsAt.timeIntervalSinceNow / 60).rounded(.up)))
-        return L("player.sleep.remaining", minutesLeft)
-    }
-
-    private var sleepTimerMenuPicker: some View {
-        Picker(
-            selection: Binding(
-                // 0 is "Off". Once the timer has fired or was cancelled the controller
-                // reports no end date, and the remembered choice no longer applies.
-                get: { player.sleepTimerEndsAt == nil ? 0 : sleepTimerChoiceMinutes },
-                set: { minutes in
-                    moreMenuDidAct()
-                    sleepTimerChoiceMinutes = minutes
-                    player.setSleepTimer(minutes: minutes > 0 ? minutes : nil)
-                }
-            )
-        ) {
-            Text(L("player.sleep.off")).tag(0)
-            ForEach(Self.sleepTimerOptionsMinutes, id: \.self) { minutes in
-                Text(L("player.sleep.minutes", minutes)).tag(minutes)
-            }
-        } label: {
-            Label(sleepTimerMenuTitle, systemImage: "moon.zzz")
-        }
-        .pickerStyle(.menu)
-    }
-
-    /// Remux casts retain source tracks and forward selections to their writer.
-    private var showsTrackMenuPickers: Bool {
-        player.canSelectPlaybackTracks
-    }
-
-    /// Always a labelled submenu, like the aspect, speed and sleep-timer rows. Listed
-    /// inline, the audio and the subtitle tracks were two runs of rows with no heading
-    /// (a `Section` title is not drawn for an inline picker inside a menu) and could
-    /// not be told apart; a long list also pushed the rest of the menu off screen.
-    private func trackMenuPicker(
-        title: String,
-        systemImage: String,
-        options: [TrackMenuOption],
-        selection: Binding<Int>
-    ) -> some View {
-        Picker(selection: selection) {
-            ForEach(options) { option in
-                Text(option.title).tag(option.id)
-            }
-        } label: {
-            Label(title, systemImage: systemImage)
-        }
-        .pickerStyle(.menu)
     }
 
     /// Re-reads the engine's tracks into the controller's published lists. Skipped while
@@ -4499,8 +4333,7 @@ private struct PlayerViewImpl: View {
     /// Auto-hide waits while the chrome is what the user is working with: playback is
     /// paused, finished or failed, AirPlay is preparing or the picture is on the receiver
     /// (the phone is the remote then), the AirPlay device list of the visible picker is
-    /// open, the More menu was opened and no row has been chosen yet (bounded by
-    /// `moreMenuHoldUntil`; when that passes, the timer's own re-check hides the chrome),
+    /// open, the More menu is presented,
     /// a scrub is in progress, or an assistive technology is running. Reads only state
     /// objects and @State, so it is also correct inside the timer closure, which runs
     /// against an older copy of this view.
@@ -4511,7 +4344,7 @@ private struct PlayerViewImpl: View {
             || player.isAirPlayPreparing
             || player.isAirPlayPlaybackActive
             || isAirPlayPickerListOpen
-            || (moreMenuHoldUntil.map { $0 > Date() } ?? false)
+            || isMoreMenuPresented
             || isAssistiveTechRunning
     }
 
@@ -4810,8 +4643,11 @@ private struct PlayerViewImpl: View {
     /// on every zap, faded out when the picture arrives. The previous frame is not held:
     /// the surface container is shared with cast view swaps and KSPlayer's own fallback
     /// swap, and a held frame would have to be cleared on every failure path.
-    private func openingArtworkLayer(pictureSize: CGSize) -> some View {
-        let side = min(min(pictureSize.width, pictureSize.height) * 0.42, 180)
+    private func openingArtworkLayer(containerSize: CGSize) -> some View {
+        // Sized from the screen, not from the letterboxed picture: nothing is drawn yet,
+        // so the 16:9 band of a portrait phone is no frame to stay inside (it made the
+        // artwork tiny there), and the size stays the same across a rotation.
+        let side = min(min(containerSize.width, containerSize.height) * 0.5, 280)
         let artwork = ZStack {
             if showsOpeningArtwork, side >= 32 {
                 CachedImage(
@@ -5190,23 +5026,6 @@ private struct PlayerViewImpl: View {
             guard token == debugLogCopyToken else { return }
             debugLogDidCopy = false
         }
-    }
-}
-
-/// The More menu's label style: the look of `.plain`, plus a report of the pressed
-/// state. A menu gives no "opened" callback; its button being pressed is the one signal
-/// that arrives for every opening.
-private struct MoreMenuButtonStyle: ButtonStyle {
-    let onPressedChange: (Bool) -> Void
-
-    func makeBody(configuration: ButtonStyleConfiguration) -> some View {
-        configuration.label
-            // The dim `.plain` gives a pressed label, as measured on the other chrome
-            // buttons.
-            .opacity(configuration.isPressed ? 0.75 : 1)
-            .onChange(of: configuration.isPressed) { _, pressed in
-                onPressedChange(pressed)
-            }
     }
 }
 
@@ -5670,6 +5489,38 @@ private struct WatchHistoryTags: Equatable {
     let containerExtension: String?
     /// Live content: its row records that the channel was watched, not a position.
     let isLive: Bool
+
+    @MainActor
+    func save(timeMs: Int, durationMs: Int) {
+        // Canlı yayında mpv duration çoğunlukla 0 kalır; guard'ı canlıda atlamazsak
+        // "son izlenen kanallar" hiç dolmaz. VOD/dizide geçerli süre şartı sürer.
+        guard durationMs > 0 || self.type == "live" else { return }
+
+        let history = DBWatchHistory(
+            id: "\(self.playlistId)_\(self.type)_\(self.streamId)",
+            playlistId: self.playlistId,
+            streamId: self.streamId,
+            type: self.type,
+            lastTimeMs: timeMs,
+            durationMs: durationMs,
+            lastWatchedAt: Date(),
+            seriesId: self.seriesId,
+            title: self.title,
+            secondaryTitle: self.secondaryTitle,
+            imageURL: self.imageURL,
+            containerExtension: self.containerExtension
+        )
+
+        Task {
+            do {
+                try await AppDatabase.shared.write { db in
+                    try history.save(db)
+                }
+            } catch {
+                Log.error("WatchHistory", "Failed to save watch history: \(error)")
+            }
+        }
+    }
 }
 
 /// When the player writes the watch-history row, kept free of view state so it can be

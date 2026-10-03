@@ -111,6 +111,8 @@ struct PlaylistSettingsView: View {
                 if let syncError, syncOrigin == .refreshRow {
                     syncErrorRow(syncError)
                 }
+
+                TipJarRow()
             }
 
             Section(header: Text(L("download.title"))) {

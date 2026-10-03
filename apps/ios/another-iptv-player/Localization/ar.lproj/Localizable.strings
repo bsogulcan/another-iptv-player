@@ -186,8 +186,21 @@
 
 "settings.about.title" = "حول";
 "settings.about.version" = "الإصدار";
+"settings.about.tip.title" = "ادعم التطبيق";
+"settings.about.tip.desc" = "ساهم في تطوير التطبيق بإكرامية.";
 "settings.about.github.title" = "ادعمنا على GitHub";
 "settings.about.github.desc" = "شارك في المشروع على GitHub";
+
+// MARK: - Tip jar
+"tip.title" = "الإكراميات";
+"tip.footer" = "هذا التطبيق مجاني ومفتوح المصدر. إذا أعجبك، فإن الإكرامية تساعد على استمرار التطوير. الإكراميات عمليات شراء لمرة واحدة ولا تفتح أي ميزات.";
+"tip.tier.small" = "ادعمني بفنجان قهوة";
+"tip.tier.medium" = "ادعم التطوير";
+"tip.tier.large" = "ساهم في التحديث القادم";
+"tip.unavailable" = "الإكراميات غير متاحة حاليًا. يُرجى المحاولة لاحقًا.";
+"tip.thanks.title" = "شكرًا لك!";
+"tip.thanks.message" = "دعمك يعني الكثير ويساعد على استمرار هذا المشروع.";
+"tip.pending" = "عملية الشراء بانتظار الموافقة.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

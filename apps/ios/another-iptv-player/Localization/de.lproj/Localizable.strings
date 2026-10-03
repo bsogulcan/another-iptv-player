@@ -186,8 +186,21 @@
 
 "settings.about.title" = "Über";
 "settings.about.version" = "Version";
+"settings.about.tip.title" = "App unterstützen";
+"settings.about.tip.desc" = "Hilf mit einem Trinkgeld, die App weiterzuentwickeln.";
 "settings.about.github.title" = "Auf GitHub unterstützen";
 "settings.about.github.desc" = "Trage zum Projekt auf GitHub bei";
+
+// MARK: - Tip jar
+"tip.title" = "Trinkgeld";
+"tip.footer" = "Diese App ist kostenlos und Open Source. Wenn sie dir gefällt, hilft ein Trinkgeld, die Entwicklung fortzuführen. Trinkgelder sind einmalige Käufe und schalten keine Funktionen frei.";
+"tip.tier.small" = "Spendier mir einen Kaffee";
+"tip.tier.medium" = "Unterstütze die Entwicklung";
+"tip.tier.large" = "Mach das nächste Update möglich";
+"tip.unavailable" = "Trinkgelder sind derzeit nicht verfügbar. Bitte versuche es später erneut.";
+"tip.thanks.title" = "Vielen Dank!";
+"tip.thanks.message" = "Deine Unterstützung bedeutet viel und hilft, dieses Projekt am Leben zu halten.";
+"tip.pending" = "Dein Kauf wartet auf Genehmigung.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

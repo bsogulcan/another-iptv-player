@@ -186,8 +186,21 @@
 
 "settings.about.title" = "À propos";
 "settings.about.version" = "Version";
+"settings.about.tip.title" = "Soutenir l’application";
+"settings.about.tip.desc" = "Contribuez au développement de l’application avec un pourboire.";
 "settings.about.github.title" = "Soutenir sur GitHub";
 "settings.about.github.desc" = "Contribuez au projet sur GitHub";
+
+// MARK: - Tip jar
+"tip.title" = "Pourboire";
+"tip.footer" = "Cette app est gratuite et open source. Si elle vous plaît, un pourboire aide à poursuivre le développement. Les pourboires sont des achats uniques et ne débloquent aucune fonctionnalité.";
+"tip.tier.small" = "Offrez-moi un café";
+"tip.tier.medium" = "Soutenez le développement";
+"tip.tier.large" = "Donnez un élan à la prochaine mise à jour";
+"tip.unavailable" = "Les pourboires ne sont pas disponibles pour le moment. Veuillez réessayer plus tard.";
+"tip.thanks.title" = "Merci !";
+"tip.thanks.message" = "Votre soutien compte beaucoup et aide à faire vivre ce projet.";
+"tip.pending" = "Votre achat est en attente d'approbation.";
 
 // MARK: - M3U settings
 "settings.m3u.type_label" = "M3U / M3U8";

@@ -66,6 +66,7 @@ struct another_iptv_playerApp: App {
             "player.speedUpOnLongPress": true,
             "player.autoPlayNextEpisode": true
         ])
+        TipStore.shared.startObservingTransactions()
     }
 
     var body: some Scene {

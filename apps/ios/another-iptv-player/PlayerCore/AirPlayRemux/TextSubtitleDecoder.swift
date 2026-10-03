@@ -20,7 +20,7 @@ final class TextSubtitleDecoder {
     guard avcodec_open2(context, codec, nil) >= 0 else { return nil }
   }
 
-  private static let textCodecs: Set<UInt32> = [
+  static let textCodecs: Set<UInt32> = [
     AV_CODEC_ID_SUBRIP.rawValue, AV_CODEC_ID_ASS.rawValue, AV_CODEC_ID_SSA.rawValue,
     AV_CODEC_ID_MOV_TEXT.rawValue, AV_CODEC_ID_WEBVTT.rawValue, AV_CODEC_ID_TEXT.rawValue,
   ]
