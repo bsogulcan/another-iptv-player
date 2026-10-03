@@ -58,7 +58,7 @@ enum M3UParserError: LocalizedError {
 /// - EXTINF ve URL aynı satıra yapışık gelmişse (`...,Namehttp://...`) ayırır.
 /// - URL percent-encoding fallback'i ile oynatılabilirliği arttırır.
 /// - An entry whose URL cannot be parsed even with that fallback is left out.
-/// Pure stateless namespace — parse runs in detached tasks, so it must not be MainActor.
+/// Pure stateless namespace; concurrent entry points parse away from MainActor.
 nonisolated enum M3UParser {
 
     // MARK: Tag Prefixes
@@ -136,17 +136,15 @@ nonisolated enum M3UParser {
     }
 
     /// Arka plan thread'inde parse — UI akışını korur. 310K kanal için ~3-5 saniye sürebilir; çağıran tarafta progress göster.
+    @concurrent
     static func parseAsync(_ rawText: String) async throws -> ParsedM3UPlaylist {
-        try await Task.detached(priority: .userInitiated) {
-            try parse(rawText)
-        }.value
+        try parse(rawText)
     }
 
     /// Arka plan parse + diagnostics.
+    @concurrent
     static func parseWithDiagnosticsAsync(_ rawText: String) async throws -> (playlist: ParsedM3UPlaylist, diagnostics: ParseDiagnostics) {
-        try await Task.detached(priority: .userInitiated) {
-            try parseWithDiagnostics(rawText)
-        }.value
+        try parseWithDiagnostics(rawText)
     }
 
     /// URL string'ini `URL`'e çevirir. Doğrudan başarısız olursa boşluk/UTF-8 gibi encode edilmemiş
@@ -174,6 +172,7 @@ nonisolated enum M3UParser {
         // kopyasız atılır, boşluk kontrolü lazy taramadır ve satır bölme tek geçişte
         // yapılır. `Character.isNewline` \n, \r, CRLF (tek grapheme), U+2028 ve U+2029'u
         // kapsar — eski 4×replacingOccurrences normalizasyon zinciriyle aynı davranış.
+        try Task.checkCancellation()
         var text = Substring(rawText)
         if text.hasPrefix("\u{FEFF}") { text = text.dropFirst() }
 
@@ -182,14 +181,15 @@ nonisolated enum M3UParser {
         }
 
         // Attr değeri içine sızmış newline'ları birleştir.
-        let logicalLines = joinEXTINFContinuations(
+        let logicalLines = try joinEXTINFContinuations(
             text.split(omittingEmptySubsequences: false, whereSeparator: { $0.isNewline })
         )
 
         var state = ParserState()
         var diag = ParseDiagnostics()
 
-        for rawLine in logicalLines {
+        for (index, rawLine) in logicalLines.enumerated() {
+            if index.isMultiple(of: 2048) { try Task.checkCancellation() }
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if line.isEmpty { continue }
             if collectDiagnostics { diag.totalLines += 1 }
@@ -197,6 +197,7 @@ nonisolated enum M3UParser {
             processLine(line, state: &state, diag: &diag, collectDiagnostics: collectDiagnostics)
         }
 
+        try Task.checkCancellation()
         guard !state.channels.isEmpty else {
             throw M3UParserError.noChannelsFound
         }
@@ -423,7 +424,7 @@ nonisolated enum M3UParser {
     ///     http://server/movie.mp4
     ///
     /// İlk iki satır mantıksal olarak tek EXTINF'tir. Yeni `#EXTINF:` görüldüğünde birleştirme durdurulur.
-    private static func joinEXTINFContinuations(_ lines: [Substring]) -> [Substring] {
+    private static func joinEXTINFContinuations(_ lines: [Substring]) throws -> [Substring] {
         // Substring döner: normal satırlar için kopya yok; yalnızca (nadir) birleştirilen
         // EXTINF'ler kendi String buffer'ını taşır.
         var result: [Substring] = []
@@ -431,6 +432,7 @@ nonisolated enum M3UParser {
         var i = 0
         let n = lines.count
         while i < n {
+            if i.isMultiple(of: 2048) { try Task.checkCancellation() }
             let raw = lines[i]
             let trimmed = raw.trimmingCharacters(in: .whitespaces)
             guard trimmed.hasPrefix(Tag.extinf), hasOddQuoteCount(trimmed) else {

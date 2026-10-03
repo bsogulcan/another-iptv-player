@@ -54,7 +54,6 @@ struct M3UDashboardView: View {
             PlayerOverlayHost(controller: playerOverlay)
                 .zIndex(10_000)
         }
-        .environmentObject(playerOverlay)
         .environment(\.playerOverlayController, playerOverlay)
         .environment(\.epgSnapshot, epgStore.snapshot)
         .environment(\.epgLineReserved, epgStore.isLineReserved(for: playlist))

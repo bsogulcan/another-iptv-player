@@ -474,3 +474,25 @@ struct M3UParserTests {
         #expect(M3UParser.sanitizedURL(from: "  http://example.com  ")?.absoluteString == "http://example.com")
     }
 }
+
+
+extension M3UParserTests {
+    @Test(arguments: [false, true])
+    func asyncParsingHonorsCallerCancellation(diagnostics: Bool) async throws {
+        let input = "#EXTM3U\n#EXTINF:-1,News\nhttps://example.invalid/live.ts"
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            if diagnostics {
+                _ = try await M3UParser.parseWithDiagnosticsAsync(input)
+            } else {
+                _ = try await M3UParser.parseAsync(input)
+            }
+        }
+        do {
+            try await task.value
+            Issue.record("Cancelled parsing unexpectedly succeeded")
+        } catch is CancellationError {
+            // Expected: concurrent parsing keeps the caller's cancellation state.
+        }
+    }
+}

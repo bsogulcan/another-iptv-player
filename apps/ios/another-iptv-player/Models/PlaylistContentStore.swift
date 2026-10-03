@@ -48,7 +48,6 @@ final class PlaylistContentStore: ObservableObject {
     /// change (flags and the active playlist included), so whoever reacts to it reads
     /// the final state. `streamsLoaded` alone cannot play this role: it does not change
     /// when the categories land, nor on a scoped reload.
-    /// Metadata patches (`applyVODMetadata`) deliberately leave them alone.
     @Published private(set) var liveRevision = 0
     @Published private(set) var vodRevision = 0
     @Published private(set) var seriesRevision = 0
@@ -168,6 +167,8 @@ final class PlaylistContentStore: ObservableObject {
     // MARK: - Açılış
 
     func loadPlaylist(_ playlist: Playlist) async {
+        let interval = BrowsePerformance.begin("CatalogLoad")
+        defer { BrowsePerformance.end("CatalogLoad", interval) }
         let token = UUID()
         loadToken = token
         loadError = nil
@@ -233,31 +234,9 @@ final class PlaylistContentStore: ObservableObject {
             bumpAllRevisions()
         } catch {
             guard loadToken == token else { return }
-            loadError = error.localizedDescription
+            loadError = NetworkErrorText.describe(error)
             loadingMessage = nil
             isLoading = false
-        }
-    }
-
-    /// Film detay fetch'i DB'ye yazıldıktan sonra bellek kataloğundaki kopyayı da
-    /// güncelle — yoksa aynı filme her yeniden girişte metadataLoaded=false görünüp
-    /// gereksiz ağ isteği ve spinner flaşı yaşanıyordu.
-    func applyVODMetadata(_ updated: DBVODStream) {
-        guard activePlaylistId == updated.playlistId else { return }
-        if let i = vodStreams.firstIndex(where: { $0.stream.streamId == updated.streamId }) {
-            vodStreams[i] = VODWithCategory(stream: updated, categoryName: vodStreams[i].categoryName)
-        }
-        // Uncategorized remap'i nedeniyle bucket anahtarı categoryId'den farklı olabilir.
-        for key in [updated.categoryId ?? "", Self.uncategorizedCategoryId] {
-            if var bucket = vodStreamsByCategoryId[key],
-               let j = bucket.firstIndex(where: { $0.stream.streamId == updated.streamId }) {
-                bucket[j] = VODWithCategory(stream: updated, categoryName: bucket[j].categoryName)
-                vodStreamsByCategoryId[key] = bucket
-                break
-            }
-        }
-        if let k = recentVODCandidates.firstIndex(where: { $0.streamId == updated.streamId }) {
-            recentVODCandidates[k] = updated
         }
     }
 
@@ -265,6 +244,8 @@ final class PlaylistContentStore: ObservableObject {
     /// katalog kopyaları (flat + kategori sözlükleri) singleton'da kalmasın.
     /// Yeniden girişte `loadPlaylist` zaten sıfırdan yükler.
     func unload() {
+        let interval = BrowsePerformance.begin("CatalogUnload")
+        defer { BrowsePerformance.end("CatalogUnload", interval) }
         loadToken = nil
         activePlaylistId = nil
         clearLists()
@@ -318,7 +299,7 @@ final class PlaylistContentStore: ObservableObject {
 
     private func reportRefreshFailure(_ error: Error, playlistId: UUID) {
         guard activePlaylistId == playlistId else { return }
-        refreshError = error.localizedDescription
+        refreshError = NetworkErrorText.describe(error)
     }
 
     private func setLoadingMessage(_ message: String?, ifActive playlistId: UUID) {
@@ -333,7 +314,7 @@ final class PlaylistContentStore: ObservableObject {
             try await reloadFromDatabase(playlistId: playlistId)
         } catch {
             guard activePlaylistId == playlistId else { return }
-            loadError = error.localizedDescription
+            loadError = NetworkErrorText.describe(error)
         }
     }
 
@@ -368,7 +349,7 @@ final class PlaylistContentStore: ObservableObject {
             }
         } catch {
             guard activePlaylistId == playlistId else { return }
-            loadError = error.localizedDescription
+            loadError = NetworkErrorText.describe(error)
         }
     }
 

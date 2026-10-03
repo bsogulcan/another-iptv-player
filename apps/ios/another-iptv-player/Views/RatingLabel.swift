@@ -64,6 +64,8 @@ struct RatingLabel: View {
             }
             .lineLimit(1)
             .minimumScaleFactor(0.85)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(BrowseAccessibility.ratingLabel(text) ?? "")
         }
     }
 
@@ -90,14 +92,17 @@ struct PosterRatingBadge: View {
         if let text = ContentRating.displayText(rating) {
             HStack(spacing: 3) {
                 Image(systemName: "star.fill")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.caption2.weight(.semibold))
                 Text(text)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.caption2.weight(.semibold))
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
             .background(Color.black.opacity(0.55), in: Capsule())
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(BrowseAccessibility.ratingLabel(text) ?? "")
         }
     }
 }

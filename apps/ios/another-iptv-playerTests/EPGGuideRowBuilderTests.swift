@@ -359,4 +359,21 @@ struct EPGGuideRowBuilderTests {
         #expect(regular.dayWidth == compact.dayWidth)
         #expect(regular.rowHeight == compact.rowHeight)
     }
+    @Test
+    func largerTextPreservesProgrammeTimeCoordinates() {
+        let start = Date(timeIntervalSince1970: 0)
+        for regular in [false, true] {
+            let baseline = EPGGuideMetrics.guide(regularWidth: regular)
+            let enlarged = EPGGuideMetrics.guide(regularWidth: regular, textScale: 3)
+            #expect(enlarged.rowHeight == baseline.rowHeight * 1.5)
+            #expect(enlarged.channelColumnWidth == baseline.channelColumnWidth * 1.5)
+            #expect(enlarged.axisHeight == baseline.axisHeight * 1.5)
+            #expect(enlarged.headerHeight == baseline.headerHeight * 1.5)
+            #expect(enlarged.dayWidth == baseline.dayWidth)
+            #expect(enlarged.x(for: start.addingTimeInterval(18_000), dayStart: start)
+                    == baseline.x(for: start.addingTimeInterval(18_000), dayStart: start))
+            #expect(EPGGuideMetrics.guide(regularWidth: regular, textScale: 0.8) == baseline)
+        }
+    }
+
 }

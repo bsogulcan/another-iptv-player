@@ -232,6 +232,10 @@ struct VODView: View {
         )
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
@@ -255,6 +259,7 @@ struct VODView: View {
 
     /// Pushes the page of `movie` unless the page pushed last is already that film's.
     private func showDetail(_ movie: DBVODStream) {
+        guard !BrowseDetailPresence.shared.contains(.init(playlistId: playlist.id, type: "vod", streamId: movie.streamId)) else { return }
         guard pendingMovieDetail?.streamId != movie.streamId else { return }
         pendingMovieDetail = movie
     }
@@ -659,7 +664,7 @@ private struct VODShelfPlaceholder: View {
             }
             .padding(.horizontal, VODCategoryShelf.horizontalInset)
         }
-        .frame(height: posterMetrics.shelfRowTotalHeight)
+        .posterShelfFrame()
         .scrollDisabled(true)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -715,7 +720,7 @@ struct RecentlyAddedVODShelf: View, Equatable {
                     }
                     .padding(.horizontal, VODCategoryShelf.horizontalInset)
                 }
-                .frame(height: posterMetrics.shelfRowTotalHeight)
+                .posterShelfFrame()
             }
         }
         .padding(.vertical, 6)
@@ -768,6 +773,7 @@ struct VODCategoryShelfRow: View, Equatable {
             ShelfHeader(category.name) {
                 VODCategoryDetailView(playlist: playlist, category: category)
             }
+            .accessibilityIdentifier("home.shelf.header.\(category.id)")
             .contextMenu {
                 HideCategoryMenuButton(categoryId: category.id, type: "vod", playlistId: playlist.id)
             }
@@ -807,19 +813,23 @@ struct VODCategoryShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, VODCategoryShelf.horizontalInset)
                 }
-                .frame(height: posterMetrics.shelfRowTotalHeight)
-                .onAppear { setPrefetching(true) }
+                .posterShelfFrame()
+                .onAppear { movePrefetch(to: headPrefetch) }
                 // A shelf that scrolled away during a fling would otherwise keep
                 // downloading posters nobody is looking at.
-                .onDisappear { setPrefetching(false) }
+                .onDisappear { movePrefetch(to: nil) }
+                .onChange(of: headPrefetch) { _, head in
+                    guard queuedPrefetch != nil else { return }
+                    movePrefetch(to: head)
+                }
             }
         }
         .padding(.vertical, 6)
     }
 
-    /// Starts or stops warming the posters one swipe can reach. Both directions go
-    /// through here so that they are called with the same arguments.
-    private func setPrefetching(_ isOn: Bool) {
+    @State private var queuedPrefetch: SeriesBrowse.HeadPrefetch?
+
+    private var headPrefetch: SeriesBrowse.HeadPrefetch {
         let headCount = ListImagePrefetch.headCount(
             itemWidth: posterMetrics.shelfPosterWidth,
             spacing: VODCategoryShelf.cardSpacing,
@@ -828,23 +838,21 @@ struct VODCategoryShelfRow: View, Equatable {
         let urls = items.prefix(headCount)
             .compactMap { $0.stream.streamIcon }
             .compactMap { URL(string: $0) }
-        if isOn {
-            ListImagePrefetch.start(
-                urls: urls,
-                width: posterMetrics.shelfPosterWidth,
-                height: posterMetrics.shelfPosterHeight,
-                contentMode: .fill,
-                loadProfile: .shelf
-            )
-        } else {
-            ListImagePrefetch.stop(
-                urls: urls,
-                width: posterMetrics.shelfPosterWidth,
-                height: posterMetrics.shelfPosterHeight,
-                contentMode: .fill,
-                loadProfile: .shelf
-            )
+        return SeriesBrowse.HeadPrefetch(urls: urls, width: posterMetrics.shelfPosterWidth,
+                                        height: posterMetrics.shelfPosterHeight)
+    }
+
+    private func movePrefetch(to head: SeriesBrowse.HeadPrefetch?) {
+        let change = SeriesBrowse.prefetchChange(from: queuedPrefetch, to: head)
+        if let stop = change.stop {
+            ListImagePrefetch.stop(urls: stop.urls, width: stop.width, height: stop.height,
+                                   contentMode: .fill, loadProfile: .shelf)
         }
+        if let start = change.start {
+            ListImagePrefetch.start(urls: start.urls, width: start.width, height: start.height,
+                                    contentMode: .fill, loadProfile: .shelf)
+        }
+        queuedPrefetch = head
     }
 }
 
@@ -861,7 +869,7 @@ struct VODStreamCard: View {
     var zoomNamespace: Namespace.ID? = nil
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 4) {
             artwork
                 .cardHover(cornerRadius: BrowseMetrics.posterCornerRadius)
 
@@ -870,12 +878,14 @@ struct VODStreamCard: View {
 
             if let catName = categoryName {
                 Text(catName)
-                    .font(.system(size: 10))
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                     .frame(width: posterWidth, alignment: .leading)
             }
         }
+        .posterAccessibility(title: stream.name, rating: stream.rating,
+                             category: categoryName, progress: watchProgress)
     }
 
     @ViewBuilder
@@ -898,20 +908,14 @@ struct VODStreamCard: View {
                 loadProfile: imageLoadProfile
             )
 
-            if let progress = watchProgress, progress > 0 {
-                Rectangle()
-                    .fill(Color.accentColor)
-                    .frame(height: 4)
-                    .frame(width: posterWidth * progress)
-                    .frame(maxWidth: posterWidth, alignment: .leading)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(2)
-                    .padding(.bottom, 2)
-                    .padding(.horizontal, 4)
-            }
 
             PosterRatingBadge(rating: stream.rating)
                 .padding(6)
+        }
+        .overlay(alignment: .bottom) {
+            if let progress = watchProgress, progress > 0 {
+                CardProgressBar(fraction: progress).padding(6)
+            }
         }
     }
 }
@@ -968,6 +972,10 @@ struct VODCategoryDetailView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("vod.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }
@@ -1008,7 +1016,7 @@ struct VODCategoryContent: View, Equatable {
     /// ignored and the menu offers the filter only.
     var allowsSorting: Bool = true
 
-    /// Cheap signature compare so a parent re-render (e.g. `applyVODMetadata`'s
+    /// Cheap signature compare so a parent re-render (e.g. a metadata
     /// @Published storm) doesn't force SwiftUI to re-process a 10k-item view — that
     /// scaled with catalog size and froze "All Movies" for seconds on return.
     /// Internal @State/@Query updates still invalidate normally, independent of this.
@@ -1098,6 +1106,8 @@ struct VODCategoryContent: View, Equatable {
     }
 
     private func recompute(for key: InputKey) async {
+        let interval = BrowsePerformance.begin("VODGridRecompute")
+        defer { BrowsePerformance.end("VODGridRecompute", interval) }
         guard key != appliedKey else { return }
         let source = items
         let computed = await CatalogTextSearch.detached { () -> (items: [VODWithCategory], queue: [DBVODStream], fileTypes: [String])? in
@@ -1314,6 +1324,10 @@ struct AllVODView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("vod.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }
@@ -1334,6 +1348,8 @@ struct AllVODView: View {
     }
 
     private func recompute(for key: VODCatalogKey) async {
+        let interval = BrowsePerformance.begin("VODCatalogRecompute")
+        defer { BrowsePerformance.end("VODCatalogRecompute", interval) }
         guard key != appliedKey else { return }
         let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "vod")
         let q = key.query.trimmingCharacters(in: .whitespaces)

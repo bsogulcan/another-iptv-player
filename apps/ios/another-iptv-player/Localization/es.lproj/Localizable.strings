@@ -583,3 +583,7 @@
 "kit.error.connection_failed" = "No se pudo conectar con el servidor (error %ld).";
 "kit.error.file_unreadable" = "No se pudo leer el archivo.";
 "kit.error.generic" = "Algo salió mal.";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "Todas las categorías están ocultas";
+"guide.all_hidden.message" = "Muestra una categoría en el selector para ver sus canales en la guía de TV.";

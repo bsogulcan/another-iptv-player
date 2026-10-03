@@ -10,24 +10,35 @@ struct FullscreenImageViewer: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
-            
-            ZoomableImageView(url: url, placeholderRequest: placeholderRequest) {
-                dismiss()
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                ZoomableImageView(url: url, placeholderRequest: placeholderRequest) {
+                    dismiss()
+                }
+                .ignoresSafeArea()
             }
-            .ignoresSafeArea()
-            
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.white.opacity(0.8))
-                    .padding()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    closeButton
+                        .accessibilityLabel(L("common.close"))
+                        .accessibilityIdentifier("artwork.close")
+                }
             }
-            .buttonStyle(.plain)
-            .padding(.top, 40)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+        .environment(\.colorScheme, .dark)
+    }
+
+    @ViewBuilder
+    private var closeButton: some View {
+        if #available(iOS 26.0, *) {
+            Button(role: .close) { dismiss() }
+        } else {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+            }
         }
     }
 }

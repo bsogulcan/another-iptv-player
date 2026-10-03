@@ -583,3 +583,7 @@
 "kit.error.connection_failed" = "تعذر الاتصال بالخادم (الخطأ %ld).";
 "kit.error.file_unreadable" = "تعذرت قراءة الملف.";
 "kit.error.generic" = "حدث خطأ ما.";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "كل الفئات مخفية";
+"guide.all_hidden.message" = "أظهر فئة في منتقي الفئات لعرض قنواتها في دليل التلفزيون.";

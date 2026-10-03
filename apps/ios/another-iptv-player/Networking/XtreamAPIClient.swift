@@ -27,6 +27,9 @@ nonisolated enum PanelURLSession {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 20
         config.timeoutIntervalForResource = 300
+        if FixturePanelProtocol.isEnabled {
+            config.protocolClasses = [FixturePanelProtocol.self] + (config.protocolClasses ?? [])
+        }
         return URLSession(configuration: config)
     }()
 }

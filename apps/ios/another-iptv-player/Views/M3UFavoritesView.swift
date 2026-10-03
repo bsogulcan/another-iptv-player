@@ -18,6 +18,7 @@ struct M3UFavoritesView: View {
     /// scan of the catalog has answered: "none" is only known after it.
     @State private var favoriteChannels: [DBM3UChannel]?
     @State private var filtered: [DBM3UChannel] = []
+    @State private var resultRevision = 0
     /// Input of the scan whose result is on screen.
     @State private var appliedKey: RecomputeKey?
 
@@ -28,16 +29,25 @@ struct M3UFavoritesView: View {
         let favoriteIds: Set<String>
         let revision: Int
         let query: String
+        let activePlaylistId: UUID?
+        let isLoading: Bool
+        let favoritesLoaded: Bool
     }
 
     private var recomputeKey: RecomputeKey {
-        RecomputeKey(favoriteIds: favorites.favoriteIds, revision: store.revision, query: debouncedQuery)
+        RecomputeKey(favoriteIds: favorites.favoriteIds, revision: store.revision, query: debouncedQuery, activePlaylistId: store.activePlaylistId, isLoading: store.isLoading, favoritesLoaded: favorites.isLoaded(for: playlist.id))
     }
 
     var body: some View {
         Group {
-            if favorites.favoriteIds.isEmpty {
-                // Known without the scan, so it is right in the first frame.
+            if let error = favorites.error(for: playlist.id) {
+                InlineErrorRow(message: error) {
+                    favorites.track(playlistId: playlist.id)
+                }
+                .padding()
+            } else if !favorites.isLoaded(for: playlist.id) {
+                Color.clear
+            } else if favorites.favoriteIds.isEmpty {
                 noFavoritesState
             } else if let favoriteChannels {
                 if favoriteChannels.isEmpty {
@@ -45,9 +55,9 @@ struct M3UFavoritesView: View {
                 } else if filtered.isEmpty {
                     CatalogEmptyView(.noSearchResults)
                 } else {
-                    M3UGroupGridContent(items: filtered, menu: .favorites) { channel in
+                    M3UGroupGridContent(items: filtered, contentID: .favorites(playlist.id, resultRevision), menu: .favorites, onChannelSelected: { channel in
                         present(channel)
-                    }
+                    })
                     .equatable()
                 }
             } else {
@@ -89,6 +99,11 @@ struct M3UFavoritesView: View {
         // The task also restarts when the screen comes back (a tab switch); the lists
         // on screen are still the answer then.
         guard key != appliedKey else { return }
+        guard key.favoritesLoaded, key.activePlaylistId == playlist.id, !(key.isLoading && store.channels.isEmpty) else {
+            favoriteChannels = nil
+            appliedKey = nil
+            return
+        }
         let channels = store.channels
         let ids = key.favoriteIds
         let query = key.query.trimmingCharacters(in: .whitespaces)
@@ -103,6 +118,7 @@ struct M3UFavoritesView: View {
         guard !Task.isCancelled else { return }
         favoriteChannels = result.0
         filtered = result.1
+        resultRevision += 1
         appliedKey = key
     }
 

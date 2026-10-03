@@ -49,6 +49,10 @@ struct SearchView: View {
         .onChange(of: searchText) { _, _ in
             debounceTask?.cancel()
             guard let q = pendingQuery else { return }
+            if q.isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
@@ -272,6 +276,8 @@ private struct SearchResultsView: View {
         .id(listGeneration)
         // The rows of the last query stay under the hint; nothing may reach them there.
         .accessibilityHidden(query.isEmpty)
+        .accessibilityIdentifier(query.isEmpty ? "search.idle" :
+                                    (resultsKey == key && key.streamsLoaded ? "search.results" : "search.pending"))
         .overlay { stateOverlay }
         .onChange(of: filter) { _, _ in
             visibleLimit = Self.pageSize
@@ -386,6 +392,8 @@ private struct SearchResultsView: View {
     // MARK: Search
 
     private func runSearch(for key: SearchKey) async {
+        let interval = BrowsePerformance.begin("SearchScan")
+        defer { BrowsePerformance.end("SearchScan", interval) }
         // Too short to search. The rows of the last query stay where they are, under
         // the hint.
         guard !key.query.isEmpty else { return }
@@ -493,6 +501,7 @@ private struct MovieResultDestination: View {
 }
 
 private struct ResultRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     enum Artwork {
         /// A channel logo: square, shown whole on a tile.
         case logo
@@ -513,7 +522,7 @@ private struct ResultRow: View {
     private static let artworkCornerRadius: CGFloat = 6
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             thumbnail
             VStack(alignment: .leading, spacing: 2) {
                 // Concrete colours: inside the list's button style a hierarchical
@@ -521,12 +530,17 @@ private struct ResultRow: View {
                 Text(name)
                     .font(.body)
                     .foregroundStyle(Color.primary)
-                    .lineLimit(artwork == .poster ? 2 : 1)
-                HStack(spacing: 6) {
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : (artwork == .poster ? 2 : 1))
+                    .fixedSize(horizontal: false, vertical: true)
+                let metadataLayout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                    : AnyLayout(HStackLayout(spacing: 6))
+                metadataLayout {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(Color.secondary)
-                        .lineLimit(1)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let ratingText = ContentRating.displayText(rating) {
                         RatingLabel(rating: rating)
                             .layoutPriority(1)

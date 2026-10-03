@@ -382,6 +382,9 @@ struct PlaylistSettingsView: View {
             guard errorMessage != nil else { return }
             Task { await fetchAuthInfo(force: true) }
         }
+        .onReceive(DownloadManager.shared.$dbVersion.dropFirst()) { _ in
+            Task { await refreshDownloadUsage() }
+        }
         .refreshable {
             await reloadStoredRow()
             async let account: Void = fetchAuthInfo(force: true)
@@ -493,7 +496,7 @@ struct PlaylistSettingsView: View {
         } catch {
             // Nothing was saved and nothing is downloaded: the switch goes back.
             withAnimation { adultFilterSaving = nil }
-            actionError = L("misc.save_setting_error", error.localizedDescription)
+            actionError = L("misc.save_setting_error", NetworkErrorText.describe(error))
         }
     }
 
@@ -548,7 +551,7 @@ struct PlaylistSettingsView: View {
             // Continue watching row in Dashboard will update via GRDB watcher if implemented,
             // or on next disappear/appear.
         } catch {
-            actionError = L("misc.history_delete_error", error.localizedDescription)
+            actionError = L("misc.history_delete_error", NetworkErrorText.describe(error))
         }
     }
 

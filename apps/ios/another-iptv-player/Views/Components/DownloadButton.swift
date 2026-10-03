@@ -105,6 +105,8 @@ struct DownloadButton: View {
                 .buttonStyle(.plain)
             }
         }
+        .accessibilityLabel(titleText)
+        .accessibilityActions { menuItems }
         .accessibilityIdentifier(compact ? "" : "detail.download")
         // Drives the symbol replace inside a label, and cross-fades the two controls
         // when the state moves between them.

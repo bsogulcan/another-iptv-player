@@ -583,3 +583,7 @@
 "kit.error.connection_failed" = "无法连接到服务器 (错误 %ld)。";
 "kit.error.file_unreadable" = "无法读取文件。";
 "kit.error.generic" = "出了点问题。";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "所有分类均已隐藏";
+"guide.all_hidden.message" = "在分类选择器中显示一个分类，即可在电视指南中查看其频道。";

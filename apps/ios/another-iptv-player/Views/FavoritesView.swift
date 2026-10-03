@@ -58,6 +58,8 @@ struct FavoritesView: View {
                 Text(L("dashboard.series")).tag("series")
             }
             .pickerStyle(.segmented)
+            .frame(maxWidth: 420)
+            .frame(maxWidth: .infinity)
             // 16 pt: the horizontal inset of the grids below.
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -108,10 +110,11 @@ struct FavoritesView: View {
             ScrollView {
                 LazyVGrid(columns: gridColumns, spacing: posterMetrics.gridRowSpacing) {
                     ForEach(shown) { item in
-                        Button {
-                            presentFavoriteLive(stream: item.stream, history: nil, queue: shown.map(\.stream))
-                        } label: {
-                            FavoriteChannelCell(stream: item.stream, side: posterMetrics.liveGridIconSize)
+                        LiveStreamCard(playlistId: playlist.id, stream: item.stream,
+                                       width: posterMetrics.liveGridIconSize,
+                                       iconSize: posterMetrics.liveGridIconSize,
+                                       imageLoadProfile: .grid) { stream, history in
+                            presentFavoriteLive(stream: stream, history: history, queue: shown.map(\.stream))
                         }
                         .buttonStyle(.cardPress)
                         .accessibilityIdentifier("card.live.\(item.stream.streamId)")
@@ -139,21 +142,19 @@ struct FavoritesView: View {
             ScrollView {
                 LazyVGrid(columns: gridColumns, spacing: posterMetrics.gridRowSpacing) {
                     ForEach(shown) { item in
-                        let zoomId = "vod.\(item.stream.streamId)"
+                        let zoomId = item.stream.streamId
                         NavigationLink {
                             MovieDetailView(playlist: playlist, movie: item.stream)
                                 .posterZoomDestination(id: zoomId, in: zoomNamespace)
                         } label: {
-                            FavoritePosterCell(
-                                title: item.stream.name,
-                                imageURL: item.stream.streamIcon,
-                                iconName: "film",
-                                rating: item.stream.rating,
+                            VODStreamCard(
+                                playlistId: playlist.id,
+                                stream: item.stream,
                                 categoryName: item.categoryName,
+                                posterWidth: posterMetrics.categoryGridPosterWidth,
+                                posterHeight: posterMetrics.categoryGridPosterHeight,
+                                imageLoadProfile: .grid,
                                 watchProgress: vodProgressMap[String(item.stream.streamId)],
-                                width: posterMetrics.categoryGridPosterWidth,
-                                height: posterMetrics.categoryGridPosterHeight,
-                                zoomId: zoomId,
                                 zoomNamespace: zoomNamespace
                             )
                         }
@@ -181,21 +182,19 @@ struct FavoritesView: View {
             ScrollView {
                 LazyVGrid(columns: gridColumns, spacing: posterMetrics.gridRowSpacing) {
                     ForEach(shown) { item in
-                        let zoomId = "series.\(item.series.seriesId)"
+                        let zoomId = item.series.seriesId
                         NavigationLink {
                             SeriesDetailView(playlist: playlist, series: item.series)
                                 .posterZoomDestination(id: zoomId, in: zoomNamespace)
                         } label: {
-                            FavoritePosterCell(
-                                title: item.series.name,
-                                imageURL: item.series.cover,
-                                iconName: "play.tv",
-                                rating: item.series.rating,
+                            SeriesCard(
+                                playlistId: playlist.id,
+                                stream: item.series,
                                 categoryName: item.categoryName,
+                                posterWidth: posterMetrics.categoryGridPosterWidth,
+                                posterHeight: posterMetrics.categoryGridPosterHeight,
+                                imageLoadProfile: .grid,
                                 watchProgress: seriesProgressMap[String(item.series.seriesId)],
-                                width: posterMetrics.categoryGridPosterWidth,
-                                height: posterMetrics.categoryGridPosterHeight,
-                                zoomId: zoomId,
                                 zoomNamespace: zoomNamespace
                             )
                         }
@@ -244,81 +243,5 @@ private extension View {
     func favoriteCellMenu<Items: View>(cornerRadius: CGFloat, @ViewBuilder _ items: () -> Items) -> some View {
         cardContextMenuShape(cornerRadius: cornerRadius)
             .contextMenu(menuItems: items)
-    }
-}
-
-/// A channel of the favourites grid: the logo, the name centred under it and the
-/// guide's now / next line when the playlist has a guide.
-private struct FavoriteChannelCell: View {
-    let stream: DBLiveStream
-    let side: CGFloat
-
-    var body: some View {
-        VStack(alignment: .center, spacing: 10) {
-            CachedImage(
-                url: stream.streamIcon.flatMap { URL(string: $0) },
-                width: side,
-                height: side,
-                cornerRadius: BrowseMetrics.tileCornerRadius,
-                iconName: "tv",
-                loadProfile: .grid
-            )
-            Text(stream.name)
-                .tileTitleStyle(width: side)
-            EPGNowNextSlot(channelKey: EPGChannelKey.forXtream(stream), width: side)
-        }
-    }
-}
-
-/// A movie or series of the favourites grid. The poster is the source of the zoom
-/// into the detail screen.
-private struct FavoritePosterCell: View {
-    let title: String
-    let imageURL: String?
-    let iconName: String
-    let rating: String?
-    let categoryName: String?
-    let watchProgress: Double?
-    let width: CGFloat
-    let height: CGFloat
-    let zoomId: String
-    let zoomNamespace: Namespace.ID
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            CachedImage(
-                url: imageURL.flatMap { URL(string: $0) },
-                width: width,
-                height: height,
-                cornerRadius: BrowseMetrics.posterCornerRadius,
-                contentMode: .fill,
-                iconName: iconName,
-                loadProfile: .grid
-            )
-            .overlay(alignment: .topTrailing) {
-                PosterRatingBadge(rating: rating)
-                    .padding(6)
-            }
-            .overlay(alignment: .bottom) {
-                if let watchProgress, watchProgress > 0 {
-                    CardProgressBar(fraction: watchProgress)
-                        .padding(.horizontal, 6)
-                        .padding(.bottom, 6)
-                }
-            }
-            .posterZoomSource(id: zoomId, in: zoomNamespace)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .posterTitleStyle(width: width)
-                if let categoryName {
-                    Text(categoryName)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .frame(width: width, alignment: .leading)
-                }
-            }
-        }
     }
 }

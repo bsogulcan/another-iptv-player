@@ -361,6 +361,8 @@ final class EPGStore: ObservableObject {
     // MARK: - Now/next index
 
     func tick() async {
+        let interval = BrowsePerformance.begin("EPGTick")
+        defer { BrowsePerformance.end("EPGTick", interval) }
         guard let pid = activePlaylistId, isGuideEnabled else {
             if snapshot != nil { snapshot = nil }
             return
@@ -792,8 +794,7 @@ final class EPGStore: ObservableObject {
             refreshState[playlist.id] = .idle
             return
         } catch {
-            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            refreshState[playlist.id] = .failed(message)
+            refreshState[playlist.id] = .failed(NetworkErrorText.describe(error))
         }
         guard playlist.id == activePlaylistId else { return }
         // The attempt has an outcome, so an index that matches nothing now means

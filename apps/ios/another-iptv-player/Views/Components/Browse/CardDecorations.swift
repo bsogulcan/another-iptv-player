@@ -76,3 +76,17 @@ extension View {
             .frame(width: width, alignment: Alignment(horizontal: alignment, vertical: .top))
     }
 }
+
+/// Shelf artwork follows the window; its caption allowance follows Dynamic Type.
+private struct PosterShelfFrame: ViewModifier {
+    @Environment(\.posterMetrics) private var metrics
+    @ScaledMetric(relativeTo: .caption) private var captionBlock: CGFloat = 40
+
+    func body(content: Content) -> some View {
+        content.frame(height: metrics.shelfRowHeight(captionBlock: captionBlock))
+    }
+}
+
+extension View {
+    func posterShelfFrame() -> some View { modifier(PosterShelfFrame()) }
+}

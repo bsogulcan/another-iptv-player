@@ -113,11 +113,11 @@ struct PlaylistFormFailureTests {
     }
 
     @Test
-    func anUnknownErrorKeepsItsOwnDescription() {
+    func anUnknownErrorUsesTheAppsLocalizedDescription() {
         let error = CocoaError(.fileWriteOutOfSpace)
         let shown = failure(error)
         #expect(shown.title == L("onboarding.error.title.save"))
-        #expect(shown.message == error.localizedDescription)
+        #expect(shown.message == L("kit.error.generic"))
         #expect(shown.field == nil)
     }
 }

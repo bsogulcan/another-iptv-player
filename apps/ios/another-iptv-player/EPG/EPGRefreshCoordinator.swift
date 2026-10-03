@@ -39,6 +39,7 @@ nonisolated struct EPGRefreshCoordinator {
     @concurrent
     func refresh(playlist: Playlist,
                  progress: @escaping @MainActor (EPGRefreshPhase) -> Void) async throws -> RefreshResult {
+        try Task.checkCancellation()
         let candidates = try sourceCandidates(playlist: playlist)
         let sourceType: EPGSourceType = playlist.kind == .xtream ? .xtreamXMLTV : .m3uXMLTV
 
@@ -62,14 +63,20 @@ nonisolated struct EPGRefreshCoordinator {
             var lastError: Error?
             for url in candidates {
                 do {
+                    try Task.checkCancellation()
+                    // Validators belong to the exact source that produced the stored guide.
+                    // A changed URL or a fallback source needs a full response of its own.
+                    let matchingSource = prior?.url == url.absoluteString && prior?.lastSuccessAt != nil
                     let download = try await downloader.downloadGuide(
                         url: url,
-                        etag: prior?.etag,
-                        lastModified: prior?.lastModified,
+                        etag: matchingSource ? prior?.etag : nil,
+                        lastModified: matchingSource ? prior?.lastModified : nil,
                         username: playlist.username, password: playlist.password
                     )
                     switch download {
                     case .notModified:
+                        try Task.checkCancellation()
+                        guard matchingSource else { throw EPGError.server(304) }
                         try await recordSuccess(playlistId: playlist.id, sourceType: sourceType,
                                                 url: url, etag: prior?.etag, lastModified: prior?.lastModified,
                                                 programmeCount: prior?.programmeCount ?? 0,
@@ -79,6 +86,7 @@ nonisolated struct EPGRefreshCoordinator {
 
                     case .file(let xmlURL, let etag, let lastModified):
                         defer { try? FileManager.default.removeItem(at: xmlURL) }
+                        try Task.checkCancellation()
                         await progress(.parse)
                         let counts = try parseIntoDatabase(
                             fileURL: xmlURL, playlistId: playlist.id,
@@ -94,20 +102,30 @@ nonisolated struct EPGRefreshCoordinator {
                         return RefreshResult(programmeCount: counts.programmes,
                                              channelCount: counts.channels, notModified: false)
                     }
-                } catch is CancellationError {
-                    throw EPGError.cancelled
                 } catch {
+                    if Task.isCancelled || Self.isCancellation(error) { throw CancellationError() }
                     lastError = error
                     continue
                 }
             }
             throw lastError ?? EPGError.noSource
         } catch {
-            if !(error is CancellationError) {
-                await recordError(playlistId: playlist.id, message: (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
-            }
+            if Task.isCancelled || Self.isCancellation(error) { throw CancellationError() }
+            await recordError(playlistId: playlist.id, message: NetworkErrorText.describe(error))
             throw error
         }
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError || (error as? URLError)?.code == .cancelled { return true }
+        if let guideError = error as? EPGError {
+            switch guideError {
+            case .cancelled: return true
+            case .network(let underlying): return isCancellation(underlying)
+            default: break
+            }
+        }
+        return false
     }
 
     // MARK: - Source resolution
@@ -246,8 +264,15 @@ nonisolated struct EPGRefreshCoordinator {
             }
         )
 
-        _ = try parser.parse(fileURL: fileURL)
+        do {
+            _ = try parser.parse(fileURL: fileURL)
+        } catch {
+            // A failed database batch also aborts XMLParser; preserve the real cause.
+            if let writeError { throw writeError }
+            throw error
+        }
         if let writeError { throw writeError }
+        try Task.checkCancellation()
         try publishStagedGuide(playlistId: playlistId)
         return (programmeCount, channelCount)
     }

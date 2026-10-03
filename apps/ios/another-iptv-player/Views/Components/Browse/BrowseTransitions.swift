@@ -26,10 +26,21 @@ extension View {
     /// `posterZoomSource(id:in:)`. Apply it to the destination's root view.
     @ViewBuilder
     func posterZoomDestination<ID: Hashable>(id: ID, in namespace: Namespace.ID) -> some View {
-        if BrowseTransitions.usesZoom {
-            navigationTransition(.zoom(sourceID: id, in: namespace))
+        modifier(PosterZoomDestination(id: id, namespace: namespace))
+    }
+}
+
+private struct PosterZoomDestination<ID: Hashable>: ViewModifier {
+    let id: ID
+    let namespace: Namespace.ID
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if BrowseTransitions.usesZoom && !reduceMotion {
+            content.navigationTransition(.zoom(sourceID: id, in: namespace))
         } else {
-            self
+            content
         }
     }
 }

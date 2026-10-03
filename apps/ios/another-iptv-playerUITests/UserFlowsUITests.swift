@@ -898,3 +898,691 @@ final class BrowseBehaviourUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Watch Now"].exists, "The long press should not open the detail")
     }
 }
+
+@MainActor
+final class M3UFavoritesBrowseUITests: XCTestCase {
+    func test_favoriteChannelTapPresentsPlayer() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-UITestsStartPlaylist", "m3u",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        let favorites = app.buttons["Favorites"].firstMatch
+        XCTAssertTrue(favorites.waitForExistence(timeout: 8))
+        favorites.tap()
+        XCTAssertTrue(app.navigationBars["Favorites"].waitForExistence(timeout: 8))
+        let channel = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Harbor News")).firstMatch
+        XCTAssertTrue(channel.waitForExistence(timeout: 8))
+        channel.tap()
+        XCTAssertTrue(app.buttons["player.close"].waitForExistence(timeout: 10),
+                      "Selecting an M3U favorite should present the player")
+    }
+}
+
+@MainActor
+final class BrowseAccessibilityUITests: XCTestCase {
+    func test_movieGridExposesTitleRatingAndWatchProgress() {
+        checkMovieGrid(accessibilityTextSize: false)
+    }
+
+    func test_movieGridRemainsActionableAtLargestTextSize() {
+        checkMovieGrid(accessibilityTextSize: true)
+    }
+
+    private func checkMovieGrid(accessibilityTextSize: Bool) {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        if accessibilityTextSize {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        }
+        app.launch()
+        let movies = app.tabBars.buttons["Movies"]
+        XCTAssertTrue(movies.waitForExistence(timeout: 25))
+        movies.tap()
+        let category = app.buttons["Sci-Fi"].firstMatch
+        for _ in 0..<10 {
+            if category.exists && category.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(category.isHittable)
+        category.tap()
+        let card = app.buttons["card.vod.1002"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 8))
+        XCTAssertTrue(card.label.hasPrefix("Echoes of Tomorrow"), card.label)
+        XCTAssertTrue(card.label.contains("Rating"), card.label)
+        XCTAssertTrue(NSPredicate(format: "value CONTAINS %@", "40").evaluate(with: card),
+                      "The watched percentage should be exposed as the card's value")
+        card.tap()
+        let primary = app.buttons["detail.primaryAction"]
+        for _ in 0..<6 {
+            if primary.exists && primary.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(primary.isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = accessibilityTextSize ? "Detail-largest-text" : "Detail-default-text"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        if !accessibilityTextSize {
+            let poster = app.buttons["detail.poster"]
+            XCTAssertTrue(poster.isHittable)
+            poster.tap()
+            let close = app.buttons["artwork.close"]
+            XCTAssertTrue(close.waitForExistence(timeout: 5))
+            XCTAssertEqual(close.label, "Close")
+            close.tap()
+            XCTAssertTrue(primary.waitForExistence(timeout: 5))
+        }
+    }
+}
+
+@MainActor
+final class GuideAccessibilityUITests: XCTestCase {
+    func test_guideAndScheduleAtLargestTextSize() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-UITestsStartPlaylist", "m3u",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        let guide = app.buttons["TV Guide"].firstMatch
+        XCTAssertTrue(guide.waitForExistence(timeout: 8))
+        guide.tap()
+        let channel = app.staticTexts["Harbor News"].firstMatch
+        XCTAssertTrue(channel.waitForExistence(timeout: 15))
+        let grid = XCTAttachment(screenshot: app.screenshot())
+        grid.name = "Guide-largest-text"
+        grid.lifetime = .keepAlways
+        add(grid)
+        channel.press(forDuration: 1)
+        let schedule = app.buttons["Schedule"].firstMatch
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5))
+        schedule.tap()
+        XCTAssertTrue(app.navigationBars["Harbor News"].waitForExistence(timeout: 8))
+        let rows = app.cells
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 8))
+        let list = XCTAttachment(screenshot: app.screenshot())
+        list.name = "Schedule-largest-text"
+        list.lifetime = .keepAlways
+        add(list)
+        let programme = rows.buttons.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? rows.buttons.firstMatch
+        XCTAssertTrue(programme.isHittable)
+        programme.tap()
+        XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 5))
+    }
+}
+
+@MainActor
+final class SearchPickerAccessibilityUITests: XCTestCase {
+    private func launchLargestText() -> XCUIApplication {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Movies"].waitForExistence(timeout: 25))
+        return app
+    }
+
+    func test_searchResultOpensDetailAtLargestTextSize() {
+        let app = launchLargestText()
+        app.tabBars.buttons["Search"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 6))
+        field.tap()
+        field.typeText("Echoes\n")
+        let title = app.staticTexts["Echoes of Tomorrow"].firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 8))
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Search-largest-text"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        title.tap()
+        XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 8))
+    }
+
+    func test_categorySelectionAtLargestTextSize() {
+        let app = launchLargestText()
+        app.tabBars.buttons["Movies"].tap()
+        let picker = app.buttons["Jump to category"].firstMatch
+        XCTAssertTrue(picker.waitForExistence(timeout: 8))
+        picker.tap()
+        XCTAssertTrue(app.navigationBars["Categories"].waitForExistence(timeout: 5))
+        let field = app.searchFields.firstMatch
+        field.tap()
+        field.typeText("Sci-Fi\n")
+        let category = app.staticTexts["Sci-Fi"].firstMatch
+        XCTAssertTrue(category.waitForExistence(timeout: 6))
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Category-picker-largest-text"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        category.tap()
+        XCTAssertTrue(app.navigationBars["Categories"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Sci-Fi"].firstMatch.isHittable)
+    }
+}
+
+@MainActor
+final class SettingsAccessibilityUITests: XCTestCase {
+    func test_xtreamSettingsAtLargestTextSize() { checkSettings(m3u: false) }
+    func test_m3uSettingsAtLargestTextSize() { checkSettings(m3u: true) }
+
+    private func checkSettings(m3u: Bool) {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
+                                "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        if m3u { app.launchArguments += ["-UITestsStartPlaylist", "m3u"] }
+        app.launch()
+        let settings = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 25))
+        settings.tap()
+        capture(app, name: m3u ? "M3U-settings-top" : "Xtream-settings-top")
+        let language = app.staticTexts["App Language"].firstMatch
+        for _ in 0..<12 {
+            if language.exists && language.isHittable { break }
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48)))
+        }
+        XCTAssertTrue(language.isHittable)
+        capture(app, name: m3u ? "M3U-settings-language" : "Xtream-settings-language")
+        language.tap()
+        XCTAssertTrue(app.navigationBars["App Language"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
+        let info = app.staticTexts["Name"].firstMatch
+        for _ in 0..<35 {
+            if info.exists && info.frame.minY > 120 && info.frame.maxY < app.frame.height - 100 { break }
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48)))
+        }
+        XCTAssertTrue(info.exists && info.frame.minY > 120 && info.frame.maxY < app.frame.height - 100)
+        capture(app, name: m3u ? "M3U-settings-info" : "Xtream-settings-info")
+        if !m3u {
+            let password = app.buttons["Password"].firstMatch
+            for _ in 0..<6 {
+                if password.exists && password.isHittable { break }
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48)))
+            }
+            XCTAssertTrue(password.isHittable)
+            password.tap()
+            XCTAssertFalse((password.value as? String ?? "").isEmpty)
+            password.tap()
+            XCTAssertEqual(password.value as? String ?? "", "")
+        }
+    }
+
+    private func capture(_ app: XCUIApplication, name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}
+
+@MainActor
+final class GuideToolbarAccessibilityUITests: XCTestCase {
+    func test_guideActionsAtDefaultTextSize() { checkToolbar(largest: false) }
+    func test_guideActionsAtLargestTextSize() { checkToolbar(largest: true) }
+
+    private func checkToolbar(largest: Bool) {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-UITestsStartPlaylist", "m3u",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        if largest {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        }
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        app.buttons["TV Guide"].firstMatch.tap()
+        let channel = app.staticTexts["Harbor News"].firstMatch
+        XCTAssertTrue(channel.waitForExistence(timeout: 15))
+        let actions = app.buttons
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = largest ? "Guide-bottom-actions-largest-text" : "Guide-top-actions-default-text"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        for label in ["Categories", "Search", "Now", "Refresh guide"] {
+            let action = actions[label].firstMatch
+            XCTAssertTrue(action.isHittable, label)
+            if largest {
+                XCTAssertGreaterThan(action.frame.minY, app.frame.height / 2, label)
+            } else {
+                XCTAssertLessThan(action.frame.maxY, app.frame.height / 2, label)
+            }
+        }
+        actions["Categories"].firstMatch.tap()
+        app.buttons["Collapse all"].firstMatch.tap()
+        XCTAssertTrue(channel.waitForNonExistence(timeout: 5))
+        actions["Categories"].firstMatch.tap()
+        app.buttons["Expand all"].firstMatch.tap()
+        XCTAssertTrue(channel.waitForExistence(timeout: 5))
+        actions["Now"].firstMatch.tap()
+        actions["Search"].firstMatch.tap()
+        XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 5))
+    }
+}
+
+@MainActor
+final class BrowseRTLVerificationUITests: XCTestCase {
+    func test_arabicGuideOnEnglishDevice() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich", "-UITestsStartPlaylist", "m3u",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US", "-app.selected_language", "ar"]
+        app.launch()
+        let guide = app.buttons["دليل التلفزيون"].firstMatch
+        XCTAssertTrue(guide.waitForExistence(timeout: 25))
+        guide.tap()
+        let channel = app.staticTexts["Harbor News"].firstMatch
+        XCTAssertTrue(channel.waitForExistence(timeout: 15))
+        let image = XCTAttachment(screenshot: app.screenshot())
+        image.name = "Arabic-guide-English-device"
+        image.lifetime = .keepAlways
+        add(image)
+        XCTAssertGreaterThan(channel.frame.midX, app.frame.width / 2)
+        channel.press(forDuration: 1)
+        let schedule = app.buttons["جدول البرامج"].firstMatch
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5))
+        schedule.tap()
+        XCTAssertTrue(app.navigationBars["Harbor News"].waitForExistence(timeout: 5))
+        let scheduleImage = XCTAttachment(screenshot: app.screenshot())
+        scheduleImage.name = "Arabic-schedule-English-device"
+        scheduleImage.lifetime = .keepAlways
+        add(scheduleImage)
+    }
+}
+
+@MainActor
+final class BrowseDetailTimingUITests: XCTestCase {
+    func test_cachedMoviePushAndPopWallClock() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let movies = app.tabBars.buttons["Movies"]
+        XCTAssertTrue(movies.waitForExistence(timeout: 25))
+        movies.tap()
+        let category = app.buttons["Sci-Fi"].firstMatch
+        for _ in 0..<10 {
+            if category.exists && category.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(category.isHittable)
+        category.tap()
+        let card = app.buttons["card.vod.1002"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 8))
+        let options = XCTMeasureOptions()
+        options.iterationCount = 3
+        options.invocationOptions = [.manuallyStart, .manuallyStop]
+        measure(metrics: [XCTClockMetric()], options: options) {
+            startMeasuring()
+            card.tap()
+            XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 8))
+            app.navigationBars.buttons.firstMatch.tap()
+            XCTAssertTrue(card.waitForExistence(timeout: 8))
+            stopMeasuring()
+        }
+    }
+}
+
+@MainActor
+final class BrowseScaleVerificationUITests: XCTestCase {
+    func test_largeCatalogJumpDetailAndReturn() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsCatalogScale", "200",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let movies = app.buttons["Movies"].firstMatch
+        XCTAssertTrue(movies.waitForExistence(timeout: 120))
+        movies.tap()
+        let picker = app.buttons["Jump to category"].firstMatch
+        XCTAssertTrue(picker.waitForExistence(timeout: 30))
+        picker.tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 8))
+        field.tap()
+        field.typeText("Movies Canyon 215\n")
+        let category = app.cells.buttons["Movies Canyon 215"].firstMatch
+        XCTAssertTrue(category.waitForExistence(timeout: 10))
+        category.tap()
+        XCTAssertTrue(app.navigationBars["Categories"].waitForNonExistence(timeout: 8))
+        let header = app.buttons["Movies Canyon 215"].firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 10))
+        XCTAssertTrue(header.isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "240k-catalog-category-jump"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        header.tap()
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "card.vod."))
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        app.swipeUp()
+        let card = cards.allElementsBoundByIndex.first { $0.isHittable }
+        XCTAssertNotNil(card)
+        guard let card else { return }
+        let identifier = card.identifier
+        let originalY = card.frame.midY
+        card.tap()
+        XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 10))
+        app.navigationBars.buttons.firstMatch.tap()
+        let returned = app.buttons[identifier].firstMatch
+        XCTAssertTrue(returned.waitForExistence(timeout: 8))
+        XCTAssertTrue(returned.isHittable)
+        XCTAssertEqual(returned.frame.midY, originalY, accuracy: 5)
+    }
+}
+
+@MainActor
+final class BrowseWideLayoutUITests: XCTestCase {
+    func test_detailAndFavoritesAcrossOrientations() {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let movies = app.buttons["Movies"].firstMatch
+        XCTAssertTrue(movies.waitForExistence(timeout: 30))
+        movies.tap()
+        let favorite = app.buttons["star.fill"].firstMatch
+        XCTAssertTrue(favorite.waitForExistence(timeout: 8))
+        favorite.tap()
+        let picker = app.segmentedControls.firstMatch
+        XCTAssertTrue(picker.waitForExistence(timeout: 8))
+        XCTAssertLessThanOrEqual(picker.frame.width, 421)
+        capture(app, "Wide-favorites-portrait")
+        rotate(.landscapeLeft, app: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: 8))
+        XCTAssertLessThanOrEqual(picker.frame.width, 421)
+        capture(app, "Wide-favorites-landscape")
+        let card = app.buttons["card.vod.1001"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10))
+        card.tap()
+        XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 10))
+        capture(app, "Wide-movie-detail-landscape")
+        rotate(.portrait, app: app)
+        XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 8))
+        capture(app, "Wide-movie-detail-portrait")
+    }
+
+    private func rotate(_ orientation: UIDeviceOrientation, app: XCUIApplication) {
+        XCUIDevice.shared.orientation = orientation
+        let landscape = orientation.isLandscape
+        let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            let frame = app.windows.firstMatch.frame
+            return landscape ? frame.width > frame.height : frame.height > frame.width
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [settled], timeout: 8), .completed)
+    }
+
+    private func capture(_ app: XCUIApplication, _ name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}
+
+@MainActor
+final class BrowseShelfRetentionUITests: XCTestCase {
+    func test_shelfOffsetSurvivesDistantCategoryJump() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsCatalogScale", "200",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let movies = app.buttons["Movies"].firstMatch
+        XCTAssertTrue(movies.waitForExistence(timeout: 120))
+        movies.tap()
+        jump(to: "Movies River 1", app: app)
+        let row = shelf(below: "home.shelf.header.vod-cat-0", app: app)
+        row.swipeLeft()
+        row.swipeLeft()
+        let before = firstVisibleCard(in: row)
+        XCTAssertNotNil(before)
+        guard let before else { return }
+        let id = before.identifier
+        jump(to: "Movies Soldier 40", app: app)
+        jump(to: "Movies River 1", app: app)
+        let returned = shelf(below: "home.shelf.header.vod-cat-0", app: app)
+        let after = firstVisibleCard(in: returned)
+        XCTAssertEqual(after?.identifier, id, "The category shelf must retain its horizontal anchor")
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Shelf-return-after-40-category-jump"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
+    func test_liveShelfOffsetSurvivesDistantCategoryJump() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsCatalogScale", "200",
+                                "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let live = app.buttons["Live TV"].firstMatch
+        XCTAssertTrue(live.waitForExistence(timeout: 120))
+        live.tap()
+        jump(to: "Channels River 1", app: app)
+        let row = shelf(below: "home.shelf.header.live-cat-0", app: app)
+        row.swipeLeft()
+        row.swipeLeft()
+        let before = firstVisibleCard(in: row, prefix: "card.live.")
+        XCTAssertNotNil(before)
+        guard let before else { return }
+        let id = before.identifier
+        jump(to: "Channels Soldier 40", app: app)
+        jump(to: "Channels River 1", app: app)
+        let returned = shelf(below: "home.shelf.header.live-cat-0", app: app)
+        XCTAssertEqual(firstVisibleCard(in: returned, prefix: "card.live.")?.identifier, id)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Live-shelf-return-after-40-category-jump"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+    }
+
+    private func firstVisibleCard(in row: XCUIElement, prefix: String = "card.vod.") -> XCUIElement? {
+        let viewport = row.frame
+        return row.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", prefix))
+            .allElementsBoundByIndex.first { card in
+                let frame = card.frame
+                // Offscreen lazy cells can have no activation point. Query hittability
+                // only after excluding those cells by their visible intersection.
+                return frame.width > 0 && frame.intersection(viewport).width > frame.width / 2
+                    && card.isHittable
+            }
+    }
+
+    private func jump(to name: String, app: XCUIApplication) {
+        app.buttons["Jump to category"].firstMatch.tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 8))
+        field.tap()
+        field.typeText(name + "\n")
+        let result = app.cells.buttons[name].firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 8))
+        result.tap()
+        XCTAssertTrue(result.waitForNonExistence(timeout: 8), "The picker row must leave the hierarchy before shelf gestures")
+        XCTAssertTrue(app.navigationBars["Categories"].waitForNonExistence(timeout: 8))
+    }
+
+    private func shelf(below headerID: String, app: XCUIApplication) -> XCUIElement {
+        let header = app.buttons[headerID].firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 8))
+        let y = header.frame.maxY
+        let row = app.scrollViews.allElementsBoundByIndex.first {
+            $0.frame.minY >= y - 2 && $0.frame.minY < y + 40 && $0.frame.height < 400
+        }
+        XCTAssertNotNil(row)
+        return row ?? app.scrollViews.firstMatch
+    }
+}
+
+
+/// iPhone-only relative simulator measurements. Clock values include XCUI dispatch
+/// and idling; they are not animation duration or a physical-device frame budget.
+@MainActor
+final class BrowsePerformanceUITests: XCTestCase {
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        guard UIDevice.current.userInterfaceIdiom == .phone else {
+            throw XCTSkip("These tab-bar measurements target iPhone; iPad has a separate layout test.")
+        }
+        XCUIDevice.shared.orientation = .portrait
+        app = XCUIApplication()
+        app.launchArguments = ["-UITests", "1", "-UITestsCatalogScale", "200",
+                               "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+    }
+
+    override func tearDown() {
+        app?.terminate()
+        app = nil
+        super.tearDown()
+    }
+
+    private var options: XCTMeasureOptions {
+        let result = XCTMeasureOptions()
+        result.iterationCount = 3
+        result.invocationOptions = [.manuallyStart, .manuallyStop]
+        return result
+    }
+
+    private var interactionMetrics: [XCTMetric] {
+        var metrics: [XCTMetric] = [XCTClockMetric(), XCTCPUMetric(application: app),
+                                    XCTMemoryMetric(application: app)]
+        if #available(iOS 26.0, *) { metrics.append(XCTHitchMetric(application: app)) }
+        return metrics
+    }
+
+    private func launchMovies() {
+        app.launch()
+        let movies = app.tabBars.buttons["Movies"]
+        XCTAssertTrue(movies.waitForExistence(timeout: 120))
+        movies.tap()
+        XCTAssertTrue(app.buttons["home.shelf.header.vod-cat-0"].waitForExistence(timeout: 30))
+    }
+
+    private func fling(up: Bool) {
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: up ? 0.75 : 0.30))
+        let to = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: up ? 0.25 : 0.80))
+        from.press(forDuration: 0.02, thenDragTo: to, withVelocity: .fast, thenHoldForDuration: 0)
+    }
+
+    func test_p01_processLaunchToFirstShelf() {
+        // Seed outside the measurement. Process-cold launches retain database/disk caches.
+        launchMovies()
+        app.terminate()
+        measure(metrics: [XCTClockMetric(), XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
+            startMeasuring()
+            app.launch()
+            let movies = app.tabBars.buttons["Movies"]
+            XCTAssertTrue(movies.waitForExistence(timeout: 60))
+            movies.tap()
+            XCTAssertTrue(app.buttons["home.shelf.header.vod-cat-0"].waitForExistence(timeout: 30))
+            stopMeasuring()
+            app.terminate()
+        }
+    }
+
+    func test_p02_moviesHomeFling() {
+        launchMovies()
+        measure(metrics: interactionMetrics, options: options) {
+            startMeasuring()
+            for _ in 0..<3 { fling(up: true) }
+            stopMeasuring()
+            // Swiping past the top triggers pull-to-refresh. Reset outside the
+            // measured window so the next sample never waits on a refresh alert.
+            app.terminate()
+            launchMovies()
+        }
+    }
+
+    func test_p03_allMoviesGridFling() {
+        launchMovies()
+        app.buttons["All Movies"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["All Movies"].waitForExistence(timeout: 20))
+        measure(metrics: interactionMetrics, options: options) {
+            startMeasuring()
+            for _ in 0..<5 { fling(up: true) }
+            stopMeasuring()
+            for _ in 0..<6 { fling(up: false) }
+        }
+    }
+
+    func test_p04_warmContentTabSwitches() {
+        launchMovies()
+        let names = ["Live TV", "Series", "Movies"]
+        for name in names { app.tabBars.buttons[name].tap() }
+        measure(metrics: interactionMetrics, options: options) {
+            startMeasuring()
+            for name in names { app.tabBars.buttons[name].tap() }
+            stopMeasuring()
+        }
+    }
+
+    func test_p05_searchTypingToResults() {
+        launchMovies()
+        app.tabBars.buttons["Search"].tap()
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.tap()
+        let results = app.descendants(matching: .any).matching(identifier: "search.results").firstMatch
+        // Intentionally no CPU metric: typeText includes runner-driven accessibility traffic.
+        measure(metrics: [XCTClockMetric()], options: options) {
+            startMeasuring()
+            field.typeText("the")
+            XCTAssertTrue(results.waitForExistence(timeout: 15))
+            stopMeasuring()
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 3))
+            XCTAssertTrue(results.waitForNonExistence(timeout: 8))
+        }
+    }
+
+    func test_p06_movieDetailPushPop() {
+        launchMovies()
+        app.buttons["home.shelf.header.vod-cat-0"].tap()
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "card.vod."))
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        let card = cards.firstMatch
+        measure(metrics: interactionMetrics, options: options) {
+            startMeasuring()
+            card.tap()
+            XCTAssertTrue(app.buttons["detail.primaryAction"].waitForExistence(timeout: 10))
+            app.navigationBars.buttons.firstMatch.tap()
+            XCTAssertTrue(card.waitForExistence(timeout: 10))
+            stopMeasuring()
+        }
+    }
+
+    func test_p07_openLargeGuide() {
+        launchMovies()
+        app.tabBars.buttons["Live TV"].tap()
+        let guide = app.buttons["TV Guide"].firstMatch
+        XCTAssertTrue(guide.waitForExistence(timeout: 15))
+        let grid = app.descendants(matching: .any).matching(identifier: "epg.guide.grid").firstMatch
+        measure(metrics: interactionMetrics, options: options) {
+            startMeasuring()
+            guide.tap()
+            XCTAssertTrue(grid.waitForExistence(timeout: 30))
+            stopMeasuring()
+            app.navigationBars.buttons.firstMatch.tap()
+            XCTAssertTrue(guide.waitForExistence(timeout: 10))
+        }
+    }
+}

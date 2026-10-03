@@ -583,3 +583,7 @@
 "kit.error.connection_failed" = "Verbindung zum Server fehlgeschlagen (Fehler %ld).";
 "kit.error.file_unreadable" = "Die Datei konnte nicht gelesen werden.";
 "kit.error.generic" = "Etwas ist schiefgelaufen.";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "Alle Kategorien sind ausgeblendet";
+"guide.all_hidden.message" = "Blende eine Kategorie in der Kategorieauswahl ein, um ihre Sender im TV-Programm zu sehen.";

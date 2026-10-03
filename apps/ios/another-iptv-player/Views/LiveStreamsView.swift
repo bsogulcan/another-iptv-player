@@ -256,6 +256,10 @@ struct LiveStreamsView: View {
         )
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
@@ -530,6 +534,7 @@ struct LiveCategoryShelfRow: View, Equatable {
             ShelfHeader(category.name) {
                 LiveCategoryDetailView(playlist: playlist, category: category)
             }
+            .accessibilityIdentifier("home.shelf.header.\(category.id)")
             .contextMenu {
                 HideCategoryMenuButton(categoryId: category.id, type: "live", playlistId: playlist.id)
             }
@@ -783,6 +788,10 @@ struct LiveCategoryDetailView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("live.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }
@@ -1202,6 +1211,10 @@ struct AllLiveView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("live.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }

@@ -139,6 +139,7 @@ final class XtreamFavoriteStore: ObservableObject {
     private(set) var trackedPlaylistId: UUID?
     /// Whether `ids` has been read from the database for the tracked playlist.
     private var isLoaded = false
+    private(set) var observationFailed = false
 
     /// Counts `track` calls that changed the playlist, so work that was started
     /// for an earlier playlist can tell it is no longer wanted.
@@ -162,11 +163,13 @@ final class XtreamFavoriteStore: ObservableObject {
     }
 
     /// Starts following a playlist's favourites; call it when the playlist becomes
-    /// the active one. Calling it again for the same playlist does nothing.
+    /// the active one. Repeating the same playlist only restarts a failed observation.
     func track(playlistId: UUID) {
-        guard trackedPlaylistId != playlistId else { return }
+        guard trackedPlaylistId != playlistId || observationFailed else { return }
         trackedPlaylistId = playlistId
         session += 1
+        let currentSession = session
+        observationFailed = false
         isLoaded = false
         pendingWrites = 0
         needsReload = false
@@ -182,8 +185,11 @@ final class XtreamFavoriteStore: ObservableObject {
             .removeDuplicates()
             .publisher(in: database.reader)
             .sink(
-                receiveCompletion: { completion in
+                receiveCompletion: { [weak self] completion in
+                    guard let self, self.session == currentSession else { return }
                     if case .failure(let error) = completion {
+                        self.observationFailed = true
+                        self.isLoaded = false
                         Log.error("Favorites", "observation ended: \(error)")
                     }
                 },

@@ -14,13 +14,14 @@ struct MovieDetailView: View {
     /// Message of the last metadata request that failed; nil while one runs.
     @State private var errorMessage: String?
     /// Counts metadata requests, so that one that was overtaken leaves the state alone.
+    @State private var optimisticMetadata: DBVODStream?
     @State private var fetchGeneration = 0
     @State private var fetchPhase: FetchPhase = .pending
     @State private var enlargedImage: IdentifiableURL?
     @State private var showNavTitle: Bool = false
     @State private var pendingMovieDetail: DBVODStream?
     /// What the star shows between a tap and the database catching up with it.
-    @State private var favoriteOverride: Bool?
+    @ObservedObject private var favoriteStore = XtreamFavoriteStore.shared
     @State private var favoriteTapCount = 0
     @Environment(\.playerOverlayController) private var playerOverlay
     @Query<VODByIDRequest> private var movieRecord: DBVODStream?
@@ -41,11 +42,12 @@ struct MovieDetailView: View {
     }
 
     private var currentMovie: DBVODStream {
-        movieRecord ?? movie
+        if let movieRecord, movieRecord.metadataLoaded { return movieRecord }
+        return optimisticMetadata ?? movieRecord ?? movie
     }
 
     private var shownFavorite: Bool {
-        favoriteOverride ?? isFavorite
+        favoriteStore.favoriteState(movie.streamId, type: "vod", playlistId: playlist.id) ?? isFavorite
     }
 
     /// Plot, genre, cast, backdrop and trailer come from a request of their own. The
@@ -62,7 +64,7 @@ struct MovieDetailView: View {
     /// Where the metadata request of this screen stands. The row alone cannot say
     /// whether something is loading: a catalog refresh can rewrite it as "not loaded"
     /// while the screen is open, with no request running.
-    enum FetchPhase: Equatable {
+    nonisolated enum FetchPhase: Equatable {
         /// The screen's task has not decided yet whether to ask.
         case pending
         case running
@@ -121,6 +123,7 @@ struct MovieDetailView: View {
 
     var body: some View {
         contentScroll
+            .browseDetailPresence(playlistId: playlist.id, type: "vod", streamId: movie.streamId)
             // Always the name: it is what the back button of a screen pushed from here
             // and VoiceOver read. The bar shows the item below instead, which can fade.
             .navigationTitle(currentMovie.name)
@@ -147,9 +150,7 @@ struct MovieDetailView: View {
             // Keyed on the tap, not on the star's value, which also changes when the
             // favourite is toggled somewhere else.
             .sensoryFeedback(.impact(weight: .light), trigger: favoriteTapCount)
-            .onChange(of: isFavorite) { _, stored in
-                if stored == favoriteOverride { favoriteOverride = nil }
-            }
+
             .fullScreenCover(item: $enlargedImage) { wrapper in
                 // The viewer opens on the poster that is already on screen and sharpens
                 // it, instead of starting with a spinner on black.
@@ -182,6 +183,8 @@ struct MovieDetailView: View {
                 guard !Task.isCancelled else { return }
                 if !(stored?.metadataLoaded ?? movie.metadataLoaded) {
                     await fetchMovieInfo()
+                } else {
+                    fetchPhase = .idle
                 }
             }
     }
@@ -384,42 +387,26 @@ struct MovieDetailView: View {
         // starts a request of its own, so two can overlap; the later one owns the state.
         fetchGeneration += 1
         let generation = fetchGeneration
+        fetchPhase = .running
+        defer { if generation == fetchGeneration { fetchPhase = .idle } }
         errorMessage = nil
         let client = XtreamAPIClient(playlist: playlist)
         do {
             let response = try await client.getVODInfo(vodId: movie.streamId)
 
-            // @Query destekli currentMovie'yi MAIN actor'da kopyala: write closure'ı
-            // GRDB'nin arka plan writer kuyruğunda koşar ve SwiftUI property-wrapper
-            // state'ini oradan okumak veri yarışıdır.
-            let base = await MainActor.run { currentMovie }
-            // The page follows the stored row through its query. The catalog held in
-            // memory is left alone: patching it copied the whole film list on the main
-            // actor and re-rendered every screen that observes the store.
-            try await AppDatabase.shared.write { db in
-                var updatedMovie = base
-                updatedMovie.metadataLoaded = true
-                if let i = response.info {
-                    updatedMovie.cast = i.cast
-                    updatedMovie.director = i.director
-                    updatedMovie.genre = i.genre
-                    updatedMovie.plot = i.plot
-                    updatedMovie.releaseDate = i.releaseDate
-                    updatedMovie.rating = i.rating
-                    updatedMovie.backdropPath = i.backdropPath?.first
-                    updatedMovie.youtubeTrailer = i.youtubeTrailer
-                    updatedMovie.duration = i.duration
-                    updatedMovie.tmdbId = i.tmdbId
-                    updatedMovie.kinopoiskURL = i.kinopoiskURL
-
-                    if let rString = i.rating, let rDouble = Double(rString) {
-                         updatedMovie.rating5Based = rDouble / 2.0
-                    }
-                }
-                try updatedMovie.update(db)
+            try Task.checkCancellation()
+            guard generation == fetchGeneration else { return }
+            optimisticMetadata = DetailMetadata.movie(currentMovie, response: response)
+            let streamId = movie.streamId
+            let playlistId = playlist.id
+            let stored = try await AppDatabase.shared.write { db in
+                try DetailMetadata.storeMovie(response, streamId: streamId, playlistId: playlistId, db: db)
             }
+            guard generation == fetchGeneration else { return }
+            if !stored { optimisticMetadata = nil }
         } catch {
             guard generation == fetchGeneration else { return }
+            optimisticMetadata = nil
             // Leaving the screen cuts the request off. That is not a failure to show:
             // the task asks again when the screen comes back.
             if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled {
@@ -431,38 +418,9 @@ struct MovieDetailView: View {
 
     private func toggleFavorite() {
         let target = !shownFavorite
-        let streamId = movie.streamId
-        let playlistId = playlist.id
         favoriteTapCount += 1
-        let tap = favoriteTapCount
-        // Shown at once; the write and its observation follow. A busy writer (a catalog
-        // refresh) would otherwise leave the star unchanged for as long as it runs.
-        withAnimation(.snappy(duration: 0.25)) { favoriteOverride = target }
         Task {
-            do {
-                // The target state is written, not a toggle of whatever is stored: a
-                // second tap that overtakes the first write must not insert the same
-                // primary key twice.
-                try await AppDatabase.shared.write { db in
-                    if target {
-                        try DBFavorite(streamId: streamId, playlistId: playlistId, type: "vod")
-                            .insert(db, onConflict: .ignore)
-                    } else {
-                        try DBFavorite
-                            .filter(Column("streamId") == streamId && Column("playlistId") == playlistId && Column("type") == "vod")
-                            .deleteAll(db)
-                    }
-                }
-                // The observation normally lands after this point and drops the
-                // override itself. When the stored value already equals the target
-                // nothing will be delivered, so it is dropped here.
-                if tap == favoriteTapCount, isFavorite == target { favoriteOverride = nil }
-            } catch {
-                Log.error("MovieDetail", "Favourite write failed: \(error)")
-                if tap == favoriteTapCount {
-                    withAnimation(.snappy(duration: 0.25)) { favoriteOverride = nil }
-                }
-            }
+            await favoriteStore.setFavorite(target, streamId: movie.streamId, type: "vod", playlistId: playlist.id)
         }
     }
 

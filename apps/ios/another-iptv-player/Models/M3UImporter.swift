@@ -37,9 +37,8 @@ enum M3UImporter {
         // per channel is the slow part of a large import, and while it ran inside
         // the write it kept the single database writer from everything else (a
         // favourite, a download, the player's progress).
-        let rows = await Task.detached(priority: .userInitiated) {
-            makeRows(playlistId: pid, channels: channels)
-        }.value
+        let rows = try await prepareRows(playlistId: pid, channels: channels)
+        try Task.checkCancellation()
         try await database.write { db in
             var stored = try Playlist.fetchOne(db, key: pid) ?? playlist
             stored.name = playlist.name
@@ -57,9 +56,15 @@ enum M3UImporter {
         }
     }
 
+    /// Keeps hashing off the caller's actor while inheriting its cancellation.
+    @concurrent
+    private static func prepareRows(playlistId: UUID, channels: [ParsedM3UChannel]) async throws -> [DBM3UChannel] {
+        try makeRows(playlistId: playlistId, channels: channels)
+    }
+
     /// The rows of an import, in playlist order (`sortIndex` is the position).
-    /// `nonisolated`: runs in the detached task of `replace`.
-    nonisolated static func makeRows(playlistId pid: UUID, channels: [ParsedM3UChannel]) -> [DBM3UChannel] {
+    nonisolated static func makeRows(playlistId pid: UUID, channels: [ParsedM3UChannel]) throws -> [DBM3UChannel] {
+        try Task.checkCancellation()
         // Aynı URL birden çok grupta geçebilir ("ALL" + ülke grubu gibi) — eskiden
         // INSERT OR REPLACE hepsini tek satıra indiriyordu ve kanallar gruplardan
         // sessizce kayboluyordu. İlk geçiş URL bazlı eski kimliğini korur (favoriler
@@ -69,6 +74,7 @@ enum M3UImporter {
         var rows: [DBM3UChannel] = []
         rows.reserveCapacity(channels.count)
         for (index, ch) in channels.enumerated() {
+            if index.isMultiple(of: 2048) { try Task.checkCancellation() }
             let trimmedURL = ch.url.trimmingCharacters(in: .whitespacesAndNewlines)
             let occurrence = urlOccurrences[trimmedURL, default: 0]
             urlOccurrences[trimmedURL] = occurrence + 1

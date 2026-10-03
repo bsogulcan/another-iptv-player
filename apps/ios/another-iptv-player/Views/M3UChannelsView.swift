@@ -78,7 +78,7 @@ struct M3UChannelsView: View {
         // Once per pass: the hidden set is read from UserDefaults.
         let shelfGroups = visibleShelfGroups
         Group {
-            if !isStoreCurrent || (store.isLoading && store.channels.isEmpty) {
+            if !isStoreCurrent || (store.isLoading && store.channels.isEmpty && !isRefreshing) {
                 // Also the frame before the dashboard has asked the store for this
                 // playlist: nothing is known yet, which is not the same as "no channels".
                 VStack(spacing: 16) {
@@ -282,7 +282,11 @@ struct M3UChannelsView: View {
         }
     }
 
+    @State private var isRefreshing = false
+
     private func refreshFromPull() async {
+        isRefreshing = true
+        defer { isRefreshing = false }
         // Bağımsız Task: refreshable iptali isteklere yayılmasın (bkz. LiveStreamsView).
         let work = Task { await Self.refreshCatalog(for: playlist) }
         await work.value
@@ -413,7 +417,11 @@ nonisolated enum M3UGroupSearch {
                 hitsByGroup[group] = channels
                 continue
             }
-            let hits = channels.filter { prepared.matches($0.name) }
+            var hits: [DBM3UChannel] = []
+            for (index, channel) in channels.enumerated() {
+                if index.isMultiple(of: 2048), Task.isCancelled { break }
+                if prepared.matches(channel.name) { hits.append(channel) }
+            }
             if !hits.isEmpty {
                 hitGroups.append(group)
                 hitsByGroup[group] = hits
@@ -463,7 +471,7 @@ struct M3UUnavailableHistoryAlert: ViewModifier {
             ),
             presenting: item
         ) { item in
-            Button(L("m3u.history.remove"), role: .destructive) {
+            Button(L("history.item.remove"), role: .destructive) {
                 remove(item)
             }
             Button(L("common.cancel"), role: .cancel) {}
@@ -474,16 +482,7 @@ struct M3UUnavailableHistoryAlert: ViewModifier {
 
     /// The card disappears through the history query that drew it.
     private func remove(_ item: DBWatchHistory) {
-        let id = item.id
-        Task {
-            do {
-                try await AppDatabase.shared.write { db in
-                    _ = try DBWatchHistory.deleteOne(db, key: id)
-                }
-            } catch {
-                Log.error("M3UHistory", "remove failed: \(error.localizedDescription)")
-            }
-        }
+        Task { await DBWatchHistory.remove(id: item.id, from: .shared) }
     }
 }
 
@@ -712,6 +711,12 @@ struct M3UChannelCard: View {
         }
         .buttonStyle(.cardPress)
         .accessibilityIdentifier("card.m3u.\(channel.id)")
+        .accessibilityActions {
+            M3UFavoriteMenuButton(channel: channel)
+            if epgGuideEnabled, let onScheduleRequested {
+                ScheduleMenuButton { onScheduleRequested(channel) }
+            }
+        }
         .cardContextMenuShape(cornerRadius: BrowseMetrics.tileCornerRadius)
         .contextMenu {
             switch menu {
@@ -833,6 +838,7 @@ struct M3UGroupDetailView: View {
     var body: some View {
         M3UGroupGridContent(
             items: items,
+            contentID: .catalog(playlist.id, appliedSearch?.revision ?? store.revision, appliedSearch?.query ?? ""),
             isSearchResult: appliedSearch != nil,
             onChannelSelected: { channel in
                 present(channel)
@@ -894,7 +900,14 @@ struct M3UGroupDetailView: View {
 }
 
 struct M3UGroupGridContent: View, Equatable {
+    enum ContentID: Equatable {
+        case catalog(UUID, Int, String)
+        case favorites(UUID, Int)
+    }
+
     let items: [DBM3UChannel]
+    /// Identifies the applied result without comparing every row on the main actor.
+    let contentID: ContentID
     /// `items` is what a search left over, so an empty list means "no results" and not
     /// "no channels".
     var isSearchResult: Bool = false
@@ -908,7 +921,8 @@ struct M3UGroupGridContent: View, Equatable {
     /// normally. The closure may be the one of an earlier pass: callers read their
     /// current list through @State when it runs.
     static func == (lhs: M3UGroupGridContent, rhs: M3UGroupGridContent) -> Bool {
-        lhs.isSearchResult == rhs.isSearchResult
+        lhs.contentID == rhs.contentID
+            && lhs.isSearchResult == rhs.isSearchResult
             && lhs.menu == rhs.menu
             && lhs.items.count == rhs.items.count
             && lhs.items.first?.id == rhs.items.first?.id

@@ -252,6 +252,7 @@ struct SeriesView: View {
             // The shelf keeps its place while the series are read, so that it fills in
             // like the category shelves instead of pushing them down afterwards.
             result.isRecentsLoading = shelf.isEmpty && isCatalogLoading
+                && RecentlyAddedReservation.isReserved(playlistId: playlist.id, type: "series")
         }
         return result
     }
@@ -377,6 +378,10 @@ struct SeriesView: View {
         )
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
@@ -400,6 +405,7 @@ struct SeriesView: View {
 
     /// Pushes the page of `series` unless the page pushed last is already that series'.
     private func showDetail(_ series: DBSeries) {
+        guard !BrowseDetailPresence.shared.contains(.init(playlistId: playlist.id, type: "series", streamId: series.seriesId)) else { return }
         guard pendingSeriesDetail?.seriesId != series.seriesId else { return }
         pendingSeriesDetail = series
     }
@@ -472,12 +478,18 @@ struct SeriesView: View {
     /// The key is marked as applied only once its result is stored: a run that was
     /// cancelled on the way must be repeated when the screen comes back.
     private func recompute(for key: ShelfKey) async {
+        let interval = BrowsePerformance.begin("SeriesHomeRecompute")
+        defer { BrowsePerformance.end("SeriesHomeRecompute", interval) }
         guard key != appliedKey else { return }
         guard key.playlistId == key.activePlaylistId else {
             if searchShelves != nil { searchShelves = nil }
             if catalogRecents != nil { catalogRecents = nil }
             appliedKey = key
             return
+        }
+        if key.streamsLoaded {
+            RecentlyAddedReservation.remember(!contentStore.recentSeriesCandidates.isEmpty,
+                                              playlistId: playlist.id, type: "series")
         }
         let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: "series")
         let categories = contentStore.seriesCategories.filter { !hidden.contains($0.id) }
@@ -569,7 +581,7 @@ private struct SeriesShelfSkeleton: View {
             .padding(.horizontal, 16)
         }
         .scrollDisabled(true)
-        .frame(height: posterMetrics.shelfRowTotalHeight)
+        .posterShelfFrame()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -621,7 +633,7 @@ struct RecentlyAddedSeriesShelf: View, Equatable {
                     }
                     .padding(.horizontal, 16)
                 }
-                .frame(height: posterMetrics.shelfRowTotalHeight)
+                .posterShelfFrame()
             }
         }
         .padding(.vertical, 6)
@@ -674,6 +686,7 @@ struct SeriesCategoryShelfRow: View, Equatable {
             ShelfHeader(category.name) {
                 SeriesCategoryDetailView(playlist: playlist, category: category)
             }
+            .accessibilityIdentifier("home.shelf.header.\(category.id)")
             .contextMenu {
                 HideCategoryMenuButton(categoryId: category.id, type: "series", playlistId: playlist.id)
             }
@@ -709,7 +722,7 @@ struct SeriesCategoryShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, 16)
                 }
-                .frame(height: posterMetrics.shelfRowTotalHeight)
+                .posterShelfFrame()
                 .onAppear { movePrefetch(to: headPrefetch) }
                 // A shelf that was flung past must not keep downloading covers nobody
                 // will see.
@@ -777,7 +790,7 @@ struct SeriesCard: View {
     var zoomNamespace: Namespace.ID? = nil
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 4) {
             artwork
                 .cardHover(cornerRadius: BrowseMetrics.posterCornerRadius)
 
@@ -786,12 +799,14 @@ struct SeriesCard: View {
 
             if let catName = categoryName {
                 Text(catName)
-                    .font(.system(size: 10))
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                     .frame(width: posterWidth, alignment: .leading)
             }
         }
+        .posterAccessibility(title: stream.name, rating: stream.rating,
+                             category: categoryName, progress: watchProgress)
     }
 
     @ViewBuilder
@@ -814,20 +829,14 @@ struct SeriesCard: View {
                 loadProfile: imageLoadProfile
             )
 
-            if let progress = watchProgress, progress > 0 {
-                Rectangle()
-                    .fill(Color.accentColor)
-                    .frame(height: 4)
-                    .frame(width: posterWidth * progress)
-                    .frame(maxWidth: posterWidth, alignment: .leading)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(2)
-                    .padding(.bottom, 2)
-                    .padding(.horizontal, 4)
-            }
 
             PosterRatingBadge(rating: stream.rating)
                 .padding(6)
+        }
+        .overlay(alignment: .bottom) {
+            if let progress = watchProgress, progress > 0 {
+                CardProgressBar(fraction: progress).padding(6)
+            }
         }
     }
 }
@@ -899,6 +908,10 @@ struct SeriesCategoryDetailView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("series.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }
@@ -1028,6 +1041,8 @@ struct SeriesCategoryContent: View, Equatable {
     }
 
     private func recompute(for key: InputKey) async {
+        let interval = BrowsePerformance.begin("SeriesGridRecompute")
+        defer { BrowsePerformance.end("SeriesGridRecompute", interval) }
         let source = items
         let isApplied = key == appliedKey
         if !isApplied, key.isIdentity {
@@ -1281,6 +1296,10 @@ struct AllSeriesView: View {
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: L("series.search_placeholder"))
         .onChange(of: searchText) { _, new in
             debounceTask?.cancel()
+            if new.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                debouncedQuery = ""
+                return
+            }
             debounceTask = Task {
                 try? await Task.sleep(nanoseconds: 280_000_000)
                 guard !Task.isCancelled else { return }
@@ -1342,6 +1361,7 @@ struct SeriesDetailView: View {
     @State private var seasonsPhase: SeasonsPhase = .idle
     /// Bumped by every `get_series_info` request, so that only the latest one settles `seasonsPhase`.
     @State private var seasonsRequestToken = 0
+    @State private var optimisticMetadata: DBSeries?
     @State private var selectedSeasonId: String?
     /// Season of the episode the series' newest history row belongs to, as last resolved.
     /// That row is what playback writes, so a change here means playback moved on.
@@ -1349,7 +1369,7 @@ struct SeriesDetailView: View {
     @State private var enlargedImage: IdentifiableURL?
     @State private var showNavTitle: Bool = false
     /// The star's value between a tap and the database catching up with it.
-    @State private var favoriteOverride: Bool?
+    @ObservedObject private var favoriteStore = XtreamFavoriteStore.shared
     @State private var favoriteTapCount = 0
     /// Whether any season holds an episode; nil until read. The primary button is
     /// disabled once the seasons are stored and there is nothing to play.
@@ -1371,7 +1391,8 @@ struct SeriesDetailView: View {
     }
 
     private var currentSeries: DBSeries {
-        seriesRecord ?? series
+        if let seriesRecord, seriesRecord.seasonsLoaded { return seriesRecord }
+        return optimisticMetadata ?? seriesRecord ?? series
     }
 
     private var heroConfig: DetailHeroConfig {
@@ -1414,7 +1435,7 @@ struct SeriesDetailView: View {
     }
 
     private var showsFavorite: Bool {
-        favoriteOverride ?? isFavorite
+        favoriteStore.favoriteState(series.seriesId, type: "series", playlistId: playlist.id) ?? isFavorite
     }
 
     private var isPrimaryDisabled: Bool {
@@ -1433,6 +1454,7 @@ struct SeriesDetailView: View {
         contentScroll
             // Constant, so the back-stack menu and VoiceOver have the name from the start.
             // What the bar shows is the principal item below.
+            .browseDetailPresence(playlistId: playlist.id, type: "series", streamId: series.seriesId)
             .navigationTitle(currentSeries.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1454,10 +1476,7 @@ struct SeriesDetailView: View {
             // On the page rather than on the bar button, and driven by taps only: the star
             // also changes when the stored value arrives, which must not play a haptic.
             .sensoryFeedback(.impact(weight: .light), trigger: favoriteTapCount)
-            .onChange(of: isFavorite) { _, stored in
-                // An earlier write landing first must not flip the star back.
-                if favoriteOverride == stored { favoriteOverride = nil }
-            }
+
             .onChange(of: seasons.isEmpty) { _, isEmpty in
                 // Seasons on screen end whatever the request was showing in their place.
                 if !isEmpty { seasonsPhase = .idle }
@@ -1787,11 +1806,15 @@ struct SeriesDetailView: View {
         let playlistId = playlist.id
         do {
             let info = try await XtreamAPIClient(playlist: playlist).getSeriesInfo(seriesId: seriesId)
+            try Task.checkCancellation()
+            guard token == seasonsRequestToken else { return }
+            optimisticMetadata = DetailMetadata.series(currentSeries, response: info)
             let storedSeasons = try await AppDatabase.shared.write { db in
                 try SeriesDetailData.store(info, seriesId: seriesId, playlistId: playlistId, db: db)
             }
             guard token == seasonsRequestToken else { return }
             guard let storedSeasons else {
+                optimisticMetadata = nil
                 seasonsPhase = .missing
                 return
             }
@@ -1800,6 +1823,7 @@ struct SeriesDetailView: View {
             seasonsPhase = (storedSeasons > 0 && seasons.isEmpty) ? .loading : .idle
         } catch {
             guard token == seasonsRequestToken else { return }
+            optimisticMetadata = nil
             // A page that leaves the screen cancels its request; that is not a failure to
             // show. The request starts again when the page is back.
             seasonsPhase = Task.isCancelled ? .idle : .failed(NetworkErrorText.describe(error))
@@ -1810,24 +1834,9 @@ struct SeriesDetailView: View {
 
     private func toggleFavorite() {
         let target = !showsFavorite
-        favoriteOverride = target
         favoriteTapCount += 1
-        let tap = favoriteTapCount
-        // Copied here: the write closure runs on the database queue and must not read view state.
-        let seriesId = series.seriesId
-        let playlistId = playlist.id
         Task {
-            do {
-                try await AppDatabase.shared.write { db in
-                    try SeriesDetailData.setFavorite(target, seriesId: seriesId, playlistId: playlistId, db: db)
-                }
-                // Usually the query delivers the new value a turn later and clears the
-                // override itself. When the stored value already matches, nothing will arrive.
-                if tap == favoriteTapCount, isFavorite == target { favoriteOverride = nil }
-            } catch {
-                // Back to the stored value, unless a later tap has taken over.
-                if tap == favoriteTapCount { favoriteOverride = nil }
-            }
+            await favoriteStore.setFavorite(target, streamId: series.seriesId, type: "series", playlistId: playlist.id)
         }
     }
 
@@ -1898,17 +1907,20 @@ final class SeasonEpisodesObserver: ObservableObject {
             .tracking { db in
                 try SeriesDetailData.seasonEpisodes(seasonId: seasonId, playlistId: playlistId, db: db)
             }
-            // The first value arrives during subscription, so the rows change in the same
-            // update as the season chip. One season through two indexes is a small read
-            // for the main thread, where this is always called from.
-            .publisher(in: db.reader, scheduling: .immediate)
+            // Daily series can contain hundreds of episodes in one season. Keep the
+            // previous rows visible while the next read runs on the database queue.
+            .publisher(in: db.reader)
             // The player saves a history row every few seconds and the observation
             // re-fetches on each of them; the panel only hears about its own episodes.
             .removeDuplicates()
-            .catch { _ in Just(SeasonEpisodes()) }
-            .sink { [weak self] season in
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    Log.error("SeriesDetail", "Season observation failed: \(error)")
+                    self?.seasonId = nil
+                }
+            }, receiveValue: { [weak self] season in
                 self?.season = season
-            }
+            })
     }
 
     deinit {
@@ -2042,6 +2054,7 @@ private struct EpisodeDetailRow: View, Equatable {
             .buttonStyle(.dimPress)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityText)
+            .accessibilityIdentifier("episode.row.\(episode.episodeId ?? episode.id)")
             .accessibilityAddTraits(.isButton)
 
             // Next to the row button, never inside it: its taps and its menu must not
@@ -2256,20 +2269,8 @@ enum SeriesDetailData {
             }
         }
 
+        row = DetailMetadata.series(row, response: info)
         row.seasonsLoaded = true
-        if let i = info.info {
-            row.cast = i.cast
-            row.director = i.director
-            row.genre = i.genre
-            row.plot = i.plot
-            row.releaseDate = i.releaseDate
-            row.rating = i.rating
-            row.lastModified = i.lastModified
-            row.rating5Based = i.rating5Based
-            row.backdropPath = i.backdropPath?.first
-            row.youtubeTrailer = i.youtubeTrailer
-            row.episodeRunTime = i.episodeRunTime
-        }
         try row.update(db)
         return resolvedSeasons.count
     }
@@ -2432,7 +2433,7 @@ enum SeriesDetailData {
         seed.seriesId = String(series.seriesId)
         seed.title = episodeTitle(episode)
         seed.secondaryTitle = series.name
-        seed.imageURL = episode.cover ?? series.cover
+        seed.imageURL = episode.cover.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 } ?? series.cover
         seed.containerExtension = episode.containerExtension
         if !resumesFinished, seed.resumePositionMs(as: .episode) == nil {
             seed.lastTimeMs = 0

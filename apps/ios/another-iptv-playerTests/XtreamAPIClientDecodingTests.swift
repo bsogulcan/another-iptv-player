@@ -9,15 +9,24 @@ nonisolated final class XtreamStubURLProtocol: URLProtocol {
     struct Answer {
         let status: Int
         let body: Data
+        var headers: [String: String] = [:]
     }
 
     private static let lock = NSLock()
     nonisolated(unsafe) private static var answers: [String: Answer] = [:]
+    nonisolated(unsafe) private static var recordedRequests: [String: [URLRequest]] = [:]
+
+    static func requests(forHost host: String) -> [URLRequest] {
+        lock.lock()
+        defer { lock.unlock() }
+        return recordedRequests[host.lowercased()] ?? []
+    }
 
     static func setAnswer(_ answer: Answer?, forHost host: String) {
         lock.lock()
         defer { lock.unlock() }
         answers[host.lowercased()] = answer
+        recordedRequests[host.lowercased()] = []
     }
 
     private static func answer(forHost host: String) -> Answer? {
@@ -41,12 +50,17 @@ nonisolated final class XtreamStubURLProtocol: URLProtocol {
     }
 
     override func startLoading() {
+        if let host = request.url?.host {
+            Self.lock.lock()
+            Self.recordedRequests[host.lowercased(), default: []].append(request)
+            Self.lock.unlock()
+        }
         guard let url = request.url,
               let host = url.host,
               let answer = Self.answer(forHost: host),
               let response = HTTPURLResponse(
                   url: url, statusCode: answer.status, httpVersion: "HTTP/1.1",
-                  headerFields: ["Content-Type": "application/json"]
+                  headerFields: ["Content-Type": "application/json"].merging(answer.headers) { _, new in new }
               )
         else {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))

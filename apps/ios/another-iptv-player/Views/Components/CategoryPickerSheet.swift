@@ -21,6 +21,7 @@ struct CategoryPickerSheet: View {
     @ObservedObject private var locale = LocalizationManager.shared
     @ObservedObject private var hiddenStore = HiddenCategoryStore.shared
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.dismiss) private var dismiss
     @State private var query: String = ""
 
@@ -120,9 +121,17 @@ struct CategoryPickerSheet: View {
             }
         } label: {
             HStack {
-                Text(entry.name)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.name)
+                        .foregroundColor(.primary)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text(entry.count, format: .number)
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(Color.secondary)
+                    }
+                }
                 if isHidden {
                     Spacer()
                     Image(systemName: "eye.slash")
@@ -134,7 +143,7 @@ struct CategoryPickerSheet: View {
         }
         // The `Text` form: the count form draws nothing for 0, and counts are 0
         // while the streams are still loading.
-        .badge(Text("\(entry.count)").monospacedDigit())
+        .badge(dynamicTypeSize.isAccessibilitySize ? nil : Text("\(entry.count)").monospacedDigit())
         .opacity(isHidden ? 0.55 : 1)
         .accessibilityHint(isHidden ? L("category_picker.unhide") : "")
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {

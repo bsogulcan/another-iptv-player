@@ -187,7 +187,7 @@ struct M3UEPGSettingsSection: View {
             // the guide current instead of fetching it a second time.
             await EPGStore.shared.setGuideEnabled(updated.epgEnabled, playlist: updated)
         } catch {
-            saveError = L("misc.save_setting_error", error.localizedDescription)
+            saveError = L("misc.save_setting_error", NetworkErrorText.describe(error))
         }
     }
 }

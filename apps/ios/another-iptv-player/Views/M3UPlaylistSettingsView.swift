@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import GRDB
 import UniformTypeIdentifiers
 
@@ -249,6 +250,9 @@ struct M3UPlaylistSettingsView: View {
             await fetchStats()
             await refreshDownloadUsage()
         }
+        .onReceive(DownloadManager.shared.$dbVersion.dropFirst()) { _ in
+            Task { await refreshDownloadUsage() }
+        }
         .refreshable {
             await reloadStoredRow()
             await fetchStats()
@@ -337,7 +341,7 @@ struct M3UPlaylistSettingsView: View {
     private func handleFileImport(_ result: Result<[URL], Error>) {
         switch result {
         case .failure(let err):
-            errorMessage = err.localizedDescription
+            errorMessage = NetworkErrorText.describe(err)
             showError = true
         case .success(let urls):
             guard let url = urls.first else { return }
@@ -403,8 +407,9 @@ struct M3UPlaylistSettingsView: View {
         let stored = await storedRow() ?? source
         await fetchStats()
         await M3UContentStore.shared.reloadIfActive(playlist: stored)
+        let latest = await storedRow() ?? current
         withAnimation {
-            current = stored
+            current = latest
             runningAction = nil
             syncMessage = nil
         }
@@ -453,7 +458,7 @@ struct M3UPlaylistSettingsView: View {
             if generation == adultFilterGeneration {
                 withAnimation { pendingAdultFilter = nil }
             }
-            errorMessage = L("misc.save_setting_error", error.localizedDescription)
+            errorMessage = L("misc.save_setting_error", NetworkErrorText.describe(error))
             showError = true
         }
     }
@@ -466,7 +471,7 @@ struct M3UPlaylistSettingsView: View {
             }
             await fetchStats()
         } catch {
-            errorMessage = L("misc.history_delete_error", error.localizedDescription)
+            errorMessage = L("misc.history_delete_error", NetworkErrorText.describe(error))
             showError = true
         }
     }

@@ -40,7 +40,10 @@ final class DownloadManager: NSObject, ObservableObject {
     /// DB yazmalarından sonra artan counter — GRDBQuery dışındaki view'ların refresh tetiği.
     @Published private(set) var dbVersion: Int = 0
 
-    private var session: URLSession!
+    private(set) var session: URLSession!
+    private let database: AppDatabase
+    private let mutationGate = DownloadMutationGate()
+    private let removeFiles: @Sendable ([String]) -> Void
     /// URLSessionTask.taskIdentifier → downloadedItem.id haritası.
     private var taskToId: [Int: String] = [:]
     /// downloadedItem.id → URLSessionDownloadTask (iptal için).
@@ -70,17 +73,30 @@ final class DownloadManager: NSObject, ObservableObject {
     private var pumpInFlight = false
     /// Pump çalışırken başka bir pump tetiklendiyse, mevcut pump bitmeden önce bir kez daha döner.
     private var pumpPending = false
+    private var pumpWaiters: [CheckedContinuation<Void, Never>] = []
     /// AppDelegate'in verdiği background completion handler; `urlSessionDidFinishEvents` çağırınca tetiklenir.
     var backgroundCompletionHandler: (() -> Void)?
 
-    override private init() {
-        super.init()
+    override private convenience init() {
         let config = URLSessionConfiguration.background(withIdentifier: Self.sessionIdentifier)
         config.sessionSendsLaunchEvents = true
         config.isDiscretionary = false
         config.httpMaximumConnectionsPerHost = 6
-        self.session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
-        Task { await restoreOutstandingTasks() }
+        self.init(database: .shared, configuration: config, restoresOutstandingTasks: true)
+    }
+
+    /// Tests use an isolated database and an ephemeral session with no restore pass.
+    init(database: AppDatabase, configuration: URLSessionConfiguration, restoresOutstandingTasks: Bool,
+         removeFiles: @escaping @Sendable ([String]) -> Void = { paths in
+             for path in paths { DownloadStorage.removeFile(relativePath: path) }
+         }) {
+        self.database = database
+        self.removeFiles = removeFiles
+        super.init()
+        self.session = URLSession(configuration: configuration, delegate: self, delegateQueue: .main)
+        if restoresOutstandingTasks {
+            Task { await restoreOutstandingTasks() }
+        }
     }
 
     // MARK: - App lifecycle
@@ -89,7 +105,7 @@ final class DownloadManager: NSObject, ObservableObject {
     /// "downloading" olarak kalmış kayıtları tekrar `.queued`'e çevir (createdAt korunur →
     /// kuyruk sırası kaybolmaz). Sonra kuyruğu çalıştır.
     private func restoreOutstandingTasks() async {
-        let downloadingRows: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+        let downloadingRows: [DBDownloadedItem] = (try? await database.read { db in
             try DBDownloadedItem
                 .filter(Column("status") == DownloadStatus.downloading.rawValue)
                 .fetchAll(db)
@@ -121,7 +137,7 @@ final class DownloadManager: NSObject, ObservableObject {
         // createdAt DEĞİŞTİRİLMEZ ki kullanıcının orjinal sırası korunsun.
         let orphans = downloadingRows.filter { !matchedIds.contains($0.id) }
         if !orphans.isEmpty {
-            _ = try? await AppDatabase.shared.write { db in
+            _ = try? await database.write { db in
                 for orphan in orphans {
                     if var row = try DBDownloadedItem.filter(Column("id") == orphan.id).fetchOne(db) {
                         row.status = DownloadStatus.queued.rawValue
@@ -166,6 +182,9 @@ final class DownloadManager: NSObject, ObservableObject {
         if idToTask[id] != nil || pendingEnqueueIds.contains(id) { return }
         pendingEnqueueIds.insert(id)
         defer { pendingEnqueueIds.remove(id) }
+        await mutationGate.acquire()
+        defer { mutationGate.release() }
+        guard idToTask[id] == nil else { return }
         autoRetryCountById.removeValue(forKey: id)
 
         let ext = containerExtension ?? "mp4"
@@ -180,7 +199,7 @@ final class DownloadManager: NSObject, ObservableObject {
                 remoteURL: remoteURL.absoluteString, relPath: relPath,
                 containerExtension: containerExtension, seriesId: seriesId,
                 seasonNumber: seasonNumber, episodeNumber: episodeNumber,
-                errorMessage: error.localizedDescription
+                errorMessage: NetworkErrorText.describe(error)
             )
             return
         }
@@ -188,7 +207,7 @@ final class DownloadManager: NSObject, ObservableObject {
         // Her indirmeyi önce `.queued` olarak yaz; pump hemen sonra kuyruğu çalıştırır.
         // Bu sayede slot atama tek bir yerde (pumpQueue) olur, yarış durumu olmaz.
         do {
-            try await AppDatabase.shared.write { db in
+            try await database.write { db in
                 let item = DBDownloadedItem(
                     id: id,
                     playlistId: playlistId,
@@ -222,37 +241,25 @@ final class DownloadManager: NSObject, ObservableObject {
                 remoteURL: remoteURL.absoluteString, relPath: relPath,
                 containerExtension: containerExtension, seriesId: seriesId,
                 seasonNumber: seasonNumber, episodeNumber: episodeNumber,
-                errorMessage: error.localizedDescription
+                errorMessage: NetworkErrorText.describe(error)
             )
             return
         }
         dbVersion &+= 1
         downloadLog.info("enqueue id=\(id, privacy: .public) — kuyruğa alındı")
-        await pumpQueue()
+        Task { await pumpQueue() }
     }
 
     /// Devam eden veya kuyruktaki bir indirmeyi iptal eder; kısmi dosyayı ve DB row'unu siler.
     /// Aktif task iptal edildiyse kuyruktan sıradaki başlar.
     func cancel(id: String) {
-        let hadActiveTask = idToTask[id] != nil
-        if let task = idToTask[id] {
-            task.cancel()
-            idToTask.removeValue(forKey: id)
-            taskToId.removeValue(forKey: task.taskIdentifier)
-        }
-        idToPlaylistId.removeValue(forKey: id)
-        progress.removeValue(forKey: id)
-        autoRetryCountById.removeValue(forKey: id)
-        DownloadStorage.removeResumeData(forId: id)
-        Task { [id] in
-            await self.deleteRow(id: id, removeFile: true)
-            if hadActiveTask { await self.pumpQueue() }
-        }
+        Task { await delete(id: id) }
     }
 
     /// Tamamlanmış/başarısız/kuyruktaki bir kaydı ve dosyasını siler.
     func delete(id: String) async {
-        let hadActiveTask = idToTask[id] != nil
+        await mutationGate.acquire()
+        defer { mutationGate.release() }
         if let task = idToTask[id] {
             task.cancel()
             idToTask.removeValue(forKey: id)
@@ -263,45 +270,28 @@ final class DownloadManager: NSObject, ObservableObject {
         autoRetryCountById.removeValue(forKey: id)
         DownloadStorage.removeResumeData(forId: id)
         await deleteRow(id: id, removeFile: true)
-        if hadActiveTask { await pumpQueue() }
+        Task { await pumpQueue() }
     }
 
     /// Bir playlist silindiğinde çağrılır: ilgili task'leri iptal eder ve klasörü siler.
     func cleanupPlaylist(playlistId: UUID) {
-        // Aktif task'ler: idToPlaylistId'den playlist eşleşmesiyle bul. `idToTask.keys`'i
-        // string parse ile süzmek yerine playlist map'i daha güvenilir.
-        let idsToCancel = idToPlaylistId.filter { $0.value == playlistId }.map(\.key)
-        var hadAny = false
-        for id in idsToCancel {
-            if let task = idToTask[id] {
-                task.cancel()
-                taskToId.removeValue(forKey: task.taskIdentifier)
-                hadAny = true
-            }
-            idToTask.removeValue(forKey: id)
-            idToPlaylistId.removeValue(forKey: id)
-            progress.removeValue(forKey: id)
-            autoRetryCountById.removeValue(forKey: id)
-        }
-        // Unlinking gigabytes of video takes long enough to stall the playlist
-        // list, so it is not waited for. Nothing can collide with it: a playlist
-        // added again gets a new id, and with it a new directory.
         Task {
+            await mutationGate.acquire()
+            defer { mutationGate.release() }
+            _ = cancelActiveTasks(playlistId: playlistId)
             await Self.offMain {
                 DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
                 DownloadStorage.removeResumeData(playlistId: playlistId)
             }
-            // Second bump: a storage figure computed before the files were gone.
             dbVersion &+= 1
+            Task { await pumpQueue() }
         }
-        dbVersion &+= 1
-        if hadAny { Task { await pumpQueue() } }
     }
 
     /// Tamamlanmış bir indirmenin local file URL'i (oynatma için).
     func localURL(forId id: String) async -> URL? {
         do {
-            let row: DBDownloadedItem? = try await AppDatabase.shared.read { db in
+            let row: DBDownloadedItem? = try await database.read { db in
                 try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
             }
             guard let row, row.downloadStatus == .completed else { return nil }
@@ -316,31 +306,29 @@ final class DownloadManager: NSObject, ObservableObject {
     /// Sadece belirli bir playlist'e ait tüm indirmeleri (her statüde) siler.
     /// Aktif task'leri iptal eder, dosyaları diskten kaldırır, DB row'larını siler.
     func deleteAll(playlistId: UUID) async {
+        await mutationGate.acquire()
+        defer { mutationGate.release() }
         // Aktif task'ler
-        var hadAny = cancelActiveTasks(playlistId: playlistId)
+        _ = cancelActiveTasks(playlistId: playlistId)
         // DB row'ları (bu playlist'e ait olanlar) ve dosyalar
-        let rows: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+        let rows: [DBDownloadedItem] = (try? await database.read { db in
             try DBDownloadedItem.filter(Column("playlistId") == playlistId).fetchAll(db)
         }) ?? []
         let paths = rows.map(\.localPath)
+        let removeFiles = self.removeFiles
         // Waited for, and before the rows go: the caller recomputes the storage
         // figure when this returns, and it has to count the bytes as freed.
         await Self.offMain {
-            for path in paths {
-                DownloadStorage.removeFile(relativePath: path)
-            }
+            removeFiles(paths)
             // Playlist klasörünü tamamen kaldır (subdir + olası boş klasörler).
             DownloadStorage.removePlaylistDirectory(playlistId: playlistId)
             DownloadStorage.removeResumeData(playlistId: playlistId)
         }
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             try DBDownloadedItem.filter(Column("playlistId") == playlistId).deleteAll(db)
         }
-        // The queue could run while the files were being removed and start a row
-        // that was still stored then. Its row is gone now; stop it as well.
-        if cancelActiveTasks(playlistId: playlistId) { hadAny = true }
         dbVersion &+= 1
-        if hadAny { await pumpQueue() }
+        Task { await pumpQueue() }
     }
 
     /// Cancels the running downloads of a playlist and forgets them. True when at
@@ -371,25 +359,24 @@ final class DownloadManager: NSObject, ObservableObject {
 
     /// Tüm playlist'lerin indirmelerini (her statüde) siler.
     func deleteAll() async {
+        await mutationGate.acquire()
+        defer { mutationGate.release() }
         cancelAllActiveTasks()
 
-        let all: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+        let all: [DBDownloadedItem] = (try? await database.read { db in
             try DBDownloadedItem.fetchAll(db)
         }) ?? []
         let paths = all.map(\.localPath)
+        let removeFiles = self.removeFiles
         await Self.offMain {
-            for path in paths {
-                DownloadStorage.removeFile(relativePath: path)
-            }
+            removeFiles(paths)
         }
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             try DBDownloadedItem.deleteAll(db)
         }
-        // Same as in `deleteAll(playlistId:)`: whatever the queue started meanwhile
-        // has lost its row.
-        cancelAllActiveTasks()
         await Self.offMain { DownloadStorage.removeAllResumeData() }
         dbVersion &+= 1
+        Task { await pumpQueue() }
     }
 
     private func cancelAllActiveTasks() {
@@ -436,18 +423,26 @@ final class DownloadManager: NSObject, ObservableObject {
     /// kadar `.queued` row'ları `.downloading`'e çeker. createdAt artan sırayla bakılır —
     /// playlist'inde slot varsa başlat, yoksa atla ve sonraki row'a bak.
     /// Aynı anda yalnızca bir pump çalışır; çakışan çağrılar `pumpPending` ile işaretlenir.
-    private func pumpQueue() async {
+    func pumpQueue() async {
         if pumpInFlight {
             pumpPending = true
+            await withCheckedContinuation { pumpWaiters.append($0) }
             return
         }
         pumpInFlight = true
-        defer { pumpInFlight = false }
+        defer {
+            pumpInFlight = false
+            let waiters = pumpWaiters
+            pumpWaiters.removeAll()
+            for waiter in waiters { waiter.resume() }
+        }
+        await mutationGate.acquire()
+        defer { mutationGate.release() }
 
         repeat {
             pumpPending = false
 
-            let queuedRows: [DBDownloadedItem] = (try? await AppDatabase.shared.read { db in
+            let queuedRows: [DBDownloadedItem] = (try? await database.read { db in
                 try DBDownloadedItem
                     .filter(Column("status") == DownloadStatus.queued.rawValue)
                     .order(Column("createdAt"))
@@ -487,12 +482,17 @@ final class DownloadManager: NSObject, ObservableObject {
                     }
                 }
 
-                _ = try? await AppDatabase.shared.write { db in
-                    if var row = try DBDownloadedItem.filter(Column("id") == next.id).fetchOne(db) {
-                        row.status = DownloadStatus.downloading.rawValue
-                        try row.update(db)
-                    }
-                }
+                // A playlist deletion or a delegate write can change the row after
+                // the queue snapshot. Only a successfully claimed queued row may start.
+                let claimed = (try? await database.write { db in
+                    guard var row = try DBDownloadedItem.filter(Column("id") == next.id).fetchOne(db),
+                          row.downloadStatus == .queued,
+                          row.createdAt == next.createdAt else { return false }
+                    row.status = DownloadStatus.downloading.rawValue
+                    try row.update(db)
+                    return true
+                }) ?? false
+                guard claimed else { continue }
                 startTask(id: next.id, playlistId: next.playlistId, remoteURL: url, relPath: next.localPath)
                 dbVersion &+= 1
             }
@@ -531,16 +531,17 @@ final class DownloadManager: NSObject, ObservableObject {
 
     private func deleteRow(id: String, removeFile: Bool) async {
         do {
-            let existing: DBDownloadedItem? = try await AppDatabase.shared.read { db in
+            let existing: DBDownloadedItem? = try await database.read { db in
                 try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
             }
             if removeFile, let relPath = existing?.localPath {
                 // Still before the row delete, and waited for: once the row is gone
                 // the same item can be downloaded again, and an unlink that arrived
                 // late would take the new file.
-                await Self.offMain { DownloadStorage.removeFile(relativePath: relPath) }
+                let removeFiles = self.removeFiles
+                await Self.offMain { removeFiles([relPath]) }
             }
-            _ = try await AppDatabase.shared.write { db in
+            _ = try await database.write { db in
                 try DBDownloadedItem.filter(Column("id") == id).deleteAll(db)
             }
             dbVersion &+= 1
@@ -565,7 +566,7 @@ final class DownloadManager: NSObject, ObservableObject {
         episodeNumber: Int?,
         errorMessage: String
     ) async {
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             let item = DBDownloadedItem(
                 id: id,
                 playlistId: playlistId,
@@ -643,7 +644,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                 self.totalBytesPersistedFor.insert(taskId)
                 let total = totalBytesExpectedToWrite
                 Task {
-                    _ = try? await AppDatabase.shared.write { db in
+                    _ = try? await database.write { db in
                         if var row = try DBDownloadedItem.filter(Column("id") == id).fetchOne(db) {
                             row.totalBytes = Int(total)
                             try row.update(db)
@@ -753,7 +754,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                         DownloadStorage.saveResumeData(resumeData, forId: id)
                         downloadLog.info("system-cancel id=\(id, privacy: .public) — resume data saklandı, kuyruğa geri alındı")
                         Task {
-                            await self.requeueAfterError(id: id, errorMessage: error.localizedDescription, preserveProgress: true)
+                            await self.requeueAfterError(id: id, errorMessage: NetworkErrorText.describe(error), preserveProgress: true)
                             await self.pumpQueue()
                         }
                     }
@@ -787,7 +788,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                 if attempts <= Self.maxAutoRetries {
                     downloadLog.info("retry id=\(id, privacy: .public) attempt=\(attempts) resume=\(resumeData != nil) — kuyruğun sonuna eklendi: \(error.localizedDescription, privacy: .public)")
                     Task {
-                        await self.requeueAfterError(id: id, errorMessage: error.localizedDescription, preserveProgress: resumeData != nil)
+                        await self.requeueAfterError(id: id, errorMessage: NetworkErrorText.describe(error), preserveProgress: resumeData != nil)
                         await self.pumpQueue()
                     }
                 } else {
@@ -818,7 +819,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
     /// `preserveProgress`: resume data saklandıysa true — byte sayaçları korunur ki
     /// UI "kaldığı yerden devam edecek" durumunu doğru göstersin.
     private func requeueAfterError(id: String, errorMessage: String, preserveProgress: Bool = false) async {
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             if var row = try DBDownloadedItem.filter(Column("id") == id).fetchOne(db) {
                 row.status = DownloadStatus.queued.rawValue
                 row.errorMessage = errorMessage
@@ -837,7 +838,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
     /// Relaunch sonrası eşleşmesiz gelen delegate hatasındaki resume data'yı, URL üzerinden
     /// DB row'una bağlar ve row'u kuyruğa geri alır. Best-effort: eşleşme yoksa sessizce düşer.
     private func adoptOrphanResumeData(_ data: Data, remoteURL: String) async {
-        let row: DBDownloadedItem? = try? await AppDatabase.shared.read { db in
+        let row: DBDownloadedItem? = try? await database.read { db in
             try DBDownloadedItem
                 .filter(Column("remoteURL") == remoteURL)
                 .filter([DownloadStatus.downloading.rawValue, DownloadStatus.queued.rawValue].contains(Column("status")))
@@ -856,7 +857,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 
     private func markCompleted(id: String, fallbackSize: Int64 = 0) async {
         let now = Date()
-        let row: DBDownloadedItem? = try? await AppDatabase.shared.read { db in
+        let row: DBDownloadedItem? = try? await database.read { db in
             try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
         }
         guard let row else {
@@ -879,7 +880,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
             )
             return
         }
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             if var r = try DBDownloadedItem.filter(Column("id") == id).fetchOne(db) {
                 r.status = DownloadStatus.completed.rawValue
                 r.completedAt = now
@@ -895,10 +896,10 @@ extension DownloadManager: URLSessionDownloadDelegate {
     }
 
     private func markFailed(id: String, error: Error) async {
-        _ = try? await AppDatabase.shared.write { db in
+        _ = try? await database.write { db in
             if var row = try DBDownloadedItem.filter(Column("id") == id).fetchOne(db) {
                 row.status = DownloadStatus.failed.rawValue
-                row.errorMessage = error.localizedDescription
+                row.errorMessage = NetworkErrorText.describe(error)
                 try row.update(db)
             }
         }

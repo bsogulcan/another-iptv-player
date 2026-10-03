@@ -329,12 +329,12 @@ struct AddM3UPlaylistView: View {
             isOnNetwork = false
             progressMessage = L("add_m3u.parsing")
             let parsed = try await M3UParser.parseAsync(rawContent)
-            // The parse runs detached and does not notice a cancel: this is the last
-            // exit before the write. The write itself is one transaction, and a
-            // cancel that lands inside it rolls it back.
+            // Check again before importing, in case cancellation arrived after parsing.
+            // The database write is transactional.
             try Task.checkCancellation()
 
             progressMessage = L("add_m3u.saving_db")
+            isCommitting = true
             try await M3UImporter.replace(
                 playlist: newPlaylist,
                 channels: parsed.channels,

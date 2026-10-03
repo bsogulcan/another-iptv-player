@@ -112,8 +112,8 @@ struct M3UBrowseLogicTests {
     @Test
     func theGridSignatureIgnoresTheSelectionClosure() {
         let items = [channel("A", group: nil), channel("B", group: nil), channel("C", group: nil)]
-        let first = M3UGroupGridContent(items: items, onChannelSelected: { _ in })
-        let second = M3UGroupGridContent(items: items, onChannelSelected: nil)
+        let first = M3UGroupGridContent(items: items, contentID: .catalog(items[0].playlistId, 1, ""), onChannelSelected: { _ in })
+        let second = M3UGroupGridContent(items: items, contentID: .catalog(items[0].playlistId, 1, ""), onChannelSelected: nil)
         // A parent pass that only rebuilt the closure must not re-render the grid.
         #expect(first == second)
     }
@@ -125,12 +125,13 @@ struct M3UBrowseLogicTests {
         let b = channel("B", group: nil)
         let c = channel("C", group: nil)
         let d = channel("D", group: nil)
-        let base = M3UGroupGridContent(items: [a, b, c])
-        #expect(base != M3UGroupGridContent(items: [a, b]))          // shorter
-        #expect(base != M3UGroupGridContent(items: [d, b, c]))       // another head
-        #expect(base != M3UGroupGridContent(items: [a, b, d]))       // another tail
+        let contentID = M3UGroupGridContent.ContentID.catalog(a.playlistId, 1, "")
+        let base = M3UGroupGridContent(items: [a, b, c], contentID: contentID)
+        #expect(base != M3UGroupGridContent(items: [a, b], contentID: contentID))          // shorter
+        #expect(base != M3UGroupGridContent(items: [d, b, c], contentID: contentID))       // another head
+        #expect(base != M3UGroupGridContent(items: [a, b, d], contentID: contentID))       // another tail
         // Same list, but one is the outcome of a search: their empty states differ.
-        #expect(base != M3UGroupGridContent(items: [a, b, c], isSearchResult: true))
+        #expect(base != M3UGroupGridContent(items: [a, b, c], contentID: contentID, isSearchResult: true))
     }
 
     // MARK: Logo look-ahead

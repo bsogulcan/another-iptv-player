@@ -33,6 +33,9 @@ enum IPTVRemoteImagePipeline {
         urlConf.timeoutIntervalForRequest = 10
         urlConf.timeoutIntervalForResource = 20
         urlConf.waitsForConnectivity = false
+        if MockFixture.isActive && MockFixture.mode != .demo {
+            urlConf.protocolClasses = [FixtureImageProtocol.self] + (urlConf.protocolClasses ?? [])
+        }
         let loader = DataLoader(configuration: urlConf)
 
         // Bellek önbelleğini sınırla: sınırsız bırakmak tüm RAM'i doldurabiliyor

@@ -346,22 +346,6 @@ struct PlaylistContentStoreTests {
         #expect(store.recentSeriesCandidates.isEmpty)
     }
 
-    @Test
-    func aMetadataPatchReachesTheCopiesButNotTheRevisions() async throws {
-        let store = PlaylistContentStore(database: try await seededDatabase())
-        await store.loadPlaylist(playlist)
-        var updated = try #require(store.recentVODCandidates.first)
-        updated.plot = "A plot"
-        updated.metadataLoaded = true
-
-        store.applyVODMetadata(updated)
-
-        #expect(revisions(store) == [3, 3, 3])
-        #expect(store.recentVODCandidates.first == updated)
-        #expect(store.vodStreams.first { $0.stream.streamId == updated.streamId }?.stream == updated)
-        #expect(store.vodStreamsByCategoryId["10"]?.first { $0.stream.streamId == updated.streamId }?.stream == updated)
-    }
-
     // MARK: - Refresh errors
 
     @Test

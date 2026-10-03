@@ -42,6 +42,7 @@ struct ContentView: View {
     /// Counts the exits, so that only the latest one releases.
     @State private var exitCount = 0
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let lastPlaylistKey = "lastPlaylistId"
 
@@ -194,7 +195,7 @@ struct ContentView: View {
             if left.id != playlist.id { releaseCatalog(of: left) }
         }
         UserDefaults.standard.set(playlist.id.uuidString, forKey: lastPlaylistKey)
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
             selectedPlaylist = playlist
         }
     }
@@ -204,7 +205,7 @@ struct ContentView: View {
         playlistAwaitingRelease = playlist
         exitCount += 1
         let exit = exitCount
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
             selectedPlaylist = nil
         } completion: {
             // Released here and not in the turn that starts the slide: freeing a

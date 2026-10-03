@@ -298,3 +298,27 @@ struct XtreamFavoriteStoreTests {
         #expect(store.favoriteState(1, type: "live", playlistId: playlist.id) == true)
     }
 }
+
+
+extension XtreamFavoriteStoreTests {
+    @Test
+    func failedObservationCanRestartForTheSamePlaylist() async throws {
+        let database = try database()
+        try await insert(42, "vod", in: playlist, database)
+        try await database.write { db in
+            try db.execute(sql: "ALTER TABLE favorite RENAME TO unavailableFavorites")
+        }
+        let store = XtreamFavoriteStore(database: database)
+        store.track(playlistId: playlist.id)
+        #expect(await eventually { store.observationFailed })
+        #expect(store.favoriteState(42, type: "vod", playlistId: playlist.id) == nil)
+        try await database.write { db in
+            try db.execute(sql: "ALTER TABLE unavailableFavorites RENAME TO favorite")
+        }
+        store.track(playlistId: playlist.id)
+        #expect(await eventually { store.favoriteState(42, type: "vod", playlistId: playlist.id) == true })
+        #expect(!store.observationFailed)
+        try await insert(43, "vod", in: playlist, database)
+        #expect(await eventually { store.isFavorite(43, type: "vod") })
+    }
+}

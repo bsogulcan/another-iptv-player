@@ -12,9 +12,6 @@ enum MockFixture {
     static let isActive: Bool = {
         let args = CommandLine.arguments
         if args.contains("-UITests") { return true }
-        if ProcessInfo.processInfo.environment["FASTLANE_SNAPSHOT"] == "YES" {
-            return true
-        }
         return false
     }()
 
@@ -70,6 +67,7 @@ enum MockFixture {
                 try db.execute(sql: "DELETE FROM playlist WHERE id = ?", arguments: [m3uPlaylistId])
             }
             seedLargeCatalogIfNeeded()
+            seedLargeGuideIfNeeded()
             UserDefaults.standard.set(demoPlaylistId.uuidString, forKey: "lastPlaylistId")
             return
         }
@@ -129,6 +127,8 @@ enum MockFixture {
         for id in playlistIds {
             keys.append("epg.collapsedCategories.\(id.uuidString)")
             keys.append("epg.lineReserved.\(id.uuidString)")
+            keys.append("browse.recentReserved.vod.\(id.uuidString)")
+            keys.append("browse.recentReserved.series.\(id.uuidString)")
             for type in ["live", "vod", "series", "m3u"] {
                 keys.append("hidden_categories.\(id.uuidString).\(type)")
             }
@@ -338,11 +338,12 @@ enum MockFixture {
 
     private static func seedLargeCatalogIfNeeded() {
         let liveCount = 300 * catalogScale, vodCount = 700 * catalogScale, seriesCount = 200 * catalogScale
+        let signature = "v2:\(catalogScale):\(imageBase ?? "offline-artwork")"
         do {
             let existing = try AppDatabase.shared.writeSync { db in
                 try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM vodStream WHERE playlistId = ?", arguments: [demoPlaylistId]) ?? 0
             }
-            if existing == vodCount { return }
+            if existing == vodCount, UserDefaults.standard.string(forKey: "fixture.large.signature") == signature { return }
             try AppDatabase.shared.writeSync { db in
                 try? db.execute(sql: "DELETE FROM playlist WHERE id = ?", arguments: [demoPlaylistId])
                 try insertDemoPlaylist(db: db, playlistId: demoPlaylistId)
@@ -370,7 +371,7 @@ enum MockFixture {
                         streamId: 100_000 + i,
                         name: "\(nouns[i % nouns.count]) TV \(i + 1) HD",
                         streamIcon: artwork("live", i, w: 200, h: 200),
-                        epgChannelId: nil,
+                        epgChannelId: i < 5_000 ? "scale.\(i)" : nil,
                         categoryId: bucket(i, liveCats),
                         sortIndex: i,
                         playlistId: demoPlaylistId
@@ -437,15 +438,49 @@ enum MockFixture {
                     try DBFavorite(streamId: 100_000 + i * 5, playlistId: demoPlaylistId, type: "live").insert(db)
                 }
             }
+            UserDefaults.standard.set(signature, forKey: "fixture.large.signature")
+            UserDefaults.standard.removeObject(forKey: "fixture.large.guideDay")
         } catch {
             Log.error("MockFixture", "large catalog seeding failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// The catalog is retained; only the guide rolls each day. At scale 200 this
+    /// supplies 240,000 catalog items and 5,000 channels with 240,000 programmes.
+    private static func seedLargeGuideIfNeeded() {
+        let now = Date()
+        let day = Calendar.current.startOfDay(for: now)
+        let count = min(5_000, 300 * catalogScale)
+        do {
+            try AppDatabase.shared.writeSync { db in
+                if UserDefaults.standard.object(forKey: "fixture.large.guideDay") as? Date == day,
+                   var source = try DBEPGSource.fetchOne(db, key: demoPlaylistId), source.channelCount == count {
+                    source.lastSuccessAt = now
+                    try source.update(db)
+                    return
+                }
+                try DBEPGProgramme.filter(Column("playlistId") == demoPlaylistId).deleteAll(db)
+                try DBEPGChannel.filter(Column("playlistId") == demoPlaylistId).deleteAll(db)
+                try DBEPGSource.filter(Column("playlistId") == demoPlaylistId).deleteAll(db)
+                let channels = (0..<count).map { index in
+                    GuideChannel(key: "scale.\(index)", displayName: "\(nouns[index % nouns.count]) TV \(index + 1) HD",
+                                 iconURL: artwork("live", index, w: 200, h: 200),
+                                 pattern: [60, 30, 90], titles: ["News", "Documentary", "Evening programme"], category: "Fixture")
+                }
+                try insertGuide(db: db, playlistId: demoPlaylistId, sourceType: .xtreamXMLTV,
+                                sourceURL: nil, channels: channels, now: now)
+            }
+            UserDefaults.standard.set(day, forKey: "fixture.large.guideDay")
+        } catch {
+            Log.error("MockFixture", "large guide seeding failed: \(error.localizedDescription)")
         }
     }
 
     /// Deterministic, copyright-safe placeholder image URLs.
     /// picsum.photos serves CC0 photos and accepts a seed string for stability.
     private static func posterURL(seed: String, w: Int, h: Int) -> String {
-        "https://picsum.photos/seed/\(seed)/\(w)/\(h)"
+        let host = isActive && mode != .demo ? FixtureImageProtocol.host : "picsum.photos"
+        return "https://\(host)/seed/\(seed)/\(w)/\(h)"
     }
 
     // MARK: - Playback

@@ -110,7 +110,6 @@ struct DashboardView: View {
             PlayerOverlayHost(controller: playerOverlay)
                 .zIndex(10_000)
         }
-        .environmentObject(playerOverlay)
         .environment(\.playerOverlayController, playerOverlay)
         .onChange(of: playerOverlay.presentation?.id) { _, id in
             // The overlay sits below UIKit-presented sheets; playback started from the
@@ -212,7 +211,6 @@ struct DashboardView: View {
                     }
             }
             // A sheet is outside the tree the injections above cover.
-            .environmentObject(playerOverlay)
             .environment(\.playerOverlayController, playerOverlay)
         }
     }

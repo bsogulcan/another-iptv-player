@@ -12,9 +12,11 @@ struct ChannelEPGDetailView: View {
     /// on to the programme sheet. Nil when there is nothing to play.
     let onPlayChannel: (() -> Void)?
 
-    @Query<ChannelEPGRequest> private var rows: [DBEPGProgramme]
+    @Query<LoadedRequest<ChannelEPGRequest>> private var loadedRows: [DBEPGProgramme]?
     @State private var selected: EPGProgramme?
     @State private var hasScrolledToNow = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 76
     @Environment(\.epgSnapshot) private var epgSnapshot
 
     init(playlist: Playlist, channelKey: String, displayName: String, iconURL: URL?, liveStream: DBLiveStream?,
@@ -28,8 +30,10 @@ struct ChannelEPGDetailView: View {
         let now = Date()
         let from = Int64(now.addingTimeInterval(-2 * 86_400).timeIntervalSince1970)
         let to = Int64(now.addingTimeInterval(8 * 86_400).timeIntervalSince1970)
-        _rows = Query(ChannelEPGRequest(playlistId: playlist.id, channelKey: channelKey, fromTs: from, toTs: to), in: \.appDatabase)
+        _loadedRows = Query(LoadedRequest(ChannelEPGRequest(playlistId: playlist.id, channelKey: channelKey, fromTs: from, toTs: to)), in: \.appDatabase)
     }
+
+    private var rows: [DBEPGProgramme] { loadedRows ?? [] }
 
     private var programmes: [EPGProgramme] { rows.map(EPGProgramme.init(from:)) }
 
@@ -41,7 +45,9 @@ struct ChannelEPGDetailView: View {
 
     var body: some View {
         Group {
-            if programmes.isEmpty {
+            if loadedRows == nil {
+                Color.clear
+            } else if programmes.isEmpty {
                 CatalogEmptyView(.message(title: L("epg.no_data.channel"),
                                           systemImage: "calendar.badge.exclamationmark", description: nil))
             } else {
@@ -103,15 +109,25 @@ struct ChannelEPGDetailView: View {
         let now = Date()
         let isCurrent = programme.isCurrent(at: now)
         let isPast = programme.isPast(at: now)
-        HStack(alignment: .top, spacing: 12) {
+        let accessible = dynamicTypeSize.isAccessibilitySize
+        let layout = accessible
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        layout {
             Text(EPGTimeFormat.time(programme.start))
                 .font(.subheadline.monospacedDigit())
                 .foregroundColor(.secondary)
-                .frame(width: 52, alignment: .leading)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: accessible ? nil : timeColumnWidth, alignment: .leading)
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
+                let titleLayout = accessible
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                    : AnyLayout(HStackLayout(spacing: 6))
+                titleLayout {
                     // Inside a list button unstyled text takes the accent colour.
-                    Text(programme.title).font(.body).lineLimit(1)
+                    Text(programme.title).font(.body).lineLimit(accessible ? 3 : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                         .foregroundStyle(.primary)
                     if isCurrent {
                         Text(L("epg.now")).font(.caption2.bold())
@@ -121,13 +137,13 @@ struct ChannelEPGDetailView: View {
                     }
                 }
                 if let desc = programme.desc, !desc.isEmpty {
-                    Text(desc).font(.caption).foregroundColor(.secondary).lineLimit(1)
+                    Text(desc).font(.caption).foregroundColor(.secondary).lineLimit(accessible ? 3 : 1)
                 }
                 if isCurrent, let fraction = programme.progress(at: now) {
                     ProgressView(value: fraction).tint(.accentColor)
                 }
             }
-            Spacer(minLength: 0)
+            if !accessible { Spacer(minLength: 0) }
             if isPast, isCatchupPlayable(programme, now: now) {
                 Image(systemName: "clock.arrow.circlepath")
                     .foregroundColor(.accentColor)

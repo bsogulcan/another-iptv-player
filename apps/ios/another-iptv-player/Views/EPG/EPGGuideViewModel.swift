@@ -315,6 +315,8 @@ final class EPGGuideViewModel: ObservableObject {
     // MARK: - Loading
 
     func load() async {
+        let interval = BrowsePerformance.begin("GuideLoad")
+        defer { BrowsePerformance.end("GuideLoad", interval) }
         loadGeneration += 1
         let generation = loadGeneration
         isWorking = true
@@ -427,6 +429,21 @@ final class EPGGuideViewModel: ObservableObject {
         }
     }
 
+    var catalogError: String? {
+        switch source {
+        case .xtream: return PlaylistContentStore.shared.loadError
+        case .m3u: return M3UContentStore.shared.loadError
+        }
+    }
+
+    func retryCatalog() async {
+        switch source {
+        case .xtream(let playlist): await PlaylistContentStore.shared.loadPlaylist(playlist)
+        case .m3u(let playlist): await M3UContentStore.shared.loadPlaylist(playlist)
+        }
+        await load()
+    }
+
     /// Reads the selected day's programmes again after a failure.
     func retryProgrammes() async {
         await selectDay(selectedDay)
@@ -479,6 +496,8 @@ final class EPGGuideViewModel: ObservableObject {
     /// map together with the channel list it belongs to, and builds off the main
     /// actor.
     private func buildRows() async -> EPGGuideRowSet {
+        let interval = BrowsePerformance.begin("GuideBuildRows")
+        defer { BrowsePerformance.end("GuideBuildRows", interval) }
         rowTask?.cancel()
         let aliases = EPGStore.shared.resolutionSnapshot
         let hiddenStore = HiddenCategoryStore.shared

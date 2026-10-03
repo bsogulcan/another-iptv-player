@@ -23,12 +23,19 @@ struct EPGChannelRowView: View, Equatable {
         let pinnedLeading: CGFloat? = layoutDirection == .leftToRight ? metrics.channelColumnWidth : nil
         ZStack(alignment: .topLeading) {
             ForEach(layout.cells) { cell in
-                EPGProgrammeCell(cell: cell, height: metrics.rowHeight, pinnedLeading: pinnedLeading)
-                    .frame(width: cell.width, height: metrics.rowHeight)
-                    .offset(x: cell.x)
-                    .onTapGesture {
-                        if let programme = cell.programme { onTap(programme) }
+                Group {
+                    if let programme = cell.programme {
+                        Button { onTap(programme) } label: {
+                            EPGProgrammeCell(cell: cell, height: metrics.rowHeight, pinnedLeading: pinnedLeading)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.dimPress)
+                    } else {
+                        EPGProgrammeCell(cell: cell, height: metrics.rowHeight, pinnedLeading: pinnedLeading)
                     }
+                }
+                .frame(width: cell.width, height: metrics.rowHeight)
+                .offset(x: cell.x)
             }
         }
         .frame(width: metrics.dayWidth, height: metrics.rowHeight, alignment: .topLeading)
@@ -65,6 +72,8 @@ struct EPGProgrammeCell: View {
                     if cell.width >= 64 {
                         Text(EPGTimeFormat.time(programme.start))
                             .font(.caption2)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -238,6 +247,8 @@ struct EPGChannelColumnCell: View, Equatable {
             label
         }
         .buttonStyle(.dimPress)
+        .accessibilityLabel(row.displayName)
+        .accessibilityAction(named: L("kit.menu.schedule"), onSchedule)
         .contextMenu {
             PlayMenuButton(action: onPlay)
             ScheduleMenuButton(action: onSchedule)

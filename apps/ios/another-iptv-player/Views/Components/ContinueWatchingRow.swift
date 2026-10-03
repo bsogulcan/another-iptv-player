@@ -48,12 +48,14 @@ struct ContinueWatchingRow<Destination: View>: View {
                             .historyItemContextMenu(item, onPlay: onPlay)
                         }
                     }
-                    .padding(.horizontal, BrowseMetrics.pageMargin)
+                    .scrollTargetLayout()
                     .padding(.bottom, 8)
                     // The remaining cards slide together when one is removed (and
                     // reorder when another title becomes the most recent one).
                     .animation(.default, value: historyItems.map(\.id))
                 }
+                .contentMargins(.horizontal, BrowseMetrics.pageMargin, for: .scrollContent)
+                .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
             }
             .padding(.vertical, 12)
         }

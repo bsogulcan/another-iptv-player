@@ -25,17 +25,32 @@ struct DetailHero: View {
 
     @Environment(\.posterMetrics) private var metrics
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            backdropLayer
-            gradientLayer
-            overlayLayer
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                backdropLayer
+                gradientLayer
+                if dynamicTypeSize.isAccessibilitySize {
+                    posterButton
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+                } else {
+                    overlayLayer
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: heroHeight)
+
+            if dynamicTypeSize.isAccessibilitySize {
+                titleAndMetadata
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: heroHeight)
     }
 
     /// The poster as the hero shows it. One place builds it, so the request another
@@ -154,8 +169,10 @@ struct DetailHero: View {
         .allowsHitTesting(false)
     }
 
-    private var overlayLayer: some View {
-        HStack(alignment: .bottom, spacing: 16) {
+    private var posterButton: some View {
+        Button {
+            if let url = config.posterURL { onPosterTap?(url) }
+        } label: {
             Self.posterImage(url: config.posterURL, iconName: config.posterIconName, metrics: metrics)
                 .shadow(color: .black.opacity(0.45), radius: 14, y: 8)
                 .overlay(
@@ -163,33 +180,41 @@ struct DetailHero: View {
                         .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
                 )
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    if let url = config.posterURL {
-                        onPosterTap?(url)
-                    }
-                }
-                .allowsHitTesting(config.posterURL != nil)
-                .accessibilityLabel(config.title)
-                .accessibilityAddTraits(config.posterURL != nil ? .isButton : [])
+        }
+        .buttonStyle(.plain)
+        .disabled(config.posterURL == nil || onPosterTap == nil)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(config.title)
+        .accessibilityRemoveTraits(.isImage)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("detail.poster")
+        .accessibilityHidden(config.posterURL == nil || onPosterTap == nil)
+    }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text(config.title)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
+    private var titleAndMetadata: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(config.title)
+                .accessibilityAddTraits(.isHeader)
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.primary)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
 
-                DetailHeroMetaRow(
-                    year: config.year,
-                    runtime: config.runtime,
-                    rating10: config.rating10,
-                    ratingText: config.ratingText
-                )
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 4)
+            DetailHeroMetaRow(year: config.year, runtime: config.runtime,
+                              rating10: config.rating10, ratingText: config.ratingText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 4)
+    }
+
+    private var overlayLayer: some View {
+        HStack(alignment: .bottom, spacing: 16) {
+            posterButton
+            titleAndMetadata
         }
     }
+
 }
 
 /// The real backdrop, drawn over the blurred poster. It draws nothing until the image is
@@ -290,6 +315,7 @@ private struct HeroBackdropImage: View {
 }
 
 private struct DetailHeroMetaRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let year: String?
     let runtime: String?
     let rating10: Double?
@@ -297,8 +323,11 @@ private struct DetailHeroMetaRow: View {
 
     var body: some View {
         // The text the posters show for the same title.
-        let ratingValueText = rating10.map(ContentRating.displayText) ?? ""
-        HStack(spacing: 10) {
+        let ratingValueText = rating10.map { ContentRating.displayText($0) } ?? ""
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 10))
+        layout {
             if !ratingValueText.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
@@ -308,6 +337,7 @@ private struct DetailHeroMetaRow: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.primary)
                 }
+                .fixedSize()
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(Capsule().fill(.ultraThinMaterial))
@@ -317,6 +347,7 @@ private struct DetailHeroMetaRow: View {
 
             if let year, !year.isEmpty {
                 Text(year)
+                    .fixedSize()
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
@@ -326,11 +357,17 @@ private struct DetailHeroMetaRow: View {
                     Image(systemName: "clock")
                         .font(.caption2)
                     Text(runtime)
+                        .fixedSize()
                         .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(.secondary)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([
+            BrowseAccessibility.ratingLabel(ratingValueText.isEmpty ? ContentRating.displayText(ratingText) : ratingValueText),
+            year, runtime
+        ].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", "))
     }
 }
 
@@ -530,6 +567,7 @@ struct DetailPlotBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(L("movie.plot"))
+                .accessibilityAddTraits(.isHeader)
                 .font(.headline)
                 .foregroundStyle(.primary)
 
@@ -587,7 +625,7 @@ struct DetailInfoTextBlock: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
                 .font(.caption2.weight(.bold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .tracking(0.4)
             Text(value)
                 .font(.subheadline)

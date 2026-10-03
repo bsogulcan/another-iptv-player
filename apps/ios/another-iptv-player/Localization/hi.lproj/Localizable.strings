@@ -583,3 +583,7 @@
 "kit.error.connection_failed" = "सर्वर से कनेक्ट नहीं हो सका (त्रुटि %ld)।";
 "kit.error.file_unreadable" = "फ़ाइल पढ़ी नहीं जा सकी।";
 "kit.error.generic" = "कुछ गलत हो गया।";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "सभी श्रेणियाँ छिपी हुई हैं";
+"guide.all_hidden.message" = "टीवी गाइड में चैनल देखने के लिए श्रेणी चयन में कोई श्रेणी दिखाएँ।";

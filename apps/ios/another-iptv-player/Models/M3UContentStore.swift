@@ -79,7 +79,7 @@ final class M3UContentStore: ObservableObject {
             apply(channels: prepared.channels, grouping: prepared.grouping)
         } catch {
             guard loadToken == token else { return }
-            loadError = error.localizedDescription
+            loadError = NetworkErrorText.describe(error)
         }
     }
 
@@ -114,7 +114,7 @@ final class M3UContentStore: ObservableObject {
             apply(channels: prepared.channels, grouping: prepared.grouping)
         } catch {
             guard loadToken == token else { return }
-            loadError = error.localizedDescription
+            loadError = NetworkErrorText.describe(error)
         }
     }
 

@@ -666,6 +666,8 @@ struct MockFixtureTests {
         for id in MockFixture.fixturePlaylistIds {
             browseKeys.append("epg.collapsedCategories.\(id.uuidString)")
             browseKeys.append("epg.lineReserved.\(id.uuidString)")
+            browseKeys.append("browse.recentReserved.vod.\(id.uuidString)")
+            browseKeys.append("browse.recentReserved.series.\(id.uuidString)")
             browseKeys += ["live", "vod", "series", "m3u"].map { "hidden_categories.\(id.uuidString).\($0)" }
         }
         let kept = [

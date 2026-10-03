@@ -218,7 +218,7 @@ struct M3UImporterTests {
             channel("Two", url: " http://host/2.ts ")
         ]
 
-        let built = M3UImporter.makeRows(playlistId: playlist.id, channels: channels)
+        let built = try M3UImporter.makeRows(playlistId: playlist.id, channels: channels)
         try await M3UImporter.replace(playlist: playlist, channels: channels, epgURL: nil, in: database)
 
         #expect(try await storedChannels(playlist.id, in: database) == built)
@@ -270,5 +270,27 @@ struct M3UImporterTests {
         #expect(one != other)
         #expect(one.count == 64)
         #expect(one.allSatisfy { "0123456789abcdef".contains($0) })
+    }
+}
+
+
+extension M3UImporterTests {
+    @Test
+    func cancelledImportDoesNotCreateAPlaylist() async throws {
+        let database = AppDatabase.empty()
+        let playlist = EPGTestSupport.m3uPlaylist()
+        let channels = [ParsedM3UChannel(name: "News", url: "https://example.invalid/news.ts")]
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await M3UImporter.replace(playlist: playlist, channels: channels, epgURL: nil, in: database)
+        }
+        do {
+            try await task.value
+            Issue.record("Cancelled import unexpectedly succeeded")
+        } catch is CancellationError {
+            // No rows should be published after the user cancels the import.
+        }
+        let stored = try await database.read { db in try Playlist.fetchOne(db, key: playlist.id) }
+        #expect(stored == nil)
     }
 }

@@ -4,9 +4,12 @@ import SwiftUI
 /// one horizontal ScrollView, so they can never drift to different time offsets.
 /// The channel column is drawn above that scroller and remains pinned.
 struct EPGGuideView: View {
+    @ScaledMetric(relativeTo: .caption) private var gridTextScale: CGFloat = 1
     @StateObject private var model: EPGGuideViewModel
     @Environment(\.playerOverlayController) private var playerOverlay
     @ObservedObject private var epgStore = EPGStore.shared
+    @Environment(\.layoutDirection) private var layoutDirection
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// Also read so the body runs again when the app comes back: the now-line is
     /// derived from the clock.
@@ -44,7 +47,7 @@ struct EPGGuideView: View {
     private static let bodyID = "body"
 
     private var metrics: EPGGuideMetrics {
-        EPGGuideMetrics.guide(regularWidth: horizontalSizeClass == .regular)
+        EPGGuideMetrics.guide(regularWidth: horizontalSizeClass == .regular, textScale: gridTextScale)
     }
 
     init(source: EPGGuideViewModel.Source) {
@@ -128,11 +131,12 @@ struct EPGGuideView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .allHidden:
-            CatalogEmptyView(.message(title: L("m3u.empty.all_hidden.title"), systemImage: "eye.slash",
-                                      description: L("m3u.empty.all_hidden.message")))
+            CatalogEmptyView(.message(title: L("guide.all_hidden.title"), systemImage: "eye.slash",
+                                      description: L("guide.all_hidden.message")))
         case .catalogFailed:
-            CatalogEmptyView(.message(title: L("catalog.load_failed.title"), systemImage: "wifi.exclamationmark",
-                                      description: nil))
+            CatalogLoadErrorView(message: model.catalogError ?? L("kit.error.generic")) {
+                Task { await model.retryCatalog() }
+            }
         case .ready:
             VStack(spacing: 0) {
                 EPGDayPicker(days: model.availableDays, selectedDay: model.selectedDay) { day in
@@ -147,6 +151,7 @@ struct EPGGuideView: View {
                     .padding(.bottom, 8)
                 }
                 grid
+                    .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                     .overlay {
                         if model.hasNoSearchResults {
                             CatalogEmptyView(.noSearchResults)
@@ -216,6 +221,7 @@ struct EPGGuideView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("epg.guide.grid")
             .scrollPosition(hBinding(Self.bodyID))
             .scrollIndicators(.hidden)
             .onScrollPhaseChange { _, phase in
@@ -300,10 +306,17 @@ struct EPGGuideView: View {
 
     // MARK: - Toolbar
 
+    // Keep the inline title readable when accessibility text enlarges controls.
+    // The guide hides the tab bar, leaving room for these same actions below.
+    private var actionPlacement: ToolbarItemPlacement {
+        (dynamicTypeSize.isAccessibilitySize || (horizontalSizeClass != .regular && layoutDirection == .rightToLeft))
+            ? .bottomBar : .topBarTrailing
+    }
+
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         if model.hasCategories {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: actionPlacement) {
                 Menu {
                     Button(L("epg.categories.expand_all")) { model.setAllCollapsed(false) }
                     Button(L("epg.categories.collapse_all")) { model.setAllCollapsed(true) }
@@ -312,7 +325,7 @@ struct EPGGuideView: View {
                 }
             }
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: actionPlacement) {
             // The drawer of an inline-title screen is collapsed on open and this
             // grid has no vertical scroller at its top to pull it out with.
             Button {
@@ -320,7 +333,7 @@ struct EPGGuideView: View {
             } label: { Label(L("common.search"), systemImage: "magnifyingglass") }
             .disabled(model.state != .ready)
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: actionPlacement) {
             // A plain clock: the arrowed one marks catch-up in the schedule rows
             // and in the programme sheet.
             Button {
@@ -328,7 +341,7 @@ struct EPGGuideView: View {
             } label: { Label(L("epg.jump_to_now"), systemImage: "clock") }
             .disabled(model.state != .ready)
         }
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: actionPlacement) {
             let refreshing = epgStore.refreshState[model.playlist.id]?.isRefreshing ?? false
             Button {
                 Task { await refreshGuide() }

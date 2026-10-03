@@ -153,3 +153,122 @@ struct EPGRefreshCoordinatorTests {
         #expect(source.fetchedAt != nil)
     }
 }
+
+extension EPGRefreshCoordinatorTests {
+    @Test(arguments: [false, true])
+    func validatorsAreScopedToTheStoredSource(sameURL: Bool) async throws {
+        let database = AppDatabase.empty()
+        let host = EPGTestSupport.uniqueHost()
+        let playlist = EPGTestSupport.m3uPlaylist(host: host)
+        var source = EPGTestSupport.freshSource(playlist)
+        source.url = sameURL ? playlist.effectiveEPGURL : "http://\(host)/previous.xml"
+        source.etag = "\"revision-1\""
+        source.lastModified = "Wed, 01 Oct 2025 12:00:00 GMT"
+        try await EPGTestSupport.seedMatchingGuide(in: database, playlist: playlist, source: source)
+        EPGTestSupport.serve(EPGTestSupport.guideXML(channelIds: ["news.tv"]), onHost: host)
+
+        _ = try await makeCoordinator(database).refresh(playlist: playlist) { _ in }
+
+        let requests = XtreamStubURLProtocol.requests(forHost: host)
+        #expect(requests.count == 1)
+        let request = try #require(requests.first)
+        #expect(request.value(forHTTPHeaderField: "If-None-Match") == (sameURL ? source.etag : nil))
+        #expect(request.value(forHTTPHeaderField: "If-Modified-Since") == (sameURL ? source.lastModified : nil))
+    }
+
+    @Test
+    func fallbackSourceDoesNotInheritTheFirstSourcesValidators() async throws {
+        let database = AppDatabase.empty()
+        let firstHost = EPGTestSupport.uniqueHost()
+        let secondHost = EPGTestSupport.uniqueHost()
+        var playlist = EPGTestSupport.m3uPlaylist(host: firstHost)
+        let firstURL = try #require(playlist.effectiveEPGURL)
+        playlist.m3uEpgURL = firstURL + ",http://\(secondHost)/guide.xml"
+        var source = EPGTestSupport.freshSource(playlist)
+        source.url = firstURL
+        source.etag = "\"shared-revision\""
+        try await EPGTestSupport.seedMatchingGuide(in: database, playlist: playlist, source: source)
+        EPGTestSupport.serve("unavailable", status: 503, onHost: firstHost)
+        EPGTestSupport.serve(EPGTestSupport.guideXML(channelIds: ["news.tv"]), onHost: secondHost)
+
+        _ = try await makeCoordinator(database).refresh(playlist: playlist) { _ in }
+
+        #expect(XtreamStubURLProtocol.requests(forHost: firstHost).first?.value(forHTTPHeaderField: "If-None-Match") == source.etag)
+        let second = try #require(XtreamStubURLProtocol.requests(forHost: secondHost).first)
+        #expect(second.value(forHTTPHeaderField: "If-None-Match") == nil)
+        #expect(try await EPGTestSupport.storedSource(playlist, in: database)?.url == "http://\(secondHost)/guide.xml")
+    }
+
+    @Test
+    func anUnsolicitedNotModifiedCannotClaimASuccessfulRefresh() async throws {
+        let database = AppDatabase.empty()
+        let host = EPGTestSupport.uniqueHost()
+        let playlist = try await makePlaylist(host: host, channelCount: 1, in: database)
+        EPGTestSupport.serve("", status: 304, onHost: host)
+
+        await #expect(throws: (any Error).self) {
+            _ = try await makeCoordinator(database).refresh(playlist: playlist) { _ in }
+        }
+        #expect(try await EPGTestSupport.storedSource(playlist, in: database)?.lastSuccessAt == nil)
+    }
+
+    @Test
+    func cancellationKeepsTheGuideAndDoesNotTryAnotherSourceOrRecordFailure() async throws {
+        let database = AppDatabase.empty()
+        let firstHost = EPGTestSupport.uniqueHost()
+        let secondHost = EPGTestSupport.uniqueHost()
+        var playlist = EPGTestSupport.m3uPlaylist(host: firstHost)
+        playlist.m3uEpgURL = "http://\(firstHost)/guide.xml,http://\(secondHost)/guide.xml"
+        try await EPGTestSupport.seedMatchingGuide(in: database, playlist: playlist)
+        let before = try await EPGTestSupport.storedSource(playlist, in: database)
+        EPGTestSupport.serve(EPGTestSupport.guideXML(channelIds: ["news.tv"]), onHost: firstHost)
+        EPGTestSupport.serve(EPGTestSupport.guideXML(channelIds: ["news.tv"]), onHost: secondHost)
+        let coordinator = makeCoordinator(database)
+        let task = Task {
+            try await coordinator.refresh(playlist: playlist) { phase in
+                if phase == .parse { withUnsafeCurrentTask { $0?.cancel() } }
+            }
+        }
+        await #expect(throws: CancellationError.self) { _ = try await task.value }
+
+        #expect(XtreamStubURLProtocol.requests(forHost: secondHost).isEmpty)
+        let after = try await EPGTestSupport.storedSource(playlist, in: database)
+        #expect(after?.lastError == before?.lastError)
+        #expect(after?.lastSuccessAt == before?.lastSuccessAt)
+        #expect(try await EPGTestSupport.storedProgrammeCount(playlist, in: database) == 1)
+        let staged = try await database.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM epgProgrammeStaging") ?? 0
+        }
+        #expect(staged == 0)
+    }
+}
+
+extension EPGRefreshCoordinatorTests {
+    @Test
+    func stagingWriteFailureIsReportedAsDatabaseErrorAndKeepsTheStoredGuide() async throws {
+        let database = AppDatabase.empty()
+        let playlist = EPGTestSupport.m3uPlaylist()
+        try await EPGTestSupport.seedMatchingGuide(in: database, playlist: playlist)
+        try await database.write { db in
+            try db.execute(sql: """
+                CREATE TRIGGER fail_guide_staging BEFORE INSERT ON epgProgrammeStaging
+                BEGIN SELECT RAISE(ABORT, 'injected staging failure'); END
+                """)
+        }
+        let host = try #require(URL(string: playlist.serverURL)?.host)
+        EPGTestSupport.serve(EPGTestSupport.guideXML(channelIds: ["news.tv"]), onHost: host)
+        do {
+            _ = try await makeCoordinator(database).refresh(playlist: playlist) { _ in }
+            Issue.record("The staging write should fail")
+        } catch {
+            #expect(error is DatabaseError)
+        }
+        #expect(try await EPGTestSupport.storedProgrammeCount(playlist, in: database) == 1)
+        let source = try #require(try await EPGTestSupport.storedSource(playlist, in: database))
+        #expect(source.lastError != nil)
+        let staged = try await database.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM epgProgrammeStaging") ?? 0
+        }
+        #expect(staged == 0)
+    }
+}

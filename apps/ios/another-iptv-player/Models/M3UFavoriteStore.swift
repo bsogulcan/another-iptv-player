@@ -12,13 +12,33 @@ final class M3UFavoriteStore: ObservableObject {
     private var observationCancellable: AnyCancellable?
     private var trackedPlaylistId: UUID?
 
-    private init() {}
+    @Published private(set) var isLoaded = false
+    @Published private var loadError: String?
+    private let database: AppDatabase
+    private var session = 0
+
+    init(database: AppDatabase = .shared) {
+        self.database = database
+    }
+
+    func isLoaded(for playlistId: UUID) -> Bool {
+        trackedPlaylistId == playlistId && isLoaded
+    }
+
+    func error(for playlistId: UUID) -> String? {
+        trackedPlaylistId == playlistId ? loadError : nil
+    }
 
     /// Aktif playlist değiştiğinde çağrılır; GRDB ValueObservation ile canlı abonelik kurar.
     func track(playlistId: UUID) {
-        guard trackedPlaylistId != playlistId else { return }
+        guard trackedPlaylistId != playlistId || loadError != nil else { return }
         trackedPlaylistId = playlistId
         observationCancellable?.cancel()
+        session += 1
+        let session = session
+        isLoaded = false
+        loadError = nil
+        favoriteIds = []
 
         let observation = ValueObservation.tracking { db in
             try String.fetchAll(db,
@@ -26,12 +46,25 @@ final class M3UFavoriteStore: ObservableObject {
                                 arguments: [playlistId])
         }
         observationCancellable = observation
-            .publisher(in: AppDatabase.shared.reader)
-            .catch { _ in Just([]) }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] ids in
-                self?.favoriteIds = Set(ids)
-            }
+            .removeDuplicates()
+            .publisher(in: database.reader, scheduling: .async(onQueue: .main))
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    guard let self, self.session == session else { return }
+                    if case .failure(let error) = completion {
+                        Log.error("M3UFavorites", "observation ended: \(error)")
+                        // A later track call may restart a failed observation.
+                        self.loadError = NetworkErrorText.describe(error)
+                        self.isLoaded = false
+                        self.favoriteIds = []
+                    }
+                },
+                receiveValue: { [weak self] ids in
+                    guard let self, self.session == session else { return }
+                    self.favoriteIds = Set(ids)
+                    self.isLoaded = true
+                }
+            )
     }
 
     func isFavorite(channelId: String) -> Bool {
@@ -41,7 +74,7 @@ final class M3UFavoriteStore: ObservableObject {
     /// Kanalı toggle'la. Callback'siz — ValueObservation yeniden yayacak.
     func toggle(channel: DBM3UChannel) async {
         do {
-            try await AppDatabase.shared.write { db in
+            try await database.write { db in
                 let exists = try Bool.fetchOne(
                     db,
                     sql: "SELECT 1 FROM m3uFavorite WHERE channelId = ? AND playlistId = ? LIMIT 1",
@@ -62,7 +95,7 @@ final class M3UFavoriteStore: ObservableObject {
                 }
             }
         } catch {
-            print("M3UFavoriteStore toggle error: \(error)")
+            Log.error("M3UFavorites", "toggle failed: \(error)")
         }
     }
 }

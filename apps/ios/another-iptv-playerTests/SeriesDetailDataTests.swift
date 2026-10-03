@@ -321,10 +321,9 @@ struct SeriesDetailDataTests {
     }
 
     /// The page keeps its length through a season switch because the list is never
-    /// empty in between: the new season's rows are there when `load` returns. A
-    /// main-actor test, as the first value is read during subscription.
+    /// empty in between: the previous rows remain until the asynchronous read arrives.
     @Test
-    func seasonSwitchReplacesTheRowsInOneStep() throws {
+    func seasonSwitchReplacesTheRowsInOneStep() async throws {
         let database = try seededDatabase()
         try database.writeSync { db in
             try addSeason(1, episodes: [(id: "101", num: 1), (id: "102", num: 2)], db: db)
@@ -339,9 +338,16 @@ struct SeriesDetailDataTests {
         #expect(observer.season == nil)
 
         observer.load(seasonId: seasonId(1), playlistId: playlist.id, db: database)
+        for _ in 0..<100 where observer.season == nil {
+            try await Task.sleep(for: .milliseconds(10))
+        }
         #expect(observer.season?.episodes.map(\.episodeId) == ["101", "102"])
 
         observer.load(seasonId: seasonId(2), playlistId: playlist.id, db: database)
+        #expect(observer.season?.episodes.map(\.episodeId) == ["101", "102"])
+        for _ in 0..<100 where observer.season?.episodes.first?.episodeId != "201" {
+            try await Task.sleep(for: .milliseconds(10))
+        }
         #expect(observer.season?.episodes.map(\.episodeId) == ["201"])
         #expect(observer.season?.history["201"] != nil)
 
@@ -499,10 +505,10 @@ struct SeriesDetailDataTests {
         #expect(seed.lastWatchedAt == watchedAt)
     }
 
-    @Test
-    func seedFallsBackToTheSeriesCover() {
+    @Test(arguments: [nil, "", "  ", "\n"] as [String?])
+    func seedFallsBackToTheSeriesCover(cover: String?) {
         let seed = SeriesDetailData.playbackSeed(
-            episode: episode(cover: nil), history: nil, resumesFinished: false,
+            episode: episode(cover: cover), history: nil, resumesFinished: false,
             series: series, playlistId: playlist.id
         )
         #expect(seed.imageURL == "show.jpg")

@@ -323,9 +323,9 @@ struct PlaylistFormFailure: Equatable {
             // Empty, or not a playlist at all: the link or the file is the wrong one.
             return PlaylistFormFailure(title: L("loading.error.title"), message: NetworkErrorText.describe(error), field: .address)
         default:
-            // Not a network failure (a full disk, a database write): the system's own
-            // sentence names the cause, which a generic network sentence would hide.
-            return PlaylistFormFailure(title: L("onboarding.error.title.save"), message: error.localizedDescription, field: nil)
+            // Foundation and database messages follow the device language. Keep the
+            // form in the app's language, as with other browse errors.
+            return PlaylistFormFailure(title: L("onboarding.error.title.save"), message: NetworkErrorText.describe(error), field: nil)
         }
     }
 

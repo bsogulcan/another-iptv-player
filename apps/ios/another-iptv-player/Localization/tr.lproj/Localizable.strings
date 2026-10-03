@@ -610,3 +610,7 @@
 "kit.error.connection_failed" = "Sunucuya bağlanılamadı (hata %ld).";
 "kit.error.file_unreadable" = "Dosya okunamadı.";
 "kit.error.generic" = "Bir sorun oluştu.";
+
+/* TV guide hidden categories */
+"guide.all_hidden.title" = "Tüm kategoriler gizli";
+"guide.all_hidden.message" = "Kanalları TV rehberinde görmek için kategori seçicisinden bir kategoriyi görünür yapın.";

@@ -303,11 +303,17 @@ struct EPGGuideMetrics: Equatable {
     /// follows the width class. The hour width is the same in both: the view
     /// model bakes it into the cell frames it precomputes, and the width class
     /// flips on rotation and on window resizes, which must not invalidate them.
-    static func guide(regularWidth: Bool) -> EPGGuideMetrics {
+    static func guide(regularWidth: Bool, textScale: CGFloat = 1) -> EPGGuideMetrics {
         var metrics = EPGGuideMetrics(compact: true)
         if regularWidth {
             metrics.channelColumnWidth = EPGGuideMetrics(compact: false).channelColumnWidth
         }
+        // Keep the precomputed horizontal programme positions unchanged.
+        let scale = min(max(textScale, 1), 1.5)
+        metrics.rowHeight *= scale
+        metrics.channelColumnWidth *= scale
+        metrics.axisHeight *= scale
+        metrics.headerHeight *= scale
         return metrics
     }
 
