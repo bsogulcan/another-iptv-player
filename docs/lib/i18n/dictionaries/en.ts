@@ -201,7 +201,7 @@ const en = {
     ],
     label: "Support the project",
     text: "Free to use, made with care. If it earns a place on your home screen, consider fueling its development.",
-    coffee: "Buy me a coffee",
+    sponsor: "Sponsor on GitHub",
     contribute: "Contribute",
   },
 
@@ -215,7 +215,7 @@ const en = {
     github: "GitHub",
     releases: "Releases",
     contribute: "Contribute",
-    coffee: "Buy me a coffee",
+    sponsor: "Sponsor on GitHub",
     privacy: "Privacy Policy",
     rights: "MIT Licensed.",
     disclaimer:

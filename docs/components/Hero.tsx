@@ -6,7 +6,7 @@ import { LINKS, PLATFORMS, RATINGS } from "@/lib/data";
 import {
   AppleIcon,
   ArrowUpRight,
-  CoffeeIcon,
+  HeartIcon,
   GithubIcon,
 } from "./icons";
 
@@ -130,13 +130,13 @@ export function Hero({ d }: { d: Dictionary }) {
               <ArrowUpRight className="h-4 w-4 text-fog transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
             <a
-              href={LINKS.coffee}
+              href={LINKS.sponsor}
               target="_blank"
               rel="noreferrer noopener external"
               className="group inline-flex items-center gap-2 rounded-xl border border-line bg-ink-2/50 px-5 py-3 text-sm font-semibold text-snow backdrop-blur transition-colors hover:border-fog"
             >
-              <CoffeeIcon className="h-4.5 w-4.5 text-acid" />
-              {d.openSource.coffee}
+              <HeartIcon className="h-4.5 w-4.5 text-acid" />
+              {d.openSource.sponsor}
             </a>
           </motion.div>
 

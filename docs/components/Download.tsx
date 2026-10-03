@@ -1,6 +1,6 @@
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import { DOWNLOADS, LINKS } from "@/lib/data";
-import { AppleIcon, ArrowUpRight, CoffeeIcon } from "./icons";
+import { AppleIcon, ArrowUpRight, HeartIcon } from "./icons";
 import { Reveal, SectionLabel } from "./Reveal";
 
 function iconFor(name: string) {
@@ -30,13 +30,13 @@ export function Download({ d }: { d: Dictionary }) {
               </Reveal>
               <Reveal delay={0.15}>
                 <a
-                  href={LINKS.coffee}
+                  href={LINKS.sponsor}
                   target="_blank"
                   rel="noreferrer noopener external"
                   className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-acid transition-colors hover:text-acid-soft"
                 >
-                  <CoffeeIcon className="h-4 w-4" />
-                  {d.openSource.coffee}
+                  <HeartIcon className="h-4 w-4" />
+                  {d.openSource.sponsor}
                   <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
               </Reveal>

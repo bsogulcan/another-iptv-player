@@ -58,7 +58,7 @@ export default async function HowToPage({
         title={h.title}
         intro={h.intro}
         contentClassName="max-w-5xl"
-        showCoffee
+        showSponsor
       >
         <div className="space-y-14 sm:space-y-20">
           {h.steps.map((s, i) => (

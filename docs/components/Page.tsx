@@ -4,7 +4,7 @@ import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import { LINKS } from "@/lib/data";
 import { Nav } from "./Nav";
 import { Footer } from "./Footer";
-import { CoffeeIcon } from "./icons";
+import { HeartIcon } from "./icons";
 import { SectionLabel } from "./Reveal";
 
 export function Page({
@@ -15,7 +15,7 @@ export function Page({
   intro,
   children,
   contentClassName = "max-w-3xl",
-  showCoffee = false,
+  showSponsor = false,
 }: {
   d: Dictionary;
   lang: Locale;
@@ -24,7 +24,7 @@ export function Page({
   intro?: string;
   children: ReactNode;
   contentClassName?: string;
-  showCoffee?: boolean;
+  showSponsor?: boolean;
 }) {
   return (
     <>
@@ -50,7 +50,7 @@ export function Page({
         <section className="relative pb-28">
           <div className={`relative mx-auto px-5 ${contentClassName}`}>
             {children}
-            {showCoffee && (
+            {showSponsor && (
               <div className="mt-16 flex flex-col items-start gap-5 rounded-2xl border border-line bg-ink-2/40 p-8 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-display text-xl font-semibold tracking-tight text-snow">
@@ -61,13 +61,13 @@ export function Page({
                   </p>
                 </div>
                 <a
-                  href={LINKS.coffee}
+                  href={LINKS.sponsor}
                   target="_blank"
                   rel="noreferrer noopener external"
                   className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-acid px-5 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5"
                 >
-                  <CoffeeIcon className="h-4 w-4" />
-                  {d.openSource.coffee}
+                  <HeartIcon className="h-4 w-4" />
+                  {d.openSource.sponsor}
                 </a>
               </div>
             )}

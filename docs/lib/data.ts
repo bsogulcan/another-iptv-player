@@ -4,7 +4,7 @@ export const LINKS = {
     "https://github.com/bsogulcan/another-iptv-player/releases/latest",
   appStore:
     "https://apps.apple.com/us/app/another-iptv-player/id6747290392",
-  coffee: "https://www.buymeacoffee.com/bsogulcan",
+  sponsor: "https://github.com/sponsors/bsogulcan",
   email: "mailto:bsogulcan@gmail.com",
 };
 

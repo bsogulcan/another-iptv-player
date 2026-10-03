@@ -203,7 +203,7 @@ const fr: Dictionary = {
     ],
     label: "Soutenez le projet",
     text: "Gratuit à utiliser, fait avec soin. S'il mérite une place sur votre écran d'accueil, pensez à soutenir son développement.",
-    coffee: "Offrez-moi un café",
+    sponsor: "Soutenir sur GitHub",
     contribute: "Contribuer",
   },
 
@@ -217,7 +217,7 @@ const fr: Dictionary = {
     github: "GitHub",
     releases: "Versions",
     contribute: "Contribuer",
-    coffee: "Offrez-moi un café",
+    sponsor: "Soutenir sur GitHub",
     privacy: "Confidentialité",
     rights: "Sous licence MIT.",
     disclaimer:

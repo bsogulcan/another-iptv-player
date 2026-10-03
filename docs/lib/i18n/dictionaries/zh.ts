@@ -203,7 +203,7 @@ const zh: Dictionary = {
     ],
     label: "支持这个项目",
     text: "免费使用，用心打造。如果它值得在你的主屏幕上占据一席之地，欢迎为它的开发提供支持。",
-    coffee: "请我喝杯咖啡",
+    sponsor: "在 GitHub 上赞助",
     contribute: "参与贡献",
   },
 
@@ -217,7 +217,7 @@ const zh: Dictionary = {
     github: "GitHub",
     releases: "发布版本",
     contribute: "参与贡献",
-    coffee: "请我喝杯咖啡",
+    sponsor: "在 GitHub 上赞助",
     privacy: "隐私",
     rights: "采用 MIT 许可。",
     disclaimer:

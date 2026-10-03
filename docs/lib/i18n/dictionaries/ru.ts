@@ -203,7 +203,7 @@ const ru: Dictionary = {
     ],
     label: "Поддержите проект",
     text: "Бесплатно и сделано с заботой. Если приложение заслужило место на вашем экране, подумайте о поддержке его разработки.",
-    coffee: "Купить мне кофе",
+    sponsor: "Поддержать на GitHub",
     contribute: "Внести вклад",
   },
 
@@ -217,7 +217,7 @@ const ru: Dictionary = {
     github: "GitHub",
     releases: "Релизы",
     contribute: "Внести вклад",
-    coffee: "Купить мне кофе",
+    sponsor: "Поддержать на GitHub",
     privacy: "Конфиденциальность",
     rights: "Лицензия MIT.",
     disclaimer:

@@ -203,7 +203,7 @@ const tr: Dictionary = {
     ],
     label: "Projeye destek ol",
     text: "Kullanımı ücretsiz, özenle yapıldı. Ana ekranında yer ettiyse, geliştirilmesine destek olmayı düşün.",
-    coffee: "Bana kahve ısmarla",
+    sponsor: "GitHub üzerinden destek ol",
     contribute: "Katkıda bulun",
   },
 
@@ -217,7 +217,7 @@ const tr: Dictionary = {
     github: "GitHub",
     releases: "Sürümler",
     contribute: "Katkıda bulun",
-    coffee: "Bana kahve ısmarla",
+    sponsor: "GitHub üzerinden destek ol",
     privacy: "Gizlilik Politikası",
     rights: "MIT Lisanslı.",
     disclaimer:

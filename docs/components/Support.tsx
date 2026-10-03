@@ -33,12 +33,12 @@ export function Support({ d }: { d: Dictionary }) {
             </div>
             <div className="flex shrink-0 flex-wrap gap-3">
               <a
-                href={LINKS.coffee}
+                href={LINKS.sponsor}
                 target="_blank"
                 rel="noreferrer noopener external"
                 className="inline-flex items-center gap-2 rounded-xl bg-acid px-5 py-3 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5"
               >
-                {o.coffee}
+                {o.sponsor}
                 <ArrowUpRight className="h-4 w-4" />
               </a>
               <a

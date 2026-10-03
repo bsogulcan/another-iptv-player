@@ -203,7 +203,7 @@ const hi: Dictionary = {
     ],
     label: "प्रोजेक्ट का समर्थन करें",
     text: "इस्तेमाल में मुफ़्त, ध्यान से बनाया गया। अगर यह आपकी होम स्क्रीन पर जगह बनाता है, तो इसके विकास में सहयोग देने पर विचार करें।",
-    coffee: "मुझे कॉफ़ी पिलाएँ",
+    sponsor: "GitHub पर समर्थन करें",
     contribute: "योगदान दें",
   },
 
@@ -217,7 +217,7 @@ const hi: Dictionary = {
     github: "GitHub",
     releases: "रिलीज़",
     contribute: "योगदान दें",
-    coffee: "मुझे कॉफ़ी पिलाएँ",
+    sponsor: "GitHub पर समर्थन करें",
     privacy: "गोपनीयता",
     rights: "MIT लाइसेंस।",
     disclaimer:

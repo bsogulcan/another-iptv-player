@@ -56,7 +56,7 @@ export default async function SupportPage({
         eyebrow={sp.eyebrow}
         title={sp.title}
         intro={sp.intro}
-        showCoffee
+        showSponsor
       >
         <div className="grid gap-3 sm:grid-cols-3">
           {sp.notes.map((n) => (

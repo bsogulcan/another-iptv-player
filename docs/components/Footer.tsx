@@ -34,7 +34,7 @@ export function Footer({ d, lang }: { d: Dictionary; lang: Locale }) {
         { label: f.github, href: LINKS.github, ext: true },
         { label: f.releases, href: LINKS.releases, ext: true },
         { label: f.contribute, href: LINKS.github, ext: true },
-        { label: f.coffee, href: LINKS.coffee, ext: true },
+        { label: f.sponsor, href: LINKS.sponsor, ext: true },
       ],
     },
   ];

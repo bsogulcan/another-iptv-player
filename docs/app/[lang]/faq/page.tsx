@@ -56,7 +56,7 @@ export default async function FaqPage({
         eyebrow={fp.eyebrow}
         title={fp.title}
         intro={fp.intro}
-        showCoffee
+        showSponsor
       >
         <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-ink-2/40">
           {fp.items.map((item, i) => (
