@@ -601,7 +601,6 @@ private struct PlayerViewImpl: View {
     /// Altyazı `update()` binary search + eşitlik kontrolü yapıyor, ama yine de her 120ms
     /// tetiklemek onChange closure kadar küçük bir yük. 200ms pencere imperceptible.
 
-    private let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "another-iptv-player", category: "Playback")
 
     private let videoZoomMax: CGFloat = 4
 
@@ -1289,7 +1288,7 @@ private struct PlayerViewImpl: View {
                 claimHardwareKeyboardFocus()
             }
         .onAppear {
-            log.info("Opening player: \(title, privacy: .public)")
+            Log.info("Playback", "Opening player: \(title)")
             resetTimer()
             player.setupAudioHandler()
             // Defer to the next run loop: the KSPlayer surface's view setup and
@@ -1608,7 +1607,7 @@ private struct PlayerViewImpl: View {
         videoPanCommitted = .zero
 
         // The identity embeds the stream URL, which carries the account's credentials.
-        log.info("Load playback: \(self.streamId, privacy: .public) \(Log.redact(self.url), privacy: .public)")
+        Log.info("Playback", "Load playback: \(self.streamId) \(Log.redact(self.url))")
         player.setImportedSubtitleContext(
             contentKey: ImportedSubtitleStore.contentKey(
                 playlistId: playlistId, type: type, streamId: streamId
@@ -1617,7 +1616,7 @@ private struct PlayerViewImpl: View {
         let initialStartSeconds: TimeInterval? =
             shouldStartFromResume ? Double(resumeTimeMs ?? 0) / 1000.0 : nil
         if let initialStartSeconds {
-            log.info("Starting playback at the resume position: \(initialStartSeconds, privacy: .public)s")
+            Log.info("Playback", "Starting playback at the resume position: \(initialStartSeconds)s")
         }
         player.play(
             url: url, startSeconds: initialStartSeconds, isLiveStream: isLiveStream,
@@ -1653,7 +1652,7 @@ private struct PlayerViewImpl: View {
             return
         }
         let pos = Float(Double(resumeTime) / Double(player.durationMs))
-        log.info("Seeking to resumeTimeMs: \(resumeTime) (pos: \(pos))")
+        Log.info("Playback", "Seeking to resumeTimeMs: \(resumeTime) (pos: \(pos))")
         player.seek(to: min(max(pos, 0), 1))
         hasInitialSeeked = true
     }
@@ -3113,7 +3112,7 @@ private struct PlayerViewImpl: View {
                     try history.save(db)
                 }
             } catch {
-                log.error("Failed to save watch history: \(error)")
+                Log.error("WatchHistory", "Failed to save watch history: \(error)")
             }
         }
     }

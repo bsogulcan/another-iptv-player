@@ -269,10 +269,17 @@ nonisolated struct XtreamSeries: Codable, Identifiable {
 // MARK: - Error-Safe Decodable
 nonisolated struct FailableDecodable<Base: Decodable>: Decodable {
     let base: Base?
+    let failure: String?
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        self.base = try? container.decode(Base.self)
+        do {
+            self.base = try container.decode(Base.self)
+            self.failure = nil
+        } catch {
+            self.base = nil
+            self.failure = SupportReport.sanitized(String(describing: error))
+        }
     }
 }
 

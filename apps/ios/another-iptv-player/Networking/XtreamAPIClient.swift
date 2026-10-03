@@ -90,7 +90,7 @@ class XtreamAPIClient {
     // references these file-private helpers from its vtable, which does not link.
     private final func fetch<T: Decodable & Sendable>(action: String? = nil, queryItems: [URLQueryItem] = []) async throws -> T {
         let (data, url) = try await load(action: action, queryItems: queryItems)
-        return try await Self.decodeDetached(data, from: url) { try JSONDecoder().decode(T.self, from: $0) }
+        return try await Self.decodeDetached(data, from: url, secrets: [playlist.username, playlist.password]) { try JSONDecoder().decode(T.self, from: $0) }
     }
 
     /// List endpoints. Elements are decoded one by one so a single malformed entry
@@ -98,8 +98,20 @@ class XtreamAPIClient {
     /// detached pass as the decode.
     private final func fetchList<Item: Decodable & Sendable>(action: String, queryItems: [URLQueryItem] = []) async throws -> [Item] {
         let (data, url) = try await load(action: action, queryItems: queryItems)
-        return try await Self.decodeDetached(data, from: url) {
-            try JSONDecoder().decode([FailableDecodable<Item>].self, from: $0).compactMap(\.base)
+        let secrets = [playlist.username, playlist.password]
+        return try await Self.decodeDetached(data, from: url, secrets: secrets) {
+            let entries = try JSONDecoder().decode([FailableDecodable<Item>].self, from: $0)
+            let failures = entries.enumerated().filter { $0.element.base == nil }
+            if !failures.isEmpty {
+                Log.error("API", "\(action): skipped \(failures.count)/\(entries.count) entries")
+                for entry in failures.prefix(5) {
+                    var reason = entry.element.failure ?? "unknown"
+                    for secret in secrets where !secret.isEmpty { reason = reason.replacingOccurrences(of: secret, with: "<credential>") }
+                    Log.error("APIDecode", "\(action) index=\(entry.offset): \(reason)")
+                }
+                APIDiagnostics.recordFailedItems(data, indices: failures.prefix(5).map(\.offset), action: action, secrets: secrets)
+            }
+            return entries.compactMap(\.base)
         }
     }
 
@@ -108,26 +120,19 @@ class XtreamAPIClient {
     /// A detached task does not inherit cancellation: a cancelled refresh finishes its
     /// decode and the caller drops the result.
     private static func decodeDetached<T: Sendable>(
-        _ data: Data, from url: URL, _ decode: @escaping @Sendable (Data) throws -> T
+        _ data: Data, from url: URL, secrets: [String], _ decode: @escaping @Sendable (Data) throws -> T
     ) async throws -> T {
-        do {
-            return try await Task.detached(priority: .userInitiated) { try decode(data) }.value
-        } catch {
-            logDecodingFailure(error, data: data, url: url)
-            throw XtreamError.decodingError(error)
-        }
-    }
-
-    private static func logDecodingFailure(_ error: Error, data: Data, url: URL) {
-        #if DEBUG
-        print("--- DECODING ERROR ---")
-        print("URL: \(Self.redacted(url.absoluteString))")
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("RAW DATA: \(jsonString)")
-        }
-        print("ERROR: \(error)")
-        print("--- END ERROR ---")
-        #endif
+        let action = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "action" }?.value ?? "authentication"
+        return try await Task.detached(priority: .userInitiated) {
+            do { return try decode(data) }
+            catch {
+                var description = String(describing: error)
+                for secret in secrets where !secret.isEmpty { description = description.replacingOccurrences(of: secret, with: "<credential>") }
+                Log.error("APIDecode", "\(action): \(SupportReport.sanitized(description))")
+                APIDiagnostics.record(data, action: action, context: "decode failed", secrets: secrets)
+                throw XtreamError.decodingError(error)
+            }
+        }.value
     }
 
     /// Builds the request, runs it and returns the raw body once the status is 2xx.
@@ -153,20 +158,18 @@ class XtreamAPIClient {
             throw XtreamError.invalidURL(Self.redacted(comps.string ?? ""))
         }
 
+        Log.info("API", "Request: \(action ?? "authentication")")
         do {
             let (data, response) = try await urlSession.data(from: url)
 
-            #if DEBUG
-            // Debug: Log series info for structure comparison
-            if url.absoluteString.contains("action=get_series_info") {
-                if let jsonString = String(data: data, encoding: .utf8) {
-                    print("--- [DEBUG] SERIES INFO RAW RESPONSE START ---")
-                    print("URL: \(Self.redacted(url.absoluteString))")
-                    print("JSON: \(jsonString)")
-                    print("--- [DEBUG] SERIES INFO RAW RESPONSE END ---")
-                }
+            let endpoint = action ?? "authentication"
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            Log.info("API", "\(endpoint): HTTP \(status), \(data.count) bytes")
+            if action == "get_series_info" || action == "get_vod_info" || !(200...299).contains(status) {
+                let secrets = [playlist.username, playlist.password]
+                APIDiagnostics.record(data, action: endpoint, context: "HTTP \(status)", secrets: secrets)
             }
-            #endif
+
 
             // Check HTTP status code
             if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
@@ -175,8 +178,10 @@ class XtreamAPIClient {
 
             return (data, url)
         } catch let error as XtreamError {
+            Log.error("API", "\(action ?? "authentication"): \(error.localizedDescription)")
             throw error
         } catch {
+            Log.error("API", "\(action ?? "authentication"): network error \((error as NSError).code)")
             throw XtreamError.networkError(error)
         }
     }

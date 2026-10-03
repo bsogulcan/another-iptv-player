@@ -12,7 +12,8 @@ import os
 /// The backend is now `os.Logger` (subsystem = bundle identifier, category = tag), so a
 /// Console filter on the bundle id shows every line, and there is no format string at all.
 /// Each line is also kept in a small in-memory ring buffer (`recentLines(tags:)`) so the
-/// app can show and copy its own recent log without a cable. Nothing leaves the device.
+/// app can show and copy its own recent log without a cable. A bounded, sanitized
+/// DiagnosticArchive also survives relaunches for user-initiated support reports.
 ///
 /// Every message is passed through `redactURLs(in:)` first: Xtream URLs carry the panel
 /// credentials in the path or the query, and these lines end up in bug reports.
@@ -33,16 +34,16 @@ nonisolated enum Log {
   /// The most recent lines, oldest first, formatted as `HH:mm:ss.SSS [tag] message`
   /// (errors as `HH:mm:ss.SSS [tag] ERROR: message`). `nil` returns every tag.
   static func recentLines(tags: [String]? = nil) -> [String] {
-    recent.entries(tags: tags.map { Set($0) }).map(\.line)
+    worker.sync { recent.entries(tags: tags.map { Set($0) }).map(\.line) }
   }
 
   /// Same as above for any other collection of tags (a `Set`, a slice, ...).
   static func recentLines<S: Sequence>(tags: S) -> [String] where S.Element == String {
-    recent.entries(tags: Set(tags)).map(\.line)
+    worker.sync { recent.entries(tags: Set(tags)).map(\.line) }
   }
 
   static func clearRecent() {
-    recent.removeAll()
+    worker.sync { recent.removeAll() }
   }
 
   // MARK: - Persisted lines (survive a relaunch)
@@ -62,20 +63,23 @@ nonisolated enum Log {
   static func persistRecent(
     tags: [String], key: String, limit: Int = 120, defaults: UserDefaults = .standard
   ) {
-    let lines = persistable(recentLines(tags: tags), limit: limit)
-    guard !lines.isEmpty else { return }
-    let record: [String: Any] = [persistedLinesField: lines, persistedDateField: Date()]
-    defaults.set(record, forKey: key)
+    let store = ThreadSafeDefaults(value: defaults)
+    worker.submit(bytes: 0) { [store] in
+      let lines = persistable(recent.entries(tags: Set(tags)).map(\.line), limit: limit)
+      guard !lines.isEmpty else { return }
+      let record: [String: Any] = [persistedLinesField: lines, persistedDateField: Date()]
+      store.value.set(record, forKey: key)
+    }
   }
 
   /// The lines last stored under `key`, oldest first; empty when there are none.
   static func persistedLines(key: String, defaults: UserDefaults = .standard) -> [String] {
-    (defaults.dictionary(forKey: key)?[persistedLinesField] as? [String]) ?? []
+    worker.sync { (defaults.dictionary(forKey: key)?[persistedLinesField] as? [String]) ?? [] }
   }
 
   /// When the lines under `key` were stored. The lines carry a time of day only.
   static func persistedDate(key: String, defaults: UserDefaults = .standard) -> Date? {
-    defaults.dictionary(forKey: key)?[persistedDateField] as? Date
+    worker.sync { defaults.dictionary(forKey: key)?[persistedDateField] as? Date }
   }
 
   /// The newest `limit` of `lines` (never more than `persistedLineLimit`), each cut
@@ -243,8 +247,20 @@ nonisolated enum Log {
 
   // MARK: - Private
 
+  // Foundation documents UserDefaults as thread-safe; the wrapper crosses this queue only.
+  private struct ThreadSafeDefaults: @unchecked Sendable {
+    let value: UserDefaults
+  }
+
   private static let subsystem = Bundle.main.bundleIdentifier ?? "another-iptv-player"
   private static let recent = RingBuffer(capacity: recentCapacity)
+  private static let worker = DiagnosticWorkQueue(label: "app.diagnostics.events", onDrop: { count in
+    emit(.error, "Diagnostics", "Dropped \(count) log records during overload", date: Date())
+  })
+  // Accessed exclusively on worker.queue.
+  private static let timestampFormatter = ISO8601DateFormatter()
+
+  static func flush() { worker.flush() }
   private static let urlPlaceholder = "<url>"
   private static let persistedLinesField = "lines"
   private static let persistedDateField = "savedAt"
@@ -262,7 +278,14 @@ nonisolated enum Log {
   private static let xtreamKinds: Set<String> = ["live", "movie", "series", "timeshift"]
 
   private static func write(_ level: Level, _ tag: String, _ rawMessage: String) {
-    let message = redactURLs(in: rawMessage)
+    let date = Date()
+    worker.submit(bytes: rawMessage.utf8.count + tag.utf8.count) {
+      emit(level, tag, rawMessage, date: date)
+    }
+  }
+
+  private static func emit(_ level: Level, _ tag: String, _ rawMessage: String, date: Date) {
+    let message = tag == "KSPlayer" ? SupportReport.sanitized(rawMessage) : redactURLs(in: rawMessage)
     // os_log_create hands back the same cached object for a subsystem/category pair,
     // so building a Logger per call is cheap.
     let logger = Logger(subsystem: subsystem, category: tag)
@@ -274,7 +297,9 @@ nonisolated enum Log {
     case .error:
       logger.error("\(message, privacy: .public)")
     }
-    recent.append(Entry(date: Date(), level: level, tag: tag, message: message))
+    let entry = Entry(date: date, level: level, tag: tag, message: message)
+    recent.append(entry)
+    DiagnosticArchive.shared.append("\(timestampFormatter.string(from: entry.date)) [\(tag)] \(level.rawValue): \(message)")
   }
 
   private static func redactedPathSegments(_ segments: [String]) -> [String] {

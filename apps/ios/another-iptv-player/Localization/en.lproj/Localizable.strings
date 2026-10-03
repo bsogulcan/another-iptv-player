@@ -614,3 +614,20 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "All categories are hidden";
 "guide.all_hidden.message" = "Show a category in the category picker to see its channels in the TV guide.";
+
+// Support
+"support.title" = "Support";
+"support.contact" = "Contact the developer";
+"support.report" = "Report a problem";
+"support.message" = "Your message";
+"support.message.hint" = "What happened, and what did you expect? Please do not include passwords or playlist links.";
+"support.diagnostics" = "Include diagnostic logs";
+"support.diagnostics.hint" = "Adds recent application logs and masked API responses, including movie and series details. Records are kept locally for up to 7 days within a size limit. Review the attachment before sharing.";
+"support.preview" = "View diagnostic logs";
+"support.send.hint" = "App and device information will be included. Review the email and tap Send when ready.";
+"support.unavailable" = "Mail is not configured. Share your report using another app and copy the support address below. You may need to enter the recipient and subject yourself.";
+"support.compose" = "Prepare email";
+"support.share" = "Share report";
+"support.copy" = "Copy support email address";
+"support.copied" = "Email address copied";
+"support.failed" = "The report could not be prepared or sent. Your message is still here; please try again.";

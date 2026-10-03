@@ -1,6 +1,30 @@
 import SwiftUI
+import KSPlayer
 
 class AppDelegate: NSObject, UIApplicationDelegate {
+    private var diagnosticBackgroundTask: UIBackgroundTaskIdentifier = .invalid
+
+    func flushDiagnosticsInBackground() {
+        guard diagnosticBackgroundTask == .invalid else { return }
+        diagnosticBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Flush diagnostics") { [weak self] in
+            self?.finishDiagnosticFlush()
+        }
+        let identifier = diagnosticBackgroundTask
+        Task.detached(priority: .utility) { [weak self] in
+            APIDiagnostics.flush()
+            Log.flush()
+            DiagnosticArchive.shared.flush()
+            await self?.finishDiagnosticFlush(expected: identifier)
+        }
+    }
+
+    private func finishDiagnosticFlush(expected: UIBackgroundTaskIdentifier? = nil) {
+        if let expected, expected != diagnosticBackgroundTask { return }
+        guard diagnosticBackgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(diagnosticBackgroundTask)
+        diagnosticBackgroundTask = .invalid
+    }
+
     /// Varsayılan: tüm yönler. `LiveChannelBrowserScreen` açıkken `.landscape` yapılır.
     static var orientationLock: UIInterfaceOrientationMask = .allButUpsideDown
 
@@ -27,8 +51,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct another_iptv_playerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        KSOptions.logger = PlayerDiagnosticLog()
+        KSOptions.logLevel = .info
+        Log.info("App", "Session started")
         IPTVRemoteImagePipeline.installAsShared()
         _ = AppDatabase.shared
         MockFixture.seedIfNeeded()
@@ -43,6 +71,9 @@ struct another_iptv_playerApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { appDelegate.flushDiagnosticsInBackground() }
         }
     }
 }

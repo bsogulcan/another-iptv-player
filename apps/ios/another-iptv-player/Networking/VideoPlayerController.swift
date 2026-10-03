@@ -572,10 +572,6 @@ final class VideoPlayerController: ObservableObject {
     )
   }
 
-  private let log = Logger(
-    subsystem: Bundle.main.bundleIdentifier ?? "another-iptv-player",
-    category: "VideoPlayer"
-  )
 
   /// Intervals around the synchronous main-thread work of a load, a stop and the
   /// audio session activation, for Instruments (Points of Interest). Measurement
@@ -1099,7 +1095,7 @@ final class VideoPlayerController: ObservableObject {
        !didAutoRetryCurrentLoad,
        let request = currentLoadRequest {
       didAutoRetryCurrentLoad = true
-      log.info("Auto-retrying playback after recoverable failure")
+      Log.info("VideoPlayer", "Auto-retrying playback after recoverable failure")
       // Resume from the current position, not the original startSeconds — otherwise a
       // mid-stream retry silently rewinds to wherever the user started this load from.
       let resumeAt: TimeInterval? = engine.isPlaybackEstablished && engine.position > 0.5
@@ -1493,7 +1489,10 @@ final class VideoPlayerController: ObservableObject {
     updateSeekLatencyIfNeeded(currentTimeMs: posMs)
     if diagnosticsVisible { mirrorDiagnostics() }
 
-    if state != newState { state = newState }
+    if state != newState {
+      Log.info("VideoPlayer", "State: \(state) → \(newState)")
+      state = newState
+    }
 
     applyIdleTimerPolicy()
     updateNowPlayingInfo()
@@ -1571,7 +1570,7 @@ final class VideoPlayerController: ObservableObject {
   private func tryFlushPendingLoad() {
     guard let request = pendingLoadRequest else { return }
     pendingLoadRequest = nil
-    log.info("Loading URL into engine: \(Log.redact(request.url), privacy: .public)")
+    Log.info("VideoPlayer", "Loading URL into engine: \(Log.redact(request.url))")
     // The load releases the previous layer and builds the new one synchronously.
     let loadInterval = Self.signposter.beginInterval("EngineLoad")
     engine.load(
@@ -1645,7 +1644,7 @@ final class VideoPlayerController: ObservableObject {
       audioSessionLease = lease.token
     } catch {
       Self.rollBackAudioSessionLease(lease.token, previous: lease.previous)
-      log.error("AVAudioSession: \(error.localizedDescription)")
+      Log.error("VideoPlayer", "AVAudioSession: \(error.localizedDescription)")
     }
   }
 
@@ -1832,7 +1831,7 @@ final class VideoPlayerController: ObservableObject {
       lastKnownPosition: lastKnownPositionSeconds,
       knownDuration: Double(durationMs) / 1000.0
     )
-    log.info("Retrying current load")
+    Log.info("VideoPlayer", "Retrying current load")
     startLoad(
       PendingLoadRequest(
         url: request.url,
@@ -1905,7 +1904,7 @@ final class VideoPlayerController: ObservableObject {
         self.handleEngineChange()
         return
       }
-      self.log.info("Reloading after a failed load (delayed one-shot retry)")
+      Log.info("VideoPlayer", "Reloading after a failed load (delayed one-shot retry)")
       self.startLoad(request, origin: .postCastRetry)
     }
     postCastRetryWork = work
@@ -1931,7 +1930,7 @@ final class VideoPlayerController: ObservableObject {
       engine.markLiveStreamEnded()
       return
     }
-    log.info("Live stream ended; reloading in \(delay, privacy: .public)s")
+    Log.info("VideoPlayer", "Live stream ended; reloading in \(delay)s")
     liveReloadWork?.cancel()
     let work = DispatchWorkItem { [weak self] in
       guard let self, !self.isTornDown else { return }

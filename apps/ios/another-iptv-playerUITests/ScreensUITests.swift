@@ -246,3 +246,56 @@ final class ScreensUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Playlists"].waitForExistence(timeout: 6))
     }
 }
+
+
+@MainActor
+final class SupportUITests: XCTestCase {
+    func test_contactKeyboardCanBeDismissedAndPrepareStaysReachable() {
+        verifyKeyboard(entry: "support.contact")
+    }
+
+    func test_issueKeyboardCanBeDismissedAndPrepareStaysReachable() {
+        verifyKeyboard(entry: "support.report")
+    }
+
+    private func verifyKeyboard(entry: String) {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let settings = app.buttons["Settings"].firstMatch
+        XCTAssertTrue(settings.waitForExistence(timeout: 25))
+        settings.tap()
+        let link = app.buttons[entry]
+        for _ in 0..<12 {
+            if link.exists && link.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(link.isHittable)
+        link.tap()
+
+        let editor = app.textViews["support.message"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        editor.tap()
+        editor.typeText("Keyboard support test\nSecond line")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        let prepare = app.buttons["support.prepare"]
+        XCTAssertTrue(prepare.isHittable, "Prepare must remain above the keyboard")
+        let done = app.buttons["support.keyboard.done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        done.tap()
+        assertKeyboardDismissed(app)
+        XCTAssertTrue((editor.value as? String)?.contains("Second line") == true)
+
+        // Preparing directly from an editing state must also resign focus before presentation.
+        editor.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        prepare.tap()
+        assertKeyboardDismissed(app)
+    }
+
+    private func assertKeyboardDismissed(_ app: XCUIApplication) {
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.keyboards.firstMatch)
+        XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: 5), .completed)
+    }
+}

@@ -614,3 +614,20 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "Tüm kategoriler gizli";
 "guide.all_hidden.message" = "Kanalları TV rehberinde görmek için kategori seçicisinden bir kategoriyi görünür yapın.";
+
+// Support
+"support.title" = "Destek";
+"support.contact" = "Geliştiriciyle iletişime geç";
+"support.report" = "Sorun bildir";
+"support.message" = "Mesajınız";
+"support.message.hint" = "Ne oldu, ne olmasını bekliyordunuz? Lütfen şifre veya playlist bağlantısı paylaşmayın.";
+"support.diagnostics" = "Tanılama kayıtlarını ekle";
+"support.diagnostics.hint" = "Son uygulama kayıtlarını ve film/dizi detayları dahil maskelenmiş API yanıtlarını ekler. Kayıtlar boyut sınırıyla en fazla 7 gün cihazda tutulur. Paylaşmadan önce eki inceleyin.";
+"support.preview" = "Tanılama kayıtlarını görüntüle";
+"support.send.hint" = "Uygulama ve cihaz bilgileri eklenecek. E-postayı inceleyip hazır olduğunuzda Gönder’e dokunun.";
+"support.unavailable" = "Mail yapılandırılmamış. Raporunuzu başka bir uygulamayla paylaşabilir ve destek adresini kopyalayabilirsiniz. Alıcı ve konuyu kendiniz girmeniz gerekebilir.";
+"support.compose" = "E-posta hazırla";
+"support.share" = "Raporu paylaş";
+"support.copy" = "Destek e-posta adresini kopyala";
+"support.copied" = "E-posta adresi kopyalandı";
+"support.failed" = "Rapor hazırlanamadı veya gönderilemedi. Mesajınız korunuyor; lütfen tekrar deneyin.";

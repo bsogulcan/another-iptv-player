@@ -324,6 +324,8 @@ struct PlaylistSettingsView: View {
                 }
             }
 
+            SupportSection()
+
             Section(header: Text(L("settings.about.title"))) {
                 LabeledContent(L("settings.about.version")) {
                     Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-")

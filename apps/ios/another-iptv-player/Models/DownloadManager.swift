@@ -3,7 +3,6 @@ import GRDB
 import Combine
 import os.log
 
-private let downloadLog = Logger(subsystem: Bundle.main.bundleIdentifier ?? "app", category: "Downloads")
 
 /// İndirme ilerlemesinin bellek içi temsili — UI sıkça değiştiği için DB'ye yazmayız.
 struct DownloadProgress: Equatable {
@@ -153,7 +152,7 @@ final class DownloadManager: NSObject, ObservableObject {
                 }
             }
             for orphan in orphans {
-                downloadLog.info("restore orphan id=\(orphan.id, privacy: .public) — DB downloading, task yok; kuyruğa geri alındı")
+                Log.info("Downloads", "restore orphan id=\(orphan.id) — DB downloading, task yok; kuyruğa geri alındı")
             }
             dbVersion &+= 1
         }
@@ -234,7 +233,7 @@ final class DownloadManager: NSObject, ObservableObject {
         } catch {
             // Sessiz yutma: kullanıcı Download'a bastı, buton idle kaldı, hiçbir iz yok.
             // failed satırı yaz ki DownloadsView'da görünsün ve retry edilebilsin.
-            downloadLog.error("enqueue id=\(id, privacy: .public) — DB insert failed: \(error.localizedDescription, privacy: .public)")
+            Log.error("Downloads", "enqueue id=\(id) — DB insert failed: \(error.localizedDescription)")
             await persistFailed(
                 id: id, playlistId: playlistId, streamId: streamId, type: type,
                 title: title, secondaryTitle: secondaryTitle, imageURL: imageURL,
@@ -246,7 +245,7 @@ final class DownloadManager: NSObject, ObservableObject {
             return
         }
         dbVersion &+= 1
-        downloadLog.info("enqueue id=\(id, privacy: .public) — kuyruğa alındı")
+        Log.info("Downloads", "enqueue id=\(id) — kuyruğa alındı")
         Task { await pumpQueue() }
     }
 
@@ -458,7 +457,7 @@ final class DownloadManager: NSObject, ObservableObject {
                 let next = remaining.remove(at: idx)
 
                 guard let url = URL(string: next.remoteURL) else {
-                    downloadLog.error("pumpQueue id=\(next.id, privacy: .public) — URL bozuk, failed işaretleniyor")
+                    Log.error("Downloads", "pumpQueue id=\(next.id) — URL bozuk, failed işaretleniyor")
                     await markFailed(
                         id: next.id,
                         error: NSError(domain: "Download", code: -3,
@@ -472,7 +471,7 @@ final class DownloadManager: NSObject, ObservableObject {
                     let remainingBytes = Int64(max(next.totalBytes - next.downloadedBytes, 0))
                     if let available = await Self.offMain({ DownloadStorage.availableCapacityBytes() }),
                        available < remainingBytes + Self.minFreeDiskMargin {
-                        downloadLog.error("pumpQueue no-space id=\(next.id, privacy: .public) needed=\(remainingBytes) available=\(available)")
+                        Log.error("Downloads", "pumpQueue no-space id=\(next.id) needed=\(remainingBytes) available=\(available)")
                         await markFailed(
                             id: next.id,
                             error: NSError(domain: "Download", code: -4,
@@ -503,14 +502,14 @@ final class DownloadManager: NSObject, ObservableObject {
     /// Önceki denemeden resume data varsa kaldığı yerden devam eder, yoksa sıfırdan başlar.
     private func startTask(id: String, playlistId: UUID, remoteURL: URL, relPath: String) {
         // The remote URL carries the panel credentials; a public log line only gets the redacted form.
-        downloadLog.info("start id=\(id, privacy: .public) playlist=\(playlistId.uuidString, privacy: .public) url=\(Log.redact(remoteURL), privacy: .public)")
+        Log.info("Downloads", "start id=\(id) playlist=\(playlistId.uuidString) url=\(Log.redact(remoteURL))")
         let task: URLSessionDownloadTask
         if let resumeData = DownloadStorage.loadResumeData(forId: id) {
             // Consume the blob up front: if this attempt fails again we either get
             // fresh resume data (persisted anew in didCompleteWithError) or the next
             // retry falls back to a clean full download.
             DownloadStorage.removeResumeData(forId: id)
-            downloadLog.info("start id=\(id, privacy: .public) — resuming with \(resumeData.count) bytes of resume data")
+            Log.info("Downloads", "start id=\(id) — resuming with \(resumeData.count) bytes of resume data")
             task = session.downloadTask(withResumeData: resumeData)
         } else {
             var request = URLRequest(url: remoteURL)
@@ -633,7 +632,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                     await MainActor.run { [weak self] in
                         // The task may have finished, failed or been cancelled since.
                         guard let self, self.taskToId[taskId] == id else { return }
-                        downloadLog.error("no-space id=\(id, privacy: .public) needed=\(remaining) available=\(available)")
+                        Log.error("Downloads", "no-space id=\(id) needed=\(remaining) available=\(available)")
                         self.spaceFailedIds.insert(id)
                         downloadTask.cancel()
                     }
@@ -752,7 +751,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                     }
                     if let resumeData {
                         DownloadStorage.saveResumeData(resumeData, forId: id)
-                        downloadLog.info("system-cancel id=\(id, privacy: .public) — resume data saklandı, kuyruğa geri alındı")
+                        Log.info("Downloads", "system-cancel id=\(id) — resume data saklandı, kuyruğa geri alındı")
                         Task {
                             await self.requeueAfterError(id: id, errorMessage: NetworkErrorText.describe(error), preserveProgress: true)
                             await self.pumpQueue()
@@ -786,7 +785,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
                 let attempts = (self.autoRetryCountById[id] ?? 0) + 1
                 self.autoRetryCountById[id] = attempts
                 if attempts <= Self.maxAutoRetries {
-                    downloadLog.info("retry id=\(id, privacy: .public) attempt=\(attempts) resume=\(resumeData != nil) — kuyruğun sonuna eklendi: \(error.localizedDescription, privacy: .public)")
+                    Log.info("Downloads", "retry id=\(id) attempt=\(attempts) resume=\(resumeData != nil) — kuyruğun sonuna eklendi: \(error.localizedDescription)")
                     Task {
                         await self.requeueAfterError(id: id, errorMessage: NetworkErrorText.describe(error), preserveProgress: resumeData != nil)
                         await self.pumpQueue()
@@ -848,7 +847,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
         // Skip if an in-memory task is already re-downloading this item.
         guard idToTask[row.id] == nil else { return }
         DownloadStorage.saveResumeData(data, forId: row.id)
-        downloadLog.info("adopt-resume id=\(row.id, privacy: .public) — relaunch sonrası resume data kurtarıldı")
+        Log.info("Downloads", "adopt-resume id=\(row.id) — relaunch sonrası resume data kurtarıldı")
         if row.downloadStatus == .downloading {
             await requeueAfterError(id: row.id, errorMessage: "Interrupted", preserveProgress: true)
         }
