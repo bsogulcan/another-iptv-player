@@ -29,9 +29,10 @@ platform :ios do
   end
 
   desc "Upload App Store metadata (text + URLs only, no binary, no screenshots)"
-  lane :metadata do
+  lane :metadata do |options|
     deliver(
       api_key: lane_context[SharedValues::APP_STORE_CONNECT_API_KEY],
+      app_version: options[:version],
       skip_binary_upload: true,
       skip_screenshots: true,
       skip_metadata: false,
@@ -58,6 +59,28 @@ platform :ios do
       default_rule_level: :warn,
       # API Key + IAP check incompatible (fastlane limitation), so the tip IAPs are not prechecked.
       include_in_app_purchases: false
+    )
+  end
+
+  desc "Prepare App Privacy answers locally without uploading (interactive, Apple ID)"
+  lane :privacy_prepare do
+    upload_app_privacy_details_to_app_store(
+      username: ENV.fetch("FASTLANE_USER"),
+      app_identifier: "dev.ogos.another-iptv-player",
+      output_json_path: File.expand_path("app_privacy_details.json", __dir__),
+      skip_upload: true
+    )
+  end
+
+  desc "Upload reviewed App Privacy answers as an unpublished draft (Apple ID)"
+  lane :privacy_upload do
+    json_path = File.expand_path("app_privacy_details.json", __dir__)
+    UI.user_error!("Run privacy_prepare and review app_privacy_details.json first.") unless File.file?(json_path)
+    upload_app_privacy_details_to_app_store(
+      username: ENV.fetch("FASTLANE_USER"),
+      app_identifier: "dev.ogos.another-iptv-player",
+      json_path: json_path,
+      skip_publish: true
     )
   end
 

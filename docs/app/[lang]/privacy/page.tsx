@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { Page } from "@/components/Page";
 import { LINKS } from "@/lib/data";
 
-const LAST_UPDATED = "2026-06-06";
+const LAST_UPDATED = "2026-10-03";
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));

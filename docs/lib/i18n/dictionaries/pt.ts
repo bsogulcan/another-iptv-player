@@ -21,7 +21,7 @@ const pt: Dictionary = {
     privacy: {
       title: "Política de Privacidade — Another IPTV Player",
       description:
-        "Política de privacidade do Another IPTV Player. O app não coleta dados pessoais; tudo permanece no seu dispositivo.",
+        "O app não inclui SDKs de publicidade ou rastreamento. Dados locais, relatórios de suporte opcionais e compras da Apple são explicados abaixo.",
     },
   },
 
@@ -276,7 +276,7 @@ const pt: Dictionary = {
       },
       {
         q: "Preciso pagar para usar o app?",
-        a: "Não. O app é totalmente gratuito e de código aberto. Não há assinaturas, compras no app nem anúncios.",
+        a: "O app continua gratuito. O iOS oferece gorjetas opcionais por compras consumíveis únicas da Apple; elas não desbloqueiam recursos nem são assinaturas.",
       },
       {
         q: "Posso usar o app sem um provedor de IPTV?",
@@ -288,7 +288,7 @@ const pt: Dictionary = {
       },
       {
         q: "Meus dados pessoais estão seguros?",
-        a: "Sim. O app não coleta nem armazena dados pessoais. Suas credenciais de IPTV são usadas apenas localmente no seu dispositivo.",
+        a: "Listas IPTV, credenciais e listas de canais são armazenadas apenas localmente no seu dispositivo. O suporte no iOS 3.0.0 é opcional. Os relatórios incluem sua mensagem, versões do app e do iOS, modelo do dispositivo e data. Ao enviar um e-mail, nós e nosso provedor Gmail também recebemos seu nome de remetente e endereço de e-mail. Nada é enviado automaticamente.",
       },
       {
         q: "Em quais plataformas o Another IPTV Player está disponível?",
@@ -320,11 +320,13 @@ const pt: Dictionary = {
       app: {
         title: "O app",
         intro:
-          "O Another IPTV Player não coleta, armazena nem transmite nenhum dado pessoal ou informação do usuário.",
+          "O app não inclui SDKs de publicidade ou rastreamento. Dados locais, relatórios de suporte opcionais e compras da Apple são explicados abaixo.",
         points: [
           "Listas IPTV, credenciais e listas de canais são armazenadas apenas localmente no seu dispositivo.",
-          "Nenhum dado é enviado aos nossos servidores — não temos nenhum.",
-          "Nenhum SDK de análise, publicidade ou rastreamento está incluído no app.",
+          "O suporte no iOS 3.0.0 é opcional. Os relatórios incluem sua mensagem, versões do app e do iOS, modelo do dispositivo e data. Ao enviar um e-mail, nós e nosso provedor Gmail também recebemos seu nome de remetente e endereço de e-mail. Nada é enviado automaticamente.",
+          "Os anexos de diagnóstico vêm desativados e podem ser visualizados antes do envio. Os logs locais incluem eventos, erros de reprodução e detalhes de respostas da API; o arquivo tem limite de tamanho e de idade de sete dias. URLs e campos de credenciais reconhecidos são ocultados; confira o conteúdo antes de compartilhar.",
+          "Os e-mails de suporte e anexos são usados para responder e resolver problemas, não para publicidade ou rastreamento. Nós os excluímos da caixa de suporte em até 30 dias após encerrar a solicitação. Para exclusão antecipada, escreva para bsogulcan@gmail.com. Cópias no seu provedor de e-mail ou compartilhamento seguem as políticas dele.",
+          "O app continua gratuito. O iOS oferece gorjetas opcionais por compras consumíveis únicas da Apple; elas não desbloqueiam recursos nem são assinaturas. A Apple processa o pagamento. Não recebemos dados de cartão ou bancários; o app não envia registros de compras a um servidor do desenvolvedor.",
         ],
       },
       website: {
@@ -334,7 +336,7 @@ const pt: Dictionary = {
       },
       thirdParty: {
         title: "Serviços de terceiros",
-        p1: "O app não se integra a nenhum serviço de análise, publicidade ou coleta de dados de terceiros. Qualquer conexão feita pelo app é diretamente com o provedor de IPTV que você configurar.",
+        p1: "As conexões incluem seu provedor IPTV, serviços necessários para exibir conteúdo, compras da Apple e serviços de e-mail ou compartilhamento escolhidos para suporte. As políticas de privacidade desses serviços se aplicam. Logs de diagnóstico não são enviados automaticamente.",
       },
       openSource: {
         title: "Código aberto",

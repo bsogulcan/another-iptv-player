@@ -21,7 +21,7 @@ const fr: Dictionary = {
     privacy: {
       title: "Politique de confidentialité — Another IPTV Player",
       description:
-        "Politique de confidentialité d'Another IPTV Player. L'app ne collecte aucune donnée personnelle ; tout reste sur votre appareil.",
+        "L’app ne contient aucun SDK publicitaire ou de suivi. Les données locales, les demandes d’assistance facultatives et les achats Apple sont décrits ci-dessous.",
     },
   },
 
@@ -276,7 +276,7 @@ const fr: Dictionary = {
       },
       {
         q: "Dois-je payer pour utiliser l'app ?",
-        a: "Non. L'app est entièrement gratuite et open source. Pas d'abonnement, pas d'achat intégré, pas de pub.",
+        a: "L’app reste gratuite. iOS propose des pourboires facultatifs sous forme d’achats consommables uniques via Apple ; ils ne débloquent aucune fonction et ne sont pas des abonnements.",
       },
       {
         q: "Puis-je utiliser l'app sans fournisseur IPTV ?",
@@ -288,7 +288,7 @@ const fr: Dictionary = {
       },
       {
         q: "Mes données personnelles sont-elles en sécurité ?",
-        a: "Oui. L'app ne collecte ni ne stocke aucune donnée personnelle. Vos identifiants IPTV sont utilisés uniquement en local sur votre appareil.",
+        a: "Les playlists IPTV, les identifiants et les listes de chaînes sont stockés uniquement en local sur votre appareil. L’assistance sous iOS 3.0.0 est facultative. Les rapports incluent votre message, les versions de l’app et d’iOS, le modèle de l’appareil et la date. En envoyant un e-mail, vous transmettez aussi votre nom d’expéditeur et votre adresse à nous et à notre fournisseur Gmail. Rien n’est envoyé automatiquement.",
       },
       {
         q: "Sur quelles plateformes Another IPTV Player est-il disponible ?",
@@ -320,11 +320,13 @@ const fr: Dictionary = {
       app: {
         title: "L'application",
         intro:
-          "Another IPTV Player ne collecte, ne stocke ni ne transmet aucune donnée personnelle ou information utilisateur.",
+          "L’app ne contient aucun SDK publicitaire ou de suivi. Les données locales, les demandes d’assistance facultatives et les achats Apple sont décrits ci-dessous.",
         points: [
           "Les playlists IPTV, les identifiants et les listes de chaînes sont stockés uniquement en local sur votre appareil.",
-          "Aucune donnée n'est envoyée à nos serveurs — nous n'en avons aucun.",
-          "Aucun SDK d'analytique, de publicité ou de suivi n'est intégré à l'app.",
+          "L’assistance sous iOS 3.0.0 est facultative. Les rapports incluent votre message, les versions de l’app et d’iOS, le modèle de l’appareil et la date. En envoyant un e-mail, vous transmettez aussi votre nom d’expéditeur et votre adresse à nous et à notre fournisseur Gmail. Rien n’est envoyé automatiquement.",
+          "Les pièces jointes de diagnostic sont désactivées par défaut et peuvent être prévisualisées. Les journaux locaux contiennent des événements, erreurs de lecture et détails de réponses API ; leur archive est limitée en taille et à sept jours d’ancienneté. Les URL et champs d’identifiants reconnus sont masqués ; vérifiez le contenu avant le partage.",
+          "Les e-mails d’assistance et leurs pièces jointes servent à répondre aux demandes et résoudre les problèmes, sans publicité ni suivi. Nous les supprimons de notre boîte d’assistance au plus tard 30 jours après la clôture de la demande. Pour une suppression anticipée, écrivez à bsogulcan@gmail.com. Les copies de votre fournisseur de messagerie ou de partage suivent ses propres règles.",
+          "L’app reste gratuite. iOS propose des pourboires facultatifs sous forme d’achats consommables uniques via Apple ; ils ne débloquent aucune fonction et ne sont pas des abonnements. Apple traite le paiement. Nous ne recevons aucune donnée bancaire ou de carte ; l’app ne transmet aucun historique d’achat à un serveur du développeur.",
         ],
       },
       website: {
@@ -334,7 +336,7 @@ const fr: Dictionary = {
       },
       thirdParty: {
         title: "Services tiers",
-        p1: "L'app n'intègre aucun service tiers d'analytique, de publicité ou de collecte de données. Toute connexion établie par l'app l'est directement avec le fournisseur IPTV que vous configurez.",
+        p1: "Les connexions concernent votre fournisseur IPTV, les services nécessaires à l’affichage du contenu, les achats Apple et les services de messagerie ou de partage choisis pour l’assistance. Leurs politiques de confidentialité s’appliquent. Les journaux ne sont pas envoyés automatiquement.",
       },
       openSource: {
         title: "Open source",

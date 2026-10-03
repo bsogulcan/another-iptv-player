@@ -1,7 +1,10 @@
-• Yepyeni video oynatıcı motoru — daha hızlı açılış, daha akıcı oynatma ve daha geniş format desteği
-• Daha iyi AirPlay — daha fazla kanal ve format Apple TV'ye aktarılıyor, içe aktarılan altyazılar dahil
-• Sonraki bölümü iptal edilebilir geri sayımla otomatik oynatma
-• Ses/görüntü senkronu için ses gecikmesi ayarı
-• Film, dizi ve kanallarda sıralama ve filtreleme; yeni "Tüm Filmler", "Tüm Diziler" ve "Tüm Kanallar" görünümleri
-• TV Rehberi kanalları artık katlanabilir kategori başlıkları altında grupluyor
-• Çok büyük listelerde belirgin hız artışı ve birçok hata düzeltmesi
+• Yenilenen içerik ve detay ekranları, daha akıcı gezinme ve büyük oynatma listelerinde daha hızlı arama.
+• Çift dokunarak ileri/geri sarma, oynatma hızı seçimi, uyku zamanlayıcısı ve yatay ekran düğmesiyle yenilenen oynatıcı kontrolleri.
+• Daha iyi altyazı içe aktarma ve görünüm ayarları; her video için ayrı kaydedilen altyazı gecikmesi.
+• AirPlay başlangıcı ve yayın uyumluluğunda iyileştirmeler, daha hızlı yanıt veren cihaz seçici, daha anlaşılır iptal ve hata bildirimleri.
+• AirPlay sırasında ses ve altyazı seçimi, telefonda oynatmaya dönüş ve izleme konumunun kaydında iyileştirmeler.
+• Bazı HDR ve 10 bit videolarda ve sarma sırasında oluşan çökmeler düzeltildi; kesilen sesin yeniden başlaması iyileştirildi.
+• Favoriler, izleme geçmişi, bölümler arası geçiş, liste içe aktarma, indirmeler ve TV rehberi yenilemede düzeltmeler.
+• VoiceOver, donanım klavyesi ve iPad kullanımında iyileştirmeler.
+• Ayarlardan geliştiriciyle iletişim kurun veya sorun bildirin. Tanılama loglarını isteğe bağlı ekleyebilir, paylaşmadan önce önizleyebilirsiniz.
+• İsteğe bağlı, tek seferlik bahşişlerle geliştirmeyi destekleyin. Uygulama ücretsiz kalır; bahşişler herhangi bir özellik açmaz.

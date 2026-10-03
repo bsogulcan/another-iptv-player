@@ -1,7 +1,10 @@
-• Nouveau moteur de lecture : démarrage plus rapide, lecture plus fluide et plus de formats pris en charge
-• AirPlay amélioré : davantage de chaînes et de formats diffusés vers l'Apple TV, sous-titres importés inclus
-• Lecture automatique de l'épisode suivant avec compte à rebours annulable
-• Réglage du délai audio pour corriger la synchronisation A/V
-• Tri et filtres pour les films, séries et chaînes, avec les nouvelles vues « Tous les films », « Toutes les séries » et « Toutes les chaînes »
-• Le guide TV regroupe désormais les chaînes par catégories repliables
-• Bien plus rapide avec les très grandes playlists, et de nombreuses corrections
+• Catalogue et fiches de détails repensés, navigation plus fluide et recherche plus rapide dans les grandes listes de lecture.
+• Commandes de lecture revues : avance et retour par double toucher, choix de vitesse, minuterie de veille et bouton de passage en paysage.
+• Importation et affichage des sous-titres améliorés ; leur décalage est enregistré séparément pour chaque vidéo.
+• Démarrage et compatibilité des flux AirPlay améliorés, sélecteur d’appareils plus réactif et messages d’annulation et d’erreur plus clairs.
+• Sélection audio et sous-titres plus fiable avec AirPlay, meilleur retour à la lecture sur le téléphone et suivi de la progression.
+• Correction de plantages avec certaines vidéos HDR et 10 bits et lors du déplacement dans la vidéo ; meilleure reprise après une interruption audio.
+• Améliorations des favoris, de l’historique, du passage entre épisodes, de l’importation des listes, des téléchargements et de l’actualisation du guide TV.
+• Meilleure prise en charge de VoiceOver, des claviers physiques et de l’iPad.
+• Contactez le développeur ou signalez un problème depuis Réglages. Les journaux de diagnostic sont facultatifs et peuvent être prévisualisés avant le partage.
+• Soutenez le développement avec des pourboires facultatifs et ponctuels. L’app reste gratuite et les pourboires ne débloquent aucune fonction.

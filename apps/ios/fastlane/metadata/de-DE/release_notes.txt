@@ -1,7 +1,10 @@
-• Komplett neue Player-Engine — schnellerer Start, flüssigere Wiedergabe und mehr unterstützte Formate
-• Besseres AirPlay — mehr Sender und Formate laufen auf Apple TV, importierte Untertitel inklusive
-• Nächste Folge automatisch abspielen, mit abbrechbarem Countdown
-• Einstellbare Audioverzögerung zur Korrektur der A/V-Synchronisation
-• Filme, Serien und Sender sortieren und filtern, plus neue Ansichten „Alle Filme", „Alle Serien" und „Alle Sender"
-• Der TV-Guide gruppiert Sender jetzt in einklappbare Kategorien
-• Deutlich schneller bei sehr großen Playlists, dazu viele Fehlerbehebungen
+• Überarbeitete Katalog- und Detailansichten, flüssigere Navigation und schnellere Suche in großen Wiedergabelisten.
+• Neue Player-Steuerung mit Spulen per Doppeltipp, Geschwindigkeitsauswahl, Einschlaftimer und Querformat-Taste.
+• Verbesserter Untertitelimport und verbesserte Darstellung; der Untertitelversatz wird für jedes Video separat gespeichert.
+• Verbesserter AirPlay-Start und höhere Stream-Kompatibilität, eine reaktionsschnellere Geräteauswahl und verständlichere Abbruch- und Fehlermeldungen.
+• Zuverlässigere Audio- und Untertitelauswahl über AirPlay, Rückkehr zur Wiedergabe auf dem iPhone und Speicherung des Wiedergabefortschritts.
+• Abstürze bei einigen HDR- und 10-Bit-Videos sowie beim Spulen behoben; bessere Wiederherstellung nach Tonaussetzern.
+• Verbesserungen bei Favoriten, Verlauf, Folgenwechsel, Playlist-Import, Downloads und Aktualisierung des TV-Programms.
+• Verbesserte Unterstützung für VoiceOver, Hardware-Tastaturen und iPad.
+• Entwicklerkontakt und Problemmeldungen in den Einstellungen. Diagnoseprotokolle sind optional und können vor dem Teilen angesehen werden.
+• Unterstütze die Entwicklung mit freiwilligen, einmaligen Trinkgeldern. Die App bleibt kostenlos; Trinkgelder schalten keine Funktionen frei.

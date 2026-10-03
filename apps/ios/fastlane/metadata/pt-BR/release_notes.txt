@@ -1,7 +1,10 @@
-• Novo motor de reprodução — início mais rápido, reprodução mais fluida e suporte a mais formatos
-• AirPlay melhorado — mais canais e formatos transmitidos para a Apple TV, incluindo legendas importadas
-• Reprodução automática do próximo episódio com contagem regressiva cancelável
-• Ajuste de atraso de áudio para corrigir a sincronização A/V
-• Ordene e filtre filmes, séries e canais, com as novas telas "Todos os filmes", "Todas as séries" e "Todos os canais"
-• O guia de TV agora agrupa canais em categorias recolhíveis
-• Muito mais rápido com listas muito grandes, além de várias correções
+• Catálogo e telas de detalhes renovados, navegação mais fluida e busca mais rápida em listas grandes.
+• Controles do player atualizados: avance ou volte com dois toques, escolha a velocidade, use o temporizador e alterne para o modo paisagem.
+• Melhorias na importação e aparência das legendas; o ajuste de sincronização é salvo separadamente para cada vídeo.
+• Melhor início e compatibilidade de transmissões no AirPlay, seletor de dispositivos mais ágil e mensagens de cancelamento e erro mais claras.
+• Seleção de áudio e legendas mais confiável no AirPlay, melhor retorno à reprodução no celular e registro do progresso.
+• Corrigidas falhas com alguns vídeos HDR e de 10 bits e ao avançar ou voltar; melhor recuperação de áudio interrompido.
+• Melhorias em favoritos, histórico, troca de episódios, importação de listas, downloads e atualização do guia de TV.
+• Melhor suporte ao VoiceOver, teclados físicos e iPad.
+• Contate o desenvolvedor ou relate um problema nos Ajustes. Os logs de diagnóstico são opcionais e podem ser visualizados antes do compartilhamento.
+• Apoie o desenvolvimento com gorjetas opcionais de pagamento único. O app continua gratuito, e as gorjetas não desbloqueiam recursos.

@@ -19,7 +19,7 @@ const en = {
     privacy: {
       title: "Privacy Policy — Another IPTV Player",
       description:
-        "Privacy Policy for Another IPTV Player. The app collects no personal data; everything stays on your device.",
+        "The app has no advertising or tracking SDKs. Local storage, optional support reports, and Apple purchases are described below.",
     },
   },
 
@@ -274,7 +274,7 @@ const en = {
       },
       {
         q: "Do I need to pay to use the app?",
-        a: "No. The app is completely free and open-source. There are no subscriptions, in-app purchases, or ads.",
+        a: "The app remains free. iOS offers optional, one-time consumable tips through Apple; they unlock no features and are not subscriptions.",
       },
       {
         q: "Can I use the app without an IPTV provider?",
@@ -286,7 +286,7 @@ const en = {
       },
       {
         q: "Is my personal data safe?",
-        a: "Yes. The app does not collect or store any personal data. Your IPTV credentials are used only locally on your device.",
+        a: "IPTV playlists, credentials, and channel lists are stored locally on your device only. Support in iOS 3.0.0 is optional. Reports include your message, app and iOS versions, device model, and date. Sending email also shares your sender name and email address with us and our email provider, Gmail. Nothing is sent automatically.",
       },
       {
         q: "Which platforms is Another IPTV Player available on?",
@@ -318,11 +318,13 @@ const en = {
       app: {
         title: "The App",
         intro:
-          "Another IPTV Player does not collect, store, or transmit any personal data or user information.",
+          "The app has no advertising or tracking SDKs. Local storage, optional support reports, and Apple purchases are described below.",
         points: [
           "IPTV playlists, credentials, and channel lists are stored locally on your device only.",
-          "No data is sent to our servers — we don't run any.",
-          "No analytics, advertising, or tracking SDKs are bundled in the app.",
+          "Support in iOS 3.0.0 is optional. Reports include your message, app and iOS versions, device model, and date. Sending email also shares your sender name and email address with us and our email provider, Gmail. Nothing is sent automatically.",
+          "Diagnostic attachments are off by default and can be previewed. Local logs include app events, playback errors, and API response details; the archive is size-limited with a seven-day age limit. Recognized URLs and credential fields are redacted, but review the content before sharing.",
+          "Support emails and attachments are used to answer requests and troubleshoot, not for advertising or tracking. We delete them from our support mailbox within 30 days after the request closes. For earlier deletion, email bsogulcan@gmail.com. Your email or sharing provider's retention policies apply to its copies.",
+          "The app remains free. iOS offers optional, one-time consumable tips through Apple; they unlock no features and are not subscriptions. Apple handles payment. We do not receive card or bank details, and the app does not upload purchase records to a developer-operated server.",
         ],
       },
       website: {
@@ -332,7 +334,7 @@ const en = {
       },
       thirdParty: {
         title: "Third-Party Services",
-        p1: "The app does not integrate with any third-party analytics, advertising, or data-collection services. Any connection the app makes is directly to the IPTV provider you configure.",
+        p1: "Connections include your IPTV provider and services needed to display content, Apple's purchase services, and email or sharing services you choose for support. Their privacy policies apply. Diagnostic logs are not automatically uploaded.",
       },
       openSource: {
         title: "Open Source",

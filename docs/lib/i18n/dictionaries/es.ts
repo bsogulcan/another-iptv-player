@@ -21,7 +21,7 @@ const es: Dictionary = {
     privacy: {
       title: "Política de privacidad — Another IPTV Player",
       description:
-        "Política de privacidad de Another IPTV Player. La app no recopila datos personales; todo permanece en tu dispositivo.",
+        "La app no incluye SDK de publicidad ni seguimiento. A continuación se explican los datos locales, los informes de soporte opcionales y las compras de Apple.",
     },
   },
 
@@ -276,7 +276,7 @@ const es: Dictionary = {
       },
       {
         q: "¿Tengo que pagar para usar la app?",
-        a: "No. La app es totalmente gratuita y de código abierto. No hay suscripciones, compras dentro de la app ni anuncios.",
+        a: "La app sigue siendo gratuita. iOS ofrece propinas opcionales mediante compras consumibles únicas de Apple; no desbloquean funciones ni son suscripciones.",
       },
       {
         q: "¿Puedo usar la app sin un proveedor de IPTV?",
@@ -288,7 +288,7 @@ const es: Dictionary = {
       },
       {
         q: "¿Están seguros mis datos personales?",
-        a: "Sí. La app no recopila ni almacena datos personales. Tus credenciales de IPTV se usan solo localmente en tu dispositivo.",
+        a: "Las listas IPTV, las credenciales y las listas de canales se almacenan solo localmente en tu dispositivo. El soporte en iOS 3.0.0 es opcional. Los informes incluyen tu mensaje, versiones de la app y de iOS, modelo del dispositivo y fecha. Al enviar un correo, nosotros y nuestro proveedor Gmail recibimos también tu nombre de remitente y dirección de correo. Nada se envía automáticamente.",
       },
       {
         q: "¿En qué plataformas está disponible Another IPTV Player?",
@@ -320,11 +320,13 @@ const es: Dictionary = {
       app: {
         title: "La app",
         intro:
-          "Another IPTV Player no recopila, almacena ni transmite ningún dato personal ni información de usuario.",
+          "La app no incluye SDK de publicidad ni seguimiento. A continuación se explican los datos locales, los informes de soporte opcionales y las compras de Apple.",
         points: [
           "Las listas IPTV, las credenciales y las listas de canales se almacenan solo localmente en tu dispositivo.",
-          "No se envían datos a nuestros servidores — no tenemos ninguno.",
-          "La app no incluye ningún SDK de analítica, publicidad ni rastreo.",
+          "El soporte en iOS 3.0.0 es opcional. Los informes incluyen tu mensaje, versiones de la app y de iOS, modelo del dispositivo y fecha. Al enviar un correo, nosotros y nuestro proveedor Gmail recibimos también tu nombre de remitente y dirección de correo. Nada se envía automáticamente.",
+          "Los adjuntos de diagnóstico están desactivados por defecto y se pueden previsualizar. Los registros locales incluyen eventos, errores de reproducción y detalles de respuestas API; el archivo tiene límites de tamaño y antigüedad de siete días. Se ocultan las URL y los campos de credenciales reconocidos; revisa el contenido antes de compartirlo.",
+          "Los correos de soporte y sus adjuntos se usan para responder y resolver problemas, no para publicidad ni seguimiento. Los eliminamos del buzón de soporte en un máximo de 30 días tras cerrar la solicitud. Puedes solicitar su eliminación anticipada en bsogulcan@gmail.com. Las copias de tu proveedor de correo o de uso compartido están sujetas a sus políticas.",
+          "La app sigue siendo gratuita. iOS ofrece propinas opcionales mediante compras consumibles únicas de Apple; no desbloquean funciones ni son suscripciones. Apple procesa el pago. No recibimos datos bancarios ni de tarjetas; la app no sube registros de compras a un servidor del desarrollador.",
         ],
       },
       website: {
@@ -334,7 +336,7 @@ const es: Dictionary = {
       },
       thirdParty: {
         title: "Servicios de terceros",
-        p1: "La app no se integra con ningún servicio de analítica, publicidad o recopilación de datos de terceros. Cualquier conexión que hace la app es directamente con el proveedor de IPTV que configures.",
+        p1: "Las conexiones incluyen tu proveedor IPTV, servicios necesarios para mostrar contenido, compras de Apple y servicios de correo o uso compartido que elijas para soporte. Se aplican sus políticas de privacidad. Los registros de diagnóstico no se suben automáticamente.",
       },
       openSource: {
         title: "Código abierto",

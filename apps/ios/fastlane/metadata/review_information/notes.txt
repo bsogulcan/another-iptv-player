@@ -19,3 +19,15 @@ For M3U Playlists
     Tap Create Playlist to save.
 
 Alternatively, you can download the M3U file from the same link and import it using the File source type.
+
+What's new in iOS 3.0.0: optional tips and support
+
+After adding and opening a playlist (Xtream Codes or M3U), open its Settings.
+- Support the App opens the Tip Jar with three optional, one-time consumable purchases:
+  dev.ogos.another_iptv_player.tip.small
+  dev.ogos.another_iptv_player.tip.medium
+  dev.ogos.another_iptv_player.tip.large
+- Tips support the developer. They are not subscriptions and unlock no content, features, or services. All app features remain available without a purchase. Prices come from StoreKit in the user's storefront currency.
+- In the Support section, Contact Developer prepares an email. Report an Issue offers an optional diagnostic attachment, disabled by default, with a log preview. The user must explicitly send the email. If Mail is unavailable, the system share sheet can be used instead.
+- Reports include the user's message, app/iOS versions, device model and date. Diagnostic logs can include application events, playback errors and API response details. Recognized URLs and credential fields are redacted. Logs are never automatically uploaded to the developer.
+- Support messages and attachments are deleted from the support mailbox within 30 days after the request closes. Earlier deletion can be requested at bsogulcan@gmail.com.

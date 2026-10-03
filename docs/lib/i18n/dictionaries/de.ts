@@ -21,7 +21,7 @@ const de: Dictionary = {
     privacy: {
       title: "Datenschutzerklärung — Another IPTV Player",
       description:
-        "Datenschutzerklärung für Another IPTV Player. Die App sammelt keine personenbezogenen Daten; alles bleibt auf deinem Gerät.",
+        "Die App enthält keine Werbe- oder Tracking-SDKs. Lokale Daten, freiwillige Supportberichte und Apple-Käufe werden nachfolgend erläutert.",
     },
   },
 
@@ -276,7 +276,7 @@ const de: Dictionary = {
       },
       {
         q: "Muss ich für die Nutzung der App bezahlen?",
-        a: "Nein. Die App ist völlig kostenlos und quelloffen. Es gibt keine Abos, In-App-Käufe oder Werbung.",
+        a: "Die App bleibt kostenlos. iOS bietet freiwillige, einmalige Verbrauchskäufe als Trinkgeld über Apple; sie schalten keine Funktionen frei und sind keine Abonnements.",
       },
       {
         q: "Kann ich die App ohne IPTV-Anbieter nutzen?",
@@ -288,7 +288,7 @@ const de: Dictionary = {
       },
       {
         q: "Sind meine persönlichen Daten sicher?",
-        a: "Ja. Die App sammelt oder speichert keine personenbezogenen Daten. Deine IPTV-Daten werden nur lokal auf deinem Gerät verwendet.",
+        a: "IPTV-Playlists, Zugangsdaten und Senderlisten werden nur lokal auf deinem Gerät gespeichert. Support in iOS 3.0.0 ist freiwillig. Berichte enthalten deine Nachricht, App- und iOS-Version, Gerätemodell und Datum. Beim E-Mail-Versand erhalten wir und unser E-Mail-Anbieter Gmail auch deinen Absendernamen und deine E-Mail-Adresse. Es wird nichts automatisch gesendet.",
       },
       {
         q: "Auf welchen Plattformen ist Another IPTV Player verfügbar?",
@@ -320,11 +320,13 @@ const de: Dictionary = {
       app: {
         title: "Die App",
         intro:
-          "Another IPTV Player sammelt, speichert oder übermittelt keine personenbezogenen Daten oder Nutzerinformationen.",
+          "Die App enthält keine Werbe- oder Tracking-SDKs. Lokale Daten, freiwillige Supportberichte und Apple-Käufe werden nachfolgend erläutert.",
         points: [
           "IPTV-Playlists, Zugangsdaten und Senderlisten werden nur lokal auf deinem Gerät gespeichert.",
-          "Es werden keine Daten an unsere Server gesendet — wir betreiben keine.",
-          "In der App sind keine Analyse-, Werbe- oder Tracking-SDKs enthalten.",
+          "Support in iOS 3.0.0 ist freiwillig. Berichte enthalten deine Nachricht, App- und iOS-Version, Gerätemodell und Datum. Beim E-Mail-Versand erhalten wir und unser E-Mail-Anbieter Gmail auch deinen Absendernamen und deine E-Mail-Adresse. Es wird nichts automatisch gesendet.",
+          "Diagnoseanhänge sind standardmäßig deaktiviert und können vorab angesehen werden. Lokale Protokolle enthalten App-Ereignisse, Wiedergabefehler und API-Antwortdetails; das Archiv hat eine Größen- und Altersgrenze von sieben Tagen. Erkannte URLs und Zugangsdatenfelder werden unkenntlich gemacht. Prüfe den Inhalt vor dem Teilen.",
+          "Support-E-Mails und Anhänge dienen der Bearbeitung von Anfragen und Fehlern, nicht Werbung oder Tracking. Wir löschen sie spätestens 30 Tage nach Abschluss der Anfrage aus unserem Supportpostfach. Eine frühere Löschung kannst du unter bsogulcan@gmail.com anfordern. Für Kopien bei deinem E-Mail- oder Freigabeanbieter gelten dessen Aufbewahrungsregeln.",
+          "Die App bleibt kostenlos. iOS bietet freiwillige, einmalige Verbrauchskäufe als Trinkgeld über Apple; sie schalten keine Funktionen frei und sind keine Abonnements. Apple verarbeitet Zahlungen. Wir erhalten keine Karten- oder Bankdaten; die App lädt keine Kaufbelege auf einen Entwicklerserver hoch.",
         ],
       },
       website: {
@@ -334,7 +336,7 @@ const de: Dictionary = {
       },
       thirdParty: {
         title: "Drittanbieterdienste",
-        p1: "Die App integriert keine Analyse-, Werbe- oder Datensammeldienste von Drittanbietern. Jede Verbindung der App erfolgt direkt zu dem von dir konfigurierten IPTV-Anbieter.",
+        p1: "Verbindungen umfassen deinen IPTV-Anbieter, Dienste zur Inhaltsanzeige, Apples Kaufdienste und die von dir gewählten E-Mail- oder Freigabedienste für Support. Es gelten deren Datenschutzrichtlinien. Diagnoseprotokolle werden nicht automatisch hochgeladen.",
       },
       openSource: {
         title: "Open Source",

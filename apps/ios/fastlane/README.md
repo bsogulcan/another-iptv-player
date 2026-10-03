@@ -47,6 +47,22 @@ Upload App Store screenshots only (no binary, no metadata)
 
 Validate metadata against Apple's App Store Review Guidelines (precheck)
 
+### ios privacy_prepare
+
+```sh
+[bundle exec] fastlane ios privacy_prepare
+```
+
+Prepare App Privacy answers locally without uploading (interactive, Apple ID)
+
+### ios privacy_upload
+
+```sh
+[bundle exec] fastlane ios privacy_upload
+```
+
+Upload reviewed App Privacy answers as an unpublished draft (Apple ID)
+
 ### ios verify_metadata
 
 ```sh

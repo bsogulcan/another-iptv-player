@@ -1,7 +1,10 @@
-• All-new video player engine — faster startup, smoother playback and wider format support
-• Better AirPlay — more channels and formats stream to Apple TV, imported subtitles included
-• Auto-play the next episode with a cancelable countdown
-• Audio delay adjustment to fix A/V sync
-• Sort and filter movies, series and channels, plus new "All Movies", "All Series" and "All Channels" views
-• TV Guide now groups channels by category with collapsible headers
-• Much faster with very large playlists, plus many bug fixes
+• Refreshed browsing and detail screens, smoother navigation, and faster search in large playlists.
+• Updated player controls with double-tap seeking, playback speed selection, a sleep timer, and a landscape button.
+• Improved subtitle importing and appearance, with subtitle timing saved separately for each video.
+• Improved AirPlay startup and stream compatibility, a more responsive device picker, and clearer cancellation and error messages.
+• More reliable audio and subtitle selection during AirPlay, return to phone playback, and watch progress tracking.
+• Fixed crashes affecting some HDR and 10-bit videos and seeking; improved recovery from interrupted audio.
+• Improved favorites, watch history, episode navigation, playlist imports, downloads, and TV guide refresh.
+• Better VoiceOver, hardware keyboard, and iPad support.
+• Contact the developer or report a problem from Settings. Diagnostic logs are optional and can be previewed before sharing.
+• Support development with optional, one-time tips. The app remains free, and tips unlock no features.

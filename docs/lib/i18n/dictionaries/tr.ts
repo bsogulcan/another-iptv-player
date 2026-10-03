@@ -21,7 +21,7 @@ const tr: Dictionary = {
     privacy: {
       title: "Gizlilik Politikası — Another IPTV Player",
       description:
-        "Another IPTV Player gizlilik politikası. Uygulama hiçbir kişisel veri toplamaz; her şey cihazınızda kalır.",
+        "Uygulamada reklam veya izleme SDK'sı yoktur. Yerel veriler, isteğe bağlı destek raporları ve Apple satın alımları aşağıda açıklanmıştır.",
     },
   },
 
@@ -276,7 +276,7 @@ const tr: Dictionary = {
       },
       {
         q: "Uygulamayı kullanmak için ödeme yapmam gerekir mi?",
-        a: "Hayır. Uygulama tamamen ücretsiz ve açık kaynaklıdır. Abonelik, uygulama içi satın alma veya reklam yoktur.",
+        a: "Uygulama ücretsiz kalır. iOS'ta Apple üzerinden isteğe bağlı, tek seferlik tüketilebilir bahşişler sunulur; özellik açmaz ve abonelik değildir.",
       },
       {
         q: "Uygulamayı bir IPTV sağlayıcısı olmadan kullanabilir miyim?",
@@ -288,7 +288,7 @@ const tr: Dictionary = {
       },
       {
         q: "Kişisel verilerim güvende mi?",
-        a: "Evet. Uygulama hiçbir kişisel veri toplamaz veya saklamaz. IPTV bilgilerin yalnızca cihazında yerel olarak kullanılır.",
+        a: "IPTV oynatma listeleri, kimlik bilgileri ve kanal listeleri yalnızca cihazında yerel olarak saklanır. iOS 3.0.0'da destek isteğe bağlıdır. Raporlar mesajını, uygulama ve iOS sürümünü, cihaz modelini ve tarihi içerir. E-posta gönderdiğinde gönderen adın ve e-posta adresin de bize ve e-posta sağlayıcımız Gmail'e iletilir. Hiçbir şey otomatik gönderilmez.",
       },
       {
         q: "Another IPTV Player hangi platformlarda mevcut?",
@@ -320,11 +320,13 @@ const tr: Dictionary = {
       app: {
         title: "Uygulama",
         intro:
-          "Another IPTV Player herhangi bir kişisel veri veya kullanıcı bilgisi toplamaz, saklamaz veya iletmez.",
+          "Uygulamada reklam veya izleme SDK'sı yoktur. Yerel veriler, isteğe bağlı destek raporları ve Apple satın alımları aşağıda açıklanmıştır.",
         points: [
           "IPTV oynatma listeleri, kimlik bilgileri ve kanal listeleri yalnızca cihazında yerel olarak saklanır.",
-          "Sunucularımıza hiçbir veri gönderilmez — zaten sunucu çalıştırmıyoruz.",
-          "Uygulamada hiçbir analitik, reklam veya izleme SDK'sı bulunmaz.",
+          "iOS 3.0.0'da destek isteğe bağlıdır. Raporlar mesajını, uygulama ve iOS sürümünü, cihaz modelini ve tarihi içerir. E-posta gönderdiğinde gönderen adın ve e-posta adresin de bize ve e-posta sağlayıcımız Gmail'e iletilir. Hiçbir şey otomatik gönderilmez.",
+          "Tanılama eki varsayılan olarak kapalıdır ve önizlenebilir. Yerel loglar uygulama olaylarını, oynatma hatalarını ve API yanıt ayrıntılarını içerir; arşivin boyutu ve yaşı (yedi gün) sınırlıdır. Tanınan URL ve kimlik bilgisi alanları maskelenir; yine de paylaşmadan önce içeriği gözden geçir.",
+          "Destek e-postaları ve ekler yalnızca talepleri yanıtlamak ve sorunları çözmek için kullanılır; reklam veya takip için kullanılmaz. Talep kapandıktan sonra en fazla 30 gün içinde destek posta kutumuzdan silinir. Daha erken silinmesi için bsogulcan@gmail.com adresine yazabilirsin. E-posta veya paylaşım sağlayıcındaki kopyalar için o sağlayıcının saklama politikası geçerlidir.",
+          "Uygulama ücretsiz kalır. iOS'ta Apple üzerinden isteğe bağlı, tek seferlik tüketilebilir bahşişler sunulur; özellik açmaz ve abonelik değildir. Ödemeyi Apple işler. Kart veya banka bilgilerini almayız; uygulama satın alma kayıtlarını geliştiriciye ait bir sunucuya yüklemez.",
         ],
       },
       website: {
@@ -334,7 +336,7 @@ const tr: Dictionary = {
       },
       thirdParty: {
         title: "Üçüncü Taraf Hizmetler",
-        p1: "Uygulama herhangi bir üçüncü taraf analitik, reklam veya veri toplama hizmetiyle entegre değildir. Uygulamanın kurduğu her bağlantı doğrudan senin yapılandırdığın IPTV sağlayıcısınadır.",
+        p1: "Bağlantılar IPTV sağlayıcını, içerik gösterimi için gereken hizmetleri, Apple satın alma hizmetlerini ve destek için seçtiğin e-posta veya paylaşım hizmetlerini kapsar. Bu hizmetlerin gizlilik politikaları geçerlidir. Tanılama logları otomatik yüklenmez.",
       },
       openSource: {
         title: "Açık Kaynak",
