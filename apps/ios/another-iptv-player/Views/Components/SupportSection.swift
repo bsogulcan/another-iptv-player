@@ -26,7 +26,11 @@ private struct SupportForm: View {
     @State private var message = ""
     @FocusState private var isMessageFocused: Bool
     @State private var includeDiagnostics = false
-    @State private var snapshot: String?
+    private struct PreparedDiagnostics: Sendable {
+        let text: String
+        let preview: DiagnosticPreview
+    }
+    @State private var snapshot: PreparedDiagnostics?
     @State private var report: SupportReport?
     @State private var failed = false
     @State private var attachmentURL: URL?
@@ -44,20 +48,15 @@ private struct SupportForm: View {
             if isIssue {
                 Section(footer: Text(L("support.diagnostics.hint"))) {
                     Toggle(L("support.diagnostics"), isOn: $includeDiagnostics)
+                        .accessibilityIdentifier("support.diagnostics")
                     if includeDiagnostics && snapshot == nil {
                         ProgressView()
                     }
                     if includeDiagnostics, let snapshot {
                         NavigationLink(L("support.preview")) {
-                            ScrollView {
-                                Text(snapshot)
-                                    .font(.system(.caption, design: .monospaced))
-                                    .textSelection(.enabled)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding()
-                            }
-                            .navigationTitle(L("support.preview"))
+                            DiagnosticLogPreview(preview: snapshot.preview)
                         }
+                        .accessibilityIdentifier("support.preview.open")
                     }
                 }
             }
@@ -94,16 +93,19 @@ private struct SupportForm: View {
                     .accessibilityIdentifier("support.keyboard.done")
             }
         }
-        .task {
-            guard snapshot == nil, isIssue else { return }
-            snapshot = await Task.detached(priority: .userInitiated) {
-                SupportReport.diagnosticsText(
+        .task(id: includeDiagnostics) {
+            guard snapshot == nil, isIssue, includeDiagnostics else { return }
+            let prepared = await Task.detached(priority: .userInitiated) {
+                let text = SupportReport.diagnosticsText(
                     current: Log.recentLines(),
                     savedAirPlay: Log.persistedLines(key: AirPlayLogExport.persistedKey),
                     savedAt: Log.persistedDate(key: AirPlayLogExport.persistedKey),
                     archive: DiagnosticArchive.shared.snapshot()
                 )
+                return PreparedDiagnostics(text: text, preview: DiagnosticPreview(text: text))
             }.value
+            guard !Task.isCancelled else { return }
+            snapshot = prepared
         }
         .sheet(item: $report, onDismiss: cleanAttachment) { draft in
             if MFMailComposeViewController.canSendMail() {
@@ -157,7 +159,7 @@ private struct SupportForm: View {
         return SupportReport(
             subject: "[Another IPTV Player • iOS] \(L(isIssue ? "support.report" : "support.contact"))",
             body: (description.isEmpty ? L("support.message.hint") : description) + "\n\n---\n" + metadata,
-            diagnostics: isIssue && includeDiagnostics ? snapshot : nil
+            diagnostics: isIssue && includeDiagnostics ? snapshot?.text : nil
         )
     }
 }

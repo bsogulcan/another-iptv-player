@@ -631,3 +631,6 @@
 "support.copy" = "Copy support email address";
 "support.copied" = "Email address copied";
 "support.failed" = "The report could not be prepared or sent. Your message is still here; please try again.";
+"support.preview.older" = "Older";
+"support.preview.newer" = "Newer";
+"support.preview.full_attachment" = "The email attachment includes the full report.";

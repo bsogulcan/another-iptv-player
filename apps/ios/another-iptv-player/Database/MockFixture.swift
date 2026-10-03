@@ -57,6 +57,16 @@ enum MockFixture {
     static func seedIfNeeded() {
         guard isActive else { return }
 
+        #if DEBUG
+        if CommandLine.arguments.contains("-UITestsLargeDiagnostics") {
+            // Fill the real rotating archive to reproduce a long playback session.
+            let row = "[APIResponse] {\"episode\":123,\"duration\":null,\"token\":\"fixture-secret\",\"title\":\"" + String(repeating: "x", count: 180) + "\"}\n"
+            let block = String(repeating: row, count: 256)
+            for _ in 0..<24 { DiagnosticArchive.shared.append(block) }
+            DiagnosticArchive.shared.append("UITEST-LATEST-DIAGNOSTIC")
+        }
+        #endif
+
         resetBrowseState(playlistIds: fixturePlaylistIds)
 
         let mode = self.mode

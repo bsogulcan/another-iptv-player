@@ -29,13 +29,19 @@ nonisolated struct SupportReport: Identifiable {
 
         if let regex = fieldRegex {
             let source = result as NSString
-            for match in regex.matches(in: result, range: NSRange(location: 0, length: source.length)).reversed() {
+            var output = ""
+            output.reserveCapacity(result.utf8.count)
+            var cursor = 0
+            for match in regex.matches(in: result, range: NSRange(location: 0, length: source.length)) {
+                output += source.substring(with: NSRange(location: cursor, length: match.range.location - cursor))
                 let prefix = source.substring(with: match.range(at: 1))
-                let valueStart = match.range(at: 1).location + match.range(at: 1).length
+                let valueStart = NSMaxRange(match.range(at: 1))
                 let quote = source.substring(with: NSRange(location: valueStart, length: 1))
-                let replacement = prefix + (quote == "\"" || quote == "'" ? quote + "<redacted>" + quote : "<redacted>")
-                if let range = Range(match.range, in: result) { result.replaceSubrange(range, with: replacement) }
+                output += prefix + (quote == "\"" || quote == "'" ? quote + "<redacted>" + quote : "<redacted>")
+                cursor = NSMaxRange(match.range)
             }
+            output += source.substring(from: cursor)
+            result = output
         }
         return result
     }

@@ -258,6 +258,47 @@ final class SupportUITests: XCTestCase {
         verifyKeyboard(entry: "support.report")
     }
 
+    func test_largeDiagnosticArchiveOpensAndPagesWithoutFreezing() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-UITests", "1", "-UITestsLargeDiagnostics", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let settings = app.buttons["Settings"].firstMatch
+        XCTAssertTrue(settings.waitForExistence(timeout: 25))
+        settings.tap()
+        let link = app.buttons["support.report"]
+        for _ in 0..<12 {
+            if link.exists && link.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(link.isHittable)
+        link.tap()
+        let toggle = app.switches["support.diagnostics"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        // SwiftUI exposes both the whole toggle row and its actual switch to XCTest.
+        let control = toggle.switches.firstMatch
+        (control.exists ? control : toggle).tap()
+        XCTAssertEqual(toggle.value as? String, "1")
+        let open = app.buttons["support.preview.open"]
+        XCTAssertTrue(open.waitForExistence(timeout: 15))
+        let start = Date()
+        open.tap()
+        let page = app.staticTexts["support.preview.page"]
+        XCTAssertTrue(page.waitForExistence(timeout: 5))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 10, "A large archive must not block preview navigation")
+        XCTAssertLessThanOrEqual(page.label.utf8.count, 4096)
+        let position = app.staticTexts["support.preview.position"]
+        let originalPosition = position.label
+        let count = Int(originalPosition.components(separatedBy: "/").last?.trimmingCharacters(in: .whitespaces) ?? "") ?? 0
+        XCTAssertGreaterThan(count, 100, "Exercise a large archive, not an empty preview")
+        XCTAssertFalse(app.buttons["support.preview.newer"].isEnabled)
+        app.buttons["support.preview.older"].tap()
+        XCTAssertNotEqual(position.label, originalPosition)
+        XCTAssertTrue(app.buttons["support.preview.newer"].isEnabled)
+        app.buttons["support.preview.newer"].tap()
+        XCTAssertEqual(position.label, originalPosition)
+    }
+
     private func verifyKeyboard(entry: String) {
         continueAfterFailure = false
         let app = XCUIApplication()

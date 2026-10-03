@@ -631,3 +631,6 @@
 "support.copy" = "Destek e-posta adresini kopyala";
 "support.copied" = "E-posta adresi kopyalandı";
 "support.failed" = "Rapor hazırlanamadı veya gönderilemedi. Mesajınız korunuyor; lütfen tekrar deneyin.";
+"support.preview.older" = "Daha eski";
+"support.preview.newer" = "Daha yeni";
+"support.preview.full_attachment" = "E-posta eki tüm kayıtları içerir.";
