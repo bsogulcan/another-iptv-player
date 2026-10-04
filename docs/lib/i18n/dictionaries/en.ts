@@ -329,7 +329,7 @@ const en = {
       },
       website: {
         title: "This Website",
-        p1: "This marketing website uses Google Analytics to understand anonymous, aggregate traffic (such as page views and country). This helps us improve the site. It does not personally identify you, and it is completely separate from the app — the app itself contains no analytics.",
+        p1: "This marketing website uses Google Analytics and Vercel Web Analytics to understand anonymous, aggregate traffic (such as page views and country). This helps us improve the site. It does not personally identify you, and it is completely separate from the app — the app itself contains no analytics.",
         p2: "You can block this at any time with a content blocker or by opting out via Google's tools.",
       },
       thirdParty: {

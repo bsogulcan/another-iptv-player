@@ -331,7 +331,7 @@ const de: Dictionary = {
       },
       website: {
         title: "Diese Website",
-        p1: "Diese Marketing-Website nutzt Google Analytics, um anonymen, aggregierten Traffic (z. B. Seitenaufrufe und Land) zu verstehen. Das hilft uns, die Website zu verbessern. Es identifiziert dich nicht persönlich und ist völlig getrennt von der App — die App selbst enthält keine Analytik.",
+        p1: "Diese Marketing-Website nutzt Google Analytics und Vercel Web Analytics, um anonymen, aggregierten Traffic (z. B. Seitenaufrufe und Land) zu verstehen. Das hilft uns, die Website zu verbessern. Es identifiziert dich nicht persönlich und ist völlig getrennt von der App — die App selbst enthält keine Analytik.",
         p2: "Du kannst dies jederzeit mit einem Content-Blocker oder über die Tools von Google deaktivieren.",
       },
       thirdParty: {

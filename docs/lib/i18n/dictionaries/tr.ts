@@ -331,7 +331,7 @@ const tr: Dictionary = {
       },
       website: {
         title: "Bu Web Sitesi",
-        p1: "Bu tanıtım web sitesi, anonim ve toplu trafiği (sayfa görüntüleme ve ülke gibi) anlamak için Google Analytics kullanır. Bu, siteyi geliştirmemize yardımcı olur. Seni kişisel olarak tanımlamaz ve uygulamadan tamamen ayrıdır — uygulamanın kendisinde hiçbir analitik yoktur.",
+        p1: "Bu tanıtım web sitesi, anonim ve toplu trafiği (sayfa görüntüleme ve ülke gibi) anlamak için Google Analytics ve Vercel Web Analytics kullanır. Bu, siteyi geliştirmemize yardımcı olur. Seni kişisel olarak tanımlamaz ve uygulamadan tamamen ayrıdır — uygulamanın kendisinde hiçbir analitik yoktur.",
         p2: "Bunu istediğin zaman bir içerik engelleyiciyle veya Google'ın araçlarıyla devre dışı bırakabilirsin.",
       },
       thirdParty: {

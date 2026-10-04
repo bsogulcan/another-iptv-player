@@ -331,7 +331,7 @@ const es: Dictionary = {
       },
       website: {
         title: "Este sitio web",
-        p1: "Este sitio de marketing usa Google Analytics para entender el tráfico anónimo y agregado (como vistas de página y país). Esto nos ayuda a mejorar el sitio. No te identifica personalmente y es totalmente independiente de la app — la app no contiene analíticas.",
+        p1: "Este sitio de marketing usa Google Analytics y Vercel Web Analytics para entender el tráfico anónimo y agregado (como vistas de página y país). Esto nos ayuda a mejorar el sitio. No te identifica personalmente y es totalmente independiente de la app — la app no contiene analíticas.",
         p2: "Puedes bloquearlo en cualquier momento con un bloqueador de contenido o mediante las herramientas de Google.",
       },
       thirdParty: {
