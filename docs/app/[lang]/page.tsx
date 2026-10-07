@@ -10,6 +10,7 @@ import { Marquee } from "@/components/Marquee";
 import { Features } from "@/components/Features";
 import { Screenshots } from "@/components/Screenshots";
 import { HowItWorks } from "@/components/HowItWorks";
+import { Reviews } from "@/components/Reviews";
 import { Download } from "@/components/Download";
 import { Support } from "@/components/Support";
 import { Footer } from "@/components/Footer";
@@ -57,6 +58,7 @@ export default async function Home({
         <Features d={d} />
         <Screenshots d={d} />
         <HowItWorks d={d} />
+        <Reviews d={d} lang={locale} />
         <Download d={d} />
         <Support d={d} />
       </main>

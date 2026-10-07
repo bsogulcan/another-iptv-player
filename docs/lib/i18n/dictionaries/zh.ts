@@ -174,6 +174,15 @@ const zh: Dictionary = {
       "Another IPTV Player 不是 IPTV 提供商，也不出售任何频道、订阅或内容。你需要带上自己支持 Xtream Codes 或 M3U 的合法提供商。使用本应用永远无需注册或付费。",
   },
 
+  reviews: {
+    label: "用户评价",
+    heading: "来自 App Store 的真实声音。",
+    note: "来自 App Store 的真实评价。其他语言的评价已翻译——点按即可查看原文。",
+    translated: "已翻译",
+    showOriginal: "查看原文",
+    showTranslation: "查看译文",
+  },
+
   download: {
     label: "获取应用",
     heading: "永久免费——在你所有的设备上。",

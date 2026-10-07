@@ -10,8 +10,8 @@ export const LINKS = {
 
 /** Real App Store / Mac App Store ratings (update as they change). */
 export const RATINGS = {
-  appStore: { value: 4.7, count: 36 },
-  macStore: { value: 4.8, count: 16 },
+  appStore: { value: 4.7, count: 253 },
+  macStore: { value: 4.7, count: 23 },
 };
 
 export const PLATFORMS = ["iOS", "iPadOS", "macOS"];

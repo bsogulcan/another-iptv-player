@@ -174,6 +174,15 @@ const fr: Dictionary = {
       "Another IPTV Player n'est pas un fournisseur d'IPTV et ne vend ni chaînes, ni abonnements, ni contenu. Vous apportez votre propre fournisseur légal compatible Xtream Codes ou M3U. Aucune inscription ni paiement n'est jamais requis pour utiliser l'app.",
   },
 
+  reviews: {
+    label: "Ils l'adorent",
+    heading: "Directement depuis l'App Store.",
+    note: "De vrais avis de l'App Store. Les avis dans d'autres langues sont traduits — touchez pour voir l'original.",
+    translated: "Traduit",
+    showOriginal: "Voir l'original",
+    showTranslation: "Voir la traduction",
+  },
+
   download: {
     label: "Obtenir l'app",
     heading: "Gratuit, pour toujours — sur tous vos appareils.",

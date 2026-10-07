@@ -174,6 +174,15 @@ const de: Dictionary = {
       "Another IPTV Player ist kein IPTV-Anbieter und verkauft keine Sender, Abos oder Inhalte. Du bringst deinen eigenen legalen Anbieter mit, der Xtream Codes oder M3U unterstützt. Für die Nutzung der App sind nie Anmeldung oder Zahlung erforderlich.",
   },
 
+  reviews: {
+    label: "Von Zuschauern geliebt",
+    heading: "Direkt aus dem App Store.",
+    note: "Echte Bewertungen aus dem App Store. Bewertungen in anderen Sprachen sind übersetzt — tippe, um das Original zu sehen.",
+    translated: "Übersetzt",
+    showOriginal: "Original anzeigen",
+    showTranslation: "Übersetzung anzeigen",
+  },
+
   download: {
     label: "App holen",
     heading: "Kostenlos, für immer — auf all deinen Geräten.",

@@ -174,6 +174,15 @@ const tr: Dictionary = {
       "Another IPTV Player bir IPTV sağlayıcısı değildir ve kanal, abonelik ya da içerik satmaz. Xtream Codes veya M3U destekleyen kendi yasal sağlayıcını getirirsin. Uygulamayı kullanmak için asla kayıt veya ödeme gerekmez.",
   },
 
+  reviews: {
+    label: "Kullanıcılar ne diyor",
+    heading: "Doğrudan App Store'dan.",
+    note: "App Store'dan gerçek yorumlar. Başka dillerdeki yorumlar çevrildi — orijinalini görmek için dokun.",
+    translated: "Çeviri",
+    showOriginal: "Orijinali göster",
+    showTranslation: "Çeviriyi göster",
+  },
+
   download: {
     label: "Uygulamayı al",
     heading: "Ücretsiz, sonsuza dek — tüm cihazlarında.",

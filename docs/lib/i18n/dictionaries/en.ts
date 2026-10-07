@@ -172,6 +172,15 @@ const en = {
       "Another IPTV Player is not an IPTV provider and does not sell channels, subscriptions, or content. You bring your own legal provider that supports Xtream Codes or M3U. No registration or payment is ever required to use the app.",
   },
 
+  reviews: {
+    label: "Loved by viewers",
+    heading: "Straight from the App Store.",
+    note: "Real reviews from the App Store. Reviews in other languages are translated — tap to see the original.",
+    translated: "Translated",
+    showOriginal: "Show original",
+    showTranslation: "Show translation",
+  },
+
   download: {
     label: "Get the app",
     heading: "Free, forever — on all your devices.",
