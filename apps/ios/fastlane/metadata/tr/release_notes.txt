@@ -1,10 +1,5 @@
-• Yenilenen içerik ve detay ekranları, daha akıcı gezinme ve büyük oynatma listelerinde daha hızlı arama.
-• Çift dokunarak ileri/geri sarma, oynatma hızı seçimi, uyku zamanlayıcısı ve yatay ekran düğmesiyle yenilenen oynatıcı kontrolleri.
-• Daha iyi altyazı içe aktarma ve görünüm ayarları; her video için ayrı kaydedilen altyazı gecikmesi.
-• AirPlay başlangıcı ve yayın uyumluluğunda iyileştirmeler, daha hızlı yanıt veren cihaz seçici, daha anlaşılır iptal ve hata bildirimleri.
-• AirPlay sırasında ses ve altyazı seçimi, telefonda oynatmaya dönüş ve izleme konumunun kaydında iyileştirmeler.
-• Bazı HDR ve 10 bit videolarda ve sarma sırasında oluşan çökmeler düzeltildi; kesilen sesin yeniden başlaması iyileştirildi.
-• Favoriler, izleme geçmişi, bölümler arası geçiş, liste içe aktarma, indirmeler ve TV rehberi yenilemede düzeltmeler.
-• VoiceOver, donanım klavyesi ve iPad kullanımında iyileştirmeler.
-• Ayarlardan geliştiriciyle iletişim kurun veya sorun bildirin. Tanılama loglarını isteğe bağlı ekleyebilir, paylaşmadan önce önizleyebilirsiniz.
-• İsteğe bağlı, tek seferlik bahşişlerle geliştirmeyi destekleyin. Uygulama ücretsiz kalır; bahşişler herhangi bir özellik açmaz.
+• iPhone Duo desteği: uygulama artık iki ekranda da tam ekran çalışıyor; oynatıcıdaki yatay ekran düğmesi yalnızca işe yaradığı yerde görünüyor.
+• Daha temiz ekranlar: sayfaların üstündeki soluk şerit kaldırıldı, detay sayfalarındaki görseller tam görünüyor.
+• Afiş ve kanallara uzun basınca açılan önizlemeler artık satır kenarlarında kesilmiyor.
+• AirPlay: alıcı oynatmayı erken bitirdiğinde bölümlerin atlanması düzeltildi.
+• Daha anlaşılır oynatma hataları: sağlayıcınızın sunucusu yayını reddettiğinde uygulama artık ağınızı suçlamak yerine bunu açıkça belirtiyor.

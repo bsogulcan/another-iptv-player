@@ -1,10 +1,5 @@
-• Catálogo e telas de detalhes renovados, navegação mais fluida e busca mais rápida em listas grandes.
-• Controles do player atualizados: avance ou volte com dois toques, escolha a velocidade, use o temporizador e alterne para o modo paisagem.
-• Melhorias na importação e aparência das legendas; o ajuste de sincronização é salvo separadamente para cada vídeo.
-• Melhor início e compatibilidade de transmissões no AirPlay, seletor de dispositivos mais ágil e mensagens de cancelamento e erro mais claras.
-• Seleção de áudio e legendas mais confiável no AirPlay, melhor retorno à reprodução no celular e registro do progresso.
-• Corrigidas falhas com alguns vídeos HDR e de 10 bits e ao avançar ou voltar; melhor recuperação de áudio interrompido.
-• Melhorias em favoritos, histórico, troca de episódios, importação de listas, downloads e atualização do guia de TV.
-• Melhor suporte ao VoiceOver, teclados físicos e iPad.
-• Contate o desenvolvedor ou relate um problema nos Ajustes. Os logs de diagnóstico são opcionais e podem ser visualizados antes do compartilhamento.
-• Apoie o desenvolvimento com gorjetas opcionais de pagamento único. O app continua gratuito, e as gorjetas não desbloqueiam recursos.
+• Suporte ao iPhone Duo: o app agora usa a tela inteira nas duas telas, e o botão de paisagem do player só aparece onde funciona.
+• Telas mais limpas: a faixa esmaecida no topo das páginas foi removida, e as imagens das páginas de detalhes aparecem por completo.
+• As prévias ao tocar e segurar pôsteres e canais não são mais cortadas nas bordas de uma fileira.
+• AirPlay: corrigido o pulo de episódios quando um receptor encerrava a reprodução antes da hora.
+• Erros de reprodução mais claros: quando o servidor do seu provedor recusa uma transmissão, o app agora informa isso em vez de culpar sua rede.
