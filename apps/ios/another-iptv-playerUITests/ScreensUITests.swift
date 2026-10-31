@@ -62,7 +62,7 @@ final class ScreensUITests: XCTestCase {
 
     func test_moviesTab_categoryPickerButton_opensSheet() {
         tabButton("Movies").tap()
-        let pickerButton = app.buttons["Jump to category"]
+        let pickerButton = app.barAction("Jump to category")
         XCTAssertTrue(pickerButton.waitForExistence(timeout: 8), "'Jump to category' button should exist")
         pickerButton.tap()
         // The picker is a sheet with its own navigation bar.
@@ -231,7 +231,7 @@ final class ScreensUITests: XCTestCase {
     // MARK: - Helpers
 
     private func tabButton(_ label: String) -> XCUIElement {
-        app.tabBars.buttons[label]
+        app.tab(label)
     }
 
     private func staticText(_ text: String) -> XCUIElement {

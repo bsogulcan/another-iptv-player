@@ -1,5 +1,27 @@
 import XCTest
 
+extension XCUIApplication {
+    /// The runner shares the app's simulator, so its idiom is the app's.
+    static let isPad = UIDevice.current.userInterfaceIdiom == .pad
+
+    /// A tab of the root `TabView`. iPhone shows a tab bar; on iPad `.sidebarAdaptable`
+    /// puts the tabs in the top bar as plain buttons, which come before the content.
+    func tab(_ label: String) -> XCUIElement {
+        Self.isPad ? buttons[label].firstMatch : tabBars.buttons[label]
+    }
+
+    /// A navigation-bar action. On iPad the top bar shares its width with the tabs and
+    /// moves trailing actions into its More menu: that menu is opened when the action
+    /// is not on the bar.
+    func barAction(_ label: String) -> XCUIElement {
+        let direct = buttons[label].firstMatch
+        guard Self.isPad, !direct.waitForExistence(timeout: 2) else { return direct }
+        let more = buttons["OverflowBarButtonItem"].firstMatch
+        if more.waitForExistence(timeout: 8) { more.tap() }
+        return buttons[label].firstMatch
+    }
+}
+
 /// Functional UI-flow tests against the MockFixture demo playlist.
 ///
 /// Launches the app with `-UITests 1`, which seeds a deterministic demo
@@ -754,7 +776,7 @@ final class UserFlowsUITests: XCTestCase {
     // MARK: - Helpers
 
     private func tabButton(named label: String) -> XCUIElement {
-        app.tabBars.buttons[label]
+        app.tab(label)
     }
 
     private func firstMatch(label: String) -> XCUIElement {
@@ -787,7 +809,7 @@ final class BrowseBehaviourUITests: XCTestCase {
         app.launchArguments += ["-UITests", "1", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
         _ = app.wait(for: .runningForeground, timeout: 20)
-        XCTAssertTrue(app.tabBars.buttons["Live TV"].waitForExistence(timeout: 25), "Dashboard did not appear")
+        XCTAssertTrue(app.tab("Live TV").waitForExistence(timeout: 25), "Dashboard did not appear")
     }
 
     override func tearDown() {
@@ -797,19 +819,19 @@ final class BrowseBehaviourUITests: XCTestCase {
 
     /// A pushed category grid keeps the tab bar, as pushed lists do in the system apps.
     func test_categoryGrid_keepsTabBar() {
-        app.tabBars.buttons["Movies"].tap()
+        app.tab("Movies").tap()
         let header = app.buttons["Action"].firstMatch
         XCTAssertTrue(header.waitForExistence(timeout: 8))
         header.tap()
         XCTAssertTrue(app.navigationBars["Action"].waitForExistence(timeout: 6))
-        let moviesTab = app.tabBars.buttons["Movies"]
+        let moviesTab = app.tab("Movies")
         XCTAssertTrue(moviesTab.waitForExistence(timeout: 3), "The tab bar should stay on a pushed category grid")
         XCTAssertTrue(moviesTab.isHittable, "The tab bar should stay on a pushed category grid")
     }
 
     /// The Search tab lists a title that starts with the query above one that only contains it.
     func test_search_listsPrefixMatchesFirst() {
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 6))
         field.tap()
@@ -824,7 +846,7 @@ final class BrowseBehaviourUITests: XCTestCase {
 
     /// The Search tab's type filter is the search field's system scope bar.
     func test_search_typeFilterIsTheSystemScopeBar() {
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 6))
         field.tap()
@@ -835,7 +857,7 @@ final class BrowseBehaviourUITests: XCTestCase {
 
     /// The + button of the playlist list is a menu with both kinds of playlist; no sheet in between.
     func test_addPlaylist_plusButtonIsAMenu() {
-        app.tabBars.buttons["Settings"].tap()
+        app.tab("Settings").tap()
         let backRow = app.buttons["Back to Playlists"]
         XCTAssertTrue(backRow.waitForExistence(timeout: 6))
         backRow.tap()
@@ -849,7 +871,7 @@ final class BrowseBehaviourUITests: XCTestCase {
     /// The series page keeps its title when its seasons cannot be loaded; the failure and
     /// Try Again sit in the seasons section. The demo panel cannot serve seasons.
     func test_seriesDetail_keepsThePageWhenSeasonsFail() {
-        app.tabBars.buttons["Series"].tap()
+        app.tab("Series").tap()
         let poster = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Northern Lights")).firstMatch
         XCTAssertTrue(poster.waitForExistence(timeout: 8))
         poster.tap()
@@ -859,7 +881,7 @@ final class BrowseBehaviourUITests: XCTestCase {
 
     /// Switching the adult-content filter of an Xtream playlist asks before the catalog is downloaded again.
     func test_adultFilter_asksBeforeDownloadingAgain() {
-        app.tabBars.buttons["Settings"].tap()
+        app.tab("Settings").tap()
         let toggle = app.switches.matching(NSPredicate(format: "label CONTAINS[c] %@", "Filter Adult Content")).firstMatch
         var swipes = 0
         while !(toggle.exists && toggle.isHittable) && swipes < 8 {
@@ -889,7 +911,7 @@ final class BrowseBehaviourUITests: XCTestCase {
 
     /// A poster offers Add to Favorites in its context menu, without opening the detail.
     func test_movieCard_contextMenuOffersFavourite() {
-        app.tabBars.buttons["Movies"].tap()
+        app.tab("Movies").tap()
         let poster = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Midnight Horizon")).firstMatch
         XCTAssertTrue(poster.waitForExistence(timeout: 8))
         poster.press(forDuration: 1.2)
@@ -908,7 +930,7 @@ final class M3UFavoritesBrowseUITests: XCTestCase {
                                 "-UITestsStartPlaylist", "m3u",
                                 "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        XCTAssertTrue(app.tab("Channels").waitForExistence(timeout: 25))
         let favorites = app.buttons["Favorites"].firstMatch
         XCTAssertTrue(favorites.waitForExistence(timeout: 8))
         favorites.tap()
@@ -940,7 +962,7 @@ final class BrowseAccessibilityUITests: XCTestCase {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         }
         app.launch()
-        let movies = app.tabBars.buttons["Movies"]
+        let movies = app.tab("Movies")
         XCTAssertTrue(movies.waitForExistence(timeout: 25))
         movies.tap()
         let category = app.buttons["Sci-Fi"].firstMatch
@@ -990,7 +1012,7 @@ final class GuideAccessibilityUITests: XCTestCase {
                                 "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
                                 "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        XCTAssertTrue(app.tab("Channels").waitForExistence(timeout: 25))
         let guide = app.buttons["TV Guide"].firstMatch
         XCTAssertTrue(guide.waitForExistence(timeout: 8))
         guide.tap()
@@ -1027,13 +1049,13 @@ final class SearchPickerAccessibilityUITests: XCTestCase {
                                 "-AppleLanguages", "(en)", "-AppleLocale", "en_US",
                                 "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Movies"].waitForExistence(timeout: 25))
+        XCTAssertTrue(app.tab("Movies").waitForExistence(timeout: 25))
         return app
     }
 
     func test_searchResultOpensDetailAtLargestTextSize() {
         let app = launchLargestText()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 6))
         field.tap()
@@ -1050,8 +1072,8 @@ final class SearchPickerAccessibilityUITests: XCTestCase {
 
     func test_categorySelectionAtLargestTextSize() {
         let app = launchLargestText()
-        app.tabBars.buttons["Movies"].tap()
-        let picker = app.buttons["Jump to category"].firstMatch
+        app.tab("Movies").tap()
+        let picker = app.barAction("Jump to category").firstMatch
         XCTAssertTrue(picker.waitForExistence(timeout: 8))
         picker.tap()
         XCTAssertTrue(app.navigationBars["Categories"].waitForExistence(timeout: 5))
@@ -1083,7 +1105,7 @@ final class SettingsAccessibilityUITests: XCTestCase {
                                 "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         if m3u { app.launchArguments += ["-UITestsStartPlaylist", "m3u"] }
         app.launch()
-        let settings = app.tabBars.buttons["Settings"]
+        let settings = app.tab("Settings")
         XCTAssertTrue(settings.waitForExistence(timeout: 25))
         settings.tap()
         capture(app, name: m3u ? "M3U-settings-top" : "Xtream-settings-top")
@@ -1144,7 +1166,7 @@ final class GuideToolbarAccessibilityUITests: XCTestCase {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         }
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["Channels"].waitForExistence(timeout: 25))
+        XCTAssertTrue(app.tab("Channels").waitForExistence(timeout: 25))
         app.buttons["TV Guide"].firstMatch.tap()
         let channel = app.staticTexts["Harbor News"].firstMatch
         XCTAssertTrue(channel.waitForExistence(timeout: 15))
@@ -1212,7 +1234,7 @@ final class BrowseDetailTimingUITests: XCTestCase {
         app.launchArguments += ["-UITests", "1", "-UITestsFixture", "rich",
                                 "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
-        let movies = app.tabBars.buttons["Movies"]
+        let movies = app.tab("Movies")
         XCTAssertTrue(movies.waitForExistence(timeout: 25))
         movies.tap()
         let category = app.buttons["Sci-Fi"].firstMatch
@@ -1249,7 +1271,7 @@ final class BrowseScaleVerificationUITests: XCTestCase {
         let movies = app.buttons["Movies"].firstMatch
         XCTAssertTrue(movies.waitForExistence(timeout: 120))
         movies.tap()
-        let picker = app.buttons["Jump to category"].firstMatch
+        let picker = app.barAction("Jump to category").firstMatch
         XCTAssertTrue(picker.waitForExistence(timeout: 30))
         picker.tap()
         let field = app.searchFields.firstMatch
@@ -1408,7 +1430,7 @@ final class BrowseShelfRetentionUITests: XCTestCase {
     }
 
     private func jump(to name: String, app: XCUIApplication) {
-        app.buttons["Jump to category"].firstMatch.tap()
+        app.barAction("Jump to category").firstMatch.tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 8))
         field.tap()
@@ -1472,7 +1494,7 @@ final class BrowsePerformanceUITests: XCTestCase {
 
     private func launchMovies() {
         app.launch()
-        let movies = app.tabBars.buttons["Movies"]
+        let movies = app.tab("Movies")
         XCTAssertTrue(movies.waitForExistence(timeout: 120))
         movies.tap()
         XCTAssertTrue(app.buttons["home.shelf.header.vod-cat-0"].waitForExistence(timeout: 30))
@@ -1491,7 +1513,7 @@ final class BrowsePerformanceUITests: XCTestCase {
         measure(metrics: [XCTClockMetric(), XCTApplicationLaunchMetric(waitUntilResponsive: true)], options: options) {
             startMeasuring()
             app.launch()
-            let movies = app.tabBars.buttons["Movies"]
+            let movies = app.tab("Movies")
             XCTAssertTrue(movies.waitForExistence(timeout: 60))
             movies.tap()
             XCTAssertTrue(app.buttons["home.shelf.header.vod-cat-0"].waitForExistence(timeout: 30))
@@ -1528,17 +1550,17 @@ final class BrowsePerformanceUITests: XCTestCase {
     func test_p04_warmContentTabSwitches() {
         launchMovies()
         let names = ["Live TV", "Series", "Movies"]
-        for name in names { app.tabBars.buttons[name].tap() }
+        for name in names { app.tab(name).tap() }
         measure(metrics: interactionMetrics, options: options) {
             startMeasuring()
-            for name in names { app.tabBars.buttons[name].tap() }
+            for name in names { app.tab(name).tap() }
             stopMeasuring()
         }
     }
 
     func test_p05_searchTypingToResults() {
         launchMovies()
-        app.tabBars.buttons["Search"].tap()
+        app.tab("Search").tap()
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10))
         field.tap()
@@ -1572,7 +1594,7 @@ final class BrowsePerformanceUITests: XCTestCase {
 
     func test_p07_openLargeGuide() {
         launchMovies()
-        app.tabBars.buttons["Live TV"].tap()
+        app.tab("Live TV").tap()
         let guide = app.buttons["TV Guide"].firstMatch
         XCTAssertTrue(guide.waitForExistence(timeout: 15))
         let grid = app.descendants(matching: .any).matching(identifier: "epg.guide.grid").firstMatch
