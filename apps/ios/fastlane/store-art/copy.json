@@ -1,0 +1,462 @@
+{
+  "en": {
+    "01-live": [
+      "All your <em>live TV</em><br>in one place",
+      "Channels sorted by category, one tap from playing"
+    ],
+    "02-movies": [
+      "Your movies,<br><em>beautifully</em> organized",
+      "Posters, ratings and categories at a glance"
+    ],
+    "03-movie-detail": [
+      "Every detail<br><em>before you press play</em>",
+      "Plot, cast and runtime, then pick up where you left off"
+    ],
+    "04-player": [
+      "A player that<br><em>plays it all</em>",
+      "Gesture controls, subtitles, audio tracks and AirPlay"
+    ],
+    "05-series": [
+      "Binge your<br><em>favorite series</em>",
+      "Every series sorted by category"
+    ],
+    "06-series-detail": [
+      "Seasons and episodes,<br><em>all in order</em>",
+      "Your progress is saved on every episode"
+    ],
+    "07-search": [
+      "Find anything,<br><em>instantly</em>",
+      "Search channels, movies and series at once"
+    ],
+    "header": [
+      "Your playlists,<br><em>beautifully played.</em>",
+      "Live TV, movies and series from your own IPTV playlists,<br>on iPhone, iPad and iPhone Duo."
+    ],
+    "search": [
+      "Your IPTV, <em>beautifully played</em>",
+      "Live TV, movies and series from your own playlists"
+    ],
+    "08-player-land": [
+      "Made for the<br><em>big picture</em>",
+      "Full-screen playback with every control at hand"
+    ],
+    "09-live-land": [
+      "Live TV on the<br><em>big screen</em>",
+      "Every channel and category side by side"
+    ]
+  },
+  "tr": {
+    "01-live": [
+      "Tüm <em>canlı yayınlar</em><br>tek bir yerde",
+      "Kategorilere ayrılmış kanallar, tek dokunuşla oynatın"
+    ],
+    "02-movies": [
+      "Filmleriniz,<br><em>özenle</em> düzenlenmiş",
+      "Afişler, puanlar ve kategoriler bir bakışta"
+    ],
+    "03-movie-detail": [
+      "Oynatmadan önce<br><em>tüm detaylar</em>",
+      "Özet, oyuncular ve süre; kaldığınız yerden devam edin"
+    ],
+    "04-player": [
+      "Her şeyi oynatan<br><em>güçlü bir oynatıcı</em>",
+      "Hareket kontrolleri, altyazılar, ses parçaları ve AirPlay"
+    ],
+    "05-series": [
+      "Favori dizilerinizi<br><em>art arda izleyin</em>",
+      "Tüm diziler kategorilerine göre sıralı"
+    ],
+    "06-series-detail": [
+      "Sezonlar ve bölümler,<br><em>hepsi sırayla</em>",
+      "Her bölümde kaldığınız yer kaydedilir"
+    ],
+    "07-search": [
+      "Aradığınızı<br><em>anında bulun</em>",
+      "Kanalları, filmleri ve dizileri tek seferde arayın"
+    ],
+    "header": [
+      "Listeleriniz,<br><em>en güzel hâliyle.</em>",
+      "Kendi IPTV listelerinizden canlı TV, film ve diziler;<br>iPhone, iPad ve iPhone Duo'da."
+    ],
+    "search": [
+      "IPTV'niz, <em>en güzel hâliyle</em>",
+      "Kendi listelerinizden canlı TV, film ve diziler"
+    ],
+    "08-player-land": [
+      "Büyük ekran için<br><em>tasarlandı</em>",
+      "Tüm kontroller elinizin altında, tam ekran oynatma"
+    ],
+    "09-live-land": [
+      "Canlı TV<br><em>büyük ekranda</em>",
+      "Tüm kanallar ve kategoriler yan yana"
+    ]
+  },
+  "de": {
+    "01-live": [
+      "Dein ganzes <em>Live-TV</em><br>an einem Ort",
+      "Sender nach Kategorien sortiert, mit einem Tipp abspielen"
+    ],
+    "02-movies": [
+      "Deine Filme,<br><em>schön</em> sortiert",
+      "Poster, Bewertungen und Kategorien auf einen Blick"
+    ],
+    "03-movie-detail": [
+      "Alle Details,<br><em>bevor du startest</em>",
+      "Handlung, Besetzung und Laufzeit, dann nahtlos weiterschauen"
+    ],
+    "04-player": [
+      "Ein Player, der<br><em>alles abspielt</em>",
+      "Gestensteuerung, Untertitel, Tonspuren und AirPlay"
+    ],
+    "05-series": [
+      "Deine Lieblingsserien<br><em>am Stück</em>",
+      "Alle Serien nach Kategorien sortiert"
+    ],
+    "06-series-detail": [
+      "Staffeln und Folgen,<br><em>alles in Reihe</em>",
+      "Dein Fortschritt wird bei jeder Folge gespeichert"
+    ],
+    "07-search": [
+      "Alles finden,<br><em>sofort</em>",
+      "Sender, Filme und Serien in einer Suche"
+    ],
+    "header": [
+      "Deine Playlists,<br><em>wunderschön abgespielt.</em>",
+      "Live-TV, Filme und Serien aus deinen eigenen IPTV-Playlists,<br>auf iPhone, iPad und iPhone Duo."
+    ],
+    "search": [
+      "Dein IPTV, <em>wunderschön abgespielt</em>",
+      "Live-TV, Filme und Serien aus deinen eigenen Playlists"
+    ],
+    "08-player-land": [
+      "Gemacht für<br><em>das große Bild</em>",
+      "Vollbild mit allen Bedienelementen griffbereit"
+    ],
+    "09-live-land": [
+      "Live-TV auf dem<br><em>großen Display</em>",
+      "Alle Sender und Kategorien nebeneinander"
+    ]
+  },
+  "es": {
+    "01-live": [
+      "Toda tu <em>TV en directo</em><br>en un solo lugar",
+      "Canales ordenados por categoría, a un toque de reproducirse"
+    ],
+    "02-movies": [
+      "Tus películas,<br><em>perfectamente</em> organizadas",
+      "Pósteres, valoraciones y categorías de un vistazo"
+    ],
+    "03-movie-detail": [
+      "Todos los detalles<br><em>antes de darle al play</em>",
+      "Sinopsis, reparto y duración; sigue donde lo dejaste"
+    ],
+    "04-player": [
+      "Un reproductor que<br><em>lo reproduce todo</em>",
+      "Gestos, subtítulos, pistas de audio y AirPlay"
+    ],
+    "05-series": [
+      "Maratonea tus<br><em>series favoritas</em>",
+      "Todas las series ordenadas por categoría"
+    ],
+    "06-series-detail": [
+      "Temporadas y episodios,<br><em>todo en orden</em>",
+      "Tu progreso se guarda en cada episodio"
+    ],
+    "07-search": [
+      "Encuentra lo que quieras,<br><em>al instante</em>",
+      "Busca canales, películas y series a la vez"
+    ],
+    "header": [
+      "Tus listas,<br><em>reproducidas con estilo.</em>",
+      "TV en directo, películas y series de tus propias listas IPTV,<br>en iPhone, iPad y iPhone Duo."
+    ],
+    "search": [
+      "Tu IPTV, <em>reproducido con estilo</em>",
+      "TV en directo, películas y series de tus propias listas"
+    ],
+    "08-player-land": [
+      "Hecho para la<br><em>gran pantalla</em>",
+      "Reproducción a pantalla completa con todo a mano"
+    ],
+    "09-live-land": [
+      "TV en directo en<br><em>pantalla grande</em>",
+      "Todos los canales y categorías de un vistazo"
+    ]
+  },
+  "fr": {
+    "01-live": [
+      "Toute votre <em>TV en direct</em><br>au même endroit",
+      "Des chaînes classées par catégorie, lancées d'un geste"
+    ],
+    "02-movies": [
+      "Vos films,<br><em>joliment</em> organisés",
+      "Affiches, notes et catégories en un coup d'œil"
+    ],
+    "03-movie-detail": [
+      "Tous les détails<br><em>avant de lancer</em>",
+      "Résumé, distribution et durée, puis reprenez où vous en étiez"
+    ],
+    "04-player": [
+      "Un lecteur qui<br><em>lit tout</em>",
+      "Gestes, sous-titres, pistes audio et AirPlay"
+    ],
+    "05-series": [
+      "Enchaînez vos<br><em>séries préférées</em>",
+      "Toutes les séries classées par catégorie"
+    ],
+    "06-series-detail": [
+      "Saisons et épisodes,<br><em>dans l'ordre</em>",
+      "Votre progression est enregistrée à chaque épisode"
+    ],
+    "07-search": [
+      "Trouvez tout,<br><em>instantanément</em>",
+      "Cherchez chaînes, films et séries en une seule fois"
+    ],
+    "header": [
+      "Vos playlists,<br><em>magnifiquement lues.</em>",
+      "TV en direct, films et séries depuis vos propres playlists IPTV,<br>sur iPhone, iPad et iPhone Duo."
+    ],
+    "search": [
+      "Votre IPTV, <em>magnifiquement lue</em>",
+      "TV en direct, films et séries depuis vos propres playlists"
+    ],
+    "08-player-land": [
+      "Pensé pour<br><em>le grand format</em>",
+      "Lecture plein écran, toutes les commandes à portée"
+    ],
+    "09-live-land": [
+      "La TV en direct<br><em>en grand</em>",
+      "Toutes les chaînes et catégories côte à côte"
+    ]
+  },
+  "pt-BR": {
+    "01-live": [
+      "Toda a sua <em>TV ao vivo</em><br>em um só lugar",
+      "Canais organizados por categoria, a um toque de assistir"
+    ],
+    "02-movies": [
+      "Seus filmes,<br><em>lindamente</em> organizados",
+      "Pôsteres, notas e categorias num piscar de olhos"
+    ],
+    "03-movie-detail": [
+      "Todos os detalhes<br><em>antes do play</em>",
+      "Sinopse, elenco e duração; continue de onde parou"
+    ],
+    "04-player": [
+      "Um player que<br><em>toca de tudo</em>",
+      "Gestos, legendas, faixas de áudio e AirPlay"
+    ],
+    "05-series": [
+      "Maratone suas<br><em>séries favoritas</em>",
+      "Todas as séries organizadas por categoria"
+    ],
+    "06-series-detail": [
+      "Temporadas e episódios,<br><em>tudo em ordem</em>",
+      "Seu progresso fica salvo em cada episódio"
+    ],
+    "07-search": [
+      "Encontre tudo<br><em>na hora</em>",
+      "Busque canais, filmes e séries de uma vez"
+    ],
+    "header": [
+      "Suas playlists,<br><em>com reprodução impecável.</em>",
+      "TV ao vivo, filmes e séries das suas próprias playlists IPTV,<br>no iPhone, iPad e iPhone Duo."
+    ],
+    "search": [
+      "Seu IPTV, <em>com reprodução impecável</em>",
+      "TV ao vivo, filmes e séries das suas próprias playlists"
+    ],
+    "08-player-land": [
+      "Feito para a<br><em>tela grande</em>",
+      "Tela cheia com todos os controles à mão"
+    ],
+    "09-live-land": [
+      "TV ao vivo na<br><em>tela grande</em>",
+      "Todos os canais e categorias lado a lado"
+    ]
+  },
+  "ru": {
+    "01-live": [
+      "Всё <em>прямое ТВ</em><br>в одном месте",
+      "Каналы по категориям — включаются одним касанием"
+    ],
+    "02-movies": [
+      "Ваши фильмы,<br><em>красиво</em> упорядочены",
+      "Постеры, рейтинги и категории с первого взгляда"
+    ],
+    "03-movie-detail": [
+      "Все подробности<br><em>до начала просмотра</em>",
+      "Сюжет, актёры и длительность — продолжайте с того же места"
+    ],
+    "04-player": [
+      "Плеер, который<br><em>воспроизводит всё</em>",
+      "Жесты, субтитры, звуковые дорожки и AirPlay"
+    ],
+    "05-series": [
+      "Смотрите любимые<br><em>сериалы запоем</em>",
+      "Все сериалы по категориям"
+    ],
+    "06-series-detail": [
+      "Сезоны и серии —<br><em>всё по порядку</em>",
+      "Прогресс сохраняется в каждой серии"
+    ],
+    "07-search": [
+      "Найдите всё<br><em>мгновенно</em>",
+      "Ищите каналы, фильмы и сериалы одновременно"
+    ],
+    "header": [
+      "Ваши плейлисты —<br><em>в лучшем виде.</em>",
+      "Прямое ТВ, фильмы и сериалы из ваших IPTV-плейлистов<br>на iPhone, iPad и iPhone Duo."
+    ],
+    "search": [
+      "Ваше IPTV <em>в лучшем виде</em>",
+      "Прямое ТВ, фильмы и сериалы из ваших плейлистов"
+    ],
+    "08-player-land": [
+      "Создан для<br><em>большого экрана</em>",
+      "Полноэкранный просмотр, все элементы под рукой"
+    ],
+    "09-live-land": [
+      "Прямое ТВ<br><em>на большом экране</em>",
+      "Все каналы и категории рядом"
+    ]
+  },
+  "ar": {
+    "01-live": [
+      "كل <em>البث المباشر</em><br>في مكان واحد",
+      "قنوات مرتبة حسب الفئة، تبدأ بلمسة واحدة"
+    ],
+    "02-movies": [
+      "أفلامك<br><em>منظمة بأناقة</em>",
+      "الملصقات والتقييمات والفئات في لمحة"
+    ],
+    "03-movie-detail": [
+      "كل التفاصيل<br><em>قبل أن تبدأ المشاهدة</em>",
+      "القصة وطاقم التمثيل والمدة، ثم تابع من حيث توقفت"
+    ],
+    "04-player": [
+      "مشغّل<br><em>يشغّل كل شيء</em>",
+      "تحكم بالإيماءات وترجمات ومسارات صوت وAirPlay"
+    ],
+    "05-series": [
+      "شاهد مسلسلاتك<br><em>المفضلة بلا توقف</em>",
+      "كل المسلسلات مرتبة حسب الفئة"
+    ],
+    "06-series-detail": [
+      "مواسم وحلقات<br><em>بالترتيب</em>",
+      "يُحفظ تقدّمك في كل حلقة"
+    ],
+    "07-search": [
+      "اعثر على ما تريد<br><em>فورًا</em>",
+      "ابحث في القنوات والأفلام والمسلسلات معًا"
+    ],
+    "header": [
+      "قوائمك<br><em>بأجمل تشغيل.</em>",
+      "بث مباشر وأفلام ومسلسلات من قوائم IPTV الخاصة بك،<br>على iPhone وiPad وiPhone Duo."
+    ],
+    "search": [
+      "IPTV الخاص بك <em>بأجمل تشغيل</em>",
+      "بث مباشر وأفلام ومسلسلات من قوائمك الخاصة"
+    ],
+    "08-player-land": [
+      "مصمم<br><em>للشاشة الكبيرة</em>",
+      "تشغيل بملء الشاشة مع كل عناصر التحكم في متناولك"
+    ],
+    "09-live-land": [
+      "البث المباشر<br><em>على الشاشة الكبيرة</em>",
+      "كل القنوات والفئات جنبًا إلى جنب"
+    ]
+  },
+  "hi": {
+    "01-live": [
+      "आपका पूरा <em>लाइव टीवी</em><br>एक ही जगह",
+      "श्रेणी के अनुसार चैनल, बस एक टैप में चलाएँ"
+    ],
+    "02-movies": [
+      "आपकी फ़िल्में,<br><em>सुंदर ढंग से</em> व्यवस्थित",
+      "पोस्टर, रेटिंग और श्रेणियाँ एक नज़र में"
+    ],
+    "03-movie-detail": [
+      "चलाने से पहले<br><em>हर जानकारी</em>",
+      "कहानी, कलाकार और अवधि, फिर वहीं से जारी रखें जहाँ छोड़ा था"
+    ],
+    "04-player": [
+      "एक प्लेयर जो<br><em>सब कुछ चलाए</em>",
+      "जेस्चर कंट्रोल, सबटाइटल, ऑडियो ट्रैक और AirPlay"
+    ],
+    "05-series": [
+      "अपनी पसंदीदा<br><em>सीरीज़ लगातार देखें</em>",
+      "सभी सीरीज़ श्रेणी के अनुसार"
+    ],
+    "06-series-detail": [
+      "सीज़न और एपिसोड,<br><em>सब क्रम में</em>",
+      "हर एपिसोड पर आपकी प्रगति सहेजी जाती है"
+    ],
+    "07-search": [
+      "कुछ भी खोजें,<br><em>तुरंत</em>",
+      "चैनल, फ़िल्में और सीरीज़ एक साथ खोजें"
+    ],
+    "header": [
+      "आपकी प्लेलिस्ट,<br><em>शानदार तरीके से।</em>",
+      "अपनी IPTV प्लेलिस्ट से लाइव टीवी, फ़िल्में और सीरीज़,<br>iPhone, iPad और iPhone Duo पर।"
+    ],
+    "search": [
+      "आपका IPTV, <em>शानदार तरीके से</em>",
+      "अपनी प्लेलिस्ट से लाइव टीवी, फ़िल्में और सीरीज़"
+    ],
+    "08-player-land": [
+      "बड़ी स्क्रीन के<br><em>लिए बना</em>",
+      "फ़ुल-स्क्रीन प्लेबैक, हर कंट्रोल हाथ में"
+    ],
+    "09-live-land": [
+      "लाइव टीवी<br><em>बड़ी स्क्रीन पर</em>",
+      "सभी चैनल और श्रेणियाँ एक साथ"
+    ]
+  },
+  "zh-Hans": {
+    "01-live": [
+      "所有<em>直播电视</em><br>尽在一处",
+      "频道按分类整理，轻点即可播放"
+    ],
+    "02-movies": [
+      "你的电影，<br><em>井然有序</em>",
+      "海报、评分和分类一目了然"
+    ],
+    "03-movie-detail": [
+      "播放之前，<br><em>细节尽览</em>",
+      "剧情、演员和时长，并可从上次位置继续"
+    ],
+    "04-player": [
+      "一款<br><em>什么都能播</em>的播放器",
+      "手势控制、字幕、音轨和 AirPlay"
+    ],
+    "05-series": [
+      "畅看你<br><em>最爱的剧集</em>",
+      "所有剧集按分类整理"
+    ],
+    "06-series-detail": [
+      "季与集，<br><em>井井有条</em>",
+      "每一集的进度都会保存"
+    ],
+    "07-search": [
+      "想找什么，<br><em>立刻找到</em>",
+      "同时搜索频道、电影和剧集"
+    ],
+    "header": [
+      "你的播放列表，<br><em>精彩呈现。</em>",
+      "来自你自己 IPTV 播放列表的直播电视、电影和剧集，<br>支持 iPhone、iPad 和 iPhone Duo。"
+    ],
+    "search": [
+      "你的 IPTV，<em>精彩呈现</em>",
+      "来自你自己播放列表的直播电视、电影和剧集"
+    ],
+    "08-player-land": [
+      "为<br><em>大画面</em>而生",
+      "全屏播放，所有控制触手可及"
+    ],
+    "09-live-land": [
+      "直播电视，<br><em>大屏呈现</em>",
+      "所有频道和分类并排展示"
+    ]
+  }
+}

@@ -24,3 +24,11 @@ fastlane/test_output
 # Secrets
 .env
 .env.local
+
+# Hand-uploaded App Store assets (iPhone Duo, product page header, search)
+fastlane/store-assets/
+# Store art: raw simulator captures and rendered output (regenerate, ~1 GB)
+fastlane/store-art/captures/
+fastlane/store-art/out/
+fastlane/store-art/html/
+fastlane/store-art/__pycache__/
