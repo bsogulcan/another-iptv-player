@@ -325,8 +325,33 @@ struct PlaybackFailureTests {
             #expect(!failure.isRecoverable, "\(code) must not be retried silently")
             #expect(!failure.isAVPlayerRescueCandidate, "\(code) must not reach AVPlayer")
         }
-        #expect(ffmpegFailure(.formatOpenInput, Libav.httpOther4xx.code) == .other)
-        #expect(ffmpegFailure(.formatOpenInput, Libav.httpServerError.code) == .other)
+        #expect(ffmpegFailure(.formatOpenInput, Libav.httpOther4xx.code) == .rejectedByServer)
+        #expect(ffmpegFailure(.formatOpenInput, Libav.httpBadRequest.code) == .rejectedByServer)
+        #expect(ffmpegFailure(.formatOpenInput, Libav.httpServerError.code) == .serverError)
+    }
+
+    /// A panel answering 405 for a title the account no longer has is the provider's
+    /// verdict; the message must not send the user to check their network.
+    @Test func unnamedHTTPStatusesBlameTheServerNotTheNetwork() {
+        #expect(ffmpegFailure(.formatOpenInput, Libav.httpOther4xx.code).messageKey
+            == "playback.error.rejected_by_server")
+        #expect(ffmpegFailure(.readFrame, Libav.httpOther4xx.code) == .rejectedByServer)
+        #expect(ffmpegFailure(.formatOpenInput, Libav.httpServerError.code).messageKey
+            == "playback.error.server_error")
+    }
+
+    /// AVPlayer's "server is not correctly configured" (-11850) after the rescue: the
+    /// response was an HTTP error or no media, so it names the server too.
+    @Test func avPlayerServerMisconfiguredIsARejection() {
+        let failure = Policy.failure(
+            domain: AVFoundationErrorDomain,
+            code: AVFoundation.AVError.Code.serverIncorrectlyConfigured.rawValue,
+            avErrorCode: nil
+        )
+        #expect(failure == .rejectedByServer)
+        #expect(!failure.isRecoverable)
+        #expect(!failure.isAVPlayerRescueCandidate)
+        #expect(Policy.failure(domain: AVFoundationErrorDomain, code: -11800, avErrorCode: nil) == .other)
     }
 
     /// A connection-limited panel answers a zap with 403 while it still counts the
@@ -338,7 +363,8 @@ struct PlaybackFailureTests {
         #expect(!Policy.Failure.forbidden.isRecoverable)
         #expect(!Policy.Failure.forbidden.isAVPlayerRescueCandidate)
         let others: [Policy.Failure] = [
-            .unauthorized, .notFound, .timeout, .unreachable, .unreadableSource, .openFailed, .other,
+            .unauthorized, .notFound, .rejectedByServer, .serverError, .timeout, .unreachable,
+            .unreadableSource, .openFailed, .other,
         ]
         for failure in others {
             #expect(!failure.isDelayedRetryCandidate, "\(failure) must not be retried after a delay")

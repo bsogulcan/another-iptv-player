@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "चलाने योग्य ऑडियो या वीडियो नहीं मिला।";
 "playback.error.output_init_failed" = "ऑडियो या वीडियो आउटपुट शुरू नहीं हो सका।";
 "playback.error.failed_check_network" = "प्लेबैक विफल रहा। अपना नेटवर्क कनेक्शन जांचें।";
+"playback.error.rejected_by_server" = "सर्वर ने यह स्ट्रीम अस्वीकार कर दी। अपने प्रदाता से जांचें कि आपके खाते को इसकी पहुंच है।";
+"playback.error.server_error" = "सर्वर ने एक त्रुटि लौटाई। बाद में फिर से प्रयास करें।";
 "player.live_badge" = "लाइव";
 "player.pip_enter" = "PiP शुरू करें";
 "player.pip_exit" = "PiP से बाहर निकलें";

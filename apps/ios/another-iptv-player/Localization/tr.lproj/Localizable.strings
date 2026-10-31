@@ -288,6 +288,8 @@
 "playback.error.no_playable_stream" = "Oynatılabilir ses veya görüntü bulunamadı.";
 "playback.error.output_init_failed" = "Ses veya görüntü çıkışı başlatılamadı.";
 "playback.error.failed_check_network" = "Oynatma başlatılamadı. Ağ bağlantınızı kontrol et.";
+"playback.error.rejected_by_server" = "Sunucu bu yayını reddetti. Hesabının bu içeriğe erişimi olup olmadığını sağlayıcınla kontrol et.";
+"playback.error.server_error" = "Sunucu bir hata döndürdü. Daha sonra tekrar dene.";
 "player.live_badge" = "CANLI";
 "player.pip_enter" = "PiP'e Geç";
 "player.pip_exit" = "PiP'ten Çık";

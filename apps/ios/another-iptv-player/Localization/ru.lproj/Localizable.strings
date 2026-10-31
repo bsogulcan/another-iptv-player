@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "Не найдено воспроизводимое аудио или видео.";
 "playback.error.output_init_failed" = "Не удалось запустить вывод аудио или видео.";
 "playback.error.failed_check_network" = "Сбой воспроизведения. Проверьте подключение к сети.";
+"playback.error.rejected_by_server" = "Сервер отклонил этот поток. Уточните у провайдера, есть ли у вашего аккаунта доступ к нему.";
+"playback.error.server_error" = "Сервер вернул ошибку. Повторите попытку позже.";
 "player.live_badge" = "ЭФИР";
 "player.pip_enter" = "Включить PiP";
 "player.pip_exit" = "Выйти из PiP";

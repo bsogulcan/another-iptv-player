@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "Aucun audio ou vidéo lisible trouvé.";
 "playback.error.output_init_failed" = "La sortie audio ou vidéo n'a pas pu démarrer.";
 "playback.error.failed_check_network" = "Échec de la lecture. Vérifie ta connexion réseau.";
+"playback.error.rejected_by_server" = "Le serveur a refusé ce flux. Vérifie auprès de ton fournisseur que ton compte y a accès.";
+"playback.error.server_error" = "Le serveur a renvoyé une erreur. Réessaie plus tard.";
 "player.live_badge" = "DIRECT";
 "player.pip_enter" = "Activer PiP";
 "player.pip_exit" = "Quitter PiP";

@@ -288,6 +288,8 @@
 "playback.error.no_playable_stream" = "No playable audio or video found.";
 "playback.error.output_init_failed" = "Audio or video output could not start.";
 "playback.error.failed_check_network" = "Playback failed. Check your network connection.";
+"playback.error.rejected_by_server" = "The server refused this stream. Check with your provider that your account can access it.";
+"playback.error.server_error" = "The server returned an error. Try again later.";
 "player.live_badge" = "LIVE";
 "player.pip_enter" = "Enter PiP";
 "player.pip_exit" = "Exit PiP";

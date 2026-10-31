@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "未找到可播放的音频或视频。";
 "playback.error.output_init_failed" = "音频或视频输出无法启动。";
 "playback.error.failed_check_network" = "播放失败。请检查网络连接。";
+"playback.error.rejected_by_server" = "服务器拒绝了此流。请向你的提供商确认你的账户是否有权访问。";
+"playback.error.server_error" = "服务器返回了错误。请稍后重试。";
 "player.live_badge" = "直播";
 "player.pip_enter" = "进入画中画";
 "player.pip_exit" = "退出画中画";

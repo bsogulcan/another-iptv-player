@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "No se encontró audio o vídeo reproducible.";
 "playback.error.output_init_failed" = "No se pudo iniciar la salida de audio o vídeo.";
 "playback.error.failed_check_network" = "Falló la reproducción. Comprueba tu conexión de red.";
+"playback.error.rejected_by_server" = "El servidor rechazó esta emisión. Consulta con tu proveedor si tu cuenta tiene acceso a ella.";
+"playback.error.server_error" = "El servidor devolvió un error. Inténtalo de nuevo más tarde.";
 "player.live_badge" = "EN VIVO";
 "player.pip_enter" = "Activar PiP";
 "player.pip_exit" = "Salir de PiP";

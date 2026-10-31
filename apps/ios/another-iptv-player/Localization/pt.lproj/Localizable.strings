@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "Nenhum áudio ou vídeo reproduzível encontrado.";
 "playback.error.output_init_failed" = "A saída de áudio ou vídeo não pôde ser iniciada.";
 "playback.error.failed_check_network" = "Falha na reprodução. Verifique sua conexão de rede.";
+"playback.error.rejected_by_server" = "O servidor recusou esta transmissão. Verifique com seu provedor se sua conta tem acesso a ela.";
+"playback.error.server_error" = "O servidor retornou um erro. Tente novamente mais tarde.";
 "player.live_badge" = "AO VIVO";
 "player.pip_enter" = "Ativar PiP";
 "player.pip_exit" = "Sair do PiP";

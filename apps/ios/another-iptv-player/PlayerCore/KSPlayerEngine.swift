@@ -2244,6 +2244,12 @@ nonisolated enum KSPlayerLoadPolicy {
     case unauthorized
     case forbidden
     case notFound
+    /// Any other HTTP 4xx (400, 405, 410, ...), or AVPlayer reporting that the server
+    /// answered with something it could not use. The panel refused the request; it
+    /// is the provider's answer, not the network.
+    case rejectedByServer
+    /// HTTP 5xx.
+    case serverError
     case timeout
     /// Host unreachable, connection refused or reset.
     case unreachable
@@ -2258,6 +2264,8 @@ nonisolated enum KSPlayerLoadPolicy {
       case .unauthorized: return "playback.error.unauthorized"
       case .forbidden: return "playback.error.forbidden"
       case .notFound: return "playback.error.not_found"
+      case .rejectedByServer: return "playback.error.rejected_by_server"
+      case .serverError: return "playback.error.server_error"
       case .timeout: return "playback.error.timeout"
       case .unreachable: return "playback.error.cannot_reach"
       case .unreadableSource: return "playback.error.unsupported"
@@ -2307,6 +2315,10 @@ nonisolated enum KSPlayerLoadPolicy {
         return .other
       }
     }
+    // What AVPlayer reports when the response is an HTTP error or not media at all.
+    if domain == AVFoundationErrorDomain, code == AVFoundation.AVError.Code.serverIncorrectlyConfigured.rawValue {
+      return .rejectedByServer
+    }
     guard domain == KSPlayerErrorDomain else { return .other }
     // Only an error from opening or probing says something about the source as a
     // whole; the same code from a later read is a broken stream.
@@ -2316,13 +2328,12 @@ nonisolated enum KSPlayerLoadPolicy {
     if avErrorCode == LibavError.httpUnauthorized.code { return .unauthorized }
     if avErrorCode == LibavError.httpForbidden.code { return .forbidden }
     if avErrorCode == LibavError.httpNotFound.code { return .notFound }
-    let unnamed = [
-      LibavError.httpBadRequest.code, LibavError.httpOther4xx.code,
-      LibavError.httpServerError.code,
-      // The read was interrupted by a shutdown, not by the source.
-      LibavError.exit.code,
-    ]
-    if unnamed.contains(avErrorCode) { return .other }
+    if avErrorCode == LibavError.httpBadRequest.code || avErrorCode == LibavError.httpOther4xx.code {
+      return .rejectedByServer
+    }
+    if avErrorCode == LibavError.httpServerError.code { return .serverError }
+    // The read was interrupted by a shutdown, not by the source.
+    if avErrorCode == LibavError.exit.code { return .other }
     if avErrorCode == -ETIMEDOUT { return .timeout }
     if unreachableCodes.contains(avErrorCode) { return .unreachable }
     guard isOpenStage else { return .other }

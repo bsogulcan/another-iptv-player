@@ -299,6 +299,8 @@
 "playback.error.no_playable_stream" = "لم يتم العثور على صوت أو فيديو قابل للتشغيل.";
 "playback.error.output_init_failed" = "تعذّر بدء إخراج الصوت أو الفيديو.";
 "playback.error.failed_check_network" = "فشل التشغيل. تحقق من اتصال الشبكة.";
+"playback.error.rejected_by_server" = "رفض الخادم هذا البث. تحقق مع مزودك من أن حسابك يملك صلاحية الوصول إليه.";
+"playback.error.server_error" = "أعاد الخادم خطأ. حاول مرة أخرى لاحقًا.";
 "player.live_badge" = "مباشر";
 "player.pip_enter" = "تشغيل صورة داخل صورة";
 "player.pip_exit" = "إنهاء صورة داخل صورة";
