@@ -1944,6 +1944,8 @@ final class CastController: ObservableObject {
     case localServerLost
     /// The session's segments outgrew the storage budget.
     case storageBudgetExceeded
+    /// The receiver reported the end of a VOD item well before the film ends.
+    case prematureEnd
   }
 
   enum RuntimeRebuildDecision: Equatable {
@@ -2008,6 +2010,7 @@ final class CastController: ObservableObject {
   /// Clears what belongs to one engagement and must not leak into the next.
   private func resetEngagementBookkeeping() {
     lastRuntimeRebuildAt = nil
+    prematureEndRebuilds = nil
     liveEdgeSeekGraceUntil = nil
     pausedByTransportCall = false
     pauseObservedAt = nil
@@ -2403,6 +2406,7 @@ final class CastController: ObservableObject {
     player.onStateChange = { [weak self] in self?.handleCastStateChange() }
     player.onError = { [weak self] error in self?.handleCastError(error) }
     player.onEnded = { [weak self] in self?.handleCastEnded() }
+    player.onStalled = { [weak self] in self?.logServingSessionState("stall") }
     return player
   }
 
@@ -2599,8 +2603,79 @@ final class CastController: ObservableObject {
     }
   }
 
+  /// Record-only: what the serving session had published and fetched at an event
+  /// of the cast item (a stall, an end).
+  private func logServingSessionState(_ context: String) {
+    guard let session = servingSession else { return }
+    Log.info("AirPlayCast", "writer at \(context): \(session.writerSummary)")
+    logReceiverFetches(of: session, context)
+  }
+
+  /// A VOD item that "ends" further than this before the known duration did not
+  /// play to the end. The writer only finalizes a playlist within 30 s of the
+  /// source duration, so a genuine end always lands inside this margin.
+  static let prematureEndToleranceSeconds: TimeInterval = 60
+  /// Rebuilds after premature ends allowed per content; one more ends the cast and
+  /// resumes on the phone, so a receiver that keeps cutting out cannot loop.
+  static let maximumPrematureEndRebuilds = 2
+
+  enum CastEndAction: Equatable {
+    /// Played to the end: mark completed, which drives auto-next.
+    case completed
+    /// Ended far before the duration: rebuild the session at the current position.
+    case rebuild
+    /// Ended early again after the allowed rebuilds: end the cast, resume on phone.
+    case endCast
+  }
+
+  /// What the end of a cast item leads to. Field logs showed the receiver ending
+  /// remux VOD items about 220 s in, right after a stall, with no writer error and
+  /// no ENDLIST: taken as completion, that skipped ten episodes in a row through
+  /// auto-next. Only a remux VOD item with a known duration is checked; anything
+  /// else keeps the old behaviour. Pure function.
+  static func castEndAction(
+    isRemuxVOD: Bool,
+    position: TimeInterval,
+    duration: TimeInterval,
+    prematureRebuildsSoFar: Int
+  ) -> CastEndAction {
+    guard isRemuxVOD, duration > 0, position.isFinite,
+          duration - position > prematureEndToleranceSeconds
+    else { return .completed }
+    return prematureRebuildsSoFar < maximumPrematureEndRebuilds ? .rebuild : .endCast
+  }
+
+  /// Premature-end rebuilds done for the content at `url`; reset by other content.
+  private var prematureEndRebuilds: (url: URL, count: Int)?
+
   private func handleCastEnded() {
-    guard case .casting = state else { return }
+    guard case let .casting(active) = state else { return }
+    logServingSessionState("end")
+    let url = active.content.url
+    let soFar = prematureEndRebuilds?.url == url ? prematureEndRebuilds?.count ?? 0 : 0
+    switch Self.castEndAction(
+      isRemuxVOD: active.session != nil && !active.content.isLive,
+      position: position, duration: duration, prematureRebuildsSoFar: soFar
+    ) {
+    case .completed:
+      break
+    case .rebuild:
+      prematureEndRebuilds = (url, soFar + 1)
+      Log.error(
+        "AirPlayCast",
+        "item ended at \(Int(position))s of \(Int(duration))s; rebuilding instead of completing (\(soFar + 1)/\(Self.maximumPrematureEndRebuilds))"
+      )
+      saveParkedHistory(force: true)
+      rebuildSessionInPlace(active, cause: .prematureEnd, startPaused: false)
+      return
+    case .endCast:
+      Log.error(
+        "AirPlayCast",
+        "item ended early again at \(Int(position))s of \(Int(duration))s; ending cast"
+      )
+      endCasting(resume: true, reason: .receiverFailed)
+      return
+    }
     saveParkedHistory(force: true)
     // Played to the end of the written playlist (ENDLIST): drives auto-next.
     if !isCompleted { isCompleted = true }

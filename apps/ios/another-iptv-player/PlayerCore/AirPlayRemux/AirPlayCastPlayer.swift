@@ -47,6 +47,9 @@ final class AirPlayCastPlayer: NSObject {
   var onError: ((Error) -> Void)?
   /// Item reached its end (played up to ENDLIST) — drives "completed" state.
   var onEnded: (() -> Void)?
+  /// The item ran out of media (record-only, like the stall log line): lets the
+  /// owner add what the writer had published at that moment.
+  var onStalled: (() -> Void)?
 
   var currentTime: TimeInterval {
     let t = player.currentTime().seconds
@@ -413,6 +416,7 @@ final class AirPlayCastPlayer: NSObject {
           + (self.isExternalPlaybackActive ? "on" : "off") + ")"
           + (last ? " (further stalls of this item are not logged)" : "")
       )
+      self.onStalled?()
     }
   }
 

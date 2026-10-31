@@ -193,6 +193,57 @@ final class RemuxHLSWriter {
     bytesLock.unlock()
   }
 
+  // MARK: - Publication snapshot (diagnostics)
+
+  /// What the video playlist offered the receiver at its last write. Read when the
+  /// cast item stalls or ends, to tell "the writer stopped publishing" from "the
+  /// receiver stopped playing what was published".
+  struct PublicationSnapshot: Equatable {
+    /// Segments in the video playlist (VOD keeps all of them).
+    var segmentCount = 0
+    /// Sum of the listed EXTINF durations: the end of the published media on the
+    /// item's local timeline.
+    var publishedSeconds: Double = 0
+    /// Uptime of the last playlist write; 0 = none yet.
+    var lastWriteUptime: TimeInterval = 0
+    /// The playlist carries EXT-X-ENDLIST.
+    var finalized = false
+  }
+
+  private let publicationLock = NSLock()
+  private var publicationStorage = PublicationSnapshot()
+  var publication: PublicationSnapshot {
+    publicationLock.lock()
+    defer { publicationLock.unlock() }
+    return publicationStorage
+  }
+
+  private func notePlaylistWritten(segments: [SegmentRecord], final: Bool) {
+    let snapshot = PublicationSnapshot(
+      segmentCount: segments.count,
+      publishedSeconds: segments.reduce(0) { $0 + $1.duration },
+      lastWriteUptime: ProcessInfo.processInfo.systemUptime,
+      finalized: final
+    )
+    publicationLock.lock()
+    publicationStorage = snapshot
+    publicationLock.unlock()
+  }
+
+  /// One log line about the writer: what is published, how long ago, whether it is
+  /// final, and how the source read is going. Thread-safe.
+  func diagnosticSummary(now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> String {
+    let pub = publication
+    let progress = readProgress
+    let age = pub.lastWriteUptime > 0 ? "\(Int(now - pub.lastWriteUptime))s ago" : "never"
+    return String(
+      format: "published %.1fs in %d segments (last write %@%@), packets read %d, read stalled %ds, playback position %.1fs, source duration %.0fs",
+      pub.publishedSeconds, pub.segmentCount, age, pub.finalized ? ", ENDLIST" : "",
+      progress.packetsRead, Int(progress.stalledSeconds), currentPlaybackPosition(),
+      sourceDurationSeconds
+    )
+  }
+
   /// Remux döngüsü tamamen çözülüp kaynak bağlantısı (avformat_close_input) kapandı.
   /// Sonraki oturum, panel slotunun boşaldığını buradan anlar.
   private let closedLock = NSLock()
@@ -1595,6 +1646,11 @@ final class RemuxHLSWriter {
         if sourceDurationSeconds > 0, sourceClock < sourceDurationSeconds - 30 {
           throw RemuxError.readFailed(readResult)
         }
+        Log.info(
+          "AirPlayRemux",
+          String(format: "source EOF at %.1fs (duration %.0fs); finalizing playlist",
+                 sourceClock, sourceDurationSeconds)
+        )
         break
       }
       if readResult < 0 { throw RemuxError.readFailed(readResult) }
@@ -1897,6 +1953,11 @@ final class RemuxHLSWriter {
         if sourceDurationSeconds > 0, sourceClock < sourceDurationSeconds - 30 {
           throw RemuxError.readFailed(readResult)
         }
+        Log.info(
+          "AirPlayRemux",
+          String(format: "source EOF at %.1fs (duration %.0fs); finalizing playlist",
+                 sourceClock, sourceDurationSeconds)
+        )
         break
       }
       if readResult < 0 { throw RemuxError.readFailed(readResult) }
@@ -2106,6 +2167,7 @@ final class RemuxHLSWriter {
     )
     do {
       try content.write(to: playlistURL, atomically: true, encoding: .utf8)
+      notePlaylistWritten(segments: segments, final: final)
     } catch {
       // Bayat playlist TV'yi sessizce dondurur (disk dolu/sandbox): hata olarak yüz.
       Log.error("AirPlayRemux", "playlist write failed: \(error.localizedDescription)")

@@ -654,12 +654,56 @@ struct CastSessionDecisionTests {
         #expect(CastController.runtimeRebuildGuardSeconds == 30)
     }
 
+    // MARK: Premature end of a cast item
+
+    /// Field log: remux VOD items "ended" ~220 s into a 45 min episode and auto-next
+    /// skipped ten episodes. Such an end rebuilds the session instead.
+    @Test func endFarBeforeDurationRebuildsInsteadOfCompleting() {
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 221, duration: 2700, prematureRebuildsSoFar: 0
+        ) == .rebuild)
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 1378, duration: 2700, prematureRebuildsSoFar: 1
+        ) == .rebuild)
+    }
+
+    @Test func repeatedPrematureEndsEndTheCast() {
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 221, duration: 2700,
+            prematureRebuildsSoFar: CastController.maximumPrematureEndRebuilds
+        ) == .endCast)
+    }
+
+    /// The writer finalizes within 30 s of the source duration, so a real end is
+    /// inside the tolerance and still completes (auto-next keeps working).
+    @Test func endNearDurationCompletes() {
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 2675, duration: 2700, prematureRebuildsSoFar: 0
+        ) == .completed)
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 2700, duration: 2700, prematureRebuildsSoFar: 5
+        ) == .completed)
+    }
+
+    /// Unknown duration, live and natively played items keep the old behaviour.
+    @Test func uncheckedItemsComplete() {
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: 221, duration: 0, prematureRebuildsSoFar: 0
+        ) == .completed)
+        #expect(CastController.castEndAction(
+            isRemuxVOD: false, position: 221, duration: 2700, prematureRebuildsSoFar: 0
+        ) == .completed)
+        #expect(CastController.castEndAction(
+            isRemuxVOD: true, position: .nan, duration: 2700, prematureRebuildsSoFar: 0
+        ) == .completed)
+    }
+
     /// The live self-heal, a restarted local server and the storage budget repair
     /// something local while the source is healthy: they neither use up the guard
     /// nor are refused by it.
     @Test func localRepairsStayOutsideTheRebuildLoopGuard() {
         let causes: [CastController.RebuildCause] = [
-            .fellBehindLiveWindow, .localServerLost, .storageBudgetExceeded,
+            .fellBehindLiveWindow, .localServerLost, .storageBudgetExceeded, .prematureEnd,
         ]
         for cause in causes {
             #expect(CastController.runtimeRebuildDecision(cause: cause, secondsSinceLastGuardedRebuild: nil)

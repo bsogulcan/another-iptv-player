@@ -339,6 +339,8 @@ final class AirPlayRemuxSession {
   static let listenerProbeAttempts = 5
 
   var sourceDurationSeconds: TimeInterval { writer.sourceDurationSeconds }
+  /// The writer's publication and read state, for the log. Thread-safe.
+  var writerSummary: String { writer.diagnosticSummary() }
   var sourceTracks: RemuxSourceTracks? { writer.sourceTracks }
 
   /// Girdi seek'inin gerçekte düştüğü konum; seek edilemeyen kaynakta 0'a düşer.
