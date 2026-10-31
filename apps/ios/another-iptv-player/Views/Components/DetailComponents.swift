@@ -752,3 +752,18 @@ enum DetailFormatting {
             .filter { !$0.isEmpty }
     }
 }
+
+extension View {
+    /// Turns off the soft scroll-edge effect iOS 26 draws under the top bars, on every
+    /// scroll view below. Set once at the app root. The faded band washed out the
+    /// detail heroes, and with the bars moved to the side (iPhone Duo's outer display
+    /// in landscape) it was a bare band across the top of the page.
+    @ViewBuilder
+    func hidesTopScrollEdgeEffect() -> some View {
+        if #available(iOS 26, *) {
+            scrollEdgeEffectHidden(true, for: .top)
+        } else {
+            self
+        }
+    }
+}

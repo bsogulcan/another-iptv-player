@@ -1001,9 +1001,9 @@ private struct PlayerViewImpl: View {
     private var isLandscapeForced: Bool { landscapeForced }
 
     /// Enters landscape regardless of Portrait Orientation Lock, or leaves it again.
-    /// iPhone only: resizable iPad windows ignore geometry requests.
+    /// Only where a geometry request can turn the window (`canForceLandscape`).
     private func toggleLandscapeFullscreen() {
-        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        guard canForceLandscape || landscapeForced else { return }
         // Not during the morph: a rotation would resize the container under the running
         // animation, and a docked card has no fullscreen to rotate.
         guard !isMiniCommitted, !isExpandingFromMini, !isClosing,
@@ -1069,7 +1069,7 @@ private struct PlayerViewImpl: View {
         }
         switch press.characters.lowercased() {
         case "f":
-            guard UIDevice.current.userInterfaceIdiom == .phone else { return .ignored }
+            guard canForceLandscape || landscapeForced else { return .ignored }
             toggleLandscapeFullscreen()
             return .handled
         case "m":
@@ -1329,6 +1329,11 @@ private struct PlayerViewImpl: View {
         .onChange(of: videoAspectModeRaw) { _, _ in
             applySelectedAspectMode()
             showAspectToast()
+        }
+        // Unfolding iPhone Duo moves the window to the resizable inner display, where a
+        // forced landscape can neither hold nor be left with the button: give it back.
+        .onChange(of: canForceLandscape) { _, canForce in
+            if !canForce { releaseForcedLandscape() }
         }
         .onChange(of: playbackPresentationKey) { _, _ in
             player.setPlaybackPresentation(makePresentation())
@@ -4122,10 +4127,19 @@ private struct PlayerViewImpl: View {
         }
     }
 
-    /// Forcing landscape goes through the window scene's geometry, which iPad's
-    /// resizable windows ignore: the button is iPhone only.
+    /// Forcing landscape goes through the window scene's geometry, which resizable
+    /// windows ignore (iPad, the open inner display of iPhone Duo). A forced landscape
+    /// keeps the button so it can always be left again.
     private var showsRotateFullscreenButton: Bool {
-        UIDevice.current.userInterfaceIdiom == .phone
+        canForceLandscape || landscapeForced
+    }
+
+    private var canForceLandscape: Bool {
+        PlayerOrientationLock.canForceLandscape(
+            idiom: UIDevice.current.userInterfaceIdiom,
+            horizontalSizeClass: horizontalSizeClass,
+            verticalSizeClass: chromeVerticalSizeClass
+        )
     }
 
     /// Enters landscape under Portrait Orientation Lock, and leaves it again. It rides at

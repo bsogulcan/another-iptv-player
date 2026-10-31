@@ -97,6 +97,7 @@ private struct AppRootView: View {
             .environment(\.appDatabase, .shared)
             .environment(\.locale, AppLocale.current)
             .environment(\.layoutDirection, isRTL ? .rightToLeft : .leftToRight)
+            .hidesTopScrollEdgeEffect()
             .id(localization.selectedLanguage)
     }
 }

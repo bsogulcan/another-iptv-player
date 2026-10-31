@@ -574,6 +574,8 @@ struct LiveCategoryShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, BrowseMetrics.pageMargin)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .onAppear {
                     headPrefetch.start(
                         urls: headIconURLs(limit: prefetchHeadCount),

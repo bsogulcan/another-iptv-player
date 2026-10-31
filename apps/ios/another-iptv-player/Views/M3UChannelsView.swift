@@ -620,6 +620,8 @@ struct M3UGroupShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, BrowseMetrics.pageMargin)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.width
                 } action: { width in

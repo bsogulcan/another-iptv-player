@@ -633,6 +633,8 @@ struct RecentlyAddedSeriesShelf: View, Equatable {
                     }
                     .padding(.horizontal, 16)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .posterShelfFrame()
             }
         }
@@ -722,6 +724,8 @@ struct SeriesCategoryShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, 16)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .posterShelfFrame()
                 .onAppear { movePrefetch(to: headPrefetch) }
                 // A shelf that was flung past must not keep downloading covers nobody

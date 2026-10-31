@@ -700,6 +700,20 @@ struct MiniPlayerChrome: View {
 enum PlayerOrientationLock {
     static let defaultMask: UIInterfaceOrientationMask = .allButUpsideDown
 
+    /// Whether a geometry request can turn the player's window to landscape. Only iPhone
+    /// windows can be turned on request; iPad windows and the open inner display of a
+    /// foldable iPhone (iPhone Duo: regular width and regular height, still the phone
+    /// idiom) are resizable and ignore the request. Phone landscape is compact height,
+    /// so a window already forced into landscape keeps its way back.
+    static func canForceLandscape(
+        idiom: UIUserInterfaceIdiom,
+        horizontalSizeClass: UserInterfaceSizeClass?,
+        verticalSizeClass: UserInterfaceSizeClass?
+    ) -> Bool {
+        guard idiom == .phone else { return false }
+        return !(horizontalSizeClass == .regular && verticalSizeClass == .regular)
+    }
+
     /// Leaving a forced landscape asks for portrait only when the app did the forcing
     /// and the phone is not being held sideways: with rotation unlocked, a user holding
     /// it in landscape must stay in landscape. Under Portrait Orientation Lock the system

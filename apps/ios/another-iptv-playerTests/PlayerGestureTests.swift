@@ -1,4 +1,6 @@
 import CoreGraphics
+import SwiftUI
+import UIKit
 import Testing
 @testable import another_iptv_player
 
@@ -574,6 +576,23 @@ struct PlayerGestureTests {
                 deviceIsPhysicallyLandscape: false
             )
         )
+    }
+
+    @Test func landscapeCanBeForcedOnlyInPhoneWindowsThatAreNotRegularBothWays() {
+        // iPhone portrait, and iPhone Duo's outer display.
+        #expect(PlayerOrientationLock.canForceLandscape(
+            idiom: .phone, horizontalSizeClass: .compact, verticalSizeClass: .regular))
+        // iPhone landscape, including the large models that report regular width there.
+        #expect(PlayerOrientationLock.canForceLandscape(
+            idiom: .phone, horizontalSizeClass: .compact, verticalSizeClass: .compact))
+        #expect(PlayerOrientationLock.canForceLandscape(
+            idiom: .phone, horizontalSizeClass: .regular, verticalSizeClass: .compact))
+        // iPhone Duo's inner display: a resizable window that ignores geometry requests.
+        #expect(!PlayerOrientationLock.canForceLandscape(
+            idiom: .phone, horizontalSizeClass: .regular, verticalSizeClass: .regular))
+        // iPad, whatever its window size.
+        #expect(!PlayerOrientationLock.canForceLandscape(
+            idiom: .pad, horizontalSizeClass: .compact, verticalSizeClass: .regular))
     }
 
     private func startsOnSlider(

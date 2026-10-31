@@ -54,6 +54,8 @@ struct ContinueWatchingRow<Destination: View>: View {
                     // reorder when another title becomes the most recent one).
                     .animation(.default, value: historyItems.map(\.id))
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .contentMargins(.horizontal, BrowseMetrics.pageMargin, for: .scrollContent)
                 .scrollTargetBehavior(.viewAligned(limitBehavior: .never))
             }

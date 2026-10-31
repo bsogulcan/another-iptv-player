@@ -720,6 +720,8 @@ struct RecentlyAddedVODShelf: View, Equatable {
                     }
                     .padding(.horizontal, VODCategoryShelf.horizontalInset)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .posterShelfFrame()
             }
         }
@@ -813,6 +815,8 @@ struct VODCategoryShelfRow: View, Equatable {
                     }
                     .padding(.horizontal, VODCategoryShelf.horizontalInset)
                 }
+                // Lets the context-menu lift and its shadow reach past the shelf's edges.
+                .scrollClipDisabled()
                 .posterShelfFrame()
                 .onAppear { movePrefetch(to: headPrefetch) }
                 // A shelf that scrolled away during a fling would otherwise keep
