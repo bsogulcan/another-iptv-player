@@ -268,9 +268,14 @@ enum MockFixture {
                 categoryId: cat,
                 rating: rating,
                 containerExtension: "mp4",
-                plot: "A captivating placeholder synopsis for demo purposes.",
+                director: demoMovieDetails[sid]?.director,
+                cast: demoMovieDetails[sid]?.cast,
+                plot: demoMovieDetails[sid]?.plot ?? "A captivating placeholder synopsis for demo purposes.",
+                genre: demoMovieDetails[sid]?.genre,
                 releaseDate: year,
                 rating5Based: rating.flatMap { Double($0) }.map { $0 / 2 },
+                backdropPath: demoMovieDetails[sid] == nil ? nil : artwork("vod-backdrop", sid, w: 1280, h: 720),
+                duration: demoMovieDetails[sid]?.duration,
                 metadataLoaded: true,
                 sortIndex: idx,
                 playlistId: playlistId
@@ -278,6 +283,18 @@ enum MockFixture {
             try s.insert(db)
         }
     }
+
+    /// Detail-page metadata of the demo films the App Store screenshots open. Every
+    /// title and name is invented.
+    private static let demoMovieDetails: [Int: (plot: String, director: String, cast: String, genre: String, duration: String)] = [
+        1001: (
+            plot: "When a night-shift pilot picks up a distress call from a plane that vanished twenty years ago, she has until sunrise to find out who is still on board.",
+            director: "Elena Marsh",
+            cast: "Nora Quinn, Theo Lambert, Ivy Castillo, Marcus Reed",
+            genre: "Action, Thriller",
+            duration: "01:52:00"
+        ),
+    ]
 
     private static func insertSeries(db: Database, playlistId: UUID) throws {
         let categories: [(String, String)] = [
@@ -302,7 +319,7 @@ enum MockFixture {
             (2008, "Coastlines",          "series-doc",      "8.4"),
         ]
         for (idx, (sid, name, cat, rating)) in series.enumerated() {
-            let s = DBSeries(
+            var s = DBSeries(
                 seriesId: sid,
                 name: name,
                 cover: artwork("series", sid, w: 400, h: 600),
@@ -315,7 +332,72 @@ enum MockFixture {
                 seasonsLoaded: false,
                 playlistId: playlistId
             )
+            if sid == demoSeriesWithSeasonsId {
+                s.plot = "A research team arrives at a remote northern station as the long night begins, and finds that the last crew left more than their notes behind."
+                s.director = "Mara Lindqvist"
+                s.cast = "Jonas Berg, Alba Moreno, Kit Harlow, Sven Ahl"
+                s.genre = "Drama, Mystery"
+                s.episodeRunTime = "48"
+                s.backdropPath = artwork("series-backdrop", sid, w: 1280, h: 720)
+                s.seasonsLoaded = true
+            }
             try s.insert(db)
+        }
+        try insertDemoSeasons(db: db, playlistId: playlistId)
+    }
+
+    /// The demo series the App Store screenshots open: its seasons and episodes are
+    /// stored up front, so the page needs no panel. Every title is invented.
+    private static let demoSeriesWithSeasonsId = 2005
+
+    private static func insertDemoSeasons(db: Database, playlistId: UUID) throws {
+        let seriesId = demoSeriesWithSeasonsId
+        let seasons: [(number: Int, overview: String, airDate: String, episodes: [(String, String)])] = [
+            (1, "The long night begins, and the station's new crew finds the logbook of the last one.", "2023-01-12", [
+                ("Arrival", "The new crew lands at the station hours before the last flight out is grounded for the winter."),
+                ("First Frost", "A generator fails on the coldest night yet, and someone has been in the supply hut."),
+                ("The Long Night", "With the sun gone for good, Alba decodes the first pages of the old logbook."),
+                ("Signals", "A radio signal repeats every night at 3:12, on a frequency nobody should be using."),
+                ("Thin Ice", "Jonas crosses the frozen bay to reach the lighthouse before the storm closes in."),
+                ("Aurora", "Under the northern lights, the crew learns what happened to the people before them."),
+            ]),
+            (2, "Spring opens the sea lanes, and with them the question of who else knows about the station.", "2024-02-08", [
+                ("Thaw", "The ice breaks up, and the first ship of the season is not the one they expected."),
+                ("New Arrivals", "Two strangers claim to be from the research institute. Their papers say otherwise."),
+                ("Static", "The 3:12 signal returns, this time with a voice."),
+                ("Low Sun", "Kit follows the coastline north and finds a second station that is on no map."),
+            ]),
+        ]
+        for season in seasons {
+            let seasonId = DBSeason.scopedId(playlistId: playlistId, seriesId: seriesId, seasonNumber: season.number)
+            try DBSeason(
+                id: seasonId,
+                seasonNumber: season.number,
+                name: nil,
+                overview: season.overview,
+                cover: artwork("season", seriesId * 10 + season.number, w: 400, h: 600),
+                airDate: season.airDate,
+                episodeCount: season.episodes.count,
+                voteAverage: 8.4,
+                seriesId: seriesId,
+                playlistId: playlistId
+            ).insert(db)
+            for (offset, (title, plot)) in season.episodes.enumerated() {
+                let number = offset + 1
+                let episodeId = String(seriesId * 10_000 + season.number * 100 + number)
+                try DBEpisode(
+                    id: DBEpisode.scopedId(playlistId: playlistId, panelEpisodeId: episodeId),
+                    episodeId: episodeId,
+                    episodeNum: number,
+                    title: title,
+                    containerExtension: "mp4",
+                    info: plot,
+                    cover: artwork("episode", Int(episodeId) ?? number, w: 640, h: 360),
+                    duration: String(format: "00:%02d:%02d", 44 + (number * 5) % 9, (number * 13) % 60),
+                    rating: String(format: "%.1f", 7.8 + Double(number % 5) / 10.0),
+                    seasonId: seasonId
+                ).insert(db)
+            }
         }
     }
 
@@ -512,6 +594,10 @@ enum MockFixture {
     /// The demo stream for a fixture playlist, nil for any other playlist.
     static func fixtureStreamURL(playlistId: UUID) -> URL? {
         guard fixturePlaylistIds.contains(playlistId) else { return nil }
-        return URL(string: demoStreamURL)
+        return URL(string: screenshotStreamURL ?? demoStreamURL)
     }
+
+    /// `-UITestsStreamURL <url>` plays that stream instead of BipBop, so the App Store
+    /// screenshots can show a real (openly licensed) film frame instead of a test card.
+    static let screenshotStreamURL: String? = UserDefaults.standard.string(forKey: "UITestsStreamURL")
 }
