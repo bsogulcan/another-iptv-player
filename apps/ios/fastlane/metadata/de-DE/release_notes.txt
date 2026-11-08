@@ -1,5 +1,5 @@
-• Unterstützung für iPhone Duo: Die App nutzt jetzt auf beiden Displays den ganzen Bildschirm, und die Querformat-Taste im Player erscheint nur dort, wo sie funktioniert.
-• Aufgeräumtere Ansichten: Der verblasste Streifen oben auf den Seiten ist weg, Bilder auf Detailseiten sind vollständig zu sehen.
-• Vorschauen beim langen Drücken auf Poster und Sender werden am Rand einer Reihe nicht mehr abgeschnitten.
-• AirPlay: Behoben, dass Folgen übersprungen wurden, wenn ein Empfänger die Wiedergabe zu früh beendete.
-• Verständlichere Wiedergabefehler: Wenn der Server deines Anbieters einen Stream ablehnt, sagt die App das jetzt, statt dein Netzwerk verantwortlich zu machen.
+• Neu gestaltete Film- und Serienseiten.
+• Die Tabs Filme und Serien starten jetzt mit neu hinzugefügten Titeln.
+• Größere Karten unter „Weiterschauen" mit der Restzeit.
+• Neue Filter: Nicht gesehen und Bewertung ab 7.
+• Die App meldet sich, wenn ein Update verfügbar ist.

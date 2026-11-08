@@ -1,5 +1,5 @@
-• iPhone Duo support: the app now uses the full screen on both displays, and the player's landscape button only appears where it works.
-• Cleaner screens: the faded band at the top of pages is gone, so artwork on detail pages shows in full.
-• Long-press previews of posters and channels are no longer cut off at the edges of a row.
-• AirPlay: fixed episodes being skipped when a receiver ended playback early.
-• Clearer playback errors: when your provider's server refuses a stream, the app now says so instead of blaming your network.
+• Redesigned film and series pages.
+• Recently added titles now open the Movies and Series tabs.
+• Larger Continue Watching cards with the time left.
+• New filters: Unwatched and rated 7+.
+• The app lets you know when an update is available.

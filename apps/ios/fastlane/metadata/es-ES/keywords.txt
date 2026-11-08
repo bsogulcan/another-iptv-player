@@ -1,1 +1,1 @@
-m3u8,ott,reproductor,canal,vivo,subtítulos,offline,descargar,deportes,satélite,fútbol,tdt,directo
+smart,m3u8,codes,epg,reproductor,canal,canales,directo,televisión,listas,tdt,subtítulos,ott,pro,xc

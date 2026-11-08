@@ -1,0 +1,5 @@
+• Páginas de películas y series rediseñadas.
+• Las pestañas Películas y Series abren con lo agregado recientemente.
+• Tarjetas de «Continuar viendo» más grandes, con el tiempo restante.
+• Nuevos filtros: Sin ver y calificación de 7+.
+• La app te avisa cuando hay una actualización.

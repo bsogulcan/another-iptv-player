@@ -1,5 +1,5 @@
-• iPhone Duo desteği: uygulama artık iki ekranda da tam ekran çalışıyor; oynatıcıdaki yatay ekran düğmesi yalnızca işe yaradığı yerde görünüyor.
-• Daha temiz ekranlar: sayfaların üstündeki soluk şerit kaldırıldı, detay sayfalarındaki görseller tam görünüyor.
-• Afiş ve kanallara uzun basınca açılan önizlemeler artık satır kenarlarında kesilmiyor.
-• AirPlay: alıcı oynatmayı erken bitirdiğinde bölümlerin atlanması düzeltildi.
-• Daha anlaşılır oynatma hataları: sağlayıcınızın sunucusu yayını reddettiğinde uygulama artık ağınızı suçlamak yerine bunu açıkça belirtiyor.
+• Film ve dizi sayfaları yenilendi.
+• Filmler ve Diziler sekmeleri artık son eklenenlerle açılıyor.
+• İzlemeye Devam Et kartları büyüdü, kalan süreyi gösteriyor.
+• Yeni filtreler: İzlenmemiş ve 7+ puan.
+• Güncelleme çıktığında uygulama haber veriyor.

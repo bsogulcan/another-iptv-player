@@ -1,5 +1,5 @@
-• Compatibilidad con iPhone Duo: la app ahora ocupa toda la pantalla en ambas pantallas, y el botón de horizontal del reproductor solo aparece donde funciona.
-• Pantallas más limpias: desaparece la franja difuminada de la parte superior, y las imágenes de las páginas de detalle se ven completas.
-• Las vistas previas al mantener pulsados pósteres y canales ya no se cortan en los bordes de una fila.
-• AirPlay: corregido el salto de episodios cuando un receptor terminaba la reproducción antes de tiempo.
-• Errores de reproducción más claros: cuando el servidor de tu proveedor rechaza una emisión, la app ahora lo indica en lugar de culpar a tu red.
+• Páginas de películas y series rediseñadas.
+• Las pestañas Películas y Series se abren con lo último añadido.
+• Tarjetas de «Continuar viendo» más grandes, con el tiempo restante.
+• Nuevos filtros: Sin ver y valoración de 7+.
+• La app te avisa cuando hay una actualización.

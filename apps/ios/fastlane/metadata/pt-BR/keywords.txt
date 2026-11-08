@@ -1,1 +1,1 @@
-m3u8,ott,player,canal,legendas,offline,baixar,esportes,futebol,sky,transmissão,assistir,smart
+smart,m3u8,codes,epg,canal,canais,televisão,lista,listas,legendas,transmissão,assistir,ott,pro,xc

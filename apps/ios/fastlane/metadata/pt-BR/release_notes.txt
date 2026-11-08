@@ -1,5 +1,5 @@
-• Suporte ao iPhone Duo: o app agora usa a tela inteira nas duas telas, e o botão de paisagem do player só aparece onde funciona.
-• Telas mais limpas: a faixa esmaecida no topo das páginas foi removida, e as imagens das páginas de detalhes aparecem por completo.
-• As prévias ao tocar e segurar pôsteres e canais não são mais cortadas nas bordas de uma fileira.
-• AirPlay: corrigido o pulo de episódios quando um receptor encerrava a reprodução antes da hora.
-• Erros de reprodução mais claros: quando o servidor do seu provedor recusa uma transmissão, o app agora informa isso em vez de culpar sua rede.
+• Páginas de filmes e séries redesenhadas.
+• As abas Filmes e Séries abrem com os adicionados recentemente.
+• Cartões de "Continuar assistindo" maiores, com o tempo restante.
+• Novos filtros: Não assistidos e nota 7+.
+• O app avisa quando há uma atualização.

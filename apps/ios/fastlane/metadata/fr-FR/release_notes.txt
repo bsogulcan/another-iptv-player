@@ -1,5 +1,5 @@
-• Prise en charge de l'iPhone Duo : l'app occupe désormais tout l'écran sur les deux écrans, et le bouton paysage du lecteur n'apparaît que là où il fonctionne.
-• Écrans plus nets : la bande estompée en haut des pages a disparu, les visuels des pages de détail s'affichent en entier.
-• Les aperçus par appui long sur les affiches et les chaînes ne sont plus coupés au bord d'une rangée.
-• AirPlay : correction des épisodes sautés lorsqu'un récepteur arrêtait la lecture trop tôt.
-• Erreurs de lecture plus claires : quand le serveur de votre fournisseur refuse un flux, l'app l'indique désormais au lieu d'incriminer votre réseau.
+• Pages de films et de séries repensées.
+• Les onglets Films et Séries s'ouvrent sur les derniers ajouts.
+• Cartes « Reprendre la lecture » plus grandes, avec le temps restant.
+• Nouveaux filtres : Non vus et note de 7+.
+• L'app vous prévient quand une mise à jour est disponible.
