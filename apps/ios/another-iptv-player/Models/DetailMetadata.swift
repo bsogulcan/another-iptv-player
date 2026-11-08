@@ -42,7 +42,7 @@ nonisolated enum DetailMetadata {
             row.plot = info.plot
             row.releaseDate = info.releaseDate
             row.rating = info.rating
-            row.lastModified = info.lastModified
+            row.lastModified = info.lastModified.flatMap { Int($0) != nil ? $0 : nil } ?? base.lastModified
             row.rating5Based = info.rating5Based
             row.backdropPath = info.backdropPath?.first
             row.youtubeTrailer = info.youtubeTrailer

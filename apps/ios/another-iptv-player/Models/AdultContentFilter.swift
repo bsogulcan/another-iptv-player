@@ -18,7 +18,6 @@ nonisolated enum AdultContentFilter {
         "SEX",           // "Essex" gibi yanlış pozitifleri önlemek için token kontrolü yeterli
         "NSFW",
         "EXPLICIT",
-        "X-RATED",
         "HARDCORE",
         "SOFTCORE",
         "PLAYBOY",
@@ -48,6 +47,10 @@ nonisolated enum AdultContentFilter {
         let tokens = upper.components(separatedBy: tokenSeparators)
                           .filter { !$0.isEmpty }
         if tokens.contains(where: { adultTokens.contains($0) }) {
+            return true
+        }
+
+        if tokens.contains("X"), zip(tokens, tokens.dropFirst()).contains(where: { $0 == "X" && $1 == "RATED" }) {
             return true
         }
 

@@ -489,6 +489,13 @@ nonisolated struct AppDatabase {
             )
         }
 
+        migrator.registerMigration("addCategoryShelfIndexes", foreignKeyChecks: .immediate) { db in
+            for table in ["vodStream", "series"] {
+                try db.create(index: "idx_\(table)_playlist_category_sort", on: table,
+                              columns: ["playlistId", "categoryId", "sortIndex"])
+            }
+        }
+
         return migrator
     }
 }

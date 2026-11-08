@@ -237,6 +237,8 @@ nonisolated struct XtreamSeries: Codable, Identifiable {
     let categoryId: String?
     let youtubeTrailer: String?
     let lastModified: String?
+    /// The first wide artwork of the series. Panels send an array, some a bare string.
+    let backdropPath: String?
 
     var id: Int { seriesId ?? 0 }
 
@@ -247,6 +249,7 @@ nonisolated struct XtreamSeries: Codable, Identifiable {
         case releaseDate = "releaseDate"
         case youtubeTrailer = "youtube_trailer"
         case lastModified = "last_modified"
+        case backdropPath = "backdrop_path"
     }
 
     init(from decoder: Decoder) throws {
@@ -263,6 +266,11 @@ nonisolated struct XtreamSeries: Codable, Identifiable {
         releaseDate = container?.decodeFlexibleStringIfPresent(forKey: .releaseDate)
         youtubeTrailer = container?.decodeFlexibleStringIfPresent(forKey: .youtubeTrailer)
         lastModified = container?.decodeFlexibleStringIfPresent(forKey: .lastModified)
+        let backdrops = (try? container?.decodeIfPresent([String].self, forKey: .backdropPath))
+            ?? container?.decodeFlexibleStringIfPresent(forKey: .backdropPath).map { [$0] }
+        backdropPath = backdrops?
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
     }
 }
 

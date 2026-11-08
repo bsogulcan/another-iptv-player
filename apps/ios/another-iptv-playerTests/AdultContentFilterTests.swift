@@ -29,12 +29,11 @@ struct AdultContentFilterTests {
         #expect(AdultContentFilter.isAdultCategoryName(name) == true)
     }
 
-    // Known bug: "X-RATED" sits in adultTokens but tokens are split on non-alphanumeric
-    // (hyphen). After splitting "X-Rated" → ["X", "RATED"], neither matches "X-RATED".
-    // Fix would be to either move "X-RATED" to adultSubstrings or check raw before split.
-    @Test(.disabled("known bug: hyphenated tokens never match after alphanumeric split"))
+    @Test
     func detectsHyphenatedXRated() {
         #expect(AdultContentFilter.isAdultCategoryName("X-Rated") == true)
+        #expect(!AdultContentFilter.isAdultCategoryName("Mix-Rated channels"))
+        #expect(!AdultContentFilter.isAdultCategoryName("X-Ratedness"))
     }
 
     // MARK: - Substring matches (special chars)

@@ -1,5 +1,9 @@
 import StoreKit
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Uygulama içi App Store puanlama isteğini yönetir.
 ///
@@ -10,9 +14,9 @@ import UIKit
 @MainActor
 final class RatingManager {
     static let shared = RatingManager()
-    private init() {}
+    private let defaults: UserDefaults
 
-    private let defaults = UserDefaults.standard
+    init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
     private enum Key {
         static let sessionCount = "rating.successfulSessionCount"
@@ -44,7 +48,28 @@ final class RatingManager {
 
     /// Tüm koşullar uygunsa sistem puanlama diyaloğunu ister.
     /// Bir başarılı oturum tetiklendikten birkaç saniye sonra çağrılması önerilir.
+    #if os(macOS)
+    func requestReviewIfAppropriate(in window: NSWindow?, perform request: () -> Void) {
+        requestReviewIfAppropriate(using: {
+            guard NSApp.isActive, NSApp.modalWindow == nil, let window,
+                  window.isKeyWindow, window.isVisible, window.attachedSheet == nil,
+                  !(window.firstResponder is NSTextView) else { return false }
+            request()
+            return true
+        })
+    }
+    #else
     func requestReviewIfAppropriate() {
+        requestReviewIfAppropriate(using: {
+            guard let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else { return false }
+            AppStore.requestReview(in: scene)
+            return true
+        })
+    }
+    #endif
+
+    func requestReviewIfAppropriate(using request: () -> Bool) {
         if MockFixture.isActive { return }
         // Yalnızca bu açılışta gerçek bir oturum sayıldıysa devam et.
         guard didCountThisLaunch else { return }
@@ -60,10 +85,7 @@ final class RatingManager {
             guard days >= minDaysBetweenPrompts else { return }
         }
 
-        guard let scene = UIApplication.shared.connectedScenes
-            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else { return }
-
-        AppStore.requestReview(in: scene)
+        guard request() else { return }
 
         defaults.set(currentVersion, forKey: Key.lastPromptVersion)
         defaults.set(Date(), forKey: Key.lastPromptDate)

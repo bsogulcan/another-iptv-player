@@ -9,6 +9,7 @@ import Combine
 @MainActor
 final class M3UContentStore: ObservableObject {
     static let shared = M3UContentStore()
+    nonisolated static let hiddenCategoryType = "m3u"
 
     @Published private(set) var activePlaylistId: UUID?
     @Published var isLoading = false

@@ -25,13 +25,15 @@ enum M3UImporter {
     ///
     /// - Parameter clearServerURL: Yerel dosya import'unda playlist URL'i boşaltılır (refresh tekrar dosya ister).
     /// - Parameter database: Injected by tests; the app writes to the shared database.
+    @discardableResult
     static func replace(
         playlist: Playlist,
         channels: [ParsedM3UChannel],
         epgURL: String?,
         clearServerURL: Bool = false,
+        editing original: Playlist? = nil,
         in database: AppDatabase = .shared
-    ) async throws {
+    ) async throws -> Playlist {
         let pid = playlist.id
         // Built before the transaction and away from the main actor: hashing an id
         // per channel is the slow part of a large import, and while it ran inside
@@ -39,10 +41,17 @@ enum M3UImporter {
         // favourite, a download, the player's progress).
         let rows = try await prepareRows(playlistId: pid, channels: channels)
         try Task.checkCancellation()
-        try await database.write { db in
-            var stored = try Playlist.fetchOne(db, key: pid) ?? playlist
-            stored.name = playlist.name
-            stored.serverURL = clearServerURL ? "" : playlist.serverURL
+        return try await database.write { db in
+            var proposed = playlist
+            if clearServerURL { proposed.serverURL = "" }
+            var stored: Playlist
+            if let original {
+                stored = try proposed.mergingImportEdit(from: original, in: db)
+            } else {
+                stored = try Playlist.fetchOne(db, key: pid) ?? proposed
+                stored.name = proposed.name
+                stored.serverURL = proposed.serverURL
+            }
             stored.m3uEpgURL = epgURL
             try stored.save(db)
 
@@ -53,6 +62,7 @@ enum M3UImporter {
                 // on conflict keeps its outcome for an id that repeats: the last row wins.
                 try row.insert(db, onConflict: .replace)
             }
+            return stored
         }
     }
 

@@ -186,15 +186,22 @@ final class PlaylistContentStore: ObservableObject {
 
         do {
             // Faz 1: Sadece kategoriler (çok hızlı – genellikle < 5 ms)
-            var cats = try await database.read { db in
-                try Self.fetchCategoriesOnly(playlistId: playlist.id, db: db)
+            let (initialCategories, needsDownload) = try await database.read { db in
+                let categories = try Self.fetchCategoriesOnly(playlistId: playlist.id, db: db)
+                guard categories.isEmpty else { return (categories, false) }
+                // Some panels return streams with no category records. Their saved
+                // catalog is still available when the panel is offline.
+                let hasContent = try Bool.fetchOne(db, sql: """
+                    SELECT EXISTS(SELECT 1 FROM liveStream WHERE playlistId=?)
+                        OR EXISTS(SELECT 1 FROM vodStream WHERE playlistId=?)
+                        OR EXISTS(SELECT 1 FROM series WHERE playlistId=?)
+                    """, arguments: [playlist.id, playlist.id, playlist.id]) ?? false
+                return (categories, !hasContent)
             }
+            var cats = initialCategories
             guard loadToken == token else { return }
 
-            // No category at all means the catalog was never downloaded: fetch it from
-            // the panel first. The category read doubles as that check, which saves a
-            // database round trip before the first paint of every ordinary launch.
-            if cats.isEmpty {
+            if needsDownload {
                 isLoading = true
                 loadingMessage = L("phase.preparing")
                 try await syncFromNetworkReplacingLocal(playlist: playlist) { msg in
@@ -623,10 +630,10 @@ final class PlaylistContentStore: ObservableObject {
             liveCatsTask, vodCatsTask, seriesCatsTask, liveStreamsTask, vodsTask, seriesTask
         )
 
-        let callerFilterAdult = playlist.filterAdultContent
+        try Task.checkCancellation()
         progress(L("phase.save_db"))
         try await database.write { db in
-            let filterAdult = try Self.adultFilterEnabled(playlistId: pid, fallback: callerFilterAdult, db: db)
+            let filterAdult = try Self.refreshFilter(db, source: playlist)
             // Delete-then-insert inside one transaction: rolls back together on any error.
             try Self.replaceLiveCatalog(db: db, pid: pid, categories: liveCats, streams: liveStreamsAPI, filterAdult: filterAdult)
             try Self.replaceVODCatalog(db: db, pid: pid, categories: vodCats, streams: vods, filterAdult: filterAdult)
@@ -641,7 +648,6 @@ final class PlaylistContentStore: ObservableObject {
     ) async throws {
         let client = makeClient(playlist)
         let pid = playlist.id
-        let callerFilterAdult = playlist.filterAdultContent
 
         progress(L("phase.fetch_categories"))
         switch type {
@@ -649,30 +655,39 @@ final class PlaylistContentStore: ObservableObject {
             async let catsTask = client.getLiveCategories()
             async let streamsTask = client.getLiveStreams()
             let (cats, streams) = try await (catsTask, streamsTask)
+            try Task.checkCancellation()
             progress(L("phase.save_db"))
             try await database.write { db in
-                let filterAdult = try Self.adultFilterEnabled(playlistId: pid, fallback: callerFilterAdult, db: db)
+                let filterAdult = try Self.refreshFilter(db, source: playlist)
                 try Self.replaceLiveCatalog(db: db, pid: pid, categories: cats, streams: streams, filterAdult: filterAdult)
             }
         case .vod:
             async let catsTask = client.getVODCategories()
             async let streamsTask = client.getVODStreams()
             let (cats, streams) = try await (catsTask, streamsTask)
+            try Task.checkCancellation()
             progress(L("phase.save_db"))
             try await database.write { db in
-                let filterAdult = try Self.adultFilterEnabled(playlistId: pid, fallback: callerFilterAdult, db: db)
+                let filterAdult = try Self.refreshFilter(db, source: playlist)
                 try Self.replaceVODCatalog(db: db, pid: pid, categories: cats, streams: streams, filterAdult: filterAdult)
             }
         case .series:
             async let catsTask = client.getSeriesCategories()
             async let seriesTask = client.getSeries()
             let (cats, items) = try await (catsTask, seriesTask)
+            try Task.checkCancellation()
             progress(L("phase.save_db"))
             try await database.write { db in
-                let filterAdult = try Self.adultFilterEnabled(playlistId: pid, fallback: callerFilterAdult, db: db)
+                let filterAdult = try Self.refreshFilter(db, source: playlist)
                 try Self.replaceSeriesCatalog(db: db, pid: pid, categories: cats, series: items, filterAdult: filterAdult)
             }
         }
+    }
+
+    // Compare credentials inside the write. A slow previous provider cannot refill
+    // a removed or edited playlist with the catalogue it downloaded.
+    nonisolated private static func refreshFilter(_ db: Database, source: Playlist) throws -> Bool {
+        try adultFilterEnabled(playlistId: source.id, fallback: source.filterAdultContent, db: db, matching: source)
     }
 
     // MARK: - DB rewrite helpers (shared by full and scoped sync and by the importer)
@@ -681,10 +696,11 @@ final class PlaylistContentStore: ObservableObject {
     /// snapshot from when the playlist was opened, while the switch in Settings
     /// writes the row; reading the row inside the write transaction makes every sync
     /// obey the current setting. The snapshot only decides when the row is missing.
-    nonisolated static func adultFilterEnabled(playlistId: UUID, fallback: Bool, db: Database) throws -> Bool {
-        try Bool.fetchOne(
-            db, sql: "SELECT filterAdultContent FROM playlist WHERE id = ?", arguments: [playlistId]
-        ) ?? fallback
+    nonisolated static func adultFilterEnabled(playlistId: UUID, fallback: Bool, db: Database,
+                                               matching expected: Playlist? = nil) throws -> Bool {
+        let stored = try Playlist.fetchOne(db, key: playlistId)
+        if let expected, stored?.usesSameProvider(as: expected) != true { throw CancellationError() }
+        return stored?.filterAdultContent ?? fallback
     }
 
     // The three helpers delete a type's rows and write the new ones. Rows are written
@@ -753,6 +769,7 @@ final class PlaylistContentStore: ObservableObject {
                 releaseDate: s.releaseDate,
                 rating: s.rating,
                 lastModified: s.lastModified,
+                backdropPath: s.backdropPath,
                 youtubeTrailer: s.youtubeTrailer,
                 categoryId: s.categoryId,
                 sortIndex: index,

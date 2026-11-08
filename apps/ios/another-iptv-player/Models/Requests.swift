@@ -549,3 +549,21 @@ struct LatestSeriesWatchHistoryRequest: Queryable, Equatable {
             .eraseToAnyPublisher()
     }
 }
+
+struct DownloadedItemByIDRequest: Queryable, Equatable {
+    static var defaultValue: DBDownloadedItem? { nil }
+    let id: String
+    func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBDownloadedItem?, Never> {
+        ValueObservation
+            .tracking { db in
+                try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
+            }
+            .publisher(in: appDatabase.reader)
+            // The observation re-fetches on every write to the downloads table. Without
+            // this, a status change of one item re-renders the button of every other.
+            .removeDuplicates()
+            .catch { _ in Just(nil) }
+            .eraseToAnyPublisher()
+    }
+}
+

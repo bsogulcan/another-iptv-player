@@ -24,13 +24,15 @@ enum XtreamImporter {
     /// Cancelling the calling task while the download runs throws and leaves the
     /// database untouched. Once `.saving` has been reported the import completes
     /// regardless of cancellation.
+    @discardableResult
     static func syncAndSave(
         playlist: Playlist,
         client: XtreamAPIClient,
         database: AppDatabase = .shared,
+        editing original: Playlist? = nil,
         progress: @escaping @MainActor (String) -> Void,
         onPhase: (@MainActor (Phase) -> Void)? = nil
-    ) async throws {
+    ) async throws -> Playlist {
         // Altı endpoint bağımsız — sıralı beklemek toplam süreyi altı gidiş-dönüşün
         // TOPLAMI yapıyordu; paralel çekim yavaş panellerde süreyi yarıdan fazla kısaltır.
         let fetchStart = Date()
@@ -56,22 +58,27 @@ enum XtreamImporter {
         progress(L("add_playlist.saving_db"))
         let saveStart = Date()
 
-        // The two writes run in their own task so a cancel can no longer reach them.
-        // GRDB rolls a cancelled async write back; landing between the two it would
-        // leave a playlist without content or, on an edit, new credentials over the
-        // old catalog.
         let pid = playlist.id
-        let filterAdult = playlist.filterAdultContent
-        try await Task {
-            // 1. Save the playlist first so it shows up in the list even if content insertion fails.
-            try await database.write { db in
-                try playlist.save(db)
+        let saved = try await Task {
+            // Preserve the add flow's early playlist row. An edit commits the row
+            // and the catalogue together so an old response cannot split them.
+            if original == nil {
+                try await database.write { db in try playlist.save(db) }
             }
-            // 2. Replace the catalog in one transaction (delete-then-insert per type).
-            try await database.write { db in
+            return try await database.write { db in
+                let stored: Playlist
+                if let original {
+                    stored = try playlist.mergingImportEdit(from: original, in: db)
+                    try stored.update(db)
+                } else {
+                    guard let row = try Playlist.fetchOne(db, key: pid), row.usesSameProvider(as: playlist) else { throw PlaylistImportConflict.changed }
+                    stored = row
+                }
+                let filterAdult = stored.filterAdultContent
                 try PlaylistContentStore.replaceLiveCatalog(db: db, pid: pid, categories: liveCats, streams: liveStreams, filterAdult: filterAdult)
                 try PlaylistContentStore.replaceVODCatalog(db: db, pid: pid, categories: vodCats, streams: vods, filterAdult: filterAdult)
                 try PlaylistContentStore.replaceSeriesCatalog(db: db, pid: pid, categories: seriesCats, series: series, filterAdult: filterAdult)
+                return stored
             }
         }.value
 
@@ -79,5 +86,6 @@ enum XtreamImporter {
             format: "live=%d vod=%d series=%d fetched in %.2fs, saved in %.2fs",
             liveStreams.count, vods.count, series.count, fetchSeconds, Date().timeIntervalSince(saveStart)
         ))
+        return saved
     }
 }
