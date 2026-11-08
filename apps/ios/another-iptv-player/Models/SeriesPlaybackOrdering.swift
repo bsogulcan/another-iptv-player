@@ -10,20 +10,24 @@ enum SeriesPlaybackOrdering {
         static let empty = NavigationContext(previous: nil, next: nil)
     }
 
-    static func orderedEpisodes(seriesId: Int, playlistId: UUID, db: Database) throws -> [DBEpisode] {
-        let seasons = try DBSeason
-            .filter(Column("seriesId") == seriesId && Column("playlistId") == playlistId)
-            .order(Column("seasonNumber").asc)
-            .fetchAll(db)
-        var out: [DBEpisode] = []
-        for s in seasons {
-            let eps = try DBEpisode
-                .filter(Column("seasonId") == s.id)
-                .order(Column("episodeNum").asc)
-                .fetchAll(db)
-            out.append(contentsOf: eps)
-        }
-        return out
+    static func orderedEpisodes(seriesId: Int, playlistId: UUID, seasonId: String? = nil,
+                                firstOnly: Bool = false, db: Database) throws -> [DBEpisode] {
+        var arguments: StatementArguments = [seriesId, playlistId]
+        if let seasonId { arguments += [seasonId] }
+        return try DBEpisode.fetchAll(db, sql: """
+            SELECT * FROM (
+                SELECT e.*, s.seasonNumber,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY COALESCE(e.episodeId, e.id)
+                           ORDER BY (e.episodeId IS NULL), s.seasonNumber, s.id, e.episodeNum, e.id
+                       ) AS occurrence
+                FROM episode e JOIN season s ON s.id = e.seasonId
+                WHERE s.seriesId = ? AND s.playlistId = ?
+            )
+            WHERE occurrence = 1 \(seasonId == nil ? "" : "AND seasonId = ?")
+            ORDER BY seasonNumber, seasonId, episodeNum, id
+            \(firstOnly ? "LIMIT 1" : "")
+            """, arguments: arguments)
     }
 
     static func index(playbackStreamId: String, in episodes: [DBEpisode]) -> Int? {
@@ -47,20 +51,13 @@ enum SeriesPlaybackOrdering {
         seriesIdHint: String?,
         db: Database
     ) throws -> NavigationContext {
-        var seriesIdInt: Int?
-        if let ep = try DBEpisode
-            .filter(Column("episodeId") == playbackStreamId || Column("id") == playbackStreamId)
-            .fetchOne(db),
-            let season = try DBSeason
-                .filter(Column("id") == ep.seasonId && Column("playlistId") == playlistId)
-                .fetchOne(db)
-        {
-            seriesIdInt = season.seriesId
-        }
-        if seriesIdInt == nil, let hint = seriesIdHint.flatMap({ Int($0) }) {
-            seriesIdInt = hint
-        }
-        guard let sid = seriesIdInt else { return .empty }
+        let storedSeries = try Int.fetchOne(db, sql: """
+            SELECT s.seriesId FROM episode e JOIN season s ON s.id = e.seasonId
+            WHERE s.playlistId = ? AND (e.episodeId = ? OR e.id = ?)
+            ORDER BY (e.episodeId IS NULL), s.seasonNumber, s.id, e.episodeNum, e.id
+            LIMIT 1
+            """, arguments: [playlistId, playbackStreamId, playbackStreamId])
+        guard let sid = storedSeries ?? seriesIdHint.flatMap(Int.init) else { return .empty }
         return try neighbors(playbackStreamId: playbackStreamId, seriesId: sid, playlistId: playlistId, db: db)
     }
 }

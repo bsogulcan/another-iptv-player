@@ -1,6 +1,10 @@
 import AVFoundation
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Thin AVPlayer wrapper that plays cast content (remuxed local HLS, or natively
 /// playable source URLs) with external playback enabled. KSAVPlayer is deliberately
@@ -11,13 +15,29 @@ import UIKit
 /// `load(url:)` swapping AVPlayerItems. Tearing down an external-playback AVPlayer
 /// flaps the AirPlay route, so content changes must never recreate the player.
 final class AirPlayCastPlayer: NSObject {
+  #if os(macOS)
+  final class View: NSView {
+    override func makeBackingLayer() -> CALayer { AVPlayerLayer() }
+    override init(frame: NSRect) {
+      super.init(frame: frame)
+      wantsLayer = true
+    }
+    required init?(coder: NSCoder) {
+      super.init(coder: coder)
+      wantsLayer = true
+    }
+    var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+  }
+  #else
   final class View: UIView {
     override class var layerClass: AnyClass { AVPlayerLayer.self }
     var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
   }
 
+  #endif
+
   private(set) var view = View()
-  private let player = AVPlayer()
+  let player = AVPlayer()
   private var item: AVPlayerItem?
   private var timeObserver: Any?
   private var playerObservations: [NSKeyValueObservation] = []
@@ -85,7 +105,7 @@ final class AirPlayCastPlayer: NSObject {
   override init() {
     super.init()
     player.allowsExternalPlayback = true
-    player.usesExternalPlaybackWhileExternalScreenIsActive = true
+    prepareForExternalPlayback()
     view.playerLayer.player = player
     view.playerLayer.videoGravity = .resizeAspect
 
@@ -456,8 +476,13 @@ final class AirPlayCastPlayer: NSObject {
 
   @discardableResult
   func restoreLocalVideoSurface() -> Bool {
+    #if os(macOS)
+    guard player.allowsExternalPlayback else { return false }
+    player.allowsExternalPlayback = false
+    #else
     guard player.usesExternalPlaybackWhileExternalScreenIsActive else { return false }
     player.usesExternalPlaybackWhileExternalScreenIsActive = false
+    #endif
     let gravity = view.playerLayer.videoGravity
     view.playerLayer.player = nil
     let replacement = View()
@@ -468,7 +493,11 @@ final class AirPlayCastPlayer: NSObject {
   }
 
   func prepareForExternalPlayback() {
+    #if os(macOS)
+    player.allowsExternalPlayback = true
+    #else
     player.usesExternalPlaybackWhileExternalScreenIsActive = true
+    #endif
   }
 
   func play() {

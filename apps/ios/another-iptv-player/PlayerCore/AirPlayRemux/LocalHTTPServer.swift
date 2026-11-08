@@ -108,7 +108,10 @@ final class LocalHTTPServer {
     return listenerPort
   }
 
-  init(directory: URL) {
+  let advertisedAddress: () -> String?
+
+  init(directory: URL, advertisedAddress: @escaping () -> String? = LocalHTTPServer.lanIPv4Address) {
+    self.advertisedAddress = advertisedAddress
     self.directory = directory
   }
 

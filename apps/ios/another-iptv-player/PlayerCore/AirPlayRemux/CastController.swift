@@ -1,7 +1,12 @@
 import AVFoundation
 import Combine
 import Foundation
+#if os(macOS)
+import AppKit
+import CoreAudio
+#else
 import UIKit
+#endif
 
 /// Source-time bookkeeping for a remux cast. The local HLS timeline starts at 0,
 /// which corresponds to `offset` seconds inside the source content.
@@ -291,7 +296,7 @@ final class CastController: ObservableObject {
 
   private var ownerToken: UUID?
 
-  var castVideoView: UIView? { castPlayer?.view }
+  var castVideoView: AirPlayCastPlayer.View? { castPlayer?.view }
 
   /// The engagement survives content changes; `VideoPlayerController.play`
   /// routes new content through `playContent` while this is true.
@@ -341,7 +346,47 @@ final class CastController: ObservableObject {
   /// Installed by an owner that left while its engagement stayed parked: releases
   /// the audio session that owner had activated (see `setParkedAudioSessionRelease`).
   private var parkedAudioSessionRelease: (@Sendable () -> Void)?
+  #if os(macOS)
+  var routePlayer: AVPlayer? { castPlayer?.player }
+  private var activity: NSObjectProtocol?
+  private var routeObservation: AudioObjectPropertyListenerBlock?
+  private static var outputAddress: AudioObjectPropertyAddress {
+    AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+      mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+  }
+  #else
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+  #endif
+
+  private static var appActive: Bool {
+    #if os(macOS)
+    NSApp.isActive
+    #else
+    UIApplication.shared.applicationState == .active
+    #endif
+  }
+  private static var appInactive: Bool {
+    #if os(macOS)
+    !NSApp.isActive
+    #else
+    UIApplication.shared.applicationState == .inactive
+    #endif
+  }
+  private static var systemAirPlayActive: Bool {
+    #if os(macOS)
+    var address = outputAddress
+    var device = AudioDeviceID(0)
+    var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+    guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &device) == noErr,
+          device != kAudioObjectUnknown else { return false }
+    address.mSelector = kAudioDevicePropertyTransportType
+    var transport: UInt32 = 0
+    return AudioObjectGetPropertyData(device, &address, 0, nil, &size, &transport) == noErr
+      && transport == kAudioDeviceTransportTypeAirPlay
+    #else
+    return AVAudioSession.sharedInstance().currentRoute.outputs.contains { $0.portType == .airPlay }
+    #endif
+  }
   private var isDisposed = false
   private var cancellables = Set<AnyCancellable>()
   private var noticeSerial = 0
@@ -383,8 +428,7 @@ final class CastController: ObservableObject {
     guard deadline >= Date() else { return false }
     // Do not strand normal playback in a cast prepare state if the user actually
     // disconnected while moving between screens.
-    let routeIsActive = AVAudioSession.sharedInstance().currentRoute.outputs
-      .contains { $0.portType == .airPlay }
+    let routeIsActive = systemAirPlayActive
     if routeIsActive {
       nativeExternalClaimDeadline = Date().addingTimeInterval(10)
     }
@@ -535,22 +579,42 @@ final class CastController: ObservableObject {
     routeWasActive || routeActiveNow || externalPlaybackActive
   }
 
-  init(routeIsActive: (() -> Bool)? = nil) {
+  private let suppliedServer: LocalHTTPServer?
+  private var server: LocalHTTPServer { suppliedServer ?? .shared }
+
+  private let nativeCastDefaults: UserDefaults
+
+  init(routeIsActive: (() -> Bool)? = nil, server: LocalHTTPServer? = nil,
+       nativeCastDefaults: UserDefaults = .standard) {
+    self.nativeCastDefaults = nativeCastDefaults
+    suppliedServer = server
     routeIsActiveOverride = routeIsActive
+    #if os(macOS)
+    var address = Self.outputAddress
+    let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in self?.handleRouteChange() }
+    if AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, listener) == noErr {
+      routeObservation = listener
+    }
+    let foreground = NSApplication.didBecomeActiveNotification
+    let background = NSApplication.didResignActiveNotification
+    #else
+    let foreground = UIApplication.willEnterForegroundNotification
+    let background = UIApplication.didEnterBackgroundNotification
     NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.handleRouteChange() }
       .store(in: &cancellables)
+    #endif
     // iOS reclaims the HTTP listener of a suspended app. Coming back, a running
     // remux cast is checked and repaired; this never starts an engagement.
-    NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+    NotificationCenter.default.publisher(for: foreground)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in self?.repairLocalServerIfNeeded() }
       .store(in: &cancellables)
     // A cast that hangs and is then force-quit never reaches its teardown, where
     // the log of the engagement is saved. Leaving the foreground is the last
     // moment that is sure to run. Record-only: it starts and ends nothing.
-    NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+    NotificationCenter.default.publisher(for: background)
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in
         guard let self, !self.isDisposed, self.isEngaged else { return }
@@ -628,7 +692,7 @@ final class CastController: ObservableObject {
     // Local checks first, while the phone is still playing: a cast that cannot
     // work (no LAN address, listener down) must not cost the user their picture
     // and an engine reload. Neither check touches the source connection.
-    if let failure = AirPlayRemuxSession.preflight() {
+    if let failure = AirPlayRemuxSession.preflight(server: server) {
       Log.error("AirPlayCast", "preflight failed (\(failure)); direct playback left untouched")
       publishNotice(Self.endReason(forPreflight: failure))
       completion(false)
@@ -638,7 +702,7 @@ final class CastController: ObservableObject {
     // budget floor the cast would stop the picture only to end as "storage full"
     // moments later, so it is refused here, with the engine still playing.
     if !content.isLive,
-       !Self.hasStorageForVODCast(availableCapacity: Self.availableStorageBytes()) {
+       !Self.hasStorageForVODCast(availableCapacity: availableStorageBytes()) {
       Log.error("AirPlayCast", "not enough free space for a VOD remux; direct playback left untouched")
       publishNotice(.storageFull)
       completion(false)
@@ -661,8 +725,8 @@ final class CastController: ObservableObject {
 
   /// Free space of the volume the remux segments are written to; nil when the
   /// system does not say.
-  private static func availableStorageBytes() -> Int64? {
-    let values = try? LocalHTTPServer.shared.directory.resourceValues(
+  private func availableStorageBytes() -> Int64? {
+    let values = try? server.directory.resourceValues(
       forKeys: [.volumeAvailableCapacityForImportantUsageKey]
     )
     return values?.volumeAvailableCapacityForImportantUsage
@@ -680,6 +744,24 @@ final class CastController: ObservableObject {
   }
 
   // MARK: - Native live cast (experimental, off by default)
+
+  /// Keep the original content URL for remux fallback and the return to local playback.
+  func startFromPlayer(content: Content, engine: KSPlayerEngine, requiresSelectedAudio: Bool,
+                       completion: @escaping (Bool) -> Void) {
+    let enabled = !requiresSelectedAudio && content.subtitleStreamIndex == nil
+      && content.subtitleFileURL == nil && nativeCastDefaults.bool(forKey: CastNativeURL.enabledDefaultsKey)
+    if let twin = CastNativeURL.candidate(
+      enabled: enabled, isLive: content.isLive, isFFmpegBackendActive: engine.isFFmpegBackendActive,
+      avPlayerAlreadyTried: !KSPlayerEngine.prefersFFmpegFirst(for: content.url),
+      videoCodec: engine.videoCodecName, audioCodec: engine.audioCodecName, url: content.url,
+      containerFormatName: engine.containerFormatName,
+      failureRemembered: enabled && CastNativeURL.hasRememberedFailure(for: content.url, defaults: nativeCastDefaults)
+    ) {
+      startNativeLiveCast(content: content, nativeURL: twin, completion: completion)
+    } else {
+      startRemuxCast(content: content, completion: completion)
+    }
+  }
 
   /// Same wait as the remux start: the stopped engine closes its source connection
   /// asynchronously.
@@ -849,7 +931,7 @@ final class CastController: ObservableObject {
   /// no twin; a remux failure then ends the cast through `endCasting`.
   private func fallBackFromNativeTwin(_ active: Active, why: String) {
     Log.error("AirPlayCast", "native live cast failed (\(why)); falling back to the remux")
-    CastNativeURL.rememberFailure(for: active.content.url)
+    CastNativeURL.rememberFailure(for: active.content.url, defaults: nativeCastDefaults)
     // Dropping the item (not pausing it) is what closes its connections; the
     // player itself, and with it the route, stays.
     castPlayer?.unload()
@@ -1065,6 +1147,13 @@ final class CastController: ObservableObject {
     parkedAudioSessionRelease = nil
     endBackgroundHold()
     cancellables.removeAll()
+    #if os(macOS)
+    if let routeObservation {
+      var address = Self.outputAddress
+      AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, routeObservation)
+      self.routeObservation = nil
+    }
+    #endif
     // Same rule as every other exit: a button completion is always resolved.
     pendingCompletion?(false)
   }
@@ -1632,7 +1721,7 @@ final class CastController: ObservableObject {
         audioStreamIndex: content.audioStreamIndex,
         subtitleStreamIndex: content.subtitleStreamIndex,
         subtitleDelaySeconds: content.subtitleDelaySeconds,
-        applyTrackPreferences: content.applyTrackPreferences
+        applyTrackPreferences: content.applyTrackPreferences, server: server
       )
     } catch {
       // Rare (temp dir creation). Resume the REQUESTED content directly — the
@@ -2030,7 +2119,7 @@ final class CastController: ObservableObject {
     guard !isDisposed, case let .casting(active) = state, let session = active.session,
           !isCompleted
     else { return }
-    let server = LocalHTTPServer.shared
+    let server = self.server
     if Self.localServerNeedsRebuild(portChanged: server.ensureRunning(), healthy: nil) {
       rebuildSessionInPlace(active, cause: .localServerLost)
       return
@@ -2561,7 +2650,7 @@ final class CastController: ObservableObject {
     // A remux item is served by this phone. If its listener is gone (reclaimed
     // while the app was suspended) the failure says nothing about the stream or
     // the receiver, and the session is rebuilt on the listener that serves now.
-    let server = LocalHTTPServer.shared
+    let server = self.server
     let isRemuxSession = active.session != nil
     var listenerWasServing = true
     var portChanged = false
@@ -2732,8 +2821,11 @@ final class CastController: ObservableObject {
   /// nothing outside this class may start or end an engagement from it.
   var isAirPlayRouteActive: Bool {
     if let routeIsActiveOverride { return routeIsActiveOverride() }
-    return AVAudioSession.sharedInstance().currentRoute.outputs
-      .contains { $0.portType == .airPlay }
+    #if os(macOS)
+    return Self.systemAirPlayActive || castPlayer?.isExternalPlaybackActive == true
+    #else
+    return Self.systemAirPlayActive
+    #endif
   }
 
   /// The route observer has exactly two jobs: cancel a pending drop when the
@@ -2916,7 +3008,7 @@ final class CastController: ObservableObject {
       externalPlaybackSeen: externalPlaybackSeenDuringEngagement,
       isPaused: castPlayer?.isPaused ?? true,
       isBuffering: castPlayer?.isBuffering ?? true,
-      appIsInactive: UIApplication.shared.applicationState == .inactive
+      appIsInactive: Self.appInactive
     ) {
     case .standDown:
       break
@@ -3008,7 +3100,7 @@ final class CastController: ObservableObject {
             !self.isDisposed, self.isContinuingLocally, case .casting = self.state,
             !self.isAirPlayRouteActive, !player.isExternalPlaybackActive else { return }
       self.localVideoCheckWork = nil
-      guard UIApplication.shared.applicationState == .active,
+      guard Self.appActive,
             player.view.window != nil, !player.view.bounds.isEmpty else { return }
       if player.isLocalVideoReadyForDisplay {
         Log.info("AirPlayCast", "phone video frame ready after AirPlay return")
@@ -3036,7 +3128,7 @@ final class CastController: ObservableObject {
         isEngaged: self.isEngaged,
         routeActiveNow: self.isAirPlayRouteActive,
         externalPlaybackActive: self.castPlayer?.isExternalPlaybackActive == true,
-        appIsInactive: UIApplication.shared.applicationState == .inactive,
+        appIsInactive: Self.appInactive,
         wasDeferred: deferredForInactiveApp
       ) {
       case .keepEngagement:
@@ -3259,16 +3351,25 @@ final class CastController: ObservableObject {
   /// no playback keeping the process alive; a background task covers it if the
   /// user locks the screen mid-handover.
   private func beginBackgroundHold() {
+    #if os(macOS)
+    guard activity == nil else { return }
+    activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "Preparing AirPlay playback")
+    #else
     guard backgroundTask == .invalid else { return }
     backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "AirPlayCastPrepare") {
       [weak self] in
       self?.endBackgroundHold()
     }
+    #endif
   }
 
   private func endBackgroundHold() {
+    #if os(macOS)
+    if let activity { ProcessInfo.processInfo.endActivity(activity); self.activity = nil }
+    #else
     guard backgroundTask != .invalid else { return }
     UIApplication.shared.endBackgroundTask(backgroundTask)
     backgroundTask = .invalid
+    #endif
   }
 }

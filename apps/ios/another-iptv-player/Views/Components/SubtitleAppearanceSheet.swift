@@ -1,7 +1,20 @@
 import SwiftUI
 
-struct SubtitleAppearanceSheet: View {
-    @ObservedObject var player: VideoPlayerController
+@MainActor protocol SubtitleStyleEditing: ObservableObject {
+    var subtitleEditingContentKey: String? { get }
+    var subtitleDelaySeconds: Double { get }
+    func applySubtitleAppearanceSettings(_ settings: SubtitleAppearanceSettings)
+    func applySubtitleDelaySeconds(_ seconds: Double)
+    func commitSubtitleDelaySeconds(_ seconds: Double)
+}
+#if os(iOS)
+extension VideoPlayerController: SubtitleStyleEditing {
+    var subtitleEditingContentKey: String? { importedSubtitleContentKey }
+}
+#endif
+
+struct SubtitleAppearanceSheet<Player: SubtitleStyleEditing>: View {
+    @ObservedObject var player: Player
     @Environment(\.dismiss) private var dismiss
 
     /// The style being edited. Every change goes straight to the playing picture and
@@ -17,9 +30,12 @@ struct SubtitleAppearanceSheet: View {
     /// it is committed for the content when the drag ends.
     @State private var isEditingDelay = false
 
-    private static let delaySecondsRange: ClosedRange<Double> = -10...10
+    private static var delaySecondsRange: ClosedRange<Double> { -10...10 }
 
-    init(player: VideoPlayerController) {
+    private let closePanel: (() -> Void)?
+
+    init(player: Player, closePanel: (() -> Void)? = nil) {
+        self.closePanel = closePanel
         self.player = player
         let loaded = SubtitleAppearancePersistence.load()
         _draft = State(initialValue: loaded)
@@ -49,18 +65,32 @@ struct SubtitleAppearanceSheet: View {
                 resetSection
             }
             .navigationTitle(L("subtitle.settings_title"))
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #else
+            .formStyle(.grouped)
+            #endif
             .toolbar {
                 // Changes are already live, so only Cancel has work to do: it puts back
                 // what the sheet opened with. Done and a swipe down keep what is on screen.
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("common.cancel")) {
-                        restoreInitialSettings()
-                        dismiss()
+                if closePanel == nil {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(L("common.cancel")) { restoreInitialSettings(); dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(L("common.done")) { dismiss() }
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L("common.done")) { dismiss() }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if let closePanel {
+                    HStack {
+                        Spacer()
+                        Button(L("common.cancel")) { restoreInitialSettings(); closePanel() }
+                            .keyboardShortcut(.cancelAction)
+                        Button(L("common.done"), action: closePanel)
+                            .keyboardShortcut(.defaultAction)
+                    }.padding(12).background(.bar)
                 }
             }
             // The panel leaves the video visible, so the style is judged on the real
@@ -79,6 +109,11 @@ struct SubtitleAppearanceSheet: View {
             // The panel can stay open while the next title starts. That title has an
             // offset of its own, which the slider and Cancel must follow; the echo of
             // this sheet's own commit is equal to `delaySeconds` and changes nothing.
+            .onChange(of: player.subtitleEditingContentKey) { _, _ in
+                isEditingDelay = false
+                initialDelaySeconds = SubtitleDelayStore.clamp(player.subtitleDelaySeconds)
+                delaySeconds = initialDelaySeconds
+            }
             .onChange(of: player.subtitleDelaySeconds) { _, published in
                 guard published != SubtitleDelayStore.clamp(delaySeconds) else { return }
                 let range = Self.delaySecondsRange
@@ -105,6 +140,7 @@ struct SubtitleAppearanceSheet: View {
             player.applySubtitleAppearanceSettings(initial)
         }
         delaySeconds = initialDelaySeconds
+        player.applySubtitleDelaySeconds(initialDelaySeconds)
         commitDelay(initialDelaySeconds)
     }
 
@@ -204,6 +240,7 @@ struct SubtitleAppearanceSheet: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .labelsHidden()
             }
             .padding(.vertical, 4)
 
@@ -216,6 +253,7 @@ struct SubtitleAppearanceSheet: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .labelsHidden()
             }
             .padding(.vertical, 4)
 
@@ -314,6 +352,18 @@ struct SubtitleAppearanceSheet: View {
         display: @escaping (Double) -> String,
         onEditingChanged: @escaping (Bool) -> Void = { _ in }
     ) -> some View {
+        #if os(macOS)
+        HStack {
+            Slider(value: value, in: range, step: step, label: { Text(label) },
+                   onEditingChanged: onEditingChanged)
+                .accessibilityLabel(label)
+                .accessibilityValue(display(value.wrappedValue))
+            Text(display(value.wrappedValue))
+                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                .frame(minWidth: 42, alignment: .trailing)
+        }
+        .padding(.vertical, 4)
+        #else
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(label)
@@ -335,6 +385,7 @@ struct SubtitleAppearanceSheet: View {
             .accessibilityValue(display(value.wrappedValue))
         }
         .padding(.vertical, 4)
+        #endif
     }
 }
 
@@ -365,7 +416,7 @@ private struct SubtitlePreviewCard: View {
                 .lineSpacing(previewLineSpacing)
                 .multilineTextAlignment(previewTextAlignment)
                 .foregroundStyle(Color(hex6: settings.textColorHex6))
-                .textRenderer(settings.outlineRenderer)
+                .subtitleOutline(settings)
                 .padding(.horizontal, CGFloat(settings.padding) + 8)
                 .padding(.vertical, 4)
                 .background(previewBackground)
@@ -466,6 +517,10 @@ private extension Color {
         let gi = UInt32(max(0, min(1, g)) * 255)
         let bi = UInt32(max(0, min(1, b)) * 255)
         return (ri << 16) | (gi << 8) | bi
+        #elseif os(macOS)
+        guard let rgb = NSColor(self).usingColorSpace(.sRGB) else { return 0xFFFFFF }
+        func byte(_ component:CGFloat) -> UInt32 { UInt32((max(0,min(1,component))*255).rounded()) }
+        return byte(rgb.redComponent) << 16 | byte(rgb.greenComponent) << 8 | byte(rgb.blueComponent)
         #else
         return 0xFFFFFF
         #endif

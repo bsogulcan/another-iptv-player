@@ -122,11 +122,10 @@ final class AirPlayRemuxSession {
   /// The two local checks `start` makes before anything else, callable on their own
   /// so a cast that cannot work is refused before phone playback is torn down.
   /// Synchronous and local only: the source is never contacted.
-  static func preflight() -> PreflightFailure? {
+  static func preflight(server: LocalHTTPServer = .shared) -> PreflightFailure? {
     // The address first: with Wi-Fi off it is the cause worth reporting, and it
     // spares the listener start-up wait.
-    guard LocalHTTPServer.lanIPv4Address() != nil else { return .noLANAddress }
-    let server = LocalHTTPServer.shared
+    guard server.advertisedAddress() != nil else { return .noLANAddress }
     do {
       try server.start()
     } catch {
@@ -157,7 +156,8 @@ final class AirPlayRemuxSession {
     audioStreamIndex: Int? = nil,
     subtitleStreamIndex: Int? = nil,
     subtitleDelaySeconds: Double = 0,
-    applyTrackPreferences: Bool = false
+    applyTrackPreferences: Bool = false,
+    server: LocalHTTPServer = .shared
   ) throws {
     self.sourceURL = sourceURL
     self.startOffsetSeconds = isLive ? 0 : startOffsetSeconds
@@ -166,7 +166,7 @@ final class AirPlayRemuxSession {
     self.previousToDrain = previousToDrain
     // Paylaşılan sunucunun kökü altında oturuma özel alt dizin: zapping'de listener ve
     // yerel-ağ doğrulaması yeniden kurulmaz.
-    server = LocalHTTPServer.shared
+    self.server = server
     sessionPathComponent = "s\(UUID().uuidString.prefix(8))"
     directory = server.directory.appendingPathComponent(sessionPathComponent, isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -209,7 +209,7 @@ final class AirPlayRemuxSession {
       completion(.failure(error))
       return
     }
-    guard let ip = LocalHTTPServer.lanIPv4Address() else {
+    guard let ip = server.advertisedAddress() else {
       completion(
         .failure(Self.makeError(.noLANAddress, "No LAN IPv4 address (Wi-Fi off?)")))
       return

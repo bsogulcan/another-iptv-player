@@ -3,7 +3,11 @@ import AVKit
 import Combine
 import Foundation
 import KSPlayer
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Playback engine over `KSPlayerLayer` (KSAVPlayer with KSMEPlayer fallback).
 /// Only the core of KSPlayer is used — video view + delegate callbacks; all UI stays ours.
@@ -43,6 +47,8 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   @Published private(set) var videoDisplayHeight: Int = 0
   @Published private(set) var streamFPS: Double = 0
   @Published private(set) var renderFPS: Double = 0
+  private var seekIssuedAt: TimeInterval?
+  private(set) var lastSeekMilliseconds: Int?
   @Published private(set) var videoBitrate: Double = 0
   @Published private(set) var droppedFrameCount: Int64 = 0
   @Published private(set) var delayedFrameCount: Int64 = 0
@@ -210,7 +216,11 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     }
     currentLoadURL = url
     currentLoadIsFFmpegOnly = ffmpegFirst
+    #if os(macOS)
+    KSOptions.audioPlayerType = MacAudioOutput.self
+    #else
     KSOptions.audioPlayerType = RecoveringAudioEnginePlayer.self
+    #endif
     AVAssetTrackDataRateGuard.install()
     let options = Self.makeOptions(
       liveLowLatency: liveLowLatency,
@@ -362,6 +372,8 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     isBuffering = true
     isPaused = true
     isSeekable = false
+    seekIssuedAt = nil
+    lastSeekMilliseconds = nil
     position = 0
     duration = 0
     bufferTimelineEnd = 0
@@ -419,6 +431,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     userAgent: String?
   ) -> GuardedKSOptions {
     let options = GuardedKSOptions()
+    #if os(macOS)
+      options.automaticWindowResize = false
+    #endif
     if let userAgent, !userAgent.isEmpty {
       options.userAgent = userAgent
       // `KSOptions.userAgent` only sets the FFmpeg header (`formatContextOptions`). The
@@ -501,6 +516,14 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       layer?.play()
     }
   }
+
+  #if os(macOS)
+  func updateNativeAudioOutput() {
+    guard let native = (layer?.player as? KSAVPlayer)?.player, !native.isExternalPlaybackActive else { return }
+    let uid = UserDefaults.standard.bool(forKey: MacAudioOutput.speakerKey) ? MacAudioOutput.builtInOutputUID() : nil
+    if native.audioOutputDeviceUniqueID != uid { native.audioOutputDeviceUniqueID = uid }
+  }
+  #endif
 
   func pause() {
     layer?.pause()
@@ -622,6 +645,7 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     }
     leaveCompletedStateForSeek(on: layer)
     let generation = seekGeneration
+    seekIssuedAt = ProcessInfo.processInfo.systemUptime
     armSeekTimeout(generation: generation)
     let resumesPlayback = pendingSeekForcesPlay || !isPaused
     issuedSeekResumesPlayback = resumesPlayback
@@ -675,6 +699,10 @@ final class KSPlayerEngine: NSObject, ObservableObject {
 
   private func seekDidComplete(generation: Int, finished: Bool) {
     guard !isDisposed, generation == seekGeneration, let layer else { return }
+    if finished, let start = seekIssuedAt {
+      lastSeekMilliseconds = Int((ProcessInfo.processInfo.systemUptime - start) * 1000)
+    }
+    seekIssuedAt = nil
     // Also when the timeout already settled a slow seek: the real landing time and
     // the repaint below still apply.
     settlePendingSeek()
@@ -879,10 +907,56 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   /// Held strongly on purpose: a layer that failed with its PiP window open still has
   /// to report that the window closed. It is dropped as soon as that arrives, and at
   /// once when a layer is released for good.
-  private var pipController: AVPictureInPictureController?
+  #if os(macOS)
+  @Published private(set) var pipPanelSize: CGSize?
+  private var windowsBeforePiP = Set<ObjectIdentifier>()
+  private weak var pipPanel: NSWindow?
+  private var pipResize: AnyCancellable?
+  private var pipVideoView: MacPiPVideoView?
+
+  var restorePictureInPictureWindow: (() -> Bool)?
+  #endif
+  private(set) var pipController: AVPictureInPictureController?
   /// The layer `pipController` was taken from.
   private weak var pipControllerLayer: KSPlayerLayer?
   private var pipPossibleObservation: NSKeyValueObservation?
+
+  #if os(macOS)
+  // The sample-buffer layer backs a KSPlayer NSView. AppKit keeps that view at
+  // its inline size unless we follow the native floating panel as it resizes.
+  private func trackPiPPanel(active: Bool) {
+    pipVideoView?.stop()
+    pipVideoView = nil
+    pipResize = nil
+    pipPanel = nil
+    if pipPanelSize != nil { pipPanelSize = nil }
+    guard active, layer?.player is KSMEPlayer,
+          let panel = NSApp.windows.first(where: {
+            $0.isVisible && $0 is NSPanel && !windowsBeforePiP.contains(ObjectIdentifier($0))
+          }) else { return }
+    pipPanel = panel
+    if let root = panel.contentView, let output = (layer?.player as? KSMEPlayer)?.videoOutput {
+      let view = MacPiPVideoView(output: output, frame: root.bounds)
+      view.autoresizingMask = [.width, .height]
+      root.addSubview(view)
+      view.start()
+      pipVideoView = view
+    }
+    updatePiPPanelSize()
+    let notifications = NotificationCenter.default
+    pipResize = notifications.publisher(for: NSWindow.didResizeNotification, object: panel)
+      .merge(with: notifications.publisher(for: NSWindow.didEndLiveResizeNotification, object: panel))
+      .sink { [weak self] _ in self?.updatePiPPanelSize() }
+  }
+
+  private func updatePiPPanelSize() {
+    guard let panel = pipPanel else { return }
+    // The content view can still report the preceding layout during a resize.
+    let size = panel.contentRect(forFrameRect: panel.frame).size
+    guard size.width > 0, size.height > 0 else { return }
+    if pipPanelSize != size { pipPanelSize = size }
+  }
+  #endif
 
   /// Same key `makeOptions` reads. With PiP switched off no controller is created.
   private static var isPictureInPictureEnabledInSettings: Bool {
@@ -892,9 +966,13 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   /// Opens the PiP window over the app; the app stays in front. Does nothing while
   /// the player is not ready. When the system refuses, `isPiPActive` stays false.
   func startPictureInPicture() {
-    guard !isDisposed, let controller = adoptPictureInPictureController(),
+    guard !isDisposed, Self.isPictureInPictureEnabledInSettings, let controller = adoptPictureInPictureController(),
+          controller.isPictureInPicturePossible,
           !controller.isPictureInPictureActive
     else { return }
+    #if os(macOS)
+    windowsBeforePiP = Set(NSApp.windows.filter(\.isVisible).map(ObjectIdentifier.init))
+    #endif
     controller.startPictureInPicture()
   }
 
@@ -926,21 +1004,40 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       // Left over from the previous load.
       releasePictureInPictureController()
     }
+    if !Self.isPictureInPictureEnabledInSettings && !isPiPActive {
+      if pipController != nil { releasePictureInPictureController() }
+      return
+    }
     // Not before the player is ready: reading `pipController` creates it, and the
     // FFmpeg player builds its own on the video output.
-    guard layer.player.isReadyToPlay,
-          pipController != nil || Self.isPictureInPictureEnabledInSettings
-    else { return }
+    guard layer.player.isReadyToPlay else { return }
     adoptPictureInPictureController()
+    #if os(macOS)
+    if isPiPActive, layer.player is KSMEPlayer {
+      if pipPanel == nil { trackPiPPanel(active: true) }
+      else { updatePiPPanelSize() }
+    }
+    #endif
     publishPictureInPictureTransport(on: layer)
   }
 
   /// Makes the engine the delegate of the current player's PiP controller.
   @discardableResult
   private func adoptPictureInPictureController() -> AVPictureInPictureController? {
-    guard let layer, layer.player.isReadyToPlay,
-          let controller = layer.player.pipController
-    else { return nil }
+    guard let layer, layer.player.isReadyToPlay else { return nil }
+    #if os(macOS)
+      guard let surface = layer.player.view, surface.window != nil,
+            surface.bounds.width > 0, surface.bounds.height > 0,
+            layer.player.naturalSize.width > 0, layer.player.naturalSize.height > 0
+      else { return nil }
+      // AVKit derives its floating window geometry from the first displayed frame.
+      if let decoder = layer.player as? KSMEPlayer {
+        guard let output = decoder.videoOutput, output.pixelBuffer != nil,
+              !output.displayLayer.bounds.isEmpty else { return nil }
+        if #available(macOS 14.4, *), !output.displayLayer.isReadyForDisplay { return nil }
+      }
+    #endif
+    guard let controller = layer.player.pipController else { return nil }
     if controller === pipController { return controller }
     releasePictureInPictureController()
     pipController = controller
@@ -948,10 +1045,12 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     controller.delegate = self
     // `KSPlayerLayer` sets this once, on the controller that exists when the player
     // becomes ready. One built later (display layer change) would lose automatic PiP.
+    #if !os(macOS)
     let automatic = guardedOptions?.canStartPictureInPictureAutomaticallyFromInline ?? false
     if controller.canStartPictureInPictureAutomaticallyFromInline != automatic {
       controller.canStartPictureInPictureAutomaticallyFromInline = automatic
     }
+    #endif
     pipPossibleObservation = controller.observe(\.isPictureInPicturePossible) { [weak self] _, _ in
       DispatchQueue.main.async { self?.pictureInPicturePossibleDidChange() }
     }
@@ -969,6 +1068,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       controller.delegate = nil
     }
     pipController = nil
+    #if os(macOS)
+    trackPiPPanel(active: false)
+    #endif
     pipControllerLayer = nil
     if isPiPActive { isPiPActive = false }
     if isPictureInPicturePossible { isPictureInPicturePossible = false }
@@ -1001,6 +1103,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
       releasePictureInPictureController()
       return
     }
+    #if os(macOS)
+    trackPiPPanel(active: active)
+    #endif
     if isPiPActive != active { isPiPActive = active }
     if stopped, !isDisposed, let layer {
       reconcileTransportAfterPictureInPicture(on: layer)
@@ -1442,6 +1547,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     // Retained menu metadata can still supply a stream index for casting, but
     // an embedded info must never be enabled after its source was closed.
     if layer == nil, info is FFmpegAssetTrack { return }
+    if subtitleModel.selectedSubtitleInfo?.subtitleID != info.subtitleID {
+      deselectSubtitleInfo()
+    }
     subtitleModel.selectedSubtitleInfo = info
     // And the other way round: only one subtitle at a time.
     selectLegibleOption(nil)
@@ -1454,6 +1562,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
 
   private func deselectSubtitleInfo() {
     subtitleModel.selectedSubtitleInfo = nil
+    // KSPlayer compares cue time ranges; switching languages at the same
+    // timestamps must also invalidate the previous track’s rendered text.
+    _ = subtitleModel.subtitle(currentTime: 0)
     if subtitleText != nil { subtitleText = nil }
     if subtitleImage != nil { subtitleImage = nil }
     if subtitleImageOrigin != .zero { subtitleImageOrigin = .zero }
@@ -1479,11 +1590,15 @@ final class KSPlayerEngine: NSObject, ObservableObject {
 
   func addExternalSubtitle(filePath: String, title: String, select: Bool) {
     let url = URL(fileURLWithPath: filePath)
-    let info = URLSubtitleInfo(subtitleID: url.absoluteString, name: title, url: url)
-    removedSubtitleIDs.remove(info.subtitleID)
+    // KSPlayer retains removed entries and deduplicates by ID. A replacement
+    // needs its own ID so later track selections read the revised file.
+    let subtitleID = externalSubtitleIDs.contains(url.absoluteString)
+      ? url.absoluteString + "#" + UUID().uuidString : url.absoluteString
+    let info = URLSubtitleInfo(subtitleID: subtitleID, name: title, url: url)
     externalSubtitleIDs.insert(info.subtitleID)
     subtitleModel.addSubtitle(info: info)
     if select {
+      deselectSubtitleInfo()
       subtitleModel.selectedSubtitleInfo = info
       // Not next to the stream's own captions. When the renditions are not loaded
       // yet, `mediaSelectionDidLoad` does this.
@@ -1496,10 +1611,7 @@ final class KSPlayerEngine: NSObject, ObservableObject {
     // SubtitleModel has no removal API; hide the entry and drop the selection.
     removedSubtitleIDs.insert(info.subtitleID)
     if subtitleModel.selectedSubtitleInfo?.subtitleID == info.subtitleID {
-      subtitleModel.selectedSubtitleInfo = nil
-      subtitleText = nil
-      subtitleImage = nil
-      subtitleImageOrigin = .zero
+      deselectSubtitleInfo()
     }
   }
 
@@ -1718,6 +1830,19 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   /// itself and brings the picture back in sync on return.
   private var observesAppLifecycle = false
   private var isAppInBackground = false
+  #if os(macOS)
+  private var windowMinimized = false
+
+  func setWindowMinimized(_ minimized: Bool) {
+    guard windowMinimized != minimized else { return }
+    windowMinimized = minimized
+    if minimized {
+      appDidEnterBackground()
+    } else if !NSApp.isHidden {
+      appWillEnterForeground()
+    }
+  }
+  #endif
   private var backgroundSuspendWorkItem: DispatchWorkItem?
   /// The video track switched off for the background. Only this one is switched
   /// back on.
@@ -1726,15 +1851,23 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   private func observeAppLifecycleIfNeeded() {
     guard !observesAppLifecycle else { return }
     observesAppLifecycle = true
+    #if os(macOS)
+    isAppInBackground = NSApp.isHidden || windowMinimized
+    let enteredBackground = NSApplication.didHideNotification
+    let enteredForeground = NSApplication.didUnhideNotification
+    #else
     isAppInBackground = UIApplication.shared.applicationState == .background
+    let enteredBackground = UIApplication.didEnterBackgroundNotification
+    let enteredForeground = UIApplication.willEnterForegroundNotification
+    #endif
     let center = NotificationCenter.default
     center.addObserver(
       self, selector: #selector(appDidEnterBackground),
-      name: UIApplication.didEnterBackgroundNotification, object: nil
+      name: enteredBackground, object: nil
     )
     center.addObserver(
       self, selector: #selector(appWillEnterForeground),
-      name: UIApplication.willEnterForegroundNotification, object: nil
+      name: enteredForeground, object: nil
     )
   }
 
@@ -1744,6 +1877,9 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   }
 
   @objc private func appWillEnterForeground() {
+    #if os(macOS)
+    guard !windowMinimized else { return }
+    #endif
     isAppInBackground = false
     backgroundSuspendWorkItem?.cancel()
     backgroundSuspendWorkItem = nil
@@ -1969,6 +2105,73 @@ final class KSPlayerEngine: NSObject, ObservableObject {
   }
 }
 
+#if os(macOS)
+/// The system panel can be larger than the inline window. Present decoded
+/// frames within the panel's bounds so the inline window cannot clip them.
+private final class MacPiPVideoView: NSView {
+  private let display = AVSampleBufferDisplayLayer()
+  private weak var output: (NSView & VideoOutput)?
+  private var displayLink: CADisplayLink?
+  private var format: CMVideoFormatDescription?
+  private var lastFrame: CVPixelBuffer?
+
+  init(output: NSView & VideoOutput, frame: CGRect) {
+    self.output = output
+    super.init(frame: frame)
+    wantsLayer = true
+    display.frame = bounds
+    display.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+    display.videoGravity = .resizeAspect
+    layer?.addSublayer(display)
+  }
+
+  required init?(coder: NSCoder) { nil }
+  override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+  func start() {
+    render()
+    let link = self.displayLink(target: self, selector: #selector(render))
+    link.preferredFrameRateRange = CAFrameRateRange(minimum: 24, maximum: 60, preferred: 60)
+    link.add(to: .main, forMode: .common)
+    displayLink = link
+  }
+
+  func stop() {
+    displayLink?.invalidate()
+    displayLink = nil
+    display.sampleBufferRenderer.flush()
+    removeFromSuperview()
+  }
+
+  @objc private func render() {
+    if display.sampleBufferRenderer.requiresFlushToResumeDecoding {
+      display.sampleBufferRenderer.flush()
+      lastFrame = nil
+    }
+    guard let buffer = output?.pixelBuffer?.cvPixelBuffer, buffer !== lastFrame,
+          display.sampleBufferRenderer.isReadyForMoreMediaData else { return }
+    if format.map({ CMVideoFormatDescriptionMatchesImageBuffer($0, imageBuffer: buffer) }) != true {
+      guard CMVideoFormatDescriptionCreateForImageBuffer(allocator: kCFAllocatorDefault,
+        imageBuffer: buffer, formatDescriptionOut: &format) == noErr else { return }
+    }
+    guard let format else { return }
+    var timing = CMSampleTimingInfo(duration: .invalid,
+      presentationTimeStamp: CMClockGetTime(CMClockGetHostTimeClock()), decodeTimeStamp: .invalid)
+    var sample: CMSampleBuffer?
+    guard CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault,
+      imageBuffer: buffer, formatDescription: format, sampleTiming: &timing,
+      sampleBufferOut: &sample) == noErr, let sample else { return }
+    if let attachments = CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: true) {
+      let entry = unsafeBitCast(CFArrayGetValueAtIndex(attachments, 0), to: CFMutableDictionary.self)
+      CFDictionarySetValue(entry, Unmanaged.passUnretained(kCMSampleAttachmentKey_DisplayImmediately).toOpaque(),
+                           Unmanaged.passUnretained(kCFBooleanTrue).toOpaque())
+    }
+    display.sampleBufferRenderer.enqueue(sample)
+    lastFrame = buffer
+  }
+}
+#endif
+
 // MARK: - AVPictureInPictureControllerDelegate
 
 extension KSPlayerEngine: AVPictureInPictureControllerDelegate {
@@ -2007,7 +2210,13 @@ extension KSPlayerEngine: AVPictureInPictureControllerDelegate {
     _: AVPictureInPictureController,
     restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
   ) {
+    #if os(macOS)
+    Self.runOnMain { [weak self] in
+      completionHandler(self?.restorePictureInPictureWindow?() ?? false)
+    }
+    #else
     completionHandler(true)
+    #endif
   }
 
   /// AVKit calls its delegate on the main thread, where this stays synchronous; the
@@ -2027,6 +2236,9 @@ extension KSPlayerEngine: KSPlayerLayerDelegate {
   func player(layer: KSPlayerLayer, state: KSPlayerState) {
     DispatchQueue.main.async { [weak self] in
       guard let self, !self.isDisposed, layer === self.layer else { return }
+      #if os(macOS)
+      if state == .readyToPlay || state == .initialized { self.updateNativeAudioOutput() }
+      #endif
       switch state {
       case .initialized:
         if !self.isBuffering { self.isBuffering = true }

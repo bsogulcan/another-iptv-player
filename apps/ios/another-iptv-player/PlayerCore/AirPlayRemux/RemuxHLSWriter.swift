@@ -1247,7 +1247,8 @@ final class RemuxHLSWriter {
       av_dict_set(&inputOpts, "reconnect_at_eof", "1", 0)
     }
 
-    var openResult = avformat_open_input(&inputCtx, sourceURL.absoluteString, nil, &inputOpts)
+    let inputLocation = sourceURL.isFileURL ? sourceURL.path : sourceURL.absoluteString
+    var openResult = avformat_open_input(&inputCtx, inputLocation, nil, &inputOpts)
     guard openResult >= 0, let input = inputCtx else {
       throw RemuxError.openInputFailed(openResult)
     }

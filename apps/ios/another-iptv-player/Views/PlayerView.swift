@@ -5,40 +5,6 @@ import GRDB
 import UIKit
 import os
 
-struct LiveChannelCategorySection: Identifiable, Equatable {
-    let id: String
-    let title: String
-    let streams: [DBLiveStream]
-}
-
-extension LiveChannelCategorySection {
-    /// Full live queue + per-category sections for the current Xtream playlist.
-    /// Players opened outside the main channel list (EPG guide, programme sheet)
-    /// use this so prev/next channel and the channel side panel keep working instead
-    /// of being disabled by a single-item queue.
-    @MainActor
-    static func xtreamLiveQueue() -> (queue: [DBLiveStream], sections: [LiveChannelCategorySection]) {
-        let store = PlaylistContentStore.shared
-        // One walk over the catalog fills both results; mapping the sections first and
-        // flattening them afterwards visited every channel twice on each open.
-        var queue: [DBLiveStream] = []
-        queue.reserveCapacity(store.liveStreams.count)
-        var sections: [LiveChannelCategorySection] = []
-        sections.reserveCapacity(store.liveCategories.count)
-        for cat in store.liveCategories {
-            guard let items = store.liveStreamsByCategoryId[cat.id], !items.isEmpty else { continue }
-            var streams: [DBLiveStream] = []
-            streams.reserveCapacity(items.count)
-            for item in items {
-                streams.append(item.stream)
-                queue.append(item.stream)
-            }
-            sections.append(LiveChannelCategorySection(id: cat.id, title: cat.name, streams: streams))
-        }
-        return (queue, sections)
-    }
-}
-
 /// Kanal panelinin Xtream `DBLiveStream` veya M3U `DBM3UChannel` gibi farklı kaynaklarla çalışabilmesi için
 /// hafif bir görüntüleme modelidir. Tıklamalar item `id`'sini callback'e verir; aranması/akışın seçilmesi
 /// çağıranın sorumluluğundadır.
@@ -5340,26 +5306,6 @@ final class PlayerChannelBannerModel: ObservableObject {
     }
 }
 
-/// On-demand lookup of the programme after the one on air. `nonisolated`: runs inside
-/// the database reader closure.
-nonisolated enum PlayerNextProgrammeQuery {
-    /// First programme of `channelKey` that starts after `currentStart` and has not
-    /// ended at `now`: a range scan on the (playlistId, channelKey, startTs) primary
-    /// key that reads one row. The `stopTs` bound skips short entries that overlapping
-    /// guide data leaves behind the programme on air.
-    static func fetch(_ db: Database, playlistId: UUID, channelKey: String,
-                      after currentStart: Date, now: Date) throws -> EPGProgramme? {
-        try EPGGuideProgrammeRecord.fetchOne(db, sql: """
-            SELECT channelKey, startTs, stopTs, title FROM epgProgramme
-            WHERE playlistId = ? AND channelKey = ? AND startTs > ? AND stopTs > ?
-            ORDER BY startTs LIMIT 1
-            """, arguments: [
-                playlistId, channelKey,
-                Int64(currentStart.timeIntervalSince1970), Int64(now.timeIntervalSince1970)
-            ])?.programme
-    }
-}
-
 /// Transient banner for a live channel change: logo, channel name and, when the guide
 /// has them, the programme on air with its time range and the one after it. It shows
 /// itself for a few seconds whenever the channel changes, whether or not the chrome is
@@ -5534,25 +5480,5 @@ private struct WatchHistoryTags: Equatable {
                 Log.error("WatchHistory", "Failed to save watch history: \(error)")
             }
         }
-    }
-}
-
-/// When the player writes the watch-history row, kept free of view state so it can be
-/// unit-tested.
-nonisolated enum PlayerWatchHistoryPolicy {
-    /// Periodic save while a film or episode plays. A crash or force-quit loses at most
-    /// this much of the resume position.
-    static let periodicIntervalSeconds: TimeInterval = 10
-    /// A playhead move of at least this much between two clock ticks is a seek. Normal
-    /// progress is a few hundred milliseconds per tick, also at 2x.
-    static let seekJumpThresholdMs: Int64 = 3_000
-    /// How long the playhead has to stay put after a jump before the position is saved.
-    static let seekSettleSeconds: TimeInterval = 1
-
-    /// False for the first tick of an item (`previousMs == nil`): there is nothing to
-    /// compare it with, and a start position is not a seek.
-    static func isSeekJump(previousMs: Int64?, currentMs: Int64) -> Bool {
-        guard let previousMs else { return false }
-        return abs(currentMs - previousMs) >= seekJumpThresholdMs
     }
 }

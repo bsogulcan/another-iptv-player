@@ -1,7 +1,7 @@
 import AVFoundation
 import Foundation
 import Testing
-import UIKit
+import CoreVideo
 @testable import another_iptv_player
 
 @Suite("AirPlayRemux")
