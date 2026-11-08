@@ -24,7 +24,21 @@ struct DownloadProgress: Equatable {
 final class DownloadManager: NSObject, ObservableObject {
     static let shared = DownloadManager()
 
-    static let sessionIdentifier = (Bundle.main.bundleIdentifier ?? "app") + ".downloads"
+    static let sessionIdentifier: String = {
+        let bundle = Bundle.main.bundleIdentifier ?? "app"
+        #if os(macOS)
+        // The daemon retains its staging directory by session ID. Downloads from
+        // older, unsandboxed Mac builds used a directory outside the container.
+        #if DEBUG
+        if NSClassFromString("XCTestCase") != nil {
+            return bundle + ".sandbox-tests.downloads"
+        }
+        #endif
+        return bundle + ".sandbox.downloads"
+        #else
+        return bundle + ".downloads"
+        #endif
+    }()
     /// Aynı playlist için aynı anda kaç indirme paralel çalışabilir. Üstü kuyruğa alınır.
     /// Başka playlist'lerin kuyruğu etkilenmez — her playlist'in kendi slotu vardır.
     /// Server connection limitinin playlist bazlı olduğunu varsayıyoruz.

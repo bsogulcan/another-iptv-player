@@ -16,7 +16,12 @@ nonisolated enum DownloadStorage {
             appropriateFor: nil,
             create: true
         )
-        let root = appSupport.appendingPathComponent("Downloads", isDirectory: true)
+        #if os(macOS) && DEBUG
+        let base = NSClassFromString("XCTestCase") == nil ? appSupport : fm.temporaryDirectory.appendingPathComponent("MacDownloadTests", isDirectory: true)
+        #else
+        let base = appSupport
+        #endif
+        let root = base.appendingPathComponent("Downloads", isDirectory: true)
         if !fm.fileExists(atPath: root.path) {
             try fm.createDirectory(at: root, withIntermediateDirectories: true)
             try markExcludedFromBackup(root)

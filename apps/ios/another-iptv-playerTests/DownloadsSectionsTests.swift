@@ -29,8 +29,8 @@ struct DownloadsSectionsTests {
 
     @Test
     func nothingToShowIsEmpty() {
-        #expect(DownloadsView.sections(of: [], matching: "").isEmpty)
-        #expect(DownloadsView.sections(of: [], matching: "abc").isEmpty)
+        #expect(DownloadSections.make(from: [], matching: "").isEmpty)
+        #expect(DownloadSections.make(from: [], matching: "abc").isEmpty)
     }
 
     @Test
@@ -41,7 +41,7 @@ struct DownloadsSectionsTests {
             item("c", status: .failed),
             item("d", status: .queued),
         ]
-        let sections = DownloadsView.sections(of: items, matching: "")
+        let sections = DownloadSections.make(from: items, matching: "")
 
         #expect(sections.inProgress.map(\.id) == ["b"])
         #expect(sections.queued.map(\.id) == ["d"])
@@ -59,7 +59,7 @@ struct DownloadsSectionsTests {
             item("mid", status: .queued, createdAt: 200),
             item("old", status: .queued, createdAt: 100),
         ]
-        #expect(DownloadsView.sections(of: items, matching: "").queued.map(\.id) == ["old", "mid", "new"])
+        #expect(DownloadSections.make(from: items, matching: "").queued.map(\.id) == ["old", "mid", "new"])
     }
 
     @Test
@@ -71,7 +71,7 @@ struct DownloadsSectionsTests {
             item("a13", status: .completed, type: "episode", series: "alpha", season: 1, episode: 3),
             item("film", status: .completed),
         ]
-        let sections = DownloadsView.sections(of: items, matching: "")
+        let sections = DownloadSections.make(from: items, matching: "")
 
         // Case-insensitive title order.
         #expect(sections.completedEpisodeGroups.map(\.title) == ["alpha", "Zeta"])
@@ -79,12 +79,27 @@ struct DownloadsSectionsTests {
         #expect(sections.completedMovies.map(\.id) == ["film"])
     }
 
+    @Test
+    func seriesWithSameTitleHaveIndependentSectionsAndLegacyRowsUseTheName() {
+        var first = item("a", status: .completed, type: "episode", series: "Coast")
+        var second = first
+        first.seriesId = "1"
+        second.id = "b"
+        second.seriesId = "2"
+        var legacy = first
+        legacy.id = "legacy"
+        legacy.seriesId = nil
+        let groups = DownloadSections.make(from: [second, legacy, first], matching: "coast").completedEpisodeGroups
+        #expect(groups.map(\.id.seriesID) == [nil, "1", "2"])
+        #expect(groups.map { $0.episodes.map(\.id) } == [["legacy"], ["a"], ["b"]])
+    }
+
     /// An episode that is still downloading is listed with the downloads in
     /// progress, not under its series.
     @Test
     func unfinishedEpisodesStayInTheirStatusSection() {
         let items = [item("e", status: .downloading, type: "episode", series: "Show", season: 1, episode: 1)]
-        let sections = DownloadsView.sections(of: items, matching: "")
+        let sections = DownloadSections.make(from: items, matching: "")
 
         #expect(sections.inProgress.map(\.id) == ["e"])
         #expect(sections.completedEpisodeGroups.isEmpty)
@@ -97,7 +112,7 @@ struct DownloadsSectionsTests {
             item("ep", status: .completed, type: "episode", title: "Pilot", series: "Matrix Stories", season: 1, episode: 1),
             item("other", status: .downloading, title: "Heat"),
         ]
-        let sections = DownloadsView.sections(of: items, matching: "  matrix ")
+        let sections = DownloadSections.make(from: items, matching: "  matrix ")
 
         #expect(sections.completedMovies.map(\.id) == ["film"])
         #expect(sections.completedEpisodeGroups.map(\.title) == ["Matrix Stories"])
@@ -107,8 +122,8 @@ struct DownloadsSectionsTests {
     @Test
     func aSearchWithoutAMatchLeavesNothing() {
         let items = [item("film", status: .completed, title: "Heat")]
-        #expect(DownloadsView.sections(of: items, matching: "matrix").isEmpty)
+        #expect(DownloadSections.make(from: items, matching: "matrix").isEmpty)
         // Blank text is no search.
-        #expect(!DownloadsView.sections(of: items, matching: "   ").isEmpty)
+        #expect(!DownloadSections.make(from: items, matching: "   ").isEmpty)
     }
 }

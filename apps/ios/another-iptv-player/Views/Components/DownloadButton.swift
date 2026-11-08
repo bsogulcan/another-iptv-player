@@ -28,6 +28,9 @@ struct DownloadButton: View {
 
     /// Kompakt variant — dizi bölüm satırları gibi dar alanlar için.
     var compact: Bool = false
+    /// Round variant for the detail pages' action row: the glyph in a circle with the
+    /// state written under it, like the trailer and restart actions next to it.
+    var round: Bool = false
 
     @Query<DownloadedItemByIDRequest> private var item: DBDownloadedItem?
     /// Side of the square every state draws its icon into. With one footprint for all of
@@ -56,7 +59,8 @@ struct DownloadButton: View {
         seriesId: String? = nil,
         seasonNumber: Int? = nil,
         episodeNumber: Int? = nil,
-        compact: Bool = false
+        compact: Bool = false,
+        round: Bool = false
     ) {
         self.id = id
         self.playlistId = playlistId
@@ -71,6 +75,7 @@ struct DownloadButton: View {
         self.seasonNumber = seasonNumber
         self.episodeNumber = episodeNumber
         self.compact = compact
+        self.round = round
         _item = Query(DownloadedItemByIDRequest(id: id), in: \.appDatabase)
     }
 
@@ -160,7 +165,29 @@ struct DownloadButton: View {
         }
     }
 
+    @ViewBuilder
     private var label: some View {
+        if round {
+            roundLabel
+        } else {
+            barLabel
+        }
+    }
+
+    private var roundLabel: some View {
+        VStack(spacing: 6) {
+            glyph
+                .frame(width: DetailRoundAction.circleSide, height: DetailRoundAction.circleSide)
+                .background(Circle().fill(Color.primary.opacity(0.12)))
+            titleView
+                .foregroundStyle(.secondary)
+        }
+        .foregroundStyle(tint)
+        .frame(minWidth: DetailRoundAction.minWidth)
+        .contentShape(Rectangle())
+    }
+
+    private var barLabel: some View {
         HStack(spacing: 6) {
             glyph
             if !compact {
@@ -197,7 +224,7 @@ struct DownloadButton: View {
     private var glyph: some View {
         ZStack {
             Image(systemName: symbolName)
-                .font(.footnote.weight(.semibold))
+                .font(round ? .body.weight(.semibold) : .footnote.weight(.semibold))
                 .contentTransition(.symbolEffect(.replace))
                 .opacity(phase == .downloading ? 0 : 1)
             if phase == .downloading {
@@ -224,7 +251,7 @@ struct DownloadButton: View {
                 Text(titleText)
             }
         }
-        .font(.footnote.weight(.semibold))
+        .font(round ? .caption2.weight(.medium) : .footnote.weight(.semibold))
         .lineLimit(1)
     }
 
@@ -414,23 +441,6 @@ struct M3UDownloadMenuItems: View {
 }
 
 // MARK: - DB Requests
-
-struct DownloadedItemByIDRequest: Queryable, Equatable {
-    static var defaultValue: DBDownloadedItem? { nil }
-    let id: String
-    func publisher(in appDatabase: AppDatabase) -> AnyPublisher<DBDownloadedItem?, Never> {
-        ValueObservation
-            .tracking { db in
-                try DBDownloadedItem.filter(Column("id") == id).fetchOne(db)
-            }
-            .publisher(in: appDatabase.reader)
-            // The observation re-fetches on every write to the downloads table. Without
-            // this, a status change of one item re-renders the button of every other.
-            .removeDuplicates()
-            .catch { _ in Just(nil) }
-            .eraseToAnyPublisher()
-    }
-}
 
 struct AllDownloadsRequest: Queryable, Equatable {
     static var defaultValue: [DBDownloadedItem] { [] }

@@ -25,69 +25,9 @@ struct DownloadsView: View {
         _loadedItems = Query(LoadedRequest(AllDownloadsRequest(playlistId: playlist.id)), in: \.appDatabase)
     }
 
-    /// The list as the screen shows it: one section per unfinished status, the
-    /// finished films, then the finished episodes grouped by series.
-    struct Sections: Equatable {
-        struct EpisodeGroup: Equatable {
-            let title: String
-            let episodes: [DBDownloadedItem]
-        }
-
-        var inProgress: [DBDownloadedItem] = []
-        /// Kuyruk `createdAt` artan sırayla gösterilir — sıradaki (en eski) en üstte.
-        /// `AllDownloadsRequest` varsayılan olarak desc döner, burada özellikle ters çeviriyoruz.
-        var queued: [DBDownloadedItem] = []
-        var failed: [DBDownloadedItem] = []
-        var completedMovies: [DBDownloadedItem] = []
-        /// Tamamlanan bölümleri seri bazlı gruplar. Anahtar seriesId + secondaryTitle pair'i,
-        /// böylece seriesId nil ise ada göre gruplayabiliriz.
-        var completedEpisodeGroups: [EpisodeGroup] = []
-
-        var isEmpty: Bool {
-            inProgress.isEmpty && queued.isEmpty && failed.isEmpty
-                && completedMovies.isEmpty && completedEpisodeGroups.isEmpty
-        }
-    }
-
-    /// Filters and splits the list in one pass. The body runs again for every
-    /// published percent of a running download, so the search match is done once
-    /// per item here instead of once per section.
-    static func sections(of items: [DBDownloadedItem], matching search: String) -> Sections {
-        let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
-        let query = q.isEmpty ? nil : CatalogTextSearch.Query(q)
-        var sections = Sections()
-        var episodes: [String: [DBDownloadedItem]] = [:]
-        for item in items {
-            if let query, !query.matches(item.title), !query.matches(item.secondaryTitle ?? "") { continue }
-            switch item.downloadStatus {
-            case .downloading: sections.inProgress.append(item)
-            case .queued: sections.queued.append(item)
-            case .failed: sections.failed.append(item)
-            case .completed:
-                if item.type == "vod" {
-                    sections.completedMovies.append(item)
-                } else if item.type == "episode" {
-                    episodes[item.secondaryTitle ?? item.seriesId ?? "-", default: []].append(item)
-                }
-            }
-        }
-        sections.queued.sort { $0.createdAt < $1.createdAt }
-        sections.completedEpisodeGroups = episodes
-            .map { title, items in
-                let sorted = items.sorted { lhs, rhs in
-                    let ls = lhs.seasonNumber ?? 0, rs = rhs.seasonNumber ?? 0
-                    if ls != rs { return ls < rs }
-                    return (lhs.episodeNumber ?? 0) < (rhs.episodeNumber ?? 0)
-                }
-                return Sections.EpisodeGroup(title: title, episodes: sorted)
-            }
-            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
-        return sections
-    }
-
     var body: some View {
         let items = loadedItems ?? []
-        let sections = Self.sections(of: items, matching: debouncedQuery)
+        let sections = DownloadSections.make(from: items, matching: debouncedQuery)
         Group {
             if loadedItems == nil {
                 // Nothing delivered yet: drawing "No downloads" here would flash it
@@ -132,7 +72,7 @@ struct DownloadsView: View {
                         }
                     }
 
-                    ForEach(sections.completedEpisodeGroups, id: \.title) { group in
+                    ForEach(sections.completedEpisodeGroups) { group in
                         Section(group.title) {
                             ForEach(group.episodes) { item in
                                 actionableRow(item)
@@ -367,28 +307,15 @@ struct DownloadsView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.secondary)
         case .completed:
-            Text(Self.byteCount(Int64(item.totalBytes)))
+            Text(DownloadFormatting.byteCount(Int64(item.totalBytes)))
                 .font(.caption2)
                 .foregroundStyle(Color.secondary)
         case .failed:
-            Text(Self.failureText(item.errorMessage))
+            Text(DownloadFormatting.failureText(item.errorMessage))
                 .font(.caption2)
                 .foregroundStyle(Color.secondary)
                 .lineLimit(2)
         }
-    }
-
-    /// A file size in the app's language and the device's region.
-    static func byteCount(_ bytes: Int64) -> String {
-        bytes.formatted(.byteCount(style: .file).locale(AppLocale.current))
-    }
-
-    /// The stored reason of a failed download. Only the text survives the failure, so
-    /// an empty or missing one falls back to the generic sentence `NetworkErrorText`
-    /// uses for an error it cannot name.
-    static func failureText(_ stored: String?) -> String {
-        let text = stored?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return text.isEmpty ? L("kit.error.generic") : text
     }
 
     private func play(_ item: DBDownloadedItem) {
@@ -497,38 +424,6 @@ struct DownloadsView: View {
                 playerOverlay.injected?.dismiss()
                 pendingSeriesDetail = series
             }
-        }
-    }
-}
-
-/// Keep the last live value while the database observation removes a finished row.
-/// The manager can remove its progress entry one frame before that observation.
-private struct DownloadProgressFooter: View {
-    let progress: DownloadProgress?
-    let stored: DownloadProgress
-    @State private var lastProgress: DownloadProgress?
-
-    var body: some View {
-        let shown = progress ?? lastProgress ?? stored
-        let fraction = shown.fraction
-        VStack(alignment: .leading, spacing: 4) {
-            ProgressView(value: fraction)
-                .progressViewStyle(.linear)
-                .animation(progress == nil ? nil : .linear(duration: 0.4), value: fraction)
-            HStack {
-                Text(DetailFormatting.percent(fraction))
-                    .font(.caption2)
-                    .foregroundStyle(Color.secondary)
-                    .monospacedDigit()
-                if shown.totalBytes > 0 {
-                    Text(DownloadsView.byteCount(shown.totalBytes))
-                        .font(.caption2)
-                        .foregroundStyle(Color.secondary)
-                }
-            }
-        }
-        .onChange(of: progress, initial: true) { _, value in
-            if let value { lastProgress = value }
         }
     }
 }
