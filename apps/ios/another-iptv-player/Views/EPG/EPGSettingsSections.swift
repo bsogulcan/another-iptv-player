@@ -98,8 +98,10 @@ struct M3UEPGSettingsSection: View {
             // One line: Return submits and closes the keyboard, and a pasted line
             // break cannot end up inside the URL. A long URL scrolls.
             TextField(L("epg.settings.url_placeholder"), text: $epgURLDraft)
+                #if os(iOS)
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
+                #endif
                 .autocorrectionDisabled()
                 .submitLabel(.done)
                 .focused($isURLFocused)

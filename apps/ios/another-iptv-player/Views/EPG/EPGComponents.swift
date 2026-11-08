@@ -19,21 +19,6 @@ extension EnvironmentValues {
 
 // MARK: - Channel key resolution
 
-/// Resolves a playlist channel to the key used to look up EPG now/next in the
-/// snapshot. Prefers the explicit EPG id, falling back to the channel name (the
-/// store publishes both id and name aliases for display-name-matched channels).
-/// `nonisolated` so the M3U player-panel builders (which are `nonisolated`) can
-/// call it.
-nonisolated enum EPGChannelKey {
-    static func forXtream(_ stream: DBLiveStream) -> String? {
-        EPGConstants.normalizeChannelKey(stream.epgChannelId) ?? EPGConstants.normalizeChannelKey(stream.name)
-    }
-
-    static func forM3U(_ channel: DBM3UChannel) -> String? {
-        EPGConstants.normalizeChannelKey(channel.tvgId) ?? EPGConstants.normalizeChannelKey(channel.tvgName ?? channel.name)
-    }
-}
-
 // MARK: - Now/Next line (channel cards, side panel)
 
 /// One compact line: current programme title + a thin progress capsule. Renders
@@ -115,33 +100,6 @@ struct EPGNowNextSlot: View {
 // MARK: - Playback from the guide
 
 /// Live queues for playback started from the guide or a programme sheet.
-enum EPGGuidePlayback {
-    /// The live catalog as the Live tab lists it: categories the user hid are left
-    /// out, so channel up/down and the channel panel cannot walk into them.
-    static func xtreamLiveQueue(
-        playlistId: UUID, including stream: DBLiveStream
-    ) -> (queue: [DBLiveStream], sections: [LiveChannelCategorySection]) {
-        let hidden = HiddenCategoryStore.shared.hiddenIds(playlistId: playlistId, type: "live")
-        return visible(LiveChannelCategorySection.xtreamLiveQueue(), hiding: hidden, including: stream)
-    }
-
-    /// `live` without the sections whose id is in `hidden`. The section holding
-    /// `stream` always stays: the channel being started must have a place in its
-    /// own queue, whatever the hidden set says by the time it is tapped.
-    static func visible(
-        _ live: (queue: [DBLiveStream], sections: [LiveChannelCategorySection]),
-        hiding hidden: Set<String>,
-        including stream: DBLiveStream
-    ) -> (queue: [DBLiveStream], sections: [LiveChannelCategorySection]) {
-        guard !hidden.isEmpty else { return live }
-        let sections = live.sections.filter { section in
-            !hidden.contains(section.id) || section.streams.contains { $0.streamId == stream.streamId }
-        }
-        guard sections.count != live.sections.count else { return live }
-        return (sections.flatMap(\.streams), sections)
-    }
-}
-
 // MARK: - Player programme strip (top chrome)
 
 /// Programme title stacked above its "HH:mm – HH:mm" range and a progress capsule,
@@ -282,43 +240,3 @@ enum EPGTimeFormat {
 
 // MARK: - Guide layout metrics
 
-struct EPGGuideMetrics: Equatable {
-    var hourWidth: CGFloat
-    var rowHeight: CGFloat
-    var channelColumnWidth: CGFloat
-    var axisHeight: CGFloat
-    var headerHeight: CGFloat
-
-    var dayWidth: CGFloat { hourWidth * 24 }
-
-    init(compact: Bool) {
-        hourWidth = compact ? 150 : 180
-        rowHeight = 56
-        channelColumnWidth = compact ? 104 : 172
-        axisHeight = 28
-        headerHeight = 34
-    }
-
-    /// The metrics the guide lays itself out with. Only the channel column
-    /// follows the width class. The hour width is the same in both: the view
-    /// model bakes it into the cell frames it precomputes, and the width class
-    /// flips on rotation and on window resizes, which must not invalidate them.
-    static func guide(regularWidth: Bool, textScale: CGFloat = 1) -> EPGGuideMetrics {
-        var metrics = EPGGuideMetrics(compact: true)
-        if regularWidth {
-            metrics.channelColumnWidth = EPGGuideMetrics(compact: false).channelColumnWidth
-        }
-        // Keep the precomputed horizontal programme positions unchanged.
-        let scale = min(max(textScale, 1), 1.5)
-        metrics.rowHeight *= scale
-        metrics.channelColumnWidth *= scale
-        metrics.axisHeight *= scale
-        metrics.headerHeight *= scale
-        return metrics
-    }
-
-    /// X offset (points from midnight) for a given instant on the selected day.
-    func x(for date: Date, dayStart: Date) -> CGFloat {
-        CGFloat(date.timeIntervalSince(dayStart) / 3600) * hourWidth
-    }
-}

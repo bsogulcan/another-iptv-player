@@ -112,7 +112,10 @@ final class EPGGuideViewModel: ObservableObject {
     /// Category ids the user has collapsed. Persisted per playlist so the guide
     /// reopens in the same shape.
     @Published private(set) var collapsedCategories: Set<String>
-    @Published private(set) var layouts: [String: EPGRowLayout] = [:]
+    private(set) var publishedLayoutVersion = 0
+    @Published private(set) var layouts: [String: EPGRowLayout] = [:] {
+        didSet { publishedLayoutVersion = layoutVersion }
+    }
     @Published var selectedDay: Date
     /// Day chips: yesterday … +7 days around the current day. Stored, because the
     /// view reads them on every pass and the calendar arithmetic is not free.
@@ -514,7 +517,7 @@ final class EPGGuideViewModel: ObservableObject {
             }
         case .m3u(let playlist):
             let channels = M3UContentStore.shared.channels
-            let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: M3UChannelsView.hiddenCategoryType)
+            let hidden = hiddenStore.hiddenIds(playlistId: playlist.id, type: M3UContentStore.hiddenCategoryType)
             task = Task.detached(priority: .userInitiated) {
                 Self.makeRows(m3u: channels, aliases: aliases, hiddenGroups: hidden)
             }
@@ -711,7 +714,7 @@ final class EPGGuideViewModel: ObservableObject {
             }
             let sx = x(cellStart)
             result.append(EPGCellLayout(id: programme.id, programme: programme, x: sx, width: max(2, x(cellEnd) - sx)))
-            cursor = cellEnd
+            cursor = max(cursor, cellEnd)
         }
         // Trailing filler to the end of the day.
         if cursor < dayEnd {

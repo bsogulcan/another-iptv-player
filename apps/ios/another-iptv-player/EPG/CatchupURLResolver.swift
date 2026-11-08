@@ -169,8 +169,10 @@ enum CatchupURLResolver {
         var lastError: Error?
         var hlsLost = false
         for candidate in candidates {
+            try Task.checkCancellation()
             do {
                 if try await probe(candidate) {
+                    try Task.checkCancellation()
                     // A panel whose HLS has worked before is not demoted on a single
                     // miss: the first one only drops the cached winner, the second
                     // (cache no longer says `.hls`) rules it out.
@@ -181,8 +183,9 @@ enum CatchupURLResolver {
                     return candidate
                 }
             } catch is CancellationError {
-                throw CatchupURLError.notAvailable
+                throw CancellationError()
             } catch {
+                try Task.checkCancellation()
                 lastError = error
             }
             // Counts only if a later shape wins: then the panel answered for this

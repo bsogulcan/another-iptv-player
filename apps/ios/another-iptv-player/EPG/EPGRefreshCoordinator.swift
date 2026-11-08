@@ -93,9 +93,6 @@ nonisolated struct EPGRefreshCoordinator {
                             wanted: wanted, pastCutoff: pastCutoff, futureCutoff: futureCutoff,
                             offsetSeconds: offsetSeconds
                         )
-                        guard counts.programmes > 0 || counts.channels > 0 else {
-                            throw EPGError.emptyGuide
-                        }
                         try await recordSuccess(playlistId: playlist.id, sourceType: sourceType,
                                                 url: url, etag: etag, lastModified: lastModified,
                                                 programmeCount: counts.programmes, channelCount: counts.channels)
@@ -273,6 +270,7 @@ nonisolated struct EPGRefreshCoordinator {
         }
         if let writeError { throw writeError }
         try Task.checkCancellation()
+        guard programmeCount > 0 || channelCount > 0 else { throw EPGError.emptyGuide }
         try publishStagedGuide(playlistId: playlistId)
         return (programmeCount, channelCount)
     }

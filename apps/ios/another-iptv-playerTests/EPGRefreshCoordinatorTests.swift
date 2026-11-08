@@ -113,11 +113,12 @@ struct EPGRefreshCoordinatorTests {
         #expect(source.channelCount == channelCount)
     }
 
-    @Test
-    func aFailedDownloadRecordsTheErrorAndKeepsTheStoredGuide() async throws {
+    @Test(arguments: [false, true])
+    func aFailedRefreshRecordsTheErrorAndKeepsTheStoredGuide(emptyFeed: Bool) async throws {
         let database = AppDatabase.empty()
-        // Nothing is served on this host: the request fails like a dead connection.
-        let playlist = EPGTestSupport.m3uPlaylist()
+        let host = EPGTestSupport.uniqueHost()
+        let playlist = EPGTestSupport.m3uPlaylist(host: host)
+        if emptyFeed { EPGTestSupport.serve("<tv></tv>", onHost: host) }
         try await EPGTestSupport.seedMatchingGuide(
             in: database, playlist: playlist,
             source: EPGTestSupport.source(playlist, attempt: 8 * 3_600, success: 8 * 3_600)

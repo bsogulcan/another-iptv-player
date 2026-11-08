@@ -1,7 +1,11 @@
 import Foundation
 import Combine
 import GRDB
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 enum EPGRefreshState: Equatable {
     case idle
@@ -112,13 +116,20 @@ final class EPGStore: ObservableObject {
     /// a Swift 6 concurrency error for `@Sendable` closures.
     private func registerLifecycleObservers() {
         let center = NotificationCenter.default
-        observers.append(center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+        #if os(macOS)
+        let suspendNotification = NSApplication.didHideNotification
+        let activeNotification = NSApplication.didBecomeActiveNotification
+        #else
+        let suspendNotification = UIApplication.didEnterBackgroundNotification
+        let activeNotification = UIApplication.didBecomeActiveNotification
+        #endif
+        observers.append(center.addObserver(forName: suspendNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in self?.applicationDidEnterBackground() }
         })
         // Utility priority for both triggers: what they may start is a guide
         // download and parse, which should not compete with a filter or a sort the
         // user is waiting for. Nothing awaits these tasks, so nothing raises it.
-        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+        observers.append(center.addObserver(forName: activeNotification, object: nil, queue: .main) { [weak self] _ in
             Task(priority: .utility) { @MainActor [weak self] in await self?.applicationDidBecomeActive() }
         })
         NetworkStatus.shared.$reconnectCount
@@ -466,6 +477,16 @@ final class EPGStore: ObservableObject {
         return dict
     }
 
+    func snapshot(for playlistId: UUID?) -> EPGSnapshot? {
+        guard playlistId != nil, activePlaylistId == playlistId else { return nil }
+        return snapshot
+    }
+
+    func nowNext(playlistId: UUID, channelKey: String?) -> EPGNowNext? {
+        guard activePlaylistId == playlistId else { return nil }
+        return nowNext(channelKey: channelKey)
+    }
+
     func nowNext(channelKey: String?) -> EPGNowNext? { snapshot?[channelKey] }
 
     // MARK: - Resolution
@@ -810,5 +831,25 @@ final class EPGStore: ObservableObject {
 
     private func databaseQuestionMarks(count: Int) -> String {
         Array(repeating: "?", count: count).joined(separator: ",")
+    }
+}
+
+/// On-demand lookup of the programme after the one on air. `nonisolated`: runs inside
+/// the database reader closure.
+nonisolated enum PlayerNextProgrammeQuery {
+    /// First programme of `channelKey` that starts after `currentStart` and has not
+    /// ended at `now`: a range scan on the (playlistId, channelKey, startTs) primary
+    /// key that reads one row. The `stopTs` bound skips short entries that overlapping
+    /// guide data leaves behind the programme on air.
+    static func fetch(_ db: Database, playlistId: UUID, channelKey: String,
+                      after currentStart: Date, now: Date) throws -> EPGProgramme? {
+        try EPGGuideProgrammeRecord.fetchOne(db, sql: """
+            SELECT channelKey, startTs, stopTs, title FROM epgProgramme
+            WHERE playlistId = ? AND channelKey = ? AND startTs > ? AND stopTs > ?
+            ORDER BY startTs LIMIT 1
+            """, arguments: [
+                playlistId, channelKey,
+                Int64(currentStart.timeIntervalSince1970), Int64(now.timeIntervalSince1970)
+            ])?.programme
     }
 }
