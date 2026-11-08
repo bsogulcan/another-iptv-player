@@ -420,7 +420,7 @@ private struct PlayerViewImpl: View {
         morph.progress < MiniMorphGeometry.fullscreenProgress
     }
 
-    /// İki parmak pinch: 1x–4x; yakınlaştırınca tek parmakla sürükleyerek kadraj kaydırılabilir.
+    /// İki parmak pinch: 1x–4x; yakınlaştırınca tek parmakla sürükleyerek görüntü kaydırılabilir.
     /// Pinch & pan UIKit tarafında (`PlayerMediaKitTouchContainerView`); koordinat sistemi
     /// scaled view'a bağlı olmadığı için drag güvenilir. Pinch midpoint anchor için aşağıdaki
     /// `pinchAnchorState` kullanılır.

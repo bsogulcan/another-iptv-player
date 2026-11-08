@@ -5,7 +5,7 @@ import GRDBQuery
 import SwiftUI
 
 @main
-struct KadrajApp: App {
+struct AnotherIPTVPlayerApp: App {
   @AppStorage("mac.appearance") private var appearance = "system"
   @StateObject private var playback = DesktopPlayback()
   @Environment(\.scenePhase) private var scenePhase

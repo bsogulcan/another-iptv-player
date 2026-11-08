@@ -92,7 +92,7 @@
 		68B750A608D3E5D7B0D38AC1 /* CatchupURLResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7CC5299D828954E418E430 /* CatchupURLResolverTests.swift */; };
 		6B37A77C352C8206CFBBFBD5 /* CatalogTextSearchFastPathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672290B60352E4E754C19025 /* CatalogTextSearchFastPathTests.swift */; };
 		6B81C573BA91B868764E3499 /* SourceImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B118BBB6A471B2840C8D27 /* SourceImport.swift */; };
-		6C69A55DA145013B6EDF1DE8 /* KadrajApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631A363FB19EACDA5CFB3001 /* KadrajApp.swift */; };
+		6C69A55DA145013B6EDF1DE8 /* AnotherIPTVPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631A363FB19EACDA5CFB3001 /* AnotherIPTVPlayerApp.swift */; };
 		6D40FBD670DE42FE373E866F /* VODSortOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E63AB23081EAB84A0FBA286 /* VODSortOption.swift */; };
 		6E2B5E6165212F775CC44769 /* GRDBQuery in Frameworks */ = {isa = PBXBuildFile; productRef = 963D16A4683D38599AF5F5BF /* GRDBQuery */; };
 		6FA5AE2CEC372DDA912DCEB9 /* RecoveringAudioEnginePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90F12D021CCE75162EDBF65 /* RecoveringAudioEnginePlayer.swift */; };
@@ -298,7 +298,7 @@
 		60F91F06647738726BB892AA /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = zh; path = zh.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		61F667BB208056CDE531F937 /* M3UStreamClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UStreamClassifier.swift; sourceTree = "<group>"; };
 		62D2ADCF71A74B741BF36275 /* MacGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacGuide.swift; sourceTree = "<group>"; };
-		631A363FB19EACDA5CFB3001 /* KadrajApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KadrajApp.swift; sourceTree = "<group>"; };
+		631A363FB19EACDA5CFB3001 /* AnotherIPTVPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnotherIPTVPlayerApp.swift; sourceTree = "<group>"; };
 		638562606513425472F9BBA9 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		66E124D1B24492DF3633642A /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		672290B60352E4E754C19025 /* CatalogTextSearchFastPathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogTextSearchFastPathTests.swift; sourceTree = "<group>"; };
@@ -706,13 +706,13 @@
 			path = "../ios/another-iptv-playerTests/Fixtures";
 			sourceTree = "<group>";
 		};
-		AA75E55F72DADB1658840780 /* Kadraj */ = {
+		AA75E55F72DADB1658840780 /* AnotherIPTVPlayer */ = {
 			isa = PBXGroup;
 			children = (
 				197316030789B623AA2117A2 /* DesktopPlayback.swift */,
 				3E821D9B08111559A6C46D40 /* DetailFormatting.swift */,
 				7949210EB7D4C83A0D0996BC /* Info.plist */,
-				631A363FB19EACDA5CFB3001 /* KadrajApp.swift */,
+				631A363FB19EACDA5CFB3001 /* AnotherIPTVPlayerApp.swift */,
 				61F667BB208056CDE531F937 /* M3UStreamClassifier.swift */,
 				8323DFDFE28ED35B442D9423 /* MacArtworkViewer.swift */,
 				1A308C18EC6D017E2521B871 /* MacCatalog.swift */,
@@ -738,7 +738,7 @@
 				F4758403BE2228936FCA5FF1 /* TrackMenuOption.swift */,
 				23D793AD927FC95AC8AD8BF0 /* Resources */,
 			);
-			path = Kadraj;
+			path = AnotherIPTVPlayer;
 			sourceTree = "<group>";
 		};
 		AAC4D8FBBE998441F0D7241F /* UIUtils */ = {
@@ -756,7 +756,7 @@
 			path = "../ios/another-iptv-player/UIUtils";
 			sourceTree = "<group>";
 		};
-		B282B76B760D398E07BD4499 /* KadrajTests */ = {
+		B282B76B760D398E07BD4499 /* AnotherIPTVPlayerTests */ = {
 			isa = PBXGroup;
 			children = (
 				C4F19AD599989D517A59426B /* MacInteractionTests.swift */,
@@ -764,7 +764,7 @@
 				97902321438E957C568C0876 /* MacUpgradeTests.swift */,
 				979ED8035C09F61161027EF0 /* Fixtures */,
 			);
-			path = KadrajTests;
+			path = AnotherIPTVPlayerTests;
 			sourceTree = "<group>";
 		};
 		BAE35B9B0F38C2AFD3D561FD /* Localization */ = {
@@ -802,8 +802,8 @@
 				1CDC3B22DA4FFAD3A92F7331 /* EPG */,
 				08FF1B4D4A62D0BE5E05E922 /* EPG */,
 				A18E25B6DFCB90A602D22FEE /* Fixtures */,
-				AA75E55F72DADB1658840780 /* Kadraj */,
-				B282B76B760D398E07BD4499 /* KadrajTests */,
+				AA75E55F72DADB1658840780 /* AnotherIPTVPlayer */,
+				B282B76B760D398E07BD4499 /* AnotherIPTVPlayerTests */,
 				BAE35B9B0F38C2AFD3D561FD /* Localization */,
 				1C6BCE03DBEE9F0BE15F4AB9 /* Models */,
 				A0DDDF42B5BAE6625FFA437D /* Networking */,
@@ -1113,7 +1113,7 @@
 				CE4E49FE9CA88A74A3CDEB77 /* KSPlayerCrashGuards.swift in Sources */,
 				F32AE06C61C500919D3A788C /* KSPlayerEngine.swift in Sources */,
 				B7646279E58150176693FE9B /* KSSubtitleTextLayer.swift in Sources */,
-				6C69A55DA145013B6EDF1DE8 /* KadrajApp.swift in Sources */,
+				6C69A55DA145013B6EDF1DE8 /* AnotherIPTVPlayerApp.swift in Sources */,
 				FD5E7E66DE8B0732BA31D0D8 /* LiveChannelCategorySection.swift in Sources */,
 				D25E0EF90C05F0C2058FBF6B /* LiveSortOption.swift in Sources */,
 				FDB68732AF01A409AB12D1D1 /* LocalHTTPServer.swift in Sources */,
@@ -1278,7 +1278,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Kadraj/Info.plist;
+				INFOPLIST_FILE = AnotherIPTVPlayer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -1445,7 +1445,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = Kadraj/Info.plist;
+				INFOPLIST_FILE = AnotherIPTVPlayer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

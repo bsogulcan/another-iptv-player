@@ -39,7 +39,7 @@ targets:
     productName: Another IPTV Player
     platform: macOS
     sources:
-      - Kadraj
+      - AnotherIPTVPlayer
       - another-iptv-player/Assets.xcassets
       - path: ../ios/another-iptv-player/Database
         excludes: [Persistence.swift]
@@ -74,7 +74,7 @@ targets:
         ENABLE_USER_SELECTED_FILES: readwrite
         PRODUCT_NAME: Another IPTV Player
         PRODUCT_MODULE_NAME: another_iptv_player
-        INFOPLIST_FILE: Kadraj/Info.plist
+        INFOPLIST_FILE: AnotherIPTVPlayer/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: GRDB
@@ -116,7 +116,7 @@ targets:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - KadrajTests
+      - AnotherIPTVPlayerTests
       - ../ios/another-iptv-playerTests/Fixtures/selected-tracks.mkv
       - path: ../../shared/fixtures
         type: folder
