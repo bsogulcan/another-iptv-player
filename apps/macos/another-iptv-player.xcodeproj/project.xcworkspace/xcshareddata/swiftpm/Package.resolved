@@ -1,6 +1,15 @@
 {
-  "originHash" : "291b53e8acb564902daaaf77c70bc85ff13c5fe18c57f47afecb7aaf853f0197",
+  "originHash" : "7c39c33198e20c2a414e8bd03e7a85ed5c3f387f92f06ceb5b4f06dd3dbc010d",
   "pins" : [
+    {
+      "identity" : "ffmpegkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kingslay/FFmpegKit.git",
+      "state" : {
+        "revision" : "c32be9bfb628042737ad3ef622e930c5c7b15954",
+        "version" : "6.1.4"
+      }
+    },
     {
       "identity" : "grdb.swift",
       "kind" : "remoteSourceControl",
@@ -20,12 +29,20 @@
       }
     },
     {
+      "identity" : "ksplayer",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kingslay/KSPlayer.git",
+      "state" : {
+        "revision" : "92c18fae716f63a080541c4bcc77247ade181426"
+      }
+    },
+    {
       "identity" : "nuke",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Nuke.git",
       "state" : {
-        "revision" : "63a8fcbd6621340a2410bc3e9575ac97058615f4",
-        "version" : "13.0.6"
+        "revision" : "76e780ad7100c224e5127822ff81915dd04880c5",
+        "version" : "13.0.1"
       }
     }
   ],

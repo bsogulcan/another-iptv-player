@@ -1,151 +1,175 @@
 name: another-iptv-player
 options:
-  bundleIdPrefix: dev.another-iptv-player
+  developmentLanguage: en
   deploymentTarget:
     macOS: "14.0"
-  createIntermediateGroups: true
-  groupSortPosition: top
-  generateEmptyDirectories: true
-  developmentLanguage: en
+  createIntermediateGroups: false
 settings:
   base:
-    SWIFT_VERSION: "5.0"
-    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SDKROOT: macosx
     ENABLE_USER_SCRIPT_SANDBOXING: NO
-    DEAD_CODE_STRIPPING: YES
-    ENABLE_MODULE_VERIFIER: NO
-    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_VERSION: "5.0"
     SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
-    SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
-    SWIFT_EMIT_LOC_STRINGS: YES
-    GCC_PREPROCESSOR_DEFINITIONS: $(inherited) GL_SILENCE_DEPRECATION=1
-    SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) GL_SILENCE_DEPRECATION
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: YES
 packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift.git
-    branch: master
+    revision: 36e30a6f1ef10e4194f6af0cff90888526f0c115
   GRDBQuery:
     url: https://github.com/groue/GRDBQuery.git
-    from: 0.11.0
+    exactVersion: 0.11.0
+  KSPlayer:
+    url: https://github.com/kingslay/KSPlayer.git
+    revision: 92c18fae716f63a080541c4bcc77247ade181426
   Nuke:
     url: https://github.com/kean/Nuke.git
-    from: 13.0.1
+    exactVersion: 13.0.1
 schemes:
   another-iptv-player:
     build:
       targets:
         another-iptv-player: all
-    run:
-      config: Debug
+    test:
+      targets: [MacTests]
 targets:
   another-iptv-player:
     type: application
+    productName: Another IPTV Player
     platform: macOS
-    deploymentTarget: "14.0"
     sources:
-      - path: another-iptv-player
-        excludes:
-          - "scripts/**"
-    resources:
-      - path: another-iptv-player/Assets.xcassets
-        optional: true
-    info:
-      path: another-iptv-player/Info.plist
-      properties:
-        CFBundleDisplayName: $(PRODUCT_NAME)
-        CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
-        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
-        NSHumanReadableCopyright: ""
-        NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
-        CFBundleLocalizations:
-          - en
-          - tr
-          - ar
-          - de
-          - es
-          - fr
-          - hi
-          - pt
-          - ru
-          - zh
-        NSMainStoryboardFile: ""
-        NSPrincipalClass: NSApplication
-    entitlements:
-      path: another-iptv-player/another-iptv-player.entitlements
-      properties:
-        com.apple.security.app-sandbox: false
-        com.apple.security.network.client: true
-        com.apple.security.files.user-selected.read-write: true
+      - Kadraj
+      - another-iptv-player/Assets.xcassets
+      - path: ../ios/another-iptv-player/Database
+        excludes: [Persistence.swift]
+      - path: ../ios/another-iptv-player/PlayerCore/AirPlayRemux
+      - ../ios/another-iptv-player/PlayerCore/KSSubtitleTextLayer.swift
+      - ../ios/another-iptv-player/Views/Components/DownloadProgressFooter.swift
+      - ../ios/another-iptv-player/Views/Components/SubtitleAppearanceSheet.swift
+      - ../ios/another-iptv-player/PlayerCore/KSPlayerEngine.swift
+      - ../ios/another-iptv-player/PlayerCore/KSPlayerCrashGuards.swift
+      - ../ios/another-iptv-player/PlayerCore/RecoveringAudioEnginePlayer.swift
+      - ../ios/another-iptv-player/PlayerCore/PlayerDiagnosticLog.swift
+      - path: ../ios/another-iptv-player/EPG
+      - path: ../ios/another-iptv-player/Models
+      - path: ../ios/another-iptv-player/Networking
+        excludes: [VideoPlayerController.swift]
+      - path: ../ios/another-iptv-player/UIUtils
+      - path: ../ios/another-iptv-player/Localization
+        excludes: [LanguagePickerSection.swift]
+      - ../ios/another-iptv-player/Views/EPG/EPGComponents.swift
+      - ../ios/another-iptv-player/Views/EPG/EPGSettingsSections.swift
+      - ../ios/another-iptv-player/Views/EPG/EPGGuideViewModel.swift
+      - ../ios/another-iptv-player/Views/CachedImage.swift
+      - ../ios/another-iptv-player/Views/ImageHostBreaker.swift
+      - ../ios/another-iptv-player/Views/RatingLabel.swift
+      - ../ios/another-iptv-player/Views/Components/Browse/BrowseAccessibility.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.another-iptv-player.mac
-        PRODUCT_NAME: another-iptv-player
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_INCOMING_NETWORK_CONNECTIONS: YES
+        ENABLE_OUTGOING_NETWORK_CONNECTIONS: YES
+        ENABLE_USER_SELECTED_FILES: readwrite
+        PRODUCT_NAME: Another IPTV Player
+        PRODUCT_MODULE_NAME: another_iptv_player
+        INFOPLIST_FILE: Kadraj/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        SWIFT_OBJC_BRIDGING_HEADER: another-iptv-player/another-iptv-player-Bridging-Header.h
-        HEADER_SEARCH_PATHS:
-          - $(inherited)
-          - $(SRCROOT)/Vendor/mpv-headers
-        FRAMEWORK_SEARCH_PATHS:
-          - $(inherited)
-          - $(SRCROOT)/Vendor/libmpv/LinkStaging/$(PLATFORM_NAME)
-        OTHER_LDFLAGS:
-          - $(inherited)
-          - -framework
-          - Mpv
-          - -framework
-          - Ass
-          - -framework
-          - Avcodec
-          - -framework
-          - Avfilter
-          - -framework
-          - Avformat
-          - -framework
-          - Avutil
-          - -framework
-          - Dav1d
-          - -framework
-          - Freetype
-          - -framework
-          - Fribidi
-          - -framework
-          - Harfbuzz
-          - -framework
-          - Mbedcrypto
-          - -framework
-          - Mbedtls
-          - -framework
-          - Mbedx509
-          - -framework
-          - Png16
-          - -framework
-          - Swresample
-          - -framework
-          - Swscale
-          - -framework
-          - Uchardet
-          - -framework
-          - Xml2
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "-"
     dependencies:
       - package: GRDB
         product: GRDB
       - package: GRDBQuery
-        product: GRDBQuery
-      - package: Nuke
-        product: Nuke
+      - package: KSPlayer
       - package: Nuke
         product: NukeUI
-    preBuildScripts:
-      - name: Prepare libmpv link paths
-        script: |
-          exec "${SRCROOT}/another-iptv-player/scripts/prepare_libmpv_link_paths.sh"
-        basedOnDependencyAnalysis: false
     postBuildScripts:
-      - name: Embed libmpv frameworks
-        script: |
-          exec "${SRCROOT}/another-iptv-player/scripts/embed_libmpv_frameworks.sh"
+      - name: Version embedded FFmpeg bundles for macOS
+        script: /bin/sh "${SRCROOT}/scripts/version-ffmpeg-frameworks.sh"
         basedOnDependencyAnalysis: false
+        inputFiles:
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libavcodec.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libavdevice.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libavfilter.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libavformat.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libavutil.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libswresample.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Libswscale.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/gmp.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/gnutls.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/hogweed.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/lcms2.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libass.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libbluray.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libdav1d.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libfontconfig.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libfreetype.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libfribidi.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libharfbuzz.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libplacebo.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libshaderc_combined.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libsmbclient.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libsrt.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libzvbi.framework"
+          - "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/nettle.framework"
+  MacTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - KadrajTests
+      - ../ios/another-iptv-playerTests/Fixtures/selected-tracks.mkv
+      - path: ../../shared/fixtures
+        type: folder
+        buildPhase: resources
+      - ../ios/another-iptv-playerTests/MockPanelServer.swift
+      - ../ios/another-iptv-playerTests/EPGTestSupport.swift
+      - ../ios/another-iptv-playerTests/AirPlayRemuxTests.swift
+      - ../ios/another-iptv-playerTests/AirPlayRemuxRegressionTests.swift
+      - ../ios/another-iptv-playerTests/RemuxTimelineTests.swift
+      - ../ios/another-iptv-playerTests/VideoPlayerControllerLogicTests.swift
+      - ../ios/another-iptv-playerTests/CatchupURLResolverTests.swift
+      - ../ios/another-iptv-playerTests/EPGRefreshCoordinatorTests.swift
+      - ../ios/another-iptv-playerTests/EPGStoreLifecycleTests.swift
+      - ../ios/another-iptv-playerTests/EPGRefreshPolicyTests.swift
+      - ../ios/another-iptv-playerTests/EPGGuideRowBuilderTests.swift
+      - ../ios/another-iptv-playerTests/EPGGuidePerformanceTests.swift
+      - ../ios/another-iptv-playerTests/DownloadMutationTests.swift
+      - ../ios/another-iptv-playerTests/DownloadsSectionsTests.swift
+      - ../ios/another-iptv-playerTests/FavoriteWriterTests.swift
+      - ../ios/another-iptv-playerTests/XtreamFavoriteStoreTests.swift
+      - ../ios/another-iptv-playerTests/M3UFavoriteStoreTests.swift
+      - ../ios/another-iptv-playerTests/PlaylistCatalogFetchTests.swift
+      - ../ios/another-iptv-playerTests/SeriesDetailDataTests.swift
+      - ../ios/another-iptv-playerTests/PlaylistCatalogTestSupport.swift
+      - ../ios/another-iptv-playerTests/AdultContentFilterTests.swift
+      - ../ios/another-iptv-playerTests/CatchupAvailabilityTests.swift
+      - ../ios/another-iptv-playerTests/CatchupURLBuilderTests.swift
+      - ../ios/another-iptv-playerTests/CatalogTextSearchTests.swift
+      - ../ios/another-iptv-playerTests/CatalogTextSearchRankingTests.swift
+      - ../ios/another-iptv-playerTests/CatalogTextSearchFastPathTests.swift
+      - ../ios/another-iptv-playerTests/CatalogTextSearchSQLTests.swift
+      - ../ios/another-iptv-playerTests/ContentRatingTests.swift
+      - ../ios/another-iptv-playerTests/DetailMetadataTests.swift
+      - ../ios/another-iptv-playerTests/DiagnosticPreviewTests.swift
+      - ../ios/another-iptv-playerTests/EPGXMLTVParserTests.swift
+      - ../ios/another-iptv-playerTests/GzipDecompressorTests.swift
+      - ../ios/another-iptv-playerTests/M3UImporterTests.swift
+      - ../ios/another-iptv-playerTests/M3UParserTests.swift
+      - ../ios/another-iptv-playerTests/PlaybackURLBuilderTests.swift
+      - ../ios/another-iptv-playerTests/PlaylistRowUpdateTests.swift
+      - ../ios/another-iptv-playerTests/PlaylistDisplaySourceTests.swift
+      - ../ios/another-iptv-playerTests/SRTParserTests.swift
+      - ../ios/another-iptv-playerTests/SeriesPlaybackOrderingTests.swift
+      - ../ios/another-iptv-playerTests/XtreamAPIClientDecodingTests.swift
+      - ../ios/another-iptv-playerTests/XtreamEPGDecodingTests.swift
+      - ../ios/another-iptv-playerTests/XtreamLinkDetectorTests.swift
+      - ../ios/another-iptv-playerTests/XtreamServerAddressTests.swift
+      - ../ios/another-iptv-playerTests/XtreamSeriesInfoTests.swift
+      - ../ios/another-iptv-playerTests/WatchResumeTests.swift
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Another IPTV Player.app/Contents/MacOS/Another IPTV Player"
+        PRODUCT_BUNDLE_IDENTIFIER: dev.another-iptv-player.mac.tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: another-iptv-player
