@@ -425,6 +425,7 @@
 "detail.show_more" = "展开";
 "detail.show_less" = "收起";
 "player.a11y.playback_position" = "播放进度";
+"download.error.file_write" = "无法将文件保存到此设备。";
 "download.error.no_space" = "设备上的可用存储空间不足";
 "download.missing_file.title" = "文件已不在设备上";
 "download.missing_file.message" = "下载的文件已丢失（通常发生在恢复或迁移设备之后）。要重新下载吗？";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "所有分类均已隐藏";
 "guide.all_hidden.message" = "在分类选择器中显示一个分类，即可在电视指南中查看其频道。";
+"detail.more_like_this" = "更多同类内容";
+"filter.unwatched" = "未观看";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "有可用更新";
+"update.message" = "App Store 已提供 %1$@ 版本，您当前使用的是 %2$@。";
+"update.action" = "更新";
+"update.later" = "稍后";
+"playlist.import.changed" = "此来源已更改或移除。请重新打开来源设置以查看最新信息。";

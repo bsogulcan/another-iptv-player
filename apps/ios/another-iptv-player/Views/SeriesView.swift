@@ -125,6 +125,76 @@ struct SeriesView: View {
     @Environment(\.playerOverlayController) private var playerOverlay
 
     @State private var pendingSeriesDetail: DBSeries?
+    /// Width of the shelf list, for the featured carousel's card size.
+    @State private var listWidth: CGFloat = UIScreen.main.bounds.width
+    /// Stored rows of the featured series, with the details loaded for those whose list
+    /// entry had no wide artwork.
+    @State private var heroRows: [Int: DBSeries] = [:]
+
+    private func heroSource(_ recents: [DBSeries]) -> [DBSeries] {
+        guard debouncedQuery.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return Array(recents.prefix(5))
+    }
+
+    /// The newest series, featured above the shelves; not while a search is shown.
+    private func heroItems(_ recents: [DBSeries]) -> [BrowseHeroItem] {
+        heroSource(recents).map { listed in
+            let series = heroRows[listed.seriesId] ?? listed
+            return BrowseHeroItem(
+                id: series.seriesId,
+                title: series.name,
+                posterURL: series.cover.flatMap { URL(string: $0) },
+                backdropURL: series.backdropPath.flatMap { URL(string: $0) },
+                meta: BrowseHeroItem.metaLine(
+                    year: DetailFormatting.year(from: series.releaseDate),
+                    genre: series.genre,
+                    rating: series.rating
+                )
+            )
+        }
+    }
+
+    /// Reads the featured series' stored rows, then asks the panel for the details of
+    /// those still without wide artwork, one at a time. The answer is stored as the
+    /// detail page stores it; the seasons are left for that page.
+    private func loadHeroRows(_ source: [DBSeries]) async {
+        guard !source.isEmpty else { return }
+        let ids = source.map(\.seriesId)
+        let playlistId = playlist.id
+        let stored = (try? await AppDatabase.shared.read { db in
+            try DBSeries
+                .filter(ids.contains(Column("seriesId")) && Column("playlistId") == playlistId)
+                .fetchAll(db)
+        }) ?? []
+        var rows = Dictionary(stored.map { ($0.seriesId, $0) }, uniquingKeysWith: { first, _ in first })
+        guard !Task.isCancelled else { return }
+        heroRows = rows
+        let client = XtreamAPIClient(playlist: playlist)
+        for listed in source {
+            let current = rows[listed.seriesId] ?? listed
+            guard current.backdropPath?.isEmpty ?? true, !current.seasonsLoaded else { continue }
+            // Panels that have no artwork for a series answer the same every time: ask
+            // once per launch, not on every visit of the tab.
+            let key = "\(playlistId)-\(listed.seriesId)"
+            guard HeroSeriesLookups.asked.insert(key).inserted else { continue }
+            guard !Task.isCancelled else { return }
+            guard let response = try? await client.getSeriesInfo(seriesId: listed.seriesId) else { continue }
+            guard !Task.isCancelled else { return }
+            let updated = DetailMetadata.series(current, response: response)
+            rows[listed.seriesId] = updated
+            heroRows = rows
+            _ = try? await AppDatabase.shared.write { db in
+                guard let row = try DBSeries
+                    .filter(Column("seriesId") == updated.seriesId && Column("playlistId") == playlistId)
+                    .fetchOne(db) else { return }
+                try DetailMetadata.series(row, response: response).update(db)
+            }
+        }
+    }
+
+    @MainActor private enum HeroSeriesLookups {
+        static var asked: Set<String> = []
+    }
 
     private var pickerEntries: [CategoryPickerSheet.Entry] {
         contentStore.seriesCategories.map { cat in
@@ -282,6 +352,21 @@ struct SeriesView: View {
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
+                        BrowseHeroCarousel(
+                            items: heroItems(shelves.recents),
+                            containerWidth: listWidth,
+                            eyebrow: L("recently_added.title")
+                        ) { item in
+                            if let series = shelves.recents.first(where: { $0.seriesId == item.id }) {
+                                SeriesDetailView(playlist: playlist, series: series)
+                            }
+                        } more: {
+                            RecentlyAddedSeriesDetailView(playlist: playlist, items: shelves.recents)
+                        }
+                        .task(id: heroSource(shelves.recents).map(\.seriesId)) {
+                            await loadHeroRows(heroSource(shelves.recents))
+                        }
+
                         ContinueWatchingRow(
                             playlist: playlist,
                             typeFilter: "series",
@@ -294,15 +379,6 @@ struct SeriesView: View {
                                 presentSeriesHistoryItem(item)
                             }
                         )
-
-                        if shelves.isRecentsLoading || !shelves.recents.isEmpty {
-                            RecentlyAddedSeriesShelf(
-                                playlist: playlist,
-                                items: shelves.recents,
-                                isLoading: shelves.isRecentsLoading
-                            )
-                            .equatable()
-                        }
 
                         LazyVStack(spacing: 0) {
                             ForEach(shelves.categories) { category in
@@ -320,6 +396,7 @@ struct SeriesView: View {
                             }
                         }
                     }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { listWidth = $0 }
                     .refreshable {
                         // Bağımsız Task: refreshable iptali isteklere yayılmasın (bkz. LiveStreamsView).
                         let work = Task { await contentStore.refreshFromNetwork(playlist: playlist, only: .series) }
@@ -584,61 +661,6 @@ private struct SeriesShelfSkeleton: View {
         .posterShelfFrame()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-    }
-}
-
-// MARK: - Recently Added shelf
-
-struct RecentlyAddedSeriesShelf: View, Equatable {
-    let playlist: Playlist
-    let items: [DBSeries]
-    /// The newest series are not known yet; the shelf holds its place with a placeholder.
-    var isLoading: Bool = false
-
-    static func == (lhs: RecentlyAddedSeriesShelf, rhs: RecentlyAddedSeriesShelf) -> Bool {
-        lhs.playlist.id == rhs.playlist.id && lhs.items == rhs.items && lhs.isLoading == rhs.isLoading
-    }
-
-    @Environment(\.posterMetrics) private var posterMetrics
-    @Namespace private var zoom
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ShelfHeader(L("recently_added.title")) {
-                RecentlyAddedSeriesDetailView(playlist: playlist, items: items)
-            }
-            .disabled(items.isEmpty)
-
-            if items.isEmpty && isLoading {
-                SeriesShelfSkeleton()
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .top, spacing: SeriesCategoryShelf.cardSpacing) {
-                        ForEach(items) { series in
-                            NavigationLink {
-                                SeriesDetailView(playlist: playlist, series: series)
-                                    .posterZoomDestination(id: series.seriesId, in: zoom)
-                            } label: {
-                                SeriesCard(
-                                    playlistId: playlist.id,
-                                    stream: series,
-                                    posterWidth: posterMetrics.shelfPosterWidth,
-                                    posterHeight: posterMetrics.shelfPosterHeight,
-                                    imageLoadProfile: .shelf,
-                                    zoomNamespace: zoom
-                                )
-                            }
-                            .seriesCardInteractions(seriesId: series.seriesId, playlistId: playlist.id)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-                // Lets the context-menu lift and its shadow reach past the shelf's edges.
-                .scrollClipDisabled()
-                .posterShelfFrame()
-            }
-        }
-        .padding(.vertical, 6)
     }
 }
 
@@ -974,6 +996,8 @@ struct SeriesCategoryContent: View, Equatable {
     @AppStorage(SeriesSortOption.storageKey) private var sortOption: SeriesSortOption = .defaultOrder
     /// Screen-local: genres are specific to the currently shown list.
     @State private var genreFilter: Set<String> = []
+    /// Screen-local: only series the panel rates 7 or more out of 10.
+    @State private var highRatedOnly = false
     /// Sort/filter output, recomputed off the main thread on input changes. With the
     /// default order and no filter it is `items` itself (the same buffer, not a copy).
     @State private var displayItems: [SeriesWithCategory] = []
@@ -997,9 +1021,10 @@ struct SeriesCategoryContent: View, Equatable {
         let items: Int
         let sort: SeriesSortOption
         let genres: Set<String>
+        var highRatedOnly = false
 
         /// Default order without a filter: the output is the input itself.
-        var isIdentity: Bool { sort == .defaultOrder && genres.isEmpty }
+        var isIdentity: Bool { sort == .defaultOrder && genres.isEmpty && !highRatedOnly }
     }
 
     init(
@@ -1037,11 +1062,7 @@ struct SeriesCategoryContent: View, Equatable {
     }
 
     private var inputKey: InputKey {
-        InputKey(items: itemsToken, sort: effectiveSort, genres: genreFilter)
-    }
-
-    private var isFilterActive: Bool {
-        effectiveSort != .defaultOrder || !genreFilter.isEmpty
+        InputKey(items: itemsToken, sort: effectiveSort, genres: genreFilter, highRatedOnly: highRatedOnly)
     }
 
     private func recompute(for key: InputKey) async {
@@ -1060,8 +1081,16 @@ struct SeriesCategoryContent: View, Equatable {
 
         let sort = key.sort
         let filter = key.genres
+        let highRatedOnly = key.highRatedOnly
         let output = await CatalogTextSearch.detached { () -> (sorted: [SeriesWithCategory]?, genres: [String]?) in
-            let sorted = needsSort ? sort.apply(to: SeriesGenre.filter(source, selection: filter)) : nil
+            var sorted: [SeriesWithCategory]?
+            if needsSort {
+                var filtered = SeriesGenre.filter(source, selection: filter)
+                if highRatedOnly {
+                    filtered.removeAll { CatalogRatingValue.parse($0.series.rating) < 7 }
+                }
+                sorted = sort.apply(to: filtered)
+            }
             if Task.isCancelled { return (nil, nil) }
             // Options come from the full list so toggling one doesn't hide the others.
             return (sorted, needsGenres ? SeriesGenre.available(in: source) : nil)
@@ -1106,7 +1135,7 @@ struct SeriesCategoryContent: View, Equatable {
         let isSettled = drawsItems || key == appliedKey
         let total = shown.count
         Group {
-            if shown.isEmpty {
+            if shown.isEmpty && (key.isIdentity || !isSettled) {
                 if isSourceLoading || !isSettled {
                     // Not known to be empty yet.
                     ProgressView()
@@ -1116,6 +1145,13 @@ struct SeriesCategoryContent: View, Equatable {
                 }
             } else {
                 ScrollView {
+                  LazyVStack(spacing: 0) {
+                   Section {
+                    if shown.isEmpty {
+                        // Only reachable with a filter on: the menu stays so it can be undone.
+                        CatalogEmptyView(.noItems(title: L("series.empty.no_series"), systemImage: "play.tv"))
+                            .padding(.top, 60)
+                    }
                     LazyVGrid(columns: categoryGridColumns, spacing: posterMetrics.gridRowSpacing) {
                         ForEach(Indexed(shown.prefix(visibleCount)), id: \.element.series.seriesId) { index, item in
                             NavigationLink {
@@ -1139,25 +1175,23 @@ struct SeriesCategoryContent: View, Equatable {
                         }
                     }
                     .padding()
+                   }
+                  }
                 }
                 .scrollPosition($scrollPosition)
             }
         }
         .toolbar {
-            if showsMenu {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    sortFilterMenu
-                }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                sortFilterMenu
             }
         }
         .task(id: key) { await recompute(for: key) }
         .onDisappear { stopPrefetch() }
     }
 
-    /// Without the sort picker the menu is only the genre filter, and a list without
-    /// genres would open an empty menu.
-    private var showsMenu: Bool {
-        allowsSorting || !genres.isEmpty
+    private var isFilterActive: Bool {
+        effectiveSort != .defaultOrder || !genreFilter.isEmpty || highRatedOnly
     }
 
     private var sortFilterMenu: some View {
@@ -1170,6 +1204,11 @@ struct SeriesCategoryContent: View, Equatable {
                 }
             }
 
+            Section(L("filter.title")) {
+                Toggle(L("filter.rating_7_plus"), isOn: $highRatedOnly)
+                    .menuActionDismissBehavior(.disabled)
+            }
+
             if !genres.isEmpty {
                 Section(L("filter.genre")) {
                     ForEach(genres, id: \.self) { genre in
@@ -1178,14 +1217,15 @@ struct SeriesCategoryContent: View, Equatable {
                     // The switches leave the menu open so several genres can be ticked
                     // in one go; "Clear filter" closes it like any other action.
                     .menuActionDismissBehavior(.disabled)
+                }
+            }
 
-                    if !genreFilter.isEmpty {
-                        Button {
-                            genreFilter.removeAll()
-                        } label: {
-                            Label(L("filter.clear"), systemImage: "xmark.circle")
-                        }
-                    }
+            if !genreFilter.isEmpty || highRatedOnly {
+                Button {
+                    genreFilter.removeAll()
+                    highRatedOnly = false
+                } label: {
+                    Label(L("filter.clear"), systemImage: "xmark.circle")
                 }
             }
         } label: {
@@ -1194,6 +1234,7 @@ struct SeriesCategoryContent: View, Equatable {
                 systemImage: isFilterActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle"
             )
         }
+        .accessibilityIdentifier("catalog.sort")
     }
 
     private func genreBinding(_ genre: String) -> Binding<Bool> {
@@ -1372,6 +1413,10 @@ struct SeriesDetailView: View {
     @State private var watchedSeasonId: String?
     @State private var enlargedImage: IdentifiableURL?
     @State private var showNavTitle: Bool = false
+    /// The page colour, taken from the poster; see `MovieDetailView.ambient`.
+    @State private var ambient: Color
+    /// Other series of the same category, for the shelf at the end of the page.
+    @State private var relatedSeries: [DBSeries] = []
     /// The star's value between a tap and the database catching up with it.
     @ObservedObject private var favoriteStore = XtreamFavoriteStore.shared
     @State private var favoriteTapCount = 0
@@ -1386,6 +1431,7 @@ struct SeriesDetailView: View {
     init(playlist: Playlist, series: DBSeries) {
         self.playlist = playlist
         self.series = series
+        _ambient = State(initialValue: DetailAmbient.cached(for: series.cover.flatMap { URL(string: $0) }) ?? DetailAmbient.fallback)
         // Read while the page subscribes: the first frame already has the stored row,
         // the seasons, the star and the resume state, instead of changing right after the push.
         _seriesRecord = Query(SeriesByIDRequest(seriesId: series.seriesId, playlistId: playlist.id, immediate: true), in: \.appDatabase)
@@ -1401,7 +1447,7 @@ struct SeriesDetailView: View {
 
     private var heroConfig: DetailHeroConfig {
         DetailHeroConfig(
-            title: currentSeries.name,
+            title: shownTitle,
             backdropURL: currentSeries.backdropPath.flatMap { URL(string: $0) },
             posterURL: currentSeries.cover.flatMap { URL(string: $0) },
             year: DetailFormatting.year(from: currentSeries.releaseDate),
@@ -1409,7 +1455,8 @@ struct SeriesDetailView: View {
             rating10: currentSeries.rating5Based.map { $0 * 2 },
             ratingText: currentSeries.rating,
             posterIconName: "play.tv",
-            backdropIconName: "play.tv"
+            backdropIconName: "play.tv",
+            genres: DetailFormatting.genreList(currentSeries.genre)
         )
     }
 
@@ -1456,6 +1503,17 @@ struct SeriesDetailView: View {
         // Always the page itself: everything above the seasons comes from the catalog row,
         // so loading and failure of the seasons request stay inside the seasons block.
         contentScroll
+            .detailPageStyle(background: ambient)
+            .task(id: currentSeries.cover) {
+                let url = currentSeries.cover.flatMap { URL(string: $0) }
+                let request = url.map { DetailHero.posterRequest(url: $0, metrics: posterMetrics) }
+                if let color = await DetailAmbient.color(for: url, request: request), color != ambient {
+                    ambient = color
+                }
+            }
+            .task(id: currentSeries.categoryId) {
+                await loadRelatedSeries()
+            }
             // Constant, so the back-stack menu and VoiceOver have the name from the start.
             // What the bar shows is the principal item below.
             .browseDetailPresence(playlistId: playlist.id, type: "series", streamId: series.seriesId)
@@ -1518,8 +1576,12 @@ struct SeriesDetailView: View {
         }
     }
 
+    private var shownTitle: String {
+        currentSeries.name
+    }
+
     private var navigationTitleLabel: some View {
-        Text(currentSeries.name)
+        Text(shownTitle)
             .font(.headline)
             .lineLimit(1)
             .opacity(showNavTitle ? 1 : 0)
@@ -1531,16 +1593,14 @@ struct SeriesDetailView: View {
     private var contentScroll: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                DetailHero(config: heroConfig, heroHeight: 380) { url in
+                DetailHero(config: heroConfig, heroHeight: 420, pageBackground: ambient) { url in
                     enlargedImage = IdentifiableURL(url: url)
                 }
-
-                GenreChipRow(genres: DetailFormatting.genreList(currentSeries.genre))
 
                 DetailActionBar(
                     primaryTitle: hasResume ? L("detail.resume") : L("detail.watch"),
                     primarySubtitle: resumeSubtitle,
-                    primaryIcon: hasResume ? "play.circle.fill" : "play.fill",
+                    primaryIcon: "play.fill",
                     progress: resumeProgress,
                     onPrimary: {
                         if hasResume { resumeLatestEpisode() } else { playFirstEpisode() }
@@ -1549,7 +1609,7 @@ struct SeriesDetailView: View {
                     primaryDisabled: isPrimaryDisabled
                 )
 
-                if let plot = currentSeries.plot?.trimmingCharacters(in: .whitespacesAndNewlines), !plot.isEmpty {
+                if let plot = currentSeries.plot?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty {
                     DetailPlotBlock(plot: plot)
                         .padding(.top, 4)
                 }
@@ -1559,10 +1619,15 @@ struct SeriesDetailView: View {
                 }
 
                 if let cast = currentSeries.cast?.trimmingCharacters(in: .whitespacesAndNewlines), !cast.isEmpty {
-                    DetailInfoTextBlock(label: L("movie.cast"), value: cast, lineLimit: 3)
+                    DetailCastRow(label: L("movie.cast"), cast: cast)
                 }
 
                 seasonsSection
+
+                if !relatedSeries.isEmpty {
+                    relatedShelf
+                        .padding(.top, 12)
+                }
             }
             .padding(.bottom, 48)
         }
@@ -1572,7 +1637,56 @@ struct SeriesDetailView: View {
         } action: { _, newValue in
             showNavTitle = newValue
         }
+        .detailTopBarBackground(visible: showNavTitle)
         .ignoresSafeArea(edges: .top)
+    }
+
+    /// Other series of the category, so the page does not end in a dead end.
+    private var relatedShelf: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L("detail.more_like_this"))
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 16)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(alignment: .top, spacing: 12) {
+                    ForEach(relatedSeries) { other in
+                        NavigationLink {
+                            SeriesDetailView(playlist: playlist, series: other)
+                        } label: {
+                            SeriesCard(
+                                playlistId: playlist.id,
+                                stream: other,
+                                posterWidth: posterMetrics.seasonStripWidth,
+                                posterHeight: posterMetrics.seasonStripHeight,
+                                imageLoadProfile: .grid
+                            )
+                        }
+                        .buttonStyle(.cardPress)
+                        .accessibilityIdentifier("detail.related.\(other.seriesId)")
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .scrollClipDisabled()
+        }
+    }
+
+    private func loadRelatedSeries() async {
+        guard let categoryId = currentSeries.categoryId, !categoryId.isEmpty else {
+            relatedSeries = []
+            return
+        }
+        let seriesId = currentSeries.seriesId
+        let playlistId = playlist.id
+        let rows = (try? await AppDatabase.shared.read { db in
+            try DBSeries
+                .filter(Column("playlistId") == playlistId && Column("categoryId") == categoryId && Column("seriesId") != seriesId)
+                .limit(20)
+                .fetchAll(db)
+        }) ?? []
+        guard !Task.isCancelled else { return }
+        relatedSeries = rows
     }
 
     /// The heading of the seasons block. A single season needs no selector, so its name
@@ -1628,7 +1742,7 @@ struct SeriesDetailView: View {
                         seasonId: sid,
                         playlist: playlist,
                         seriesId: String(currentSeries.seriesId),
-                        seriesName: currentSeries.name,
+                        seriesName: shownTitle,
                         seriesCover: currentSeries.cover
                     ) { ep, history in
                         play(ep, history: history, resumesFinished: false)
@@ -2088,31 +2202,45 @@ private struct EpisodeDetailRow: View, Equatable {
         }
     }
 
-    private var thumbnail: some View {
-        ZStack(alignment: .bottom) {
-            CachedImage(
-                url: episode.cover.flatMap { URL(string: $0) },
-                width: posterMetrics.episodeThumbWidth,
-                height: posterMetrics.episodeThumbHeight,
-                cornerRadius: 8,
-                contentMode: .fill,
-                iconName: "play.rectangle.fill",
-                loadProfile: .grid
-            )
+    private var watchedFraction: Double? {
+        guard let history, history.durationMs > 0 else { return nil }
+        return min(max(Double(history.lastTimeMs) / Double(history.durationMs), 0), 1)
+    }
 
-            if let history, history.durationMs > 0 {
-                let progress = Double(history.lastTimeMs) / Double(history.durationMs)
-                Rectangle()
-                    .fill(Color.accentColor)
-                    .frame(height: 3)
-                    .frame(width: posterMetrics.episodeThumbWidth * min(max(progress, 0), 1))
-                    .frame(maxWidth: posterMetrics.episodeThumbWidth, alignment: .leading)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(1.5)
-                    .padding(.bottom, 2)
-                    .padding(.horizontal, 4)
+    /// A 16:9 still: the episode artwork panels send is a frame of the episode, which a
+    /// portrait box cropped down to a strip.
+    private var thumbnail: some View {
+        let width = posterMetrics.episodeThumbWidth
+        let height = posterMetrics.episodeThumbHeight
+        return CachedImage(
+            url: episode.cover.flatMap { URL(string: $0) },
+            width: width,
+            height: height,
+            cornerRadius: 8,
+            contentMode: .fill,
+            iconName: "play.rectangle.fill",
+            loadProfile: .grid
+        )
+        .overlay(alignment: .bottomLeading) {
+            if let fraction = watchedFraction, fraction < 0.95, fraction > 0 {
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Color.black.opacity(0.35))
+                    Rectangle().fill(Color.accentColor).frame(width: width * fraction)
+                }
+                .frame(width: width, height: 3)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if let fraction = watchedFraction, fraction >= 0.95 {
+                Image(systemName: "checkmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(.black.opacity(0.55)))
+                    .padding(5)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var textColumn: some View {
@@ -2139,11 +2267,11 @@ private struct EpisodeDetailRow: View, Equatable {
                 }
             }
 
-            if let plot = episode.info?.trimmingCharacters(in: .whitespacesAndNewlines), !plot.isEmpty {
+            if let plot = episode.info?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty {
                 Text(plot)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(5)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

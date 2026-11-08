@@ -24,6 +24,9 @@ struct VODView: View {
     @Environment(\.playerOverlayController) private var playerOverlay
 
     @State private var pendingMovieDetail: DBVODStream?
+    /// Stored rows of the featured films, with their metadata once it is loaded: the
+    /// backdrop, year and genre the carousel shows come from there.
+    @State private var heroRows: [Int: DBVODStream] = [:]
 
     private var pickerEntries: [CategoryPickerSheet.Entry] {
         contentStore.vodCategories.map { cat in
@@ -264,9 +267,78 @@ struct VODView: View {
         pendingMovieDetail = movie
     }
 
+    /// The newest films, featured above the shelves. Only on the plain catalog: a search
+    /// shows its hits instead.
+    private func heroSource(_ shelves: ShelfList) -> [DBVODStream] {
+        guard debouncedQuery.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return Array(shelves.recentlyAdded.prefix(5))
+    }
+
+    private func heroItems(_ source: [DBVODStream]) -> [BrowseHeroItem] {
+        source.map { stream in
+            let row = heroRows[stream.streamId] ?? stream
+            return BrowseHeroItem(
+                id: stream.streamId,
+                title: stream.name,
+                posterURL: stream.streamIcon.flatMap { URL(string: $0) },
+                backdropURL: row.backdropPath.flatMap { URL(string: $0) },
+                meta: BrowseHeroItem.metaLine(
+                    year: DetailFormatting.year(from: row.releaseDate),
+                    genre: row.genre,
+                    rating: row.rating ?? stream.rating
+                )
+            )
+        }
+    }
+
+    /// Reads the featured films' stored rows, then asks the panel for the metadata of
+    /// those that have none yet, one at a time. The answer is stored as the detail page
+    /// stores it, so opening the film later needs no request.
+    private func loadHeroRows(_ source: [DBVODStream]) async {
+        guard !source.isEmpty else { return }
+        let ids = source.map(\.streamId)
+        let playlistId = playlist.id
+        let stored = (try? await AppDatabase.shared.read { db in
+            try DBVODStream
+                .filter(ids.contains(Column("streamId")) && Column("playlistId") == playlistId)
+                .fetchAll(db)
+        }) ?? []
+        var rows = Dictionary(stored.map { ($0.streamId, $0) }, uniquingKeysWith: { first, _ in first })
+        guard !Task.isCancelled else { return }
+        heroRows = rows
+        let client = XtreamAPIClient(playlist: playlist)
+        for stream in source where !(rows[stream.streamId]?.metadataLoaded ?? stream.metadataLoaded) {
+            guard !Task.isCancelled else { return }
+            guard let response = try? await client.getVODInfo(vodId: stream.streamId) else { continue }
+            guard !Task.isCancelled else { return }
+            rows[stream.streamId] = DetailMetadata.movie(rows[stream.streamId] ?? stream, response: response)
+            heroRows = rows
+            let streamId = stream.streamId
+            _ = try? await AppDatabase.shared.write { db in
+                try DetailMetadata.storeMovie(response, streamId: streamId, playlistId: playlistId, db: db)
+            }
+        }
+    }
+
     private func shelfList(_ shelves: ShelfList) -> some View {
-        ScrollViewReader { proxy in
+        let heroSource = heroSource(shelves)
+        return ScrollViewReader { proxy in
             ScrollView {
+                BrowseHeroCarousel(
+                    items: heroItems(heroSource),
+                    containerWidth: shelfWidth,
+                    eyebrow: L("recently_added.title")
+                ) { item in
+                    if let stream = heroSource.first(where: { $0.streamId == item.id }) {
+                        MovieDetailView(playlist: playlist, movie: stream, queue: heroSource)
+                    }
+                } more: {
+                    RecentlyAddedVODDetailView(playlist: playlist, items: shelves.recentlyAdded)
+                }
+                .task(id: heroSource.map(\.streamId)) {
+                    await loadHeroRows(heroSource)
+                }
+
                 ContinueWatchingRow(
                     playlist: playlist,
                     typeFilter: "vod",
@@ -279,15 +351,6 @@ struct VODView: View {
                         presentHistoryPlayer(item)
                     }
                 )
-
-                if shelves.reservesRecentlyAdded || !shelves.recentlyAdded.isEmpty {
-                    RecentlyAddedVODShelf(
-                        playlist: playlist,
-                        items: shelves.recentlyAdded,
-                        containerWidth: shelfWidth
-                    )
-                    .equatable()
-                }
 
                 LazyVStack(spacing: 0) {
                     ForEach(shelves.categories) { category in
@@ -671,64 +734,6 @@ private struct VODShelfPlaceholder: View {
     }
 }
 
-// MARK: - Recently Added shelf
-
-struct RecentlyAddedVODShelf: View, Equatable {
-    let playlist: Playlist
-    /// Empty while the movies are not known yet: the shelf then holds its place with a
-    /// placeholder. The home view does not show it at all when there is nothing to add.
-    let items: [DBVODStream]
-    var containerWidth: CGFloat = 0
-
-    static func == (lhs: RecentlyAddedVODShelf, rhs: RecentlyAddedVODShelf) -> Bool {
-        lhs.playlist.id == rhs.playlist.id &&
-        lhs.items == rhs.items &&
-        lhs.containerWidth == rhs.containerWidth
-    }
-
-    @Environment(\.posterMetrics) private var posterMetrics
-    @Namespace private var zoom
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ShelfHeader(L("recently_added.title")) {
-                RecentlyAddedVODDetailView(playlist: playlist, items: items)
-            }
-            .disabled(items.isEmpty)
-
-            if items.isEmpty {
-                VODShelfPlaceholder(containerWidth: containerWidth)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .top, spacing: VODCategoryShelf.cardSpacing) {
-                        ForEach(items) { stream in
-                            NavigationLink {
-                                MovieDetailView(playlist: playlist, movie: stream, queue: items)
-                                    .posterZoomDestination(id: stream.streamId, in: zoom)
-                            } label: {
-                                VODStreamCard(
-                                    playlistId: playlist.id,
-                                    stream: stream,
-                                    posterWidth: posterMetrics.shelfPosterWidth,
-                                    posterHeight: posterMetrics.shelfPosterHeight,
-                                    imageLoadProfile: .shelf,
-                                    zoomNamespace: zoom
-                                )
-                            }
-                            .vodCardInteractions(streamId: stream.streamId, playlistId: playlist.id)
-                        }
-                    }
-                    .padding(.horizontal, VODCategoryShelf.horizontalInset)
-                }
-                // Lets the context-menu lift and its shadow reach past the shelf's edges.
-                .scrollClipDisabled()
-                .posterShelfFrame()
-            }
-        }
-        .padding(.vertical, 6)
-    }
-}
-
 // MARK: - Recently Added Detail View
 struct RecentlyAddedVODDetailView: View {
     let playlist: Playlist
@@ -1041,6 +1046,10 @@ struct VODCategoryContent: View, Equatable {
     /// Screen-local: file types are specific to the currently shown list, so this
     /// intentionally does not persist across screens.
     @State private var fileTypeFilter: Set<String> = []
+    /// Screen-local like the file types: hide films watched to the end.
+    @State private var unwatchedOnly = false
+    /// Screen-local: only films the panel rates 7 or more out of 10.
+    @State private var highRatedOnly = false
     /// Sort/filter output, recomputed off the main thread on input changes so large
     /// lists (e.g. "All Movies") don't re-sort on every body pass (watch-progress ticks).
     /// Not what is drawn in the identity case, see `body`.
@@ -1066,9 +1075,11 @@ struct VODCategoryContent: View, Equatable {
         let items: Int
         let sort: VODSortOption
         let fileTypes: Set<String>
+        var unwatchedOnly = false
+        var highRatedOnly = false
 
         /// Default order and no filter: the list to show is `items` itself.
-        var isIdentity: Bool { sort == .defaultOrder && fileTypes.isEmpty }
+        var isIdentity: Bool { sort == .defaultOrder && fileTypes.isEmpty && !unwatchedOnly && !highRatedOnly }
     }
 
     init(playlist: Playlist, items: [VODWithCategory], isSourceLoading: Bool = false, allowsSorting: Bool = true) {
@@ -1102,11 +1113,8 @@ struct VODCategoryContent: View, Equatable {
     }
 
     private var inputKey: InputKey {
-        InputKey(items: itemsToken, sort: effectiveSort, fileTypes: fileTypeFilter)
-    }
-
-    private var isFilterActive: Bool {
-        effectiveSort != .defaultOrder || !fileTypeFilter.isEmpty
+        InputKey(items: itemsToken, sort: effectiveSort, fileTypes: fileTypeFilter,
+                 unwatchedOnly: unwatchedOnly, highRatedOnly: highRatedOnly)
     }
 
     private func recompute(for key: InputKey) async {
@@ -1114,8 +1122,18 @@ struct VODCategoryContent: View, Equatable {
         defer { BrowsePerformance.end("VODGridRecompute", interval) }
         guard key != appliedKey else { return }
         let source = items
+        // Taken when the filter is applied: a film finished later stays until the next change.
+        let finished = key.unwatchedOnly ? Set(progressMap.filter { $0.value >= 0.95 }.keys) : []
         let computed = await CatalogTextSearch.detached { () -> (items: [VODWithCategory], queue: [DBVODStream], fileTypes: [String])? in
-            let sorted = key.sort.apply(to: VODFileType.filter(source, selection: key.fileTypes))
+            var filtered = VODFileType.filter(source, selection: key.fileTypes)
+            if key.unwatchedOnly {
+                filtered.removeAll { finished.contains(String($0.stream.streamId)) }
+            }
+            if key.highRatedOnly {
+                filtered.removeAll { CatalogRatingValue.parse($0.stream.rating) < 7 }
+            }
+            if Task.isCancelled { return nil }
+            let sorted = key.sort.apply(to: filtered)
             if Task.isCancelled { return nil }
             let queue = sorted.map(\.stream)
             if Task.isCancelled { return nil }
@@ -1153,12 +1171,13 @@ struct VODCategoryContent: View, Equatable {
         // after a round trip through a background task. Any other order shows the last
         // computed list until the new one is ready.
         let shown = key.isIdentity ? items : displayItems
+        let isReady = key.isIdentity || isComputed
         Group {
-            if !shown.isEmpty {
+            if !shown.isEmpty || (!key.isIdentity && isComputed) {
                 // The queue of another list would send previous / next to the wrong
                 // films; until this one's is built a film opens on its own.
                 grid(shown, queue: isComputed ? streamQueue : [])
-            } else if isSourceLoading || !(key.isIdentity || isComputed) {
+            } else if isSourceLoading || !isReady {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -1166,12 +1185,8 @@ struct VODCategoryContent: View, Equatable {
             }
         }
         .toolbar {
-            // Without the sort picker the menu only has the file types to offer, and
-            // those need at least two to choose from.
-            if allowsSorting || fileTypes.count > 1 {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    sortFilterMenu
-                }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                sortFilterMenu
             }
         }
         .task(id: key) { await recompute(for: key) }
@@ -1185,6 +1200,20 @@ struct VODCategoryContent: View, Equatable {
 
     private func grid(_ shown: [VODWithCategory], queue: [DBVODStream]) -> some View {
         ScrollView {
+            LazyVStack(spacing: 0) {
+                if shown.isEmpty {
+                    // Only reachable with a filter on: the filter bar stays so it can be undone.
+                    CatalogEmptyView(.noItems(title: L("vod.empty.no_movie"), systemImage: "film"))
+                        .padding(.top, 60)
+                } else {
+                    gridBody(shown, queue: queue)
+                }
+            }
+        }
+        .scrollPosition($scrollPosition)
+    }
+
+    private func gridBody(_ shown: [VODWithCategory], queue: [DBVODStream]) -> some View {
             LazyVGrid(columns: categoryGridColumns, spacing: posterMetrics.gridRowSpacing) {
                 ForEach(Indexed(shown.prefix(visibleCount)), id: \.element.stream.streamId) { index, item in
                     NavigationLink {
@@ -1208,8 +1237,10 @@ struct VODCategoryContent: View, Equatable {
                 }
             }
             .padding()
-        }
-        .scrollPosition($scrollPosition)
+    }
+
+    private var isFilterActive: Bool {
+        effectiveSort != .defaultOrder || !fileTypeFilter.isEmpty || unwatchedOnly || highRatedOnly
     }
 
     private var sortFilterMenu: some View {
@@ -1222,6 +1253,14 @@ struct VODCategoryContent: View, Equatable {
                 }
             }
 
+            Section(L("filter.title")) {
+                Group {
+                    Toggle(L("filter.unwatched"), isOn: $unwatchedOnly)
+                    Toggle(L("filter.rating_7_plus"), isOn: $highRatedOnly)
+                }
+                .menuActionDismissBehavior(.disabled)
+            }
+
             if fileTypes.count > 1 {
                 Section(L("filter.file_type")) {
                     ForEach(fileTypes, id: \.self) { ext in
@@ -1230,19 +1269,22 @@ struct VODCategoryContent: View, Equatable {
                     // Several types can be ticked in one go; choosing a sort or
                     // clearing the filter still closes the menu.
                     .menuActionDismissBehavior(.disabled)
+                }
+            }
 
-                    if !fileTypeFilter.isEmpty {
-                        Button {
-                            fileTypeFilter.removeAll()
-                        } label: {
-                            Label(L("filter.clear"), systemImage: "xmark.circle")
-                        }
-                    }
+            if !fileTypeFilter.isEmpty || unwatchedOnly || highRatedOnly {
+                Button {
+                    fileTypeFilter.removeAll()
+                    unwatchedOnly = false
+                    highRatedOnly = false
+                } label: {
+                    Label(L("filter.clear"), systemImage: "xmark.circle")
                 }
             }
         } label: {
             Label(L(allowsSorting ? "sort.title" : "filter.title"), systemImage: sortFilterSymbol)
         }
+        .accessibilityIdentifier("catalog.sort")
     }
 
     private var sortFilterSymbol: String {

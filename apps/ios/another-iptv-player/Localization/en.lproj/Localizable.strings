@@ -452,6 +452,7 @@
 "detail.show_more" = "Show more";
 "detail.show_less" = "Show less";
 "player.a11y.playback_position" = "Playback position";
+"download.error.file_write" = "The file could not be saved on this device.";
 "download.error.no_space" = "Not enough free storage on this device";
 "download.missing_file.title" = "File No Longer on Device";
 "download.missing_file.message" = "The downloaded file is missing (this happens after restoring or migrating your device). Download it again?";
@@ -649,3 +650,12 @@
 "support.preview.older" = "Older";
 "support.preview.newer" = "Newer";
 "support.preview.full_attachment" = "The email attachment includes the full report.";
+"detail.more_like_this" = "More Like This";
+"filter.unwatched" = "Unwatched";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Update Available";
+"update.message" = "Version %1$@ is available on the App Store. You're using %2$@.";
+"update.action" = "Update";
+"update.later" = "Later";
+"playlist.import.changed" = "This source was changed or removed. Reopen its settings to use the latest version.";

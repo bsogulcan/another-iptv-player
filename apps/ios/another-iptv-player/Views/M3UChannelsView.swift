@@ -509,14 +509,14 @@ struct M3ULogoLookAhead {
         guard let range = Self.startRange(forCardAt: index, stride: stride, count: items.count) else { return }
         let urls = Self.logoURLs(in: items[range])
         guard !urls.isEmpty else { return }
-        ListImagePrefetch.start(urls: urls, width: side, height: side, loadProfile: loadProfile)
+        ListImagePrefetch.start(urls: urls, width: LiveChannelLogo.imageSize(width: side, height: side).width, height: LiveChannelLogo.imageSize(width: side, height: side).height, contentMode: .fit, loadProfile: loadProfile)
     }
 
     func cardDisappeared(at index: Int, in items: [DBM3UChannel]) {
         guard let range = Self.stopRange(forCardAt: index, stride: stride, count: items.count) else { return }
         let urls = Self.logoURLs(in: items[range])
         guard !urls.isEmpty else { return }
-        ListImagePrefetch.stop(urls: urls, width: side, height: side, loadProfile: loadProfile)
+        ListImagePrefetch.stop(urls: urls, width: LiveChannelLogo.imageSize(width: side, height: side).width, height: LiveChannelLogo.imageSize(width: side, height: side).height, contentMode: .fit, loadProfile: loadProfile)
     }
 
     /// Items a trigger card asks for when it appears; nil for a card that is no trigger
@@ -659,9 +659,9 @@ struct M3UGroupShelfRow: View, Equatable {
         guard !urls.isEmpty else { return }
         let side = posterMetrics.liveShelfIcon
         if start {
-            ListImagePrefetch.start(urls: urls, width: side, height: side, loadProfile: .shelf)
+            ListImagePrefetch.start(urls: urls, width: LiveChannelLogo.imageSize(width: side, height: side).width, height: LiveChannelLogo.imageSize(width: side, height: side).height, contentMode: .fit, loadProfile: .shelf)
         } else {
-            ListImagePrefetch.stop(urls: urls, width: side, height: side, loadProfile: .shelf)
+            ListImagePrefetch.stop(urls: urls, width: LiveChannelLogo.imageSize(width: side, height: side).width, height: LiveChannelLogo.imageSize(width: side, height: side).height, contentMode: .fit, loadProfile: .shelf)
         }
     }
 }
@@ -693,12 +693,10 @@ struct M3UChannelCard: View {
             onChannelSelected?(channel)
         } label: {
             VStack(alignment: .center, spacing: 10) {
-                CachedImage(
+                LiveChannelLogo(
                     url: channel.tvgLogo.flatMap { URL(string: $0) },
                     width: iconSize,
                     height: iconSize,
-                    cornerRadius: BrowseMetrics.tileCornerRadius,
-                    iconName: "tv",
                     loadProfile: imageLoadProfile
                 )
                 .cardHover(cornerRadius: BrowseMetrics.tileCornerRadius)

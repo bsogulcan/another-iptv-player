@@ -425,6 +425,7 @@
 "detail.show_more" = "Afficher plus";
 "detail.show_less" = "Afficher moins";
 "player.a11y.playback_position" = "Position de lecture";
+"download.error.file_write" = "Impossible d’enregistrer le fichier sur cet appareil.";
 "download.error.no_space" = "Espace de stockage insuffisant sur cet appareil";
 "download.missing_file.title" = "Fichier absent de l'appareil";
 "download.missing_file.message" = "Le fichier téléchargé est introuvable (après une restauration ou une migration). Le télécharger à nouveau ?";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "Toutes les catégories sont masquées";
 "guide.all_hidden.message" = "Affichez une catégorie dans le sélecteur pour voir ses chaînes dans le guide TV.";
+"detail.more_like_this" = "Dans la même catégorie";
+"filter.unwatched" = "Non vus";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Mise à jour disponible";
+"update.message" = "La version %1$@ est disponible sur l'App Store. Vous utilisez la %2$@.";
+"update.action" = "Mettre à jour";
+"update.later" = "Plus tard";
+"playlist.import.changed" = "La source a été modifiée ou supprimée. Rouvrez ses réglages.";

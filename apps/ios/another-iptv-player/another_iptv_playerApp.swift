@@ -75,6 +75,7 @@ struct another_iptv_playerApp: App {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { appDelegate.flushDiagnosticsInBackground() }
+            if phase == .active { AppUpdateChecker.shared.checkIfNeeded() }
         }
     }
 }
@@ -89,6 +90,7 @@ struct another_iptv_playerApp: App {
 /// counts) would then disagree in digits and separators with the dates and sizes next to them.
 private struct AppRootView: View {
     @ObservedObject private var localization = LocalizationManager.shared
+    @ObservedObject private var updateChecker = AppUpdateChecker.shared
 
     var body: some View {
         let code = localization.effectiveLanguageCode
@@ -97,7 +99,7 @@ private struct AppRootView: View {
             .environment(\.appDatabase, .shared)
             .environment(\.locale, AppLocale.current)
             .environment(\.layoutDirection, isRTL ? .rightToLeft : .leftToRight)
-            .hidesTopScrollEdgeEffect()
             .id(localization.selectedLanguage)
+            .modifier(AppUpdateOffer(updateChecker: updateChecker))
     }
 }

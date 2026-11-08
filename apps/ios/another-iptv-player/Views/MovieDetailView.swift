@@ -20,6 +20,11 @@ struct MovieDetailView: View {
     @State private var enlargedImage: IdentifiableURL?
     @State private var showNavTitle: Bool = false
     @State private var pendingMovieDetail: DBVODStream?
+    /// The page colour, taken from the poster. Starts from the cached tone of an earlier
+    /// visit so that the page does not change colour while it slides in.
+    @State private var ambient: Color
+    /// Other films of the same category, for the shelf at the end of the page.
+    @State private var relatedMovies: [DBVODStream] = []
     /// What the star shows between a tap and the database catching up with it.
     @ObservedObject private var favoriteStore = XtreamFavoriteStore.shared
     @State private var favoriteTapCount = 0
@@ -32,6 +37,7 @@ struct MovieDetailView: View {
         self.playlist = playlist
         self.movie = movie
         self.queue = queue
+        _ambient = State(initialValue: DetailAmbient.cached(for: movie.streamIcon.flatMap { URL(string: $0) }) ?? DetailAmbient.fallback)
         // Three single-row lookups that decide the first frame: the stored metadata, the
         // star, and whether the button says Resume and carries a progress bar. Read
         // during subscription, they are in the first body instead of changing the
@@ -109,7 +115,7 @@ struct MovieDetailView: View {
 
     private var heroConfig: DetailHeroConfig {
         DetailHeroConfig(
-            title: currentMovie.name,
+            title: shownTitle,
             backdropURL: currentMovie.backdropPath.flatMap { URL(string: $0) },
             posterURL: currentMovie.streamIcon.flatMap { URL(string: $0) },
             year: DetailFormatting.year(from: currentMovie.releaseDate),
@@ -117,12 +123,39 @@ struct MovieDetailView: View {
             rating10: currentMovie.rating5Based.map { $0 * 2 },
             ratingText: currentMovie.rating,
             posterIconName: "film",
-            backdropIconName: "film"
+            backdropIconName: "film",
+            genres: DetailFormatting.genreList(currentMovie.genre)
         )
+    }
+
+    private var shownTitle: String {
+        currentMovie.name
+    }
+
+    private var shownPlot: String? {
+        currentMovie.plot?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+    }
+
+    private var shownDirector: String? {
+        currentMovie.director?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+    }
+
+    private var posterURL: URL? {
+        currentMovie.streamIcon.flatMap { URL(string: $0) }
     }
 
     var body: some View {
         contentScroll
+            .detailPageStyle(background: ambient)
+            .task(id: posterURL) {
+                let request = posterURL.map { DetailHero.posterRequest(url: $0, metrics: posterMetrics) }
+                if let color = await DetailAmbient.color(for: posterURL, request: request), color != ambient {
+                    ambient = color
+                }
+            }
+            .task(id: currentMovie.categoryId) {
+                await loadRelatedMovies()
+            }
             .browseDetailPresence(playlistId: playlist.id, type: "vod", streamId: movie.streamId)
             // Always the name: it is what the back button of a screen pushed from here
             // and VoiceOver read. The bar shows the item below instead, which can fade.
@@ -192,7 +225,7 @@ struct MovieDetailView: View {
     /// The title in the bar, shown once the hero's own title has scrolled away. A view,
     /// because the bar cannot cross-fade a change of its title string.
     private var navigationTitleLabel: some View {
-        Text(currentMovie.name)
+        Text(shownTitle)
             .font(.headline)
             .lineLimit(1)
             .opacity(showNavTitle ? 1 : 0)
@@ -231,63 +264,43 @@ struct MovieDetailView: View {
     private var contentScroll: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                DetailHero(config: heroConfig, heroHeight: 380) { url in
+                DetailHero(config: heroConfig, heroHeight: 440, pageBackground: ambient) { url in
                     enlargedImage = IdentifiableURL(url: url)
                 }
 
                 DetailActionBar(
                     primaryTitle: resumeMs != nil ? L("detail.resume") : L("detail.watch_now"),
                     primarySubtitle: resumeMs.map { DetailFormatting.formatMs($0) },
-                    primaryIcon: resumeMs != nil ? "play.circle.fill" : "play.fill",
+                    primaryIcon: "play.fill",
                     progress: resumeProgress,
                     onPrimary: { presentMoviePlayer(resume: true) },
                     restartTitle: resumeMs != nil ? L("detail.restart") : nil,
                     onRestart: resumeMs != nil ? { presentMoviePlayer(resume: false) } : nil,
-                    trailerURL: trailerURL
+                    trailerURL: trailerURL,
+                    accessory: downloadAction
                 )
-
-                if let remoteURL = PlaybackURLBuilder(playlist: playlist).movieURL(
-                    streamId: currentMovie.streamId,
-                    containerExtension: currentMovie.containerExtension
-                ) {
-                    DownloadButton(
-                        id: DownloadManager.idFor(vod: playlist.id, streamId: currentMovie.streamId),
-                        playlistId: playlist.id,
-                        streamId: String(currentMovie.streamId),
-                        type: "vod",
-                        title: currentMovie.name,
-                        secondaryTitle: currentMovie.genre,
-                        imageURL: currentMovie.streamIcon,
-                        remoteURL: remoteURL,
-                        containerExtension: currentMovie.containerExtension
-                    )
-                    .padding(.horizontal, 16)
-                    // Fragman satırıyla aynı sıkı aralık; VStack spacing 20'yi -10 ile nötrleyip
-                    // DetailActionBar içindeki 10pt ritme hizalar.
-                    .padding(.top, -10)
-                }
 
                 if case .failed(let message) = metadataState {
                     metadataErrorRow(message)
                 }
 
-                // Below the actions: the genres arrive with the metadata, and above the
-                // primary button they would push it down just as the thumb reaches it.
-                GenreChipRow(genres: DetailFormatting.genreList(currentMovie.genre))
-
-                if metadataState == .loading {
+                if metadataState == .loading && shownPlot == nil {
                     plotPlaceholder
-                } else if let plot = currentMovie.plot?.trimmingCharacters(in: .whitespacesAndNewlines), !plot.isEmpty {
+                } else if let plot = shownPlot {
                     DetailPlotBlock(plot: plot)
                         .padding(.top, 4)
                 }
 
-                if let director = currentMovie.director?.trimmingCharacters(in: .whitespacesAndNewlines), !director.isEmpty {
+                if let director = shownDirector {
                     DetailInfoTextBlock(label: L("movie.director"), value: director)
                 }
 
                 if let cast = currentMovie.cast?.trimmingCharacters(in: .whitespacesAndNewlines), !cast.isEmpty {
-                    DetailInfoTextBlock(label: L("movie.cast"), value: cast, lineLimit: 3)
+                    DetailCastRow(label: L("movie.cast"), cast: cast)
+                }
+
+                if !relatedMovies.isEmpty {
+                    relatedShelf
                 }
             }
             .padding(.bottom, 48)
@@ -301,7 +314,81 @@ struct MovieDetailView: View {
         } action: { _, newValue in
             if showNavTitle != newValue { showNavTitle = newValue }
         }
+        .detailTopBarBackground(visible: showNavTitle)
         .ignoresSafeArea(edges: .top)
+    }
+
+    /// The download control as a round action next to the trailer.
+    private var downloadAction: AnyView? {
+        guard let remoteURL = PlaybackURLBuilder(playlist: playlist).movieURL(
+            streamId: currentMovie.streamId,
+            containerExtension: currentMovie.containerExtension
+        ) else { return nil }
+        return AnyView(
+            DownloadButton(
+                id: DownloadManager.idFor(vod: playlist.id, streamId: currentMovie.streamId),
+                playlistId: playlist.id,
+                streamId: String(currentMovie.streamId),
+                type: "vod",
+                title: currentMovie.name,
+                secondaryTitle: currentMovie.genre,
+                imageURL: currentMovie.streamIcon,
+                remoteURL: remoteURL,
+                containerExtension: currentMovie.containerExtension,
+                round: true
+            )
+        )
+    }
+
+    /// Other films of the category, so the page does not end in a dead end.
+    private var relatedShelf: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L("detail.more_like_this"))
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 16)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(alignment: .top, spacing: 12) {
+                    ForEach(relatedMovies) { other in
+                        // The shelf is the queue: the page of another film must not
+                        // play next/previous from the list this page was opened from.
+                        NavigationLink {
+                            MovieDetailView(playlist: playlist, movie: other, queue: relatedMovies)
+                        } label: {
+                            VODStreamCard(
+                                playlistId: playlist.id,
+                                stream: other,
+                                posterWidth: posterMetrics.seasonStripWidth,
+                                posterHeight: posterMetrics.seasonStripHeight,
+                                imageLoadProfile: .grid
+                            )
+                        }
+                        .buttonStyle(.cardPress)
+                        .accessibilityIdentifier("detail.related.\(other.streamId)")
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .scrollClipDisabled()
+        }
+        .padding(.top, 4)
+    }
+
+    private func loadRelatedMovies() async {
+        guard let categoryId = currentMovie.categoryId, !categoryId.isEmpty else {
+            relatedMovies = []
+            return
+        }
+        let streamId = currentMovie.streamId
+        let playlistId = playlist.id
+        let rows = (try? await AppDatabase.shared.read { db in
+            try DBVODStream
+                .filter(Column("playlistId") == playlistId && Column("categoryId") == categoryId && Column("streamId") != streamId)
+                .limit(20)
+                .fetchAll(db)
+        }) ?? []
+        guard !Task.isCancelled else { return }
+        relatedMovies = rows
     }
 
     private func presentMoviePlayer(resume: Bool) {
@@ -368,7 +455,7 @@ struct MovieDetailView: View {
         playerOverlay.injected?.present(skipDownloadCheck: localOverrideURL != nil, playlistId: playlist.id) {
             PlayerView(
                 url: url,
-                title: currentMovie.name,
+                title: shownTitle,
                 subtitle: parts.isEmpty ? nil : parts.joined(separator: " · "),
                 artworkURL: currentMovie.streamIcon.flatMap { URL(string: $0) },
                 isLiveStream: false,

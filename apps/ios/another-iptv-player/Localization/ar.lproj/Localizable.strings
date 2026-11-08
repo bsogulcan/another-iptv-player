@@ -425,6 +425,7 @@
 "detail.show_more" = "عرض المزيد";
 "detail.show_less" = "عرض أقل";
 "player.a11y.playback_position" = "موضع التشغيل";
+"download.error.file_write" = "تعذّر حفظ الملف على هذا الجهاز.";
 "download.error.no_space" = "لا توجد مساحة تخزين كافية على هذا الجهاز";
 "download.missing_file.title" = "الملف لم يعد موجودًا على الجهاز";
 "download.missing_file.message" = "ملف التنزيل مفقود (يحدث هذا بعد استعادة الجهاز أو نقله). هل تريد تنزيله مرة أخرى؟";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "كل الفئات مخفية";
 "guide.all_hidden.message" = "أظهر فئة في منتقي الفئات لعرض قنواتها في دليل التلفزيون.";
+"detail.more_like_this" = "المزيد من هذه الفئة";
+"filter.unwatched" = "غير المشاهدة";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "يتوفر تحديث";
+"update.message" = "الإصدار %1$@ متاح في App Store. أنت تستخدم الإصدار %2$@.";
+"update.action" = "تحديث";
+"update.later" = "لاحقًا";
+"playlist.import.changed" = "تم تعديل المصدر أو حذفه. أعد فتح إعداداته لعرض آخر التغييرات.";

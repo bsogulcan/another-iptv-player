@@ -425,6 +425,7 @@
 "detail.show_more" = "और दिखाएँ";
 "detail.show_less" = "कम दिखाएँ";
 "player.a11y.playback_position" = "प्लेबैक स्थिति";
+"download.error.file_write" = "इस डिवाइस पर फ़ाइल सहेजी नहीं जा सकी।";
 "download.error.no_space" = "इस डिवाइस पर पर्याप्त खाली संग्रहण नहीं है";
 "download.missing_file.title" = "फ़ाइल अब डिवाइस पर नहीं है";
 "download.missing_file.message" = "डाउनलोड की गई फ़ाइल गायब है (डिवाइस रीस्टोर या माइग्रेशन के बाद ऐसा होता है)। फिर से डाउनलोड करें?";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "सभी श्रेणियाँ छिपी हुई हैं";
 "guide.all_hidden.message" = "टीवी गाइड में चैनल देखने के लिए श्रेणी चयन में कोई श्रेणी दिखाएँ।";
+"detail.more_like_this" = "इस श्रेणी से और";
+"filter.unwatched" = "बिना देखे";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "अपडेट उपलब्ध है";
+"update.message" = "App Store पर संस्करण %1$@ उपलब्ध है। आप %2$@ का उपयोग कर रहे हैं।";
+"update.action" = "अपडेट करें";
+"update.later" = "बाद में";
+"playlist.import.changed" = "स्रोत बदल दिया गया है या हटा दिया गया है। इसकी सेटिंग फिर से खोलें।";

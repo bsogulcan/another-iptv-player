@@ -425,6 +425,7 @@
 "detail.show_more" = "Mehr anzeigen";
 "detail.show_less" = "Weniger anzeigen";
 "player.a11y.playback_position" = "Wiedergabeposition";
+"download.error.file_write" = "Die Datei konnte auf diesem Gerät nicht gespeichert werden.";
 "download.error.no_space" = "Nicht genügend freier Speicherplatz auf diesem Gerät";
 "download.missing_file.title" = "Datei nicht mehr auf dem Gerät";
 "download.missing_file.message" = "Die heruntergeladene Datei fehlt (z. B. nach Wiederherstellung oder Gerätewechsel). Erneut herunterladen?";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "Alle Kategorien sind ausgeblendet";
 "guide.all_hidden.message" = "Blende eine Kategorie in der Kategorieauswahl ein, um ihre Sender im TV-Programm zu sehen.";
+"detail.more_like_this" = "Mehr davon";
+"filter.unwatched" = "Nicht gesehen";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Update verfügbar";
+"update.message" = "Version %1$@ ist im App Store verfügbar. Du verwendest %2$@.";
+"update.action" = "Aktualisieren";
+"update.later" = "Später";
+"playlist.import.changed" = "Die Quelle wurde geändert oder entfernt. Öffne die Einstellungen der Quelle erneut.";

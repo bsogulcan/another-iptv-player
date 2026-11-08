@@ -452,6 +452,7 @@
 "detail.show_more" = "Daha fazla";
 "detail.show_less" = "Daha az";
 "player.a11y.playback_position" = "Oynatma konumu";
+"download.error.file_write" = "Dosya bu aygıta kaydedilemedi.";
 "download.error.no_space" = "Cihazda yeterli boş alan yok";
 "download.missing_file.title" = "Dosya Cihazda Yok";
 "download.missing_file.message" = "İndirilen dosya bulunamıyor (cihaz geri yükleme veya taşıma sonrası olabilir). Yeniden indirilsin mi?";
@@ -649,3 +650,12 @@
 "support.preview.older" = "Daha eski";
 "support.preview.newer" = "Daha yeni";
 "support.preview.full_attachment" = "E-posta eki tüm kayıtları içerir.";
+"detail.more_like_this" = "Bu Kategoriden";
+"filter.unwatched" = "İzlenmemiş";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Güncelleme Mevcut";
+"update.message" = "App Store'da %1$@ sürümü yayında. Şu an %2$@ sürümünü kullanıyorsunuz.";
+"update.action" = "Güncelle";
+"update.later" = "Daha Sonra";
+"playlist.import.changed" = "Kaynak değiştirildi veya silindi. Güncel bilgileri görmek için kaynak ayarlarını yeniden açın.";

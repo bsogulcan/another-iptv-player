@@ -156,11 +156,3 @@ extension View {
 /// Deletes single rows of the watch history.
 ///
 /// `nonisolated`: the statement runs on the database's writer queue.
-nonisolated enum WatchHistoryWriter {
-    /// Removes one history row by its id. A row that is already gone is not an error.
-    static func remove(id: String, in database: AppDatabase) async throws {
-        try await database.write { db in
-            try db.execute(sql: "DELETE FROM watchHistory WHERE id = ?", arguments: [id])
-        }
-    }
-}

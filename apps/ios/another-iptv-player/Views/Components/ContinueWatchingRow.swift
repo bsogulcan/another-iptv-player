@@ -41,7 +41,11 @@ struct ContinueWatchingRow<Destination: View>: View {
                             Button {
                                 onPlay(item)
                             } label: {
-                                HistoryCard(item: item, width: 160, height: 90, loadProfile: .shelf)
+                                if item.type == "live" {
+                                    HistoryCard(item: item, width: 160, height: 90, loadProfile: .shelf)
+                                } else {
+                                    HistoryCard(item: item, width: 208, height: 117, loadProfile: .shelf, showsPlayGlyph: true)
+                                }
                             }
                             .buttonStyle(.cardPress)
                             .accessibilityIdentifier(HistoryCard.accessibilityIdentifier(for: item, in: playlist))
@@ -72,6 +76,8 @@ struct HistoryCard: View {
     var width: CGFloat = 160
     var height: CGFloat = 90
     var loadProfile: ImageLoadProfile = .shelf
+    /// A play glyph in the corner of the artwork: the Continue Watching shelf plays on tap.
+    var showsPlayGlyph: Bool = false
 
     static let cornerRadius = BrowseMetrics.tileCornerRadius
 
@@ -83,6 +89,7 @@ struct HistoryCard: View {
     }
 
     var body: some View {
+        let subtitle = item.secondaryTitle
         VStack(alignment: .leading, spacing: 6) {
             CachedImage(
                 url: item.imageURL.flatMap { URL(string: $0) },
@@ -100,12 +107,28 @@ struct HistoryCard: View {
                         .padding(.bottom, 6)
                 }
             }
+            .overlay(alignment: .center) {
+                if showsPlayGlyph {
+                    Image(systemName: "play.fill")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(.black.opacity(0.45)))
+                        .accessibilityHidden(true)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .posterTitleStyle(width: width)
 
-                if let subtitle = item.secondaryTitle, !subtitle.isEmpty {
+                if let remaining = remainingText(seriesLine: subtitle) {
+                    Text(remaining)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(Color.accentColor)
+                        .lineLimit(1)
+                        .frame(width: width, alignment: .leading)
+                } else if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -114,6 +137,21 @@ struct HistoryCard: View {
                 }
             }
         }
+    }
+}
+
+extension HistoryCard {
+    /// "12:34 left" on the shelf, for a film or episode that is under way. The episode
+    /// line takes its place otherwise.
+    fileprivate func remainingText(seriesLine: String?) -> String? {
+        guard showsPlayGlyph, item.type != "live", item.durationMs > 0 else { return nil }
+        let fraction = Double(item.lastTimeMs) / Double(item.durationMs)
+        guard fraction > 0.02, fraction < 0.95 else { return nil }
+        let remaining = DetailFormatting.formatMs(item.durationMs - item.lastTimeMs)
+        if let subtitle = seriesLine, !subtitle.isEmpty, item.type == "series" {
+            return "\(subtitle) · \(L("detail.remaining_format", remaining))"
+        }
+        return L("detail.remaining_format", remaining)
     }
 }
 

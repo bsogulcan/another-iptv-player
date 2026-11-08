@@ -3,7 +3,11 @@ import Network
 import SwiftUI
 import Nuke
 import NukeUI
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Uzak kanal ikonu / poster URL’leri çoğu zaman ölü veya TLS hatalı; `URLSession.shared` fırtınası CFNetwork’ü konsola doldurur.
 /// Tamamen susturulamaz, ancak host başına bağlantı ve zaman aşımı ile satır sayısı ve gecikme azalır.
@@ -94,8 +98,13 @@ enum IPTVRemoteImagePipeline {
     /// after the network is back.
     private static func forgetBlockedHostsOnConnectivityChange() {
         let breaker = hostBreaker
+        #if os(macOS)
+        let foreground = NSApplication.didBecomeActiveNotification
+        #else
+        let foreground = UIApplication.willEnterForegroundNotification
+        #endif
         foregroundObserver = NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
+            forName: foreground,
             object: nil,
             queue: nil
         ) { _ in
@@ -299,13 +308,18 @@ struct CachedImage: View {
     /// Screen scale an image is decoded at. Shared by everything that derives a decode
     /// size, so that prefetch and render agree.
     static func decodeScale(for loadProfile: ImageLoadProfile) -> CGFloat {
+        #if os(macOS)
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        #else
+        let scale = UIScreen.main.scale
+        #endif
         switch loadProfile {
         case .shelf, .standard, .grid:
             // 2x görsel olarak 3x'ten ayırt edilemez, %44 daha az bellek
-            return min(UIScreen.main.scale, 2)
+            return min(scale, 2)
         case .high:
             // Hero / backdrop: büyük ekranda 3x kalite korunur
-            return min(UIScreen.main.scale, 3)
+            return min(scale, 3)
         }
     }
 
@@ -320,13 +334,20 @@ struct CachedImage: View {
     /// without it. The one place to return nil for `.shelf` / `.grid` should many
     /// simultaneous fades ever cost frames during a fling.
     fileprivate static func fade(for loadProfile: ImageLoadProfile) -> Animation? {
-        .easeOut(duration: 0.18)
+        #if os(macOS)
+        if loadProfile == .grid || loadProfile == .shelf { return nil }
+        #endif
+        return .easeOut(duration: 0.18)
     }
 
     // MARK: - Drawing
 
     private var tile: some View {
+        #if os(macOS)
+        Rectangle().fill(Color(nsColor: .controlBackgroundColor))
+        #else
         Rectangle().fill(Color(.systemGray6))
+        #endif
     }
 
     private var glyph: some View {

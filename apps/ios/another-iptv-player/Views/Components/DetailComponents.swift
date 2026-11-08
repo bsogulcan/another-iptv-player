@@ -14,6 +14,9 @@ struct DetailHeroConfig {
     var ratingText: String?
     var posterIconName: String
     var backdropIconName: String
+    /// Shown as one line under the metadata, in the hero. Arrives with the metadata
+    /// request on films; the hero grows upwards, so nothing below it moves.
+    var genres: [String] = []
 }
 
 // MARK: - Cinematic Hero
@@ -21,6 +24,8 @@ struct DetailHeroConfig {
 struct DetailHero: View {
     let config: DetailHeroConfig
     var heroHeight: CGFloat = 380
+    /// The page colour the hero fades into. The detail pages pass their ambient colour.
+    var pageBackground: Color = Color(UIColor.systemBackground)
     var onPosterTap: ((URL) -> Void)? = nil
 
     @Environment(\.posterMetrics) private var metrics
@@ -31,7 +36,9 @@ struct DetailHero: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .bottomLeading) {
                 backdropLayer
-                gradientLayer
+                if config.posterURL == nil && config.backdropURL == nil {
+                    gradientLayer
+                }
                 if dynamicTypeSize.isAccessibilitySize {
                     posterButton
                         .padding(.horizontal, 16)
@@ -93,6 +100,9 @@ struct DetailHero: View {
                     if let backdropURL = config.backdropURL {
                         HeroBackdropImage(url: backdropURL, width: proxy.size.width, height: h)
                     }
+                    // Inside the stretched layer, so pulling the page down stretches the
+                    // scrim with the artwork instead of uncovering artwork above it.
+                    gradientLayer
                 }
                 .frame(width: proxy.size.width, height: h)
                 .visualEffect { content, proxy in
@@ -147,7 +157,7 @@ struct DetailHero: View {
         LinearGradient(
             colors: [
                 Color.accentColor.opacity(0.28),
-                Color(UIColor.systemBackground)
+                pageBackground
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -157,10 +167,13 @@ struct DetailHero: View {
     private var gradientLayer: some View {
         LinearGradient(
             stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .clear, location: 0.5),
-                .init(color: Color(UIColor.systemBackground).opacity(0.78), location: 0.85),
-                .init(color: Color(UIColor.systemBackground), location: 1)
+                // A light scrim at the top keeps the status bar and the bar buttons
+                // readable over bright artwork.
+                .init(color: .black.opacity(0.35), location: 0),
+                .init(color: .clear, location: 0.22),
+                .init(color: .clear, location: 0.42),
+                .init(color: pageBackground.opacity(0.82), location: 0.8),
+                .init(color: pageBackground, location: 1)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -195,7 +208,7 @@ struct DetailHero: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(config.title)
                 .accessibilityAddTraits(.isHeader)
-                .font(.title2.weight(.bold))
+                .font(.title.weight(.heavy))
                 .foregroundStyle(.primary)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -203,6 +216,14 @@ struct DetailHero: View {
 
             DetailHeroMetaRow(year: config.year, runtime: config.runtime,
                               rating10: config.rating10, ratingText: config.ratingText)
+
+            if !config.genres.isEmpty {
+                Text(config.genres.joined(separator: " · "))
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 4)
@@ -224,7 +245,7 @@ struct DetailHero: View {
 ///
 /// `CachedImage` cannot be used for this layer: it always draws its tile and glyph while
 /// it loads.
-private struct HeroBackdropImage: View {
+struct HeroBackdropImage: View {
     let url: URL
     let width: CGFloat
     let height: CGFloat
@@ -389,8 +410,11 @@ struct DetailActionBar: View {
     /// live: they do not depend on whatever the primary action is still waiting for.
     var primaryDisabled: Bool = false
 
+    /// More round actions after restart and trailer (the film's download button).
+    var accessory: AnyView? = nil
+
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 14) {
             primaryCTA
             secondaryRow
         }
@@ -400,30 +424,29 @@ struct DetailActionBar: View {
     private var primaryCTA: some View {
         Button(action: onPrimary) {
             VStack(spacing: 0) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Image(systemName: primaryIcon)
                         .font(.title3)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(primaryTitle)
-                            .font(.subheadline.weight(.bold))
+                            .font(.headline)
                         if let sub = primarySubtitle, !sub.isEmpty {
                             Text(sub)
-                                .font(.caption2)
-                                .opacity(0.82)
+                                .font(.caption)
+                                .opacity(0.7)
                                 .lineLimit(1)
                         }
                     }
                 }
-                // Full width with the content at the leading edge. No trailing chevron
-                // on purpose: the button plays, it does not navigate.
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .foregroundStyle(.white)
+                // Centred, the way the system's media apps draw their play button.
+                // No trailing chevron on purpose: the button plays, it does not navigate.
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 18)
-                .padding(.vertical, 14)
+                .padding(.vertical, 13)
 
                 if let progress {
                     ProgressView(value: min(max(progress, 0), 1))
-                        .tint(.white)
+                        .tint(Color(UIColor.systemBackground))
                         .padding(.horizontal, 18)
                         .padding(.bottom, 10)
                 }
@@ -432,7 +455,6 @@ struct DetailActionBar: View {
         .buttonStyle(DetailPrimaryButtonStyle())
         .accessibilityIdentifier("detail.primaryAction")
         .disabled(primaryDisabled)
-        // The label is white on a gradient, so disabling alone would not show.
         .opacity(primaryDisabled ? 0.5 : 1)
     }
 
@@ -440,112 +462,247 @@ struct DetailActionBar: View {
     private var secondaryRow: some View {
         let hasRestart = onRestart != nil && restartTitle != nil
         let hasTrailer = trailerURL != nil
-        if hasRestart || hasTrailer {
-            HStack(spacing: 10) {
+        if hasRestart || hasTrailer || accessory != nil {
+            HStack(alignment: .top, spacing: 18) {
                 if let onRestart, let restartTitle {
-                    DetailSecondaryButton(icon: "arrow.counterclockwise", title: restartTitle, action: onRestart)
+                    Button(action: onRestart) {
+                        DetailRoundAction(icon: "arrow.counterclockwise", title: restartTitle)
+                    }
+                    .buttonStyle(.dimPress)
+                    .accessibilityIdentifier("detail.restart")
                 }
                 if let trailerURL {
                     Link(destination: trailerURL) {
-                        DetailSecondaryLabel(icon: "play.rectangle.on.rectangle", title: L("movie.trailer"))
+                        DetailRoundAction(icon: "play.rectangle.on.rectangle", title: L("movie.trailer"))
                     }
                     .buttonStyle(.dimPress)
+                    .accessibilityIdentifier("detail.trailer")
                 }
+                if let accessory {
+                    accessory
+                }
+                Spacer(minLength: 0)
             }
         }
     }
 }
 
-/// The primary button's gradient, shape and glow, as a style so that it can answer a
-/// press: `.plain` only dims foreground styles, and every colour here is explicit, which
-/// left the button without any feedback until the player appeared.
+/// The primary button: filled with the text colour of the page and lettered with its
+/// background, so it is white with black text on the dark detail pages. A style so that
+/// it can answer a press.
 private struct DetailPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         configuration.label
-            .background(
-                LinearGradient(
-                    colors: [Color.accentColor, Color.accentColor.opacity(0.78)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            .foregroundStyle(Color(UIColor.systemBackground))
+            .background(Color.primary)
             .clipShape(shape)
-            .shadow(color: Color.accentColor.opacity(0.35), radius: 12, y: 6)
             .contentShape(shape)
-            .opacity(configuration.isPressed ? 0.85 : 1)
+            .opacity(configuration.isPressed ? 0.8 : 1)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
-private struct DetailSecondaryButton: View {
+/// A secondary action on the detail pages: a glyph in a circle with its name under it.
+struct DetailRoundAction: View {
+    static let circleSide: CGFloat = 48
+    static let minWidth: CGFloat = 64
+
     let icon: String
     let title: String
-    var tinted: Bool = false
-    let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            DetailSecondaryLabel(icon: icon, title: title, tinted: tinted)
-        }
-        .buttonStyle(.dimPress)
-    }
-}
-
-private struct DetailSecondaryLabel: View {
-    let icon: String
-    let title: String
-    var tinted: Bool = false
-
-    var body: some View {
-        HStack(spacing: 6) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.footnote.weight(.semibold))
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(width: Self.circleSide, height: Self.circleSide)
+                .background(Circle().fill(Color.primary.opacity(0.12)))
             Text(title)
-                .font(.footnote.weight(.semibold))
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-        .foregroundStyle(tinted ? Color.yellow : Color.primary)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 11)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .frame(minWidth: Self.minWidth)
+        .contentShape(Rectangle())
     }
 }
 
-// MARK: - Genre chips
+// MARK: - Cast
 
-struct GenreChipRow: View {
-    let genres: [String]
+/// One cast member: the panel sends names only; a role and photo are optional.
+struct DetailCastMember: Equatable, Hashable, Sendable {
+    let name: String
+    var character: String? = nil
+    var photoURL: URL? = nil
+}
+
+/// The cast as round photos or initials avatars (panel names only), with the
+/// name and the role under each. Every member of the list is kept; the row scrolls.
+struct DetailCastRow: View {
+    let label: String
+    let members: [DetailCastMember]
+
+    init(label: String, members: [DetailCastMember]) {
+        self.label = label
+        self.members = members
+    }
+
+    /// Panel cast: a comma-separated list of names.
+    init(label: String, cast: String) {
+        self.label = label
+        self.members = cast.split(whereSeparator: { $0 == "," || $0 == "|" || $0 == "/" })
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { DetailCastMember(name: $0) }
+    }
+
+    private static let side: CGFloat = 64
 
     var body: some View {
-        if !genres.isEmpty {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(label)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.horizontal, 16)
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(genres, id: \.self) { g in
-                        Text(g)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.primary.opacity(0.85))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(.ultraThinMaterial))
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-                            )
+                LazyHStack(alignment: .top, spacing: 14) {
+                    ForEach(Array(members.enumerated()), id: \.offset) { _, member in
+                        VStack(spacing: 6) {
+                            avatar(member)
+                            VStack(spacing: 1) {
+                                Text(member.name)
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(2)
+                                if let character = member.character {
+                                    Text(character)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
+                            }
+                            .multilineTextAlignment(.center)
+                            .frame(width: 80)
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
             }
+            .scrollClipDisabled()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label): \(members.map { [$0.name, $0.character].compactMap { $0 }.joined(separator: ", ") }.joined(separator: "; "))")
+    }
+
+    @ViewBuilder
+    private func avatar(_ member: DetailCastMember) -> some View {
+        ZStack {
+            Circle().fill(Self.color(for: member.name).gradient)
+            Text(Self.initials(member.name))
+                .font(.callout.weight(.bold))
+                .foregroundStyle(.white)
+            if let url = member.photoURL {
+                CachedImage(
+                    url: url,
+                    width: Self.side,
+                    height: Self.side,
+                    cornerRadius: Self.side / 2,
+                    contentMode: .fill,
+                    iconName: "person.fill",
+                    loadProfile: .grid
+                )
+            }
+        }
+        .frame(width: Self.side, height: Self.side)
+        .clipShape(Circle())
+    }
+
+    static func initials(_ name: String) -> String {
+        let parts = name.split(separator: " ").filter { !$0.isEmpty }
+        let letters = [parts.first, parts.count > 1 ? parts.last : nil]
+            .compactMap { $0?.first }
+        return letters.isEmpty ? "?" : String(letters).uppercased()
+    }
+
+    /// A muted colour that stays the same for a name on every page.
+    static func color(for name: String) -> Color {
+        var hash: UInt64 = 1469598103934665603
+        for byte in name.utf8 { hash = (hash ^ UInt64(byte)) &* 1099511628211 }
+        let hue = Double(hash % 360) / 360
+        return Color(hue: hue, saturation: 0.35, brightness: 0.55)
+    }
+}
+
+// MARK: - Ambient colour
+
+/// The detail pages' background: a dark tone taken from the poster, so every page has
+/// the colour of its title. Computed once per poster and kept for the session.
+enum DetailAmbient {
+    static let fallback = Color(red: 0.07, green: 0.07, blue: 0.08)
+
+    private static let cache = NSCache<NSURL, UIColor>()
+
+    static func cached(for url: URL?) -> Color? {
+        guard let url, let color = cache.object(forKey: url as NSURL) else { return nil }
+        return Color(uiColor: color)
+    }
+
+    /// Reads the poster through the image pipeline, so the card's bitmap that is already
+    /// in memory or on disk is used, and returns the darkened average colour.
+    static func color(for url: URL?, request: ImageRequest?) async -> Color? {
+        guard let url, let request else { return nil }
+        if let hit = cache.object(forKey: url as NSURL) { return Color(uiColor: hit) }
+        guard let image = try? await ImagePipeline.shared.image(for: request) else { return nil }
+        guard let tone = await Task.detached(priority: .utility, operation: { averageTone(of: image) }).value else {
+            return nil
+        }
+        cache.setObject(tone, forKey: url as NSURL)
+        return Color(uiColor: tone)
+    }
+
+    private nonisolated static func averageTone(of image: UIImage) -> UIColor? {
+        guard let cg = image.cgImage else { return nil }
+        // Drawn into a 1×1 bitmap: the scaler averages the whole image.
+        var pixel = [UInt8](repeating: 0, count: 4)
+        guard let context = CGContext(
+            data: &pixel, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .medium
+        context.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        let average = UIColor(
+            red: CGFloat(pixel[0]) / 255, green: CGFloat(pixel[1]) / 255,
+            blue: CGFloat(pixel[2]) / 255, alpha: 1
+        )
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        average.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        // Dark enough for white text at every saturation, never a flat black.
+        return UIColor(hue: hue, saturation: min(saturation, 0.6), brightness: 0.17, alpha: 1)
+    }
+}
+
+extension View {
+    /// The detail pages' look: dark whatever the system appearance, on the ambient colour.
+    func detailPageStyle(background: Color) -> some View {
+        self
+            .environment(\.colorScheme, .dark)
+            .background(background.ignoresSafeArea())
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .animation(.easeInOut(duration: 0.35), value: background)
+    }
+
+    /// Gives the top bar a background once the hero has scrolled away, so the page no
+    /// longer runs under the status bar and the bar's title. The soft edge effect stays
+    /// off while the hero is in view, where it would wash the artwork out.
+    @ViewBuilder
+    func detailTopBarBackground(visible: Bool) -> some View {
+        if #available(iOS 26, *) {
+            self.scrollEdgeEffectHidden(!visible, for: .top)
+        } else {
+            self.toolbarBackground(visible ? .visible : .hidden, for: .navigationBar)
         }
     }
 }
@@ -648,7 +805,56 @@ struct DetailSeasonTabBar: View {
     /// playback crosses into another season, which must stay silent.
     @State private var selectionTapCount = 0
 
+    /// Above this many seasons a row of chips no longer fits on a phone and scrolling it
+    /// to find a season is slower than a menu.
+    static let menuThreshold = 5
+
+    private func title(_ season: DBSeason) -> String {
+        season.name ?? L("series.season_format", season.seasonNumber)
+    }
+
     var body: some View {
+        if seasons.count > Self.menuThreshold {
+            seasonMenu
+        } else {
+            chipRow
+        }
+    }
+
+    private var seasonMenu: some View {
+        Menu {
+            ForEach(seasons) { season in
+                Button {
+                    guard selectedId != season.id else { return }
+                    selectionTapCount += 1
+                    selectedId = season.id
+                } label: {
+                    if selectedId == season.id {
+                        Label(title(season), systemImage: "checkmark")
+                    } else {
+                        Text(title(season))
+                    }
+                }
+                .accessibilityIdentifier("series.season.\(season.seasonNumber)")
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(seasons.first(where: { $0.id == selectedId }).map(title) ?? L("series.seasons"))
+                    .font(.headline)
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.bold))
+            }
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(Color.primary.opacity(0.12)))
+        }
+        .accessibilityIdentifier("series.season.menu")
+        .sensoryFeedback(.selection, trigger: selectionTapCount)
+        .padding(.horizontal, 16)
+    }
+
+    private var chipRow: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -753,17 +959,7 @@ enum DetailFormatting {
     }
 }
 
-extension View {
-    /// Turns off the soft scroll-edge effect iOS 26 draws under the top bars, on every
-    /// scroll view below. Set once at the app root. The faded band washed out the
-    /// detail heroes, and with the bars moved to the side (iPhone Duo's outer display
-    /// in landscape) it was a bare band across the top of the page.
-    @ViewBuilder
-    func hidesTopScrollEdgeEffect() -> some View {
-        if #available(iOS 26, *) {
-            scrollEdgeEffectHidden(true, for: .top)
-        } else {
-            self
-        }
-    }
+extension String {
+    /// nil for an empty string, so a blank field falls through to the next source.
+    nonisolated var nilIfEmpty: String? { isEmpty ? nil : self }
 }

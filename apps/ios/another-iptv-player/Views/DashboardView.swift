@@ -111,6 +111,11 @@ struct DashboardView: View {
                 .zIndex(10_000)
         }
         .environment(\.playerOverlayController, playerOverlay)
+        // The update offer waits while a player fills the screen.
+        .onChange(of: isPlayerCoveringContent, initial: true) { _, covering in
+            AppUpdateChecker.shared.isPlayerInFront = covering
+        }
+        .onDisappear { AppUpdateChecker.shared.isPlayerInFront = false }
         .onChange(of: playerOverlay.presentation?.id) { _, id in
             // The overlay sits below UIKit-presented sheets; playback started from the
             // Downloads sheet would otherwise run, audibly, behind it.

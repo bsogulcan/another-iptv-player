@@ -55,6 +55,11 @@ struct M3UDashboardView: View {
                 .zIndex(10_000)
         }
         .environment(\.playerOverlayController, playerOverlay)
+        // The update offer waits while a player fills the screen.
+        .onChange(of: isPlayerCoveringContent, initial: true) { _, covering in
+            AppUpdateChecker.shared.isPlayerInFront = covering
+        }
+        .onDisappear { AppUpdateChecker.shared.isPlayerInFront = false }
         .environment(\.epgSnapshot, epgStore.snapshot)
         .environment(\.epgLineReserved, epgStore.isLineReserved(for: playlist))
         .environment(\.epgGuideEnabled, epgStore.isGuideEnabled)

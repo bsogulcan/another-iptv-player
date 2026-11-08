@@ -425,6 +425,7 @@
 "detail.show_more" = "Mostrar mais";
 "detail.show_less" = "Mostrar menos";
 "player.a11y.playback_position" = "Posição de reprodução";
+"download.error.file_write" = "Não foi possível salvar o arquivo neste dispositivo.";
 "download.error.no_space" = "Armazenamento livre insuficiente neste dispositivo";
 "download.missing_file.title" = "Arquivo não está mais no dispositivo";
 "download.missing_file.message" = "O arquivo baixado está ausente (acontece após restaurar ou migrar o dispositivo). Baixar novamente?";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "Todas as categorias estão ocultas";
 "guide.all_hidden.message" = "Mostre uma categoria no seletor para ver os seus canais no guia de TV.";
+"detail.more_like_this" = "Mais como este";
+"filter.unwatched" = "Não assistidos";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Atualização disponível";
+"update.message" = "A versão %1$@ está disponível na App Store. Você está usando a %2$@.";
+"update.action" = "Atualizar";
+"update.later" = "Mais tarde";
+"playlist.import.changed" = "A fonte foi alterada ou removida. Abra novamente as configurações da fonte.";

@@ -425,6 +425,7 @@
 "detail.show_more" = "Показать больше";
 "detail.show_less" = "Показать меньше";
 "player.a11y.playback_position" = "Позиция воспроизведения";
+"download.error.file_write" = "Не удалось сохранить файл на этом устройстве.";
 "download.error.no_space" = "Недостаточно свободного места на этом устройстве";
 "download.missing_file.title" = "Файл больше не на устройстве";
 "download.missing_file.message" = "Загруженный файл отсутствует (такое бывает после восстановления или переноса устройства). Скачать заново?";
@@ -602,3 +603,12 @@
 /* TV guide hidden categories */
 "guide.all_hidden.title" = "Все категории скрыты";
 "guide.all_hidden.message" = "Покажите категорию в списке категорий, чтобы увидеть её каналы в телепрограмме.";
+"detail.more_like_this" = "Похожее";
+"filter.unwatched" = "Непросмотренные";
+"filter.rating_7_plus" = "★ 7+";
+
+"update.title" = "Доступно обновление";
+"update.message" = "В App Store доступна версия %1$@. У вас установлена %2$@.";
+"update.action" = "Обновить";
+"update.later" = "Позже";
+"playlist.import.changed" = "Источник изменён или удалён. Откройте его настройки заново.";

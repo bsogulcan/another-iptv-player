@@ -37,9 +37,9 @@ struct PosterMetrics: Equatable, Sendable {
     var seasonStripWidth: CGFloat { scaled(120) }
     var seasonStripHeight: CGFloat { scaled(180) }
 
-    var episodeThumbWidth: CGFloat { scaled(100) }
-    var episodeThumbHeight: CGFloat { scaled(150) }
-    var episodeRowDividerLeading: CGFloat { scaled(100) + 28 }
+    var episodeThumbWidth: CGFloat { scaled(136) }
+    var episodeThumbHeight: CGFloat { scaled(77) }
+    var episodeRowDividerLeading: CGFloat { scaled(136) + 28 }
 
     var gridSpacing: CGFloat { scaled(16) }
     var gridRowSpacing: CGFloat { scaled(20) }
