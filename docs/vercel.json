@@ -1,4 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ."
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD .",
+  "redirects": [
+    {
+      "source": "/link",
+      "destination": "https://api.another-iptv-player.com/link",
+      "permanent": false
+    },
+    {
+      "source": "/link/",
+      "destination": "https://api.another-iptv-player.com/link",
+      "permanent": false
+    }
+  ]
 }
